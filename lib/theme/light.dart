@@ -11,7 +11,7 @@ final ThemeData themeLight = ThemeData(
   scaffoldBackgroundColor: AppColors.neutral50,
   appBarTheme: appBarThemeLight,
   cardTheme: cardThemeLight,
-  dividerColor: AppColors.neutral200,
+  dividerTheme: const DividerThemeData(color: AppColors.neutral200),
   iconTheme: const IconThemeData(color: AppColors.primary500),
   textTheme: textThemeLight(),
 );

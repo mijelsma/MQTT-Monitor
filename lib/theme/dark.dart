@@ -11,7 +11,7 @@ final ThemeData themeDark = ThemeData(
   scaffoldBackgroundColor: AppColors.dark0,
   appBarTheme: appBarThemeDark,
   cardTheme: cardThemeDark,
-  dividerColor: AppColors.dark200,
+  dividerTheme: const DividerThemeData(color: AppColors.dark200),
   iconTheme: const IconThemeData(color: AppColors.primary300),
   textTheme: textThemeDark(),
 );
