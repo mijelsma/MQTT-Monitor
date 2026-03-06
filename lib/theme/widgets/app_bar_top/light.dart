@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../app_colors.dart';
 
-const AppBarTheme appBarThemeLight = AppBarTheme(
+const AppBarTheme appBarTopThemeLight = AppBarTheme(
   backgroundColor: AppColors.primary500,
   foregroundColor: AppColors.neutral0,
   elevation: 0,
