@@ -1,0 +1,118 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "pub get",
+            "type": "shell",
+            "command": "flutter pub get",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run — macOS (debug)",
+            "type": "shell",
+            "command": "flutter run -d macos",
+            "group": "test",
+            "isBackground": true,
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": {
+                "owner": "flutter",
+                "pattern": {
+                    "regexp": "^(.*)$",
+                    "message": 1
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^Launching",
+                    "endsPattern": "^(Flutter run key commands|An Observatory debugger)"
+                }
+            }
+        },
+        {
+            "label": "Run — Windows (debug)",
+            "type": "shell",
+            "command": "flutter run -d windows",
+            "group": "test",
+            "isBackground": true,
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run — Linux (debug)",
+            "type": "shell",
+            "command": "flutter run -d linux",
+            "group": "test",
+            "isBackground": true,
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build — macOS (release)",
+            "type": "shell",
+            "command": "flutter build macos --release",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$dart-build"
+            ]
+        },
+        {
+            "label": "Build — Windows (release)",
+            "type": "shell",
+            "command": "flutter build windows --release",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$dart-build"
+            ]
+        },
+        {
+            "label": "Build — Linux (release)",
+            "type": "shell",
+            "command": "flutter build linux --release",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$dart-build"
+            ]
+        },
+        {
+            "label": "flutter analyze",
+            "type": "shell",
+            "command": "flutter analyze",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$dart-build"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run — macOS",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "macos",
+            "flutterMode": "debug",
+            "program": "lib/main.dart"
+        },
+        {
+            "name": "Run — Windows",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "windows",
+            "flutterMode": "debug",
+            "program": "lib/main.dart"
+        },
+        {
+            "name": "Run — Linux",
+            "request": "launch",
+            "type": "dart",
+            "deviceId": "linux",
+            "flutterMode": "debug",
+            "program": "lib/main.dart"
+        },
+    ]
+}
