@@ -1,87 +1,94 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppColors {
-  static const Color primary50 = Color(0xFFE3F2F9);
-  static const Color primary100 = Color(0xFFB3DAEC);
-  static const Color primary200 = Color(0xFF80C1DE);
-  static const Color primary300 = Color(0xFF4DA8D0);
-  static const Color primary400 = Color(0xFF2695C6);
-  static const Color primary500 = Color(0xFF0077B6);
-  static const Color primary600 = Color(0xFF006BA6);
-  static const Color primary700 = Color(0xFF005C94);
-  static const Color primary800 = Color(0xFF004E82);
-  static const Color primary900 = Color(0xFF023E8A);
+  // Primary colors
+  static const Color primary50 = Color(0xFFEEF2FF);
+  static const Color primary100 = Color(0xFFE0E7FF);
+  static const Color primary200 = Color(0xFFC7D2FE);
+  static const Color primary300 = Color(0xFFA5B4FC);
+  static const Color primary400 = Color(0xFF818CF8);
+  static const Color primary500 = Color(0xFF6366F1);
+  static const Color primary600 = Color(0xFF4F46E5);
+  static const Color primary700 = Color(0xFF4338CA);
+  static const Color primary800 = Color(0xFF3730A3);
+  static const Color primary900 = Color(0xFF312E81);
 
-  static const Color secondary50 = Color(0xFFE0FAFD);
-  static const Color secondary100 = Color(0xFFB3F0F7);
-  static const Color secondary200 = Color(0xFF80E5F1);
-  static const Color secondary300 = Color(0xFF4DDBEB);
-  static const Color secondary400 = Color(0xFF26D2E6);
-  static const Color secondary500 = Color(0xFF00B4D8);
-  static const Color secondary600 = Color(0xFF0096C7);
-  static const Color secondary700 = Color(0xFF0086B3);
-  static const Color secondary800 = Color(0xFF00769F);
-  static const Color secondary900 = Color(0xFF005F80);
+  // Secondary colors
+  static const Color secondary50 = Color(0xFFECFEFF);
+  static const Color secondary100 = Color(0xFFCFFAFE);
+  static const Color secondary200 = Color(0xFFA5F3FC);
+  static const Color secondary300 = Color(0xFF67E8F9);
+  static const Color secondary400 = Color(0xFF22D3EE);
+  static const Color secondary500 = Color(0xFF06B6D4);
+  static const Color secondary600 = Color(0xFF0891B2);
+  static const Color secondary700 = Color(0xFF0E7490);
+  static const Color secondary800 = Color(0xFF155E75);
+  static const Color secondary900 = Color(0xFF164E63);
 
-  static const Color accent = Color(0xFF90E0EF);
+  // Success scale
+  static const Color success50 = Color(0xFFF0FDF4);
+  static const Color success100 = Color(0xFFDCFCE7);
+  static const Color success200 = Color(0xFFBBF7D0);
+  static const Color success300 = Color(0xFF86EFAC);
+  static const Color success400 = Color(0xFF4ADE80);
+  static const Color success500 = Color(0xFF22C55E);
+  static const Color success600 = Color(0xFF16A34A);
+  static const Color success700 = Color(0xFF15803D);
 
-  static const Color success50 = Color(0xFFE6F9ED);
-  static const Color success100 = Color(0xFFC2F0D3);
-  static const Color success200 = Color(0xFF9BE6B7);
-  static const Color success300 = Color(0xFF6FDC98);
-  static const Color success400 = Color(0xFF4FD37F);
-  static const Color success500 = Color(0xFF2DC653);
-  static const Color success600 = Color(0xFF24B148);
-  static const Color success700 = Color(0xFF1D8F3A);
+  // Warning scale
+  static const Color warning50 = Color(0xFFFFFBEB);
+  static const Color warning100 = Color(0xFFFEF3C7);
+  static const Color warning200 = Color(0xFFFDE68A);
+  static const Color warning300 = Color(0xFFFCD34D);
+  static const Color warning400 = Color(0xFFFBBF24);
+  static const Color warning500 = Color(0xFFF59E0B);
+  static const Color warning600 = Color(0xFFD97706);
+  static const Color warning700 = Color(0xFFB45309);
 
-  static const Color warning50 = Color(0xFFFFF3E6);
-  static const Color warning100 = Color(0xFFFFE0BF);
-  static const Color warning200 = Color(0xFFFFCC99);
-  static const Color warning300 = Color(0xFFFFB873);
-  static const Color warning400 = Color(0xFFFFA657);
-  static const Color warning500 = Color(0xFFF4A261);
-  static const Color warning600 = Color(0xFFE38B3F);
-  static const Color warning700 = Color(0xFFC46F1E);
+  // Error scale
+  static const Color error50 = Color(0xFFFEF2F2);
+  static const Color error100 = Color(0xFFFEE2E2);
+  static const Color error200 = Color(0xFFFECACA);
+  static const Color error300 = Color(0xFFFCA5A5);
+  static const Color error400 = Color(0xFFF87171);
+  static const Color error500 = Color(0xFFEF4444);
+  static const Color error600 = Color(0xFFDC2626);
+  static const Color error700 = Color(0xFFB91C1C);
 
-  static const Color error50 = Color(0xFFFFEAEA);
-  static const Color error100 = Color(0xFFFFC9C9);
-  static const Color error200 = Color(0xFFFFA6A6);
-  static const Color error300 = Color(0xFFFF8383);
-  static const Color error400 = Color(0xFFFF6666);
-  static const Color error500 = Color(0xFFE63946);
-  static const Color error600 = Color(0xFFD62839);
-  static const Color error700 = Color(0xFFB71F2D);
+  // Info scale
+  static const Color info50 = Color(0xFFEFF6FF);
+  static const Color info100 = Color(0xFFDBEAFE);
+  static const Color info200 = Color(0xFFBFDBFE);
+  static const Color info300 = Color(0xFF93C5FD);
+  static const Color info400 = Color(0xFF60A5FA);
+  static const Color info500 = Color(0xFF3B82F6);
+  static const Color info600 = Color(0xFF2563EB);
+  static const Color info700 = Color(0xFF1D4ED8);
 
-  static const Color info50 = Color(0xFFE3F7FE);
-  static const Color info100 = Color(0xFFB9EAFE);
-  static const Color info200 = Color(0xFF8EDDFC);
-  static const Color info300 = Color(0xFF63D0FA);
-  static const Color info400 = Color(0xFF42C6F6);
-  static const Color info500 = Color(0xFF4CC9F0);
-  static const Color info600 = Color(0xFF2EAED8);
-  static const Color info700 = Color(0xFF168DB5);
-
+  // Neutral scale (light-mode greys)
   static const Color neutral0 = Color(0xFFFFFFFF);
-  static const Color neutral50 = Color(0xFFF8F9FA);
-  static const Color neutral100 = Color(0xFFE9ECEF);
-  static const Color neutral200 = Color(0xFFDEE2E6);
-  static const Color neutral300 = Color(0xFFCED4DA);
-  static const Color neutral400 = Color(0xFFADB5BD);
-  static const Color neutral500 = Color(0xFF6C757D);
-  static const Color neutral600 = Color(0xFF495057);
-  static const Color neutral700 = Color(0xFF343A40);
-  static const Color neutral800 = Color(0xFF212529);
-  static const Color neutral900 = Color(0xFF1A1A2E);
+  static const Color neutral50 = Color(0xFFFAFAFA);
+  static const Color neutral100 = Color(0xFFF4F4F5);
+  static const Color neutral200 = Color(0xFFE4E4E7);
+  static const Color neutral300 = Color(0xFFD4D4D8);
+  static const Color neutral400 = Color(0xFFA1A1AA);
+  static const Color neutral500 = Color(0xFF71717A);
+  static const Color neutral600 = Color(0xFF52525B);
+  static const Color neutral700 = Color(0xFF3F3F46);
+  static const Color neutral800 = Color(0xFF27272A);
+  static const Color neutral900 = Color(0xFF18181B);
 
-  static const Color dark0 = Color(0xFF0D1117);
-  static const Color dark50 = Color(0xFF161B22);
-  static const Color dark100 = Color(0xFF21262D);
-  static const Color dark200 = Color(0xFF30363D);
-  static const Color dark300 = Color(0xFF484F58);
-  static const Color dark400 = Color(0xFF6E7681);
-  static const Color dark500 = Color(0xFF8B949E);
-  static const Color dark600 = Color(0xFFB1BAC4);
-  static const Color dark700 = Color(0xFFCDD9E5);
-  static const Color dark800 = Color(0xFFE6EDF3);
-  static const Color dark900 = Color(0xFFF0F6FC);
+  static const Color dark0 = Color(0xFF09090B);
+  static const Color dark50 = Color(0xFF18181B);
+  static const Color dark100 = Color(0xFF27272A);
+  static const Color dark200 = Color(0xFF3F3F46);
+  static const Color dark300 = Color(0xFF52525B);
+  static const Color dark400 = Color(0xFF71717A);
+  static const Color dark500 = Color(0xFFA1A1AA);
+  static const Color dark600 = Color(0xFFD4D4D8);
+  static const Color dark700 = Color(0xFFE4E4E7);
+  static const Color dark800 = Color(0xFFF4F4F5);
+  static const Color dark900 = Color(0xFFFAFAFA);
+
+  static const List<Color> brokerGradient = [primary600, primary400];
 }
