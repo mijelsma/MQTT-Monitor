@@ -7,6 +7,7 @@ import 'divider/dark.dart';
 import 'icon/dark.dart';
 import 'card/dark.dart';
 import 'text/dark.dart';
+import 'app_tokens.dart';
 
 final ThemeData themeDark = ThemeData(
   useMaterial3: true,
@@ -18,4 +19,5 @@ final ThemeData themeDark = ThemeData(
   iconTheme: iconThemeDark,
   bottomAppBarTheme: bottomAppBarThemeDark,
   textTheme: textThemeDark(),
+  extensions: const [AppTokens.dark],
 );

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'ui/main_screen/main_screen.dart';
+import 'ui/main/main_screen.dart';
 import 'theme/app_theme.dart';
 
 class App extends StatelessWidget {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../settings/settings_screen.dart';
 
 class SettingsButton extends StatelessWidget {
   const SettingsButton({super.key});
@@ -6,7 +7,9 @@ class SettingsButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+      ),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
         padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
