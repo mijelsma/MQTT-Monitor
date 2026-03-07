@@ -1,0 +1,54 @@
+import 'package:flutter/material.dart';
+import '../../theme/app_colors.dart';
+import 'about_panel.dart';
+import 'settings_section.dart';
+import 'settings_item.dart';
+import 'layouts/settings_wide_layout.dart';
+import 'layouts/settings_narrow_layout.dart';
+
+class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  SettingsSection _current = SettingsSection.about;
+
+  // Settings items
+  static final _items = <SettingsItem>[
+    (
+      section: SettingsSection.about,
+      label: 'About',
+      icon: Icons.info_outline_rounded,
+      gradient: AppColors.aboutGradient,
+    ),
+  ];
+  
+
+  Widget _buildPanel() => switch (_current) {
+    SettingsSection.about => const AboutPanel(),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final isWide = MediaQuery.sizeOf(context).width >= 600;
+
+    if (isWide) {
+      return SettingsWideLayout(
+        items: _items,
+        current: _current,
+        onSelect: (s) => setState(() => _current = s),
+        panel: _buildPanel(),
+      );
+    } else {
+      return SettingsNarrowLayout(
+        items: _items,
+        current: _current,
+        onSelect: (s) => setState(() => _current = s),
+        panel: _buildPanel(),
+      );
+    }
+  }
+}
