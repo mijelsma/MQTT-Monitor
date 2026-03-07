@@ -1,4 +1,5 @@
 {
-  "editor.formatOnSave": true,
-  "dart.closingLabels": false
+  "editor.formatOnSave": false,
+  "dart.closingLabels": false,
+  "dart.lineLength": 360
 }

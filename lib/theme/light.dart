@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'color_scheme/light.dart';
-import 'widgets/app_bar_top/light.dart';
-import 'widgets/card/light.dart';
-import 'widgets/app_bar_bottom/light.dart';
+import 'app_bar/light.dart';
+import 'bottom_app_bar/light.dart';
+import 'divider/light.dart';
+import 'icon/light.dart';
+import 'card/light.dart';
 import 'text/light.dart';
 
 final ThemeData themeLight = ThemeData(
   useMaterial3: true,
   colorScheme: colorSchemeLight,
   scaffoldBackgroundColor: AppColors.neutral50,
-  appBarTheme: appBarTopThemeLight,
+  appBarTheme: appBarThemeLight,
   cardTheme: cardThemeLight,
-  dividerTheme: const DividerThemeData(color: AppColors.neutral200),
-  iconTheme: const IconThemeData(color: AppColors.primary500),
-  bottomAppBarTheme: appBarBottomThemeLight,
+  dividerTheme: dividerThemeLight,
+  iconTheme: iconThemeLight,
+  bottomAppBarTheme: bottomAppBarThemeLight,
   textTheme: textThemeLight(),
 );
