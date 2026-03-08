@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_tokens.dart';
+import '../../../theme/app_tokens/app_tokens.dart';
 
 class InfoRow extends StatelessWidget {
   const InfoRow({super.key, required this.label, required this.value});

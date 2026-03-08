@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_colors.dart';
-import '../../../theme/app_tokens.dart';
+import '../../../theme/app_tokens/app_tokens.dart';
 import '../widgets/info_row.dart';
 import '../widgets/link_row.dart';
 import '../widgets/settings_group.dart';
@@ -15,8 +15,7 @@ class AboutPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme     = Theme.of(context);
-    final isDark    = theme.brightness == Brightness.dark;
-    final accent    = isDark ? AppColors.primary400 : AppColors.primary500;
+    final accent    = context.tokens.primary;
     final secondary = context.tokens.textSecondary;
 
     return SingleChildScrollView(

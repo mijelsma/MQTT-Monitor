@@ -7,7 +7,7 @@ import 'divider/dark.dart';
 import 'icon/dark.dart';
 import 'card/dark.dart';
 import 'text/dark.dart';
-import 'app_tokens.dart';
+import 'app_tokens/app_tokens.dart';
 
 final ThemeData themeDark = ThemeData(
   useMaterial3: true,

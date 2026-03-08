@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_colors.dart';
-import '../../../theme/app_tokens.dart';
+import '../../../theme/app_tokens/app_tokens.dart';
 import 'settings_row.dart';
 
 
@@ -16,8 +15,7 @@ class SwitchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final resolvedAccent = accent ?? (isDark ? AppColors.primary400 : AppColors.primary500);
+    final resolvedAccent = accent ?? context.tokens.primary;
 
     return SettingsRow(
       isLast: isLast,
