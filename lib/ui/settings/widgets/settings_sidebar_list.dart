@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_colors.dart';
-import '../../../theme/app_tokens.dart';
+import '../../../theme/app_tokens/app_tokens.dart';
 import '../settings_section.dart';
 import '../settings_item.dart';
 
@@ -20,8 +19,7 @@ class SettingsSidebarList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final selectedBg = isDark ? context.tokens.surface : AppColors.primary500.withValues(alpha: 0.08);
+    final selectedBg = context.tokens.selectedBg;
     final textColor = context.tokens.textPrimary;
     final mutedColor = context.tokens.textTertiary;
 

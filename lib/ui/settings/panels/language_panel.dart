@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_colors.dart';
+import '../../../theme/app_tokens/app_tokens.dart';
 import '../models/language.dart';
 import '../widgets/settings_group.dart';
 import '../widgets/settings_row.dart';
@@ -70,9 +70,7 @@ class _LanguagePanelState extends State<LanguagePanel> {
   }
 
   Widget _buildLanguageRow({required Language language, required bool isLast}) {
-    final theme  = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final accent = isDark ? AppColors.primary400 : AppColors.primary500;
+    final accent = context.tokens.primary;
 
     return SettingsRow(
       isLast: isLast,

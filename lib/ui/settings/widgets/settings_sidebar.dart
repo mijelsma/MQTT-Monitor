@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_colors.dart';
-import '../../../theme/app_tokens.dart';
+import '../../../theme/app_tokens/app_tokens.dart';
 import '../settings_section.dart';
 import '../settings_item.dart';
 import 'settings_sidebar_list.dart';
@@ -23,8 +22,7 @@ class SettingsSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = isDark ? AppColors.primary400 : AppColors.primary500;
+    final accent = context.tokens.primary;
 
     return Container(
       color: bg,

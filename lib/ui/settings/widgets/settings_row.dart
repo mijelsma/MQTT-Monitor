@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_tokens.dart';
+import '../../../theme/app_tokens/app_tokens.dart';
 
 class SettingsRow extends StatelessWidget {
   const SettingsRow({super.key, required this.child, this.dividerIndent = 0, this.isLast = false});

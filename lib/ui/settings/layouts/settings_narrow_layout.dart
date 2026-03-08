@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../theme/app_colors.dart';
-import '../../../theme/app_tokens.dart';
+import '../../../theme/app_tokens/app_tokens.dart';
 import '../settings_section.dart';
 import '../settings_item.dart';
 import '../widgets/settings_sidebar_list.dart';
@@ -28,8 +27,7 @@ class _SettingsNarrowLayoutState extends State<SettingsNarrowLayout> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = isDark ? AppColors.primary400 : AppColors.primary500;
+    final accent = context.tokens.primary;
     final contentBg = context.tokens.bg;
     final borderColor = context.tokens.border;
 
