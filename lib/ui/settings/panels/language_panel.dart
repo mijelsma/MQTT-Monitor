@@ -3,6 +3,7 @@ import '../../../theme/app_tokens/app_tokens.dart';
 import '../models/language.dart';
 import '../widgets/settings_group.dart';
 import '../widgets/settings_row.dart';
+import '../../widgets/spacers.dart';
 
 // Divider indent for language rows: 14 (left padding) + 22 (flag emoji) + 16 (gap) = 52
 const _kDividerIndent = 52.0;
@@ -17,13 +18,7 @@ class LanguagePanel extends StatefulWidget {
 class _LanguagePanelState extends State<LanguagePanel> {
   String _selected = 'en';
 
-  static const _languages = [
-    Language(code: 'en', name: 'English',    flag: '🇬🇧'),
-    Language(code: 'de', name: 'Deutsch',    flag: '🇩🇪'),
-    Language(code: 'fr', name: 'Français',   flag: '🇫🇷'),
-    Language(code: 'nl', name: 'Nederlands', flag: '🇳🇱'),
-    Language(code: 'es', name: 'Español',    flag: '🇪🇸'),
-  ];
+  static const _languages = [Language(code: 'en', name: 'English', flag: '🇬🇧'), Language(code: 'de', name: 'Deutsch', flag: '🇩🇪'), Language(code: 'fr', name: 'Français', flag: '🇫🇷'), Language(code: 'nl', name: 'Nederlands', flag: '🇳🇱'), Language(code: 'es', name: 'Español', flag: '🇪🇸')];
 
   @override
   Widget build(BuildContext context) {
@@ -34,30 +29,30 @@ class _LanguagePanelState extends State<LanguagePanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title 
+          // Title
           Text('Language', style: theme.textTheme.headlineSmall),
 
           // Spacer
-          const SizedBox(height: 6),
+          VSpacer(6),
 
           // Description
           Text('Select the interface language.', style: theme.textTheme.bodySmall),
 
           // Spacer
-          const SizedBox(height: 20),
+          VSpacer(20),
 
           // Language options
           SettingsGroup(
             children: _languages.asMap().entries.map((entry) {
               final language = entry.value;
-              final isLast   = entry.key == _languages.length - 1;
+              final isLast = entry.key == _languages.length - 1;
 
               return _buildLanguageRow(language: language, isLast: isLast);
             }).toList(),
           ),
 
           // Spacer
-          const SizedBox(height: 12),
+          VSpacer(12),
 
           // Note
           Padding(

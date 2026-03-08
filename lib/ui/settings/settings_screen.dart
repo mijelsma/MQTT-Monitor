@@ -3,6 +3,7 @@ import '../../theme/app_colors.dart';
 import 'panels/about_panel.dart';
 import 'panels/language_panel.dart';
 import 'panels/ui_panel.dart';
+import 'panels/brokers_panel.dart';
 import 'settings_section.dart';
 import 'settings_item.dart';
 import 'layouts/settings_wide_layout.dart';
@@ -20,31 +21,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // Settings items
   static final _items = <SettingsItem>[
-    (
-      section: SettingsSection.ui,
-      label: 'User Interface',
-      icon: Icons.palette_outlined,
-      gradient: AppColors.uiGradient,
-    ),
-    (
-      section: SettingsSection.language,
-      label: 'Language',
-      icon: Icons.language_rounded,
-      gradient: AppColors.languageGradient,
-    ),
-    (
-      section: SettingsSection.about,
-      label: 'About',
-      icon: Icons.info_outline_rounded,
-      gradient: AppColors.aboutGradient,
-    ),
+    (section: SettingsSection.brokers, label: 'Brokers', icon: Icons.dns_rounded, gradient: AppColors.brokerGradient),
+    (section: SettingsSection.ui, label: 'User Interface', icon: Icons.palette_outlined, gradient: AppColors.uiGradient),
+    (section: SettingsSection.language, label: 'Language', icon: Icons.language_rounded, gradient: AppColors.languageGradient),
+    (section: SettingsSection.about, label: 'About', icon: Icons.info_outline_rounded, gradient: AppColors.aboutGradient),
   ];
-  
 
   Widget _buildPanel() => switch (_current) {
-    SettingsSection.ui       => const UiPanel(),
+    SettingsSection.brokers => const BrokersPanel(),
+    SettingsSection.ui => const UiPanel(),
     SettingsSection.language => const LanguagePanel(),
-    SettingsSection.about    => const AboutPanel(),
+    SettingsSection.about => const AboutPanel(),
   };
 
   @override
@@ -52,19 +39,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isWide = MediaQuery.sizeOf(context).width >= 600;
 
     if (isWide) {
-      return SettingsWideLayout(
-        items: _items,
-        current: _current,
-        onSelect: (s) => setState(() => _current = s),
-        panel: _buildPanel(),
-      );
+      return SettingsWideLayout(items: _items, current: _current, onSelect: (s) => setState(() => _current = s), panel: _buildPanel());
     } else {
-      return SettingsNarrowLayout(
-        items: _items,
-        current: _current,
-        onSelect: (s) => setState(() => _current = s),
-        panel: _buildPanel(),
-      );
+      return SettingsNarrowLayout(items: _items, current: _current, onSelect: (s) => setState(() => _current = s), panel: _buildPanel());
     }
   }
 }

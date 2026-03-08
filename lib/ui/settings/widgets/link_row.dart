@@ -2,13 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 
 class LinkRow extends StatelessWidget {
-  const LinkRow({
-    super.key,
-    required this.label,
-    required this.icon,
-    required this.accent,
-    required this.onTap,
-  });
+  const LinkRow({super.key, required this.label, required this.icon, required this.accent, required this.onTap});
 
   final String label;
   final IconData icon;
@@ -27,7 +21,9 @@ class LinkRow extends StatelessWidget {
           children: [
             Icon(icon, size: 18, color: accent),
             const SizedBox(width: 10),
-            Expanded(child: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400))),
+            Expanded(
+              child: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400)),
+            ),
             Icon(Icons.chevron_right_rounded, size: 18, color: secondary),
           ],
         ),

@@ -4,6 +4,7 @@ import '../widgets/section_header.dart';
 import '../widgets/settings_group.dart';
 import '../widgets/settings_row.dart';
 import '../widgets/switch_row.dart';
+import '../../widgets/spacers.dart';
 
 class UiPanel extends StatefulWidget {
   const UiPanel({super.key});
@@ -16,7 +17,6 @@ class _UiPanelState extends State<UiPanel> {
   ThemeMode _themeMode = ThemeMode.system;
   bool _compactDensity = false;
   bool _showTopicTree = true;
-  bool _showTimestamps = true;
   bool _persistLayout = true;
 
   @override
@@ -33,38 +33,39 @@ class _UiPanelState extends State<UiPanel> {
           Text('UI', style: theme.textTheme.headlineSmall),
 
           // Spacer
-          const SizedBox(height: 6),
+          VSpacer(6),
 
           // Description
           Text('Appearance and layout preferences.', style: theme.textTheme.bodySmall),
-          const SizedBox(height: 20),
+          VSpacer(20),
 
           // Appearance
           const SectionHeader(label: 'Appearance'),
-          const SizedBox(height: 8),
+          VSpacer(8),
           SettingsGroup(
             children: [
-              SettingsRow(isLast: false, child: _ThemeModeSelector(value: _themeMode, accent: accent, onChanged: (mode) => setState(() => _themeMode = mode))),
+              SettingsRow(
+                isLast: false,
+                child: _ThemeModeSelector(value: _themeMode, accent: accent, onChanged: (mode) => setState(() => _themeMode = mode)),
+              ),
               SwitchRow(label: 'Hide status bar', subtitle: 'Hides bottom status bar', value: _compactDensity, onChanged: (v) => setState(() => _compactDensity = v)),
             ],
           ),
 
           // Spacer
-          const SizedBox(height: 20),
+          VSpacer(20),
 
           // Data Display
           const SectionHeader(label: 'Data Display'),
-          const SizedBox(height: 8),
+          VSpacer(8),
           SettingsGroup(
-            children: [
-              SwitchRow(label: 'Show activity', subtitle: 'Pulse topic when activity occurs', value: _showTopicTree, isLast: false, onChanged: (v) => setState(() => _showTopicTree = v)),
-            ],
+            children: [SwitchRow(label: 'Show activity', subtitle: 'Pulse topic when activity occurs', value: _showTopicTree, isLast: false, onChanged: (v) => setState(() => _showTopicTree = v))],
           ),
-          const SizedBox(height: 20),
+          VSpacer(20),
 
           // Layout
           const SectionHeader(label: 'Layout'),
-          const SizedBox(height: 8),
+          VSpacer(8),
           SettingsGroup(
             children: [SwitchRow(label: 'Persist Layout', subtitle: 'Restore panel sizes and positions on restart', value: _persistLayout, onChanged: (v) => setState(() => _persistLayout = v))],
           ),
@@ -91,7 +92,7 @@ class _ThemeModeSelector extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Theme Mode', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 10),
+          VSpacer(10),
           Row(
             children: ThemeMode.values.map((mode) {
               final label = switch (mode) {
@@ -123,7 +124,7 @@ class _ThemeModeSelector extends StatelessWidget {
                       child: Column(
                         children: [
                           Icon(icon, size: 20, color: isSelected ? Colors.white : tokens.textSecondary),
-                          const SizedBox(height: 4),
+                          VSpacer(4),
                           Text(
                             label,
                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: isSelected ? Colors.white : tokens.textSecondary),
