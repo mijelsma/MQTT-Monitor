@@ -90,7 +90,8 @@ abstract final class AppColors {
   static const Color dark800 = Color(0xFFF4F4F5);
   static const Color dark900 = Color(0xFFFAFAFA);
 
-  static const List<Color> brokerGradient = [primary600, primary400];
+  static const List<Color> brokerGradient = [Color(0xFF6366F1), Color(0xFF8B5CF6)];
   static const List<Color> languageGradient = [Color(0xFF0EA5E9), Color(0xFF06B6D4)];
+  static const List<Color> uiGradient = [Color(0xFFF59E0B), Color(0xFFEF4444)];
   static const List<Color> aboutGradient = [Color(0xFF10B981), Color(0xFF059669)];
 }
