@@ -3,9 +3,5 @@ class Language {
   final String name;
   final String flag;
 
-  const Language({
-    required this.code,
-    required this.name,
-    required this.flag,
-  });
+  const Language({required this.code, required this.name, required this.flag});
 }
