@@ -32,9 +32,9 @@ class UiModalScaffold extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Header ──────────────────────────────────────────────────
+              // Header
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 12, 0),
+                padding: const EdgeInsets.fromLTRB(24, 20, 12, 10),
                 child: Row(
                   children: [
                     Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
@@ -42,7 +42,7 @@ class UiModalScaffold extends StatelessWidget {
                     if (isEditing && onDelete != null)
                       IconButton(
                         onPressed: onDelete,
-                        icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444)),
+                        icon: Icon(Icons.delete_outline_rounded, color: tokens.error),
                         padding: const EdgeInsets.all(8),
                         constraints: const BoxConstraints(),
                         visualDensity: VisualDensity.compact,
@@ -63,14 +63,14 @@ class UiModalScaffold extends StatelessWidget {
 
               Divider(height: 0.5, thickness: 0.5, color: tokens.border),
 
-              // ── Scrollable body ──────────────────────────────────────────
+              // Scrollable body
               Flexible(
                 child: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(24, 20, 24, 24), child: body),
               ),
 
               Divider(height: 0.5, thickness: 0.5, color: tokens.border),
 
-              // ── Action row ───────────────────────────────────────────────
+              // Action row
               Padding(
                 padding: EdgeInsets.fromLTRB(24, 14, 24, 20 + bottomInset),
                 child: Row(
@@ -80,7 +80,7 @@ class UiModalScaffold extends StatelessWidget {
                     const SizedBox(width: 8),
                     FilledButton(
                       onPressed: onSubmit,
-                      style: FilledButton.styleFrom(backgroundColor: accent, foregroundColor: Colors.white),
+                      style: FilledButton.styleFrom(backgroundColor: accent, foregroundColor: tokens.onPrimary),
                       child: Text(submitLabel),
                     ),
                   ],

@@ -48,7 +48,7 @@ class UiSortableRow extends StatelessWidget {
             // Delete button (optional)
             if (onDelete != null)
               IconButton(
-                icon: Icon(Icons.delete_outline_rounded, size: 18, color: _errorColor),
+                icon: Icon(Icons.delete_outline_rounded, size: 18, color: tokens.error),
                 tooltip: 'Remove',
                 visualDensity: VisualDensity.compact,
                 padding: const EdgeInsets.all(6),
@@ -62,7 +62,4 @@ class UiSortableRow extends StatelessWidget {
       ),
     );
   }
-
-  // Inline constant to avoid importing AppColors into this primitive.
-  static const Color _errorColor = Color(0xFFEF4444);
 }
