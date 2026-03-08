@@ -1,1 +1,4 @@
-enum SettingsSection { about }
+enum SettingsSection { 
+  language,
+  about,
+}

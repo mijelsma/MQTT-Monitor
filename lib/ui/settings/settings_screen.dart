@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
-import 'about_panel.dart';
+import 'panels/about_panel.dart';
+import 'panels/language_panel.dart';
 import 'settings_section.dart';
 import 'settings_item.dart';
 import 'layouts/settings_wide_layout.dart';
@@ -19,6 +20,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Settings items
   static final _items = <SettingsItem>[
     (
+      section: SettingsSection.language,
+      label: 'Language',
+      icon: Icons.language_rounded,
+      gradient: AppColors.languageGradient,
+    ),
+    (
       section: SettingsSection.about,
       label: 'About',
       icon: Icons.info_outline_rounded,
@@ -28,6 +35,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   
 
   Widget _buildPanel() => switch (_current) {
+    SettingsSection.language => const LanguagePanel(),
     SettingsSection.about => const AboutPanel(),
   };
 
