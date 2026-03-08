@@ -3,13 +3,16 @@ import '../../theme/app_tokens/app_tokens.dart';
 import '../widgets/spacers.dart';
 
 class UiSegmentOption<T> {
-  const UiSegmentOption({required this.value, required this.label, this.icon});
+  const UiSegmentOption({required this.value, required this.label, this.icon, this.description});
 
   final T value;
   final String label;
 
   /// Optional icon displayed above the label inside the chip.
   final IconData? icon;
+
+  /// Optional secondary line displayed below the label inside the chip.
+  final String? description;
 }
 
 class UiSegmentRow<T> extends StatelessWidget {
@@ -48,18 +51,26 @@ class UiSegmentRow<T> extends StatelessWidget {
                       curve: Curves.easeOut,
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        color: isSelected ? resolvedAccent : tokens.elevated,
+                        color: isSelected ? resolvedAccent : tokens.inputFill,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: isSelected ? resolvedAccent : tokens.border, width: 0.5),
+                        border: Border.all(color: isSelected ? resolvedAccent : tokens.border, width: isSelected ? 0.5 : 1.0),
                       ),
                       child: Column(
                         children: [
-                          if (opt.icon != null) ...[Icon(opt.icon, size: 20, color: isSelected ? Colors.white : tokens.textSecondary), const VSpacer(4)],
+                          if (opt.icon != null) ...[Icon(opt.icon, size: 20, color: isSelected ? tokens.onPrimary : tokens.textPrimary), const VSpacer(4)],
                           Text(
                             opt.label,
                             textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: isSelected ? Colors.white : tokens.textSecondary),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: isSelected ? tokens.onPrimary : tokens.textPrimary),
                           ),
+                          if (opt.description != null) ...[
+                            const VSpacer(2),
+                            Text(
+                              opt.description!,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 9.5, color: isSelected ? tokens.onPrimary.withValues(alpha: 0.75) : tokens.textSecondary),
+                            ),
+                          ],
                         ],
                       ),
                     ),
