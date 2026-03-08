@@ -1,10 +1,45 @@
 import 'package:flutter/material.dart';
+import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../models/subscription_entry.dart';
-import '../widgets/field_label.dart';
-import '../widgets/modal_input_decoration.dart';
+import '../../elements/ui_field.dart';
+import '../../elements/ui_modal_scaffold.dart';
 import '../../widgets/spacers.dart';
 import '../../widgets/qos_tag.dart';
+
+// ── Input decoration shared across all form fields in this modal ──────────────
+InputDecoration _inputDecoration(BuildContext context, {required Color accent, String? hint, Widget? suffixIcon}) {
+  final tokens = context.tokens;
+  const radius = BorderRadius.all(Radius.circular(10));
+  return InputDecoration(
+    hintText: hint,
+    suffixIcon: suffixIcon,
+    isDense: true,
+    filled: true,
+    fillColor: tokens.inputFill,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    border: OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide(color: tokens.border, width: 0.5),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide(color: tokens.border, width: 0.5),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide(color: accent, width: 1.5),
+    ),
+    errorBorder: const OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide(color: AppColors.error500, width: 1.0),
+    ),
+    focusedErrorBorder: const OutlineInputBorder(
+      borderRadius: radius,
+      borderSide: BorderSide(color: AppColors.error500, width: 1.5),
+    ),
+  );
+}
 
 /// Opens the add / edit subscription dialog.
 /// Returns the saved [SubscriptionEntry], or `null` if cancelled.
@@ -55,88 +90,45 @@ class _SubscriptionModalState extends State<SubscriptionModal> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final accent = context.tokens.primary;
-    final cardColor = context.tokens.surface;
-    final tokens = context.tokens;
 
-    return Dialog(
-      backgroundColor: cardColor,
-      surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 380),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Header
-                Row(
-                  children: [
-                    Text(_isEditing ? 'Edit Subscription' : 'Add Subscription', style: theme.textTheme.titleMedium),
-                    const Spacer(),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close_rounded, color: tokens.textSecondary),
-                      padding: const EdgeInsets.all(4),
-                      constraints: const BoxConstraints(),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ],
-                ),
-
-                VSpacer(20),
-
-                // Topic filter
-                const FieldLabel(label: 'Topic Filter'),
-                VSpacer(6),
-                TextFormField(
-                  controller: _topic,
-                  textInputAction: TextInputAction.next,
-                  style: const TextStyle(fontSize: 13, fontFamily: 'monospace'),
-                  decoration: modalInputDecoration(context, accent: accent, hint: 'e.g. home/+/temperature or sensors/#'),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a topic filter' : null,
-                ),
-                VSpacer(14),
-
-                // Display name
-                const FieldLabel(label: 'Display Name', optional: true),
-                VSpacer(6),
-                TextFormField(
-                  controller: _name,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _submit(),
-                  decoration: modalInputDecoration(context, accent: accent, hint: 'Optional friendly name'),
-                ),
-                VSpacer(18),
-
-                // QoS selector
-                const FieldLabel(label: 'Quality of Service'),
-                VSpacer(10),
-                _QosSelector(value: _qos, accent: accent, onChanged: (v) => setState(() => _qos = v)),
-                VSpacer(20),
-
-                // Actions
-                Row(
-                  children: [
-                    const Spacer(),
-                    TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-                    HSpacer(8),
-                    FilledButton(
-                      onPressed: _submit,
-                      style: FilledButton.styleFrom(backgroundColor: accent, foregroundColor: Colors.white),
-                      child: Text(_isEditing ? 'Save' : 'Add'),
-                    ),
-                  ],
-                ),
-              ],
+    return UiModalScaffold(
+      title: _isEditing ? 'Edit Subscription' : 'Add Subscription',
+      onCancel: () => Navigator.pop(context),
+      onSubmit: _submit,
+      submitLabel: _isEditing ? 'Save' : 'Add',
+      body: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            UiField(
+              label: 'Topic Filter',
+              child: TextFormField(
+                controller: _topic,
+                textInputAction: TextInputAction.next,
+                style: const TextStyle(fontSize: 13, fontFamily: 'monospace'),
+                decoration: _inputDecoration(context, accent: accent, hint: 'e.g. home/+/temperature or sensors/#'),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a topic filter' : null,
+              ),
             ),
-          ),
+            VSpacer(14),
+            UiField(
+              label: 'Display Name',
+              optional: true,
+              child: TextFormField(
+                controller: _name,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _submit(),
+                decoration: _inputDecoration(context, accent: accent, hint: 'Optional friendly name'),
+              ),
+            ),
+            VSpacer(18),
+            UiField(
+              label: 'Quality of Service',
+              child: _QosSelector(value: _qos, accent: accent, onChanged: (v) => setState(() => _qos = v)),
+            ),
+          ],
         ),
       ),
     );
