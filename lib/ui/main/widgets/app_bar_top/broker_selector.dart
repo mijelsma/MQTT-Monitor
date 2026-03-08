@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../../theme/app_colors.dart';
+import '../../../../theme/app_tokens/app_tokens.dart';
 
 class BrokerSelector extends StatelessWidget {
   const BrokerSelector({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = isDark ? AppColors.primary400 : AppColors.primary500;
+    final accent = context.tokens.primary;
 
     return PopupMenuButton<String>(
       onSelected: (_) {},
