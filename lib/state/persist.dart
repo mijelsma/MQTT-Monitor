@@ -10,5 +10,5 @@ class Persist {
   static const never = Persist._(false, null);
   static Persist when(StateKey<bool> gate) => Persist._(null, gate);
 
-  bool resolve(bool Function(StateKey<bool>) read) => _gate != null ? read(_gate!) : _always!;
+  bool resolve(bool Function(StateKey<bool>) read) => _gate != null ? read(_gate) : _always!;
 }
