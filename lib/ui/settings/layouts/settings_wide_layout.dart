@@ -5,13 +5,7 @@ import '../settings_item.dart';
 import '../widgets/settings_sidebar.dart';
 
 class SettingsWideLayout extends StatelessWidget {
-  const SettingsWideLayout({
-    super.key,
-    required this.items,
-    required this.current,
-    required this.onSelect,
-    required this.panel,
-  });
+  const SettingsWideLayout({super.key, required this.items, required this.current, required this.onSelect, required this.panel});
 
   final List<SettingsItem> items;
   final SettingsSection current;
@@ -30,14 +24,8 @@ class SettingsWideLayout extends StatelessWidget {
         children: [
           // Sidebar
           SizedBox(
-            width: 230,
-            child: SettingsSidebar(
-              bg: sidebarBg,
-              borderColor: borderColor,
-              items: items,
-              current: current,
-              onSelect: onSelect,
-            ),
+            width: 300,
+            child: SettingsSidebar(bg: sidebarBg, borderColor: borderColor, items: items, current: current, onSelect: onSelect),
           ),
 
           // Divider
