@@ -7,8 +7,15 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_tokens/app_tokens.dart';
 import '../../../settings/models/broker_entry.dart';
 
-class BrokerSelector extends StatelessWidget {
+class BrokerSelector extends StatefulWidget {
   const BrokerSelector({super.key});
+
+  @override
+  State<BrokerSelector> createState() => _BrokerSelectorState();
+}
+
+class _BrokerSelectorState extends State<BrokerSelector> {
+  final _menuKey = GlobalKey<PopupMenuButtonState<String>>();
 
   @override
   Widget build(BuildContext context) {
@@ -32,46 +39,59 @@ class BrokerSelector extends StatelessWidget {
     final accent = context.tokens.primary;
     final cs = Theme.of(context).colorScheme;
 
-    return PopupMenuButton<String>(
-      onSelected: (id) => context.read<AppStateManager>().write(AppKeys.activeBrokerId, id),
-      offset: const Offset(0, 42),
-      enabled: brokers.isNotEmpty,
-      itemBuilder: (_) => [for (final broker in brokers) _buildMenuItem(context, broker, broker.id == effectiveId, accent)],
+    const borderRadius = BorderRadius.all(Radius.circular(8));
 
-      // Trigger button
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: cs.surface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Connection status dot
-            Container(
-              width: 5,
-              height: 5,
-              decoration: BoxDecoration(color: AppColors.success500, shape: BoxShape.circle),
-            ),
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: Material(
+        color: cs.surface,
+        child: InkWell(
+          onTap: brokers.isNotEmpty ? () => _menuKey.currentState?.showButtonMenu() : null,
+          child: Stack(
+            children: [
+              // Invisible PopupMenuButton acting as the menu anchor, not receiving gestures itself
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: PopupMenuButton<String>(key: _menuKey, onSelected: (id) => context.read<AppStateManager>().write(AppKeys.activeBrokerId, id), offset: const Offset(0, 46), enabled: brokers.isNotEmpty, itemBuilder: (_) => [for (final broker in brokers) _buildMenuItem(context, broker, broker.id == effectiveId, accent)], child: const SizedBox.expand()),
+                ),
+              ),
 
-            // Spacer
-            const SizedBox(width: 5),
+              // Visible button content
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  borderRadius: borderRadius,
+                  border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Connection status dot
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(color: AppColors.success500, shape: BoxShape.circle),
+                    ),
 
-            // Selected broker name
-            Text(
-              activeBroker?.name ?? 'No Broker',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: cs.onSurface, letterSpacing: -0.1),
-            ),
+                    // Spacer
+                    const SizedBox(width: 6),
 
-            // Spacer
-            const SizedBox(width: 3),
+                    // Selected broker name
+                    Text(
+                      activeBroker?.name ?? 'No Broker',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: cs.onSurface, letterSpacing: -0.1),
+                    ),
 
-            // Expand icon
-            Icon(Icons.unfold_more_rounded, size: 13, color: cs.onSurfaceVariant),
-          ],
+                    // Spacer
+                    const SizedBox(width: 3),
+
+                    // Expand icon
+                    Icon(Icons.unfold_more_rounded, size: 14, color: cs.onSurfaceVariant),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
