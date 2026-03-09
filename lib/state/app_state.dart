@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'keys/app_keys.dart';
 import 'keys/layout_keys.dart';
 import 'keys/settings_keys.dart';
 import 'persist.dart';
@@ -88,5 +89,5 @@ class AppStateManager extends ChangeNotifier {
     }
   }
 
-  static final List<StateKey> _allKeys = [...SettingsKeys.all, ...LayoutKeys.all];
+  static final List<StateKey> _allKeys = [...AppKeys.all, ...SettingsKeys.all, ...LayoutKeys.all];
 }

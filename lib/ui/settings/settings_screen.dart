@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../state/app_state.dart';
-import '../../state/keys/settings_keys.dart';
+import '../../state/keys/app_keys.dart';
 import '../../theme/app_colors.dart';
 import 'panels/about_panel.dart';
 import 'panels/language_panel.dart';
@@ -25,10 +25,10 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppStateManager>();
-    final current = state.read(SettingsKeys.activeSettingsSection);
+    final current = state.read(AppKeys.activeSettingsSection);
     final isWide = MediaQuery.sizeOf(context).width >= 600;
 
-    void select(SettingsSection s) => context.read<AppStateManager>().write(SettingsKeys.activeSettingsSection, s);
+    void select(SettingsSection s) => context.read<AppStateManager>().write(AppKeys.activeSettingsSection, s);
 
     Widget panel() => switch (current) {
       SettingsSection.brokers => const BrokersPanel(),
