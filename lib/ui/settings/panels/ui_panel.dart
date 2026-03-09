@@ -17,7 +17,7 @@ class UiPanel extends StatelessWidget {
     final accent = context.tokens.primary;
 
     final themeMode = state.read(SettingsKeys.themeMode);
-    final hideStatusBar = state.read(SettingsKeys.hideStatusBar);
+    final showStatusBar = state.read(SettingsKeys.showStatusBar);
     final showActivity = state.read(SettingsKeys.showActivity);
     final persistLayout = state.read(SettingsKeys.persistLayout);
 
@@ -40,7 +40,7 @@ class UiPanel extends StatelessWidget {
                 UiSegmentOption(value: ThemeMode.dark, label: 'Dark', icon: Icons.dark_mode_rounded),
               ],
             ),
-            UiSwitchRow(label: 'Hide status bar', subtitle: 'Hides bottom status bar', value: hideStatusBar, onChanged: (v) => context.read<AppStateManager>().write(SettingsKeys.hideStatusBar, v)),
+            UiSwitchRow(label: 'Show status bar', subtitle: 'Shows the bottom status bar', value: showStatusBar, onChanged: (v) => context.read<AppStateManager>().write(SettingsKeys.showStatusBar, v)),
           ],
         ),
 

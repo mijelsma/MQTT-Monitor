@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'widgets/app_bar_bottom/app_bar_bottom.dart';
 import 'widgets/app_bar_top/app_bar_top.dart';
+import '../../state/app_state.dart';
+import '../../state/keys/settings_keys.dart';
 import '../../theme/app_colors.dart';
 
 class MainScreen extends StatelessWidget {
@@ -8,12 +11,9 @@ class MainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const AppBarTop(),
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: const _EmptyState(),
-      bottomNavigationBar: const AppBarBottom(), //
-    );
+    final showStatusBar = context.watch<AppStateManager>().read(SettingsKeys.showStatusBar);
+
+    return Scaffold(appBar: const AppBarTop(), backgroundColor: Theme.of(context).scaffoldBackgroundColor, body: const _EmptyState(), bottomNavigationBar: showStatusBar ? const AppBarBottom() : null);
   }
 }
 
