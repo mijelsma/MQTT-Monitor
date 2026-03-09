@@ -6,22 +6,23 @@ class SettingsButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const SettingsScreen()),
-      ),
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
-        ),
-        child: Icon(
-          Icons.tune_rounded,
-          size: 15,
-          color: Theme.of(context).colorScheme.onSurfaceVariant, //
+    final cs = Theme.of(context).colorScheme;
+    const borderRadius = BorderRadius.all(Radius.circular(8));
+
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: Material(
+        color: cs.surface,
+        child: InkWell(
+          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: borderRadius,
+              border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
+            ),
+            child: Icon(Icons.tune_rounded, size: 18, color: cs.onSurfaceVariant),
+          ),
         ),
       ),
     );
