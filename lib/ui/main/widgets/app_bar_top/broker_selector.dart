@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../generated/l10n.dart';
 import '../../../../state/app_state.dart';
 import '../../../../state/keys/app_keys.dart';
 import '../../../../state/keys/settings_keys.dart';
@@ -78,7 +79,7 @@ class _BrokerSelectorState extends State<BrokerSelector> {
 
                     // Selected broker name
                     Text(
-                      activeBroker?.name ?? 'No Broker',
+                      activeBroker?.name ?? S.of(context).noBroker,
                       style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: cs.onSurface, letterSpacing: -0.1),
                     ),
 

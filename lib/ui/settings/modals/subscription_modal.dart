@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../generated/l10n.dart';
 import '../models/subscription_entry.dart';
 import '../../elements/ui_field.dart';
 import '../../elements/ui_modal_scaffold.dart';
@@ -52,39 +53,40 @@ class _SubscriptionModalState extends State<SubscriptionModal> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return UiModalScaffold(
-      title: _isEditing ? 'Edit Subscription' : 'Add Subscription',
+      title: _isEditing ? s.subscriptionModalEditTitle : s.subscriptionModalAddTitle,
       onCancel: () => Navigator.pop(context),
       onSubmit: _submit,
-      submitLabel: _isEditing ? 'Save' : 'Add',
+      submitLabel: _isEditing ? s.save : s.add,
       body: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             UiField(
-              label: 'Topic Filter',
+              label: s.subscriptionModalFieldTopicFilter,
               controller: _topic,
               hint: 'e.g. home/+/sensor/#',
               textInputAction: TextInputAction.next,
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a topic filter' : null, //
+              validator: (v) => (v == null || v.trim().isEmpty) ? s.subscriptionModalValidateTopicFilter : null, //
             ),
             VSpacer(14),
             UiField(
-              label: 'Display Name',
+              label: s.subscriptionModalFieldDisplayName,
               optional: true,
               controller: _name,
-              hint: 'Optional friendly name',
+              hint: s.subscriptionModalHintDisplayName,
               textInputAction: TextInputAction.done,
               onFieldSubmitted: (_) => _submit(), //
             ),
             VSpacer(18),
             UiSegmentRow<int>(
-              label: 'Quality of Service',
-              options: const [
-                UiSegmentOption(value: 0, label: 'QoS 0', description: 'At most once'),
-                UiSegmentOption(value: 1, label: 'QoS 1', description: 'At least once'),
-                UiSegmentOption(value: 2, label: 'QoS 2', description: 'Exactly once'),
+              label: s.subscriptionModalQoSLabel,
+              options: [
+                UiSegmentOption(value: 0, label: s.subscriptionModalQoS0Label, description: s.subscriptionModalQoS0Description),
+                UiSegmentOption(value: 1, label: s.subscriptionModalQoS1Label, description: s.subscriptionModalQoS1Description),
+                UiSegmentOption(value: 2, label: s.subscriptionModalQoS2Label, description: s.subscriptionModalQoS2Description),
               ],
               value: _qos,
               onChanged: (v) => setState(() => _qos = v),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../generated/l10n.dart';
 import '../../../state/app_state.dart';
 import '../../../state/keys/settings_keys.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
@@ -21,39 +22,41 @@ class UiPanel extends StatelessWidget {
     final showActivity = state.read(SettingsKeys.showActivity);
     final persistLayout = state.read(SettingsKeys.persistLayout);
 
+    final s = S.of(context);
+
     return UiPanelScaffold(
-      title: 'UI',
-      description: 'Appearance and layout preferences.',
+      title: s.uiPanelTitle,
+      description: s.uiPanelDescription,
       children: [
         // Appearance
         UiSection(
-          label: 'Appearance',
+          label: s.uiPanelSectionAppearance,
           children: [
             UiSegmentRow<ThemeMode>(
-              label: 'Theme Mode',
+              label: s.uiPanelThemeMode,
               accent: accent,
               value: themeMode,
               onChanged: (mode) => context.read<AppStateManager>().write(SettingsKeys.themeMode, mode),
-              options: const [
-                UiSegmentOption(value: ThemeMode.system, label: 'System', icon: Icons.brightness_auto_rounded),
-                UiSegmentOption(value: ThemeMode.light, label: 'Light', icon: Icons.light_mode_rounded),
-                UiSegmentOption(value: ThemeMode.dark, label: 'Dark', icon: Icons.dark_mode_rounded),
+              options: [
+                UiSegmentOption(value: ThemeMode.system, label: s.uiPanelThemeSystem, icon: Icons.brightness_auto_rounded),
+                UiSegmentOption(value: ThemeMode.light, label: s.uiPanelThemeLight, icon: Icons.light_mode_rounded),
+                UiSegmentOption(value: ThemeMode.dark, label: s.uiPanelThemeDark, icon: Icons.dark_mode_rounded),
               ],
             ),
-            UiSwitchRow(label: 'Show status bar', subtitle: 'Shows the bottom status bar', value: showStatusBar, onChanged: (v) => context.read<AppStateManager>().write(SettingsKeys.showStatusBar, v)),
+            UiSwitchRow(label: s.uiPanelShowStatusBar, subtitle: s.uiPanelShowStatusBarSubtitle, value: showStatusBar, onChanged: (v) => context.read<AppStateManager>().write(SettingsKeys.showStatusBar, v)),
           ],
         ),
 
         // Data Display
         UiSection(
-          label: 'Data Display',
-          children: [UiSwitchRow(label: 'Show activity', subtitle: 'Pulse topic when activity occurs', value: showActivity, onChanged: (v) => context.read<AppStateManager>().write(SettingsKeys.showActivity, v))],
+          label: s.uiPanelSectionDataDisplay,
+          children: [UiSwitchRow(label: s.uiPanelShowActivity, subtitle: s.uiPanelShowActivitySubtitle, value: showActivity, onChanged: (v) => context.read<AppStateManager>().write(SettingsKeys.showActivity, v))],
         ),
 
         // Layout
         UiSection(
-          label: 'Layout',
-          children: [UiSwitchRow(label: 'Persist Layout', subtitle: 'Restore panel sizes and positions on restart', value: persistLayout, onChanged: (v) => context.read<AppStateManager>().write(SettingsKeys.persistLayout, v))],
+          label: s.uiPanelSectionLayout,
+          children: [UiSwitchRow(label: s.uiPanelPersistLayout, subtitle: s.uiPanelPersistLayoutSubtitle, value: persistLayout, onChanged: (v) => context.read<AppStateManager>().write(SettingsKeys.persistLayout, v))],
         ),
       ],
     );

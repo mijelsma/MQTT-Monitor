@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../generated/l10n.dart';
 import '../../../state/app_state.dart';
 import '../../../state/keys/settings_keys.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
@@ -16,17 +17,19 @@ class LanguagePanel extends StatelessWidget {
     final accent = context.tokens.primary;
     final selected = context.watch<AppStateManager>().read(SettingsKeys.language);
 
+    final s = S.of(context);
+
     return UiPanelScaffold(
-      title: 'Language',
-      description: 'Select the interface language.',
+      title: s.languagePanelTitle,
+      description: s.languagePanelDescription,
       children: [
         UiSection(
-          label: 'Interface Language',
+          label: s.languagePanelSectionLabel,
           children: [
             for (final language in AppLanguage.values)
               ListTile(
                 key: ValueKey(language),
-                title: Text(language.displayName, style: const TextStyle(fontSize: 14)),
+                title: Text(language.localizedName(s), style: const TextStyle(fontSize: 14)),
                 trailing: selected == language ? Icon(Icons.check_rounded, color: accent, size: 20) : null,
                 onTap: () => context.read<AppStateManager>().write(SettingsKeys.language, language),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
@@ -37,7 +40,7 @@ class LanguagePanel extends StatelessWidget {
         // Note below the list
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Text('Changes will apply on next launch.', style: theme.textTheme.labelSmall),
+          child: Text(S.of(context).languagePanelChangesNote, style: theme.textTheme.labelSmall),
         ),
       ],
     );

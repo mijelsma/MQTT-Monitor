@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../generated/l10n.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../settings_section.dart';
 import '../settings_item.dart';
 import '../widgets/settings_sidebar_list.dart';
 
 class SettingsNarrowLayout extends StatefulWidget {
-  const SettingsNarrowLayout({
-    super.key,
-    required this.items,
-    required this.current,
-    required this.onSelect,
-    required this.panel,
-  });
+  const SettingsNarrowLayout({super.key, required this.items, required this.current, required this.onSelect, required this.panel});
 
   final List<SettingsItem> items;
   final SettingsSection current;
@@ -31,7 +26,7 @@ class _SettingsNarrowLayoutState extends State<SettingsNarrowLayout> {
     final contentBg = context.tokens.bg;
     final borderColor = context.tokens.border;
 
-    // Detail view when an item is selected 
+    // Detail view when an item is selected
     if (_showDetail) {
       return Scaffold(
         backgroundColor: contentBg,
@@ -50,15 +45,15 @@ class _SettingsNarrowLayoutState extends State<SettingsNarrowLayout> {
               children: [
                 const SizedBox(width: 4),
                 Icon(Icons.chevron_left_rounded, color: accent, size: 22),
-                Text('Settings', style: TextStyle(color: accent, fontSize: 15, fontWeight: FontWeight.w500)),
+                Text(
+                  S.of(context).settings,
+                  style: TextStyle(color: accent, fontSize: 15, fontWeight: FontWeight.w500),
+                ),
               ],
             ),
           ),
           leadingWidth: 120,
-          title: Text(
-            widget.items.firstWhere((i) => i.section == widget.current).label,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17),
-          ),
+          title: Text(widget.items.firstWhere((i) => i.section == widget.current).label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 17)),
         ),
         body: widget.panel,
       );

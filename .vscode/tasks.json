@@ -2,6 +2,17 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Generate translations",
+            "type": "shell",
+            "command": "dart run intl_utils:generate",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "pub get",
             "type": "shell",
             "command": "flutter pub get",

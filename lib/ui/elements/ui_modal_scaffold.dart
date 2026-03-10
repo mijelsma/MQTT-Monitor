@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../generated/l10n.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 
 class UiModalScaffold extends StatelessWidget {
@@ -46,7 +47,7 @@ class UiModalScaffold extends StatelessWidget {
                         padding: const EdgeInsets.all(8),
                         constraints: const BoxConstraints(),
                         visualDensity: VisualDensity.compact,
-                        tooltip: 'Delete',
+                        tooltip: S.of(context).delete,
                       ),
                     IconButton(
                       onPressed: onCancel,
@@ -76,7 +77,7 @@ class UiModalScaffold extends StatelessWidget {
                 child: Row(
                   children: [
                     const Spacer(),
-                    TextButton(onPressed: onCancel, child: const Text('Cancel')),
+                    TextButton(onPressed: onCancel, child: Text(S.of(context).cancel)),
                     const SizedBox(width: 8),
                     FilledButton(
                       onPressed: onSubmit,
