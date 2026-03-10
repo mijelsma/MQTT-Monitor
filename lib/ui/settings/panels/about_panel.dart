@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../generated/l10n.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../../elements/ui_info_row.dart';
@@ -38,29 +39,31 @@ class AboutPanel extends StatelessWidget {
       ),
     );
 
+    final s = S.of(context);
+
     return UiPanelScaffold(
-      title: 'About',
+      title: s.aboutPanelTitle,
       children: [
         appBranding,
 
         // Info rows
         UiSection(
-          label: 'Details',
+          label: s.aboutPanelSectionDetails,
           children: [
-            const UiInfoRow(label: 'Commit Hash', value: 'a1b2c3d'),
-            const UiInfoRow(label: 'License', value: 'MIT'),
-            const UiInfoRow(label: 'Author', value: 'Michel Jelsma'),
+            UiInfoRow(label: s.aboutPanelCommitHash, value: 'a1b2c3d'),
+            UiInfoRow(label: s.aboutPanelLicense, value: 'MIT'),
+            UiInfoRow(label: s.aboutPanelAuthor, value: 'Michel Jelsma'),
           ],
         ),
 
         // Links
         UiSection(
-          label: 'Resources',
+          label: s.aboutPanelSectionResources,
           children: [
-            UiLinkRow(label: 'Source Code', icon: Icons.code_rounded, accent: accent, onTap: () {}),
-            UiLinkRow(label: 'Changelog', icon: Icons.history_rounded, accent: accent, onTap: () {}),
-            UiLinkRow(label: 'Report an Issue', icon: Icons.bug_report_outlined, accent: AppColors.error500, onTap: () {}),
-            UiLinkRow(label: 'Support the Project', icon: Icons.favorite_border_rounded, accent: accent, onTap: () {}),
+            UiLinkRow(label: s.aboutPanelSourceCode, icon: Icons.code_rounded, accent: accent, onTap: () {}),
+            UiLinkRow(label: s.aboutPanelChangelog, icon: Icons.history_rounded, accent: accent, onTap: () {}),
+            UiLinkRow(label: s.aboutPanelReportIssue, icon: Icons.bug_report_outlined, accent: AppColors.error500, onTap: () {}),
+            UiLinkRow(label: s.aboutPanelSupportProject, icon: Icons.favorite_border_rounded, accent: accent, onTap: () {}),
           ],
         ),
       ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../generated/l10n.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../models/broker_entry.dart';
 import '../models/subscription_entry.dart';
@@ -117,18 +118,13 @@ class _BrokerModalState extends State<BrokerModal> {
   }
 
   Widget _buildConnectionSection(Color accent) {
+    final s = S.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _sectionLabel(context, 'Connection'),
+        _sectionLabel(context, s.brokerModalSectionConnection),
         const VSpacer(10),
-        UiField(
-          label: 'Name',
-          controller: _name,
-          hint: 'e.g. Home Server',
-          textInputAction: TextInputAction.next,
-          validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a name' : null, //
-        ),
+        UiField(label: s.brokerModalFieldName, controller: _name, hint: 'e.g. Home Server', textInputAction: TextInputAction.next, validator: (v) => (v == null || v.trim().isEmpty) ? s.brokerModalValidateName : null),
 
         const VSpacer(14),
 
@@ -137,13 +133,7 @@ class _BrokerModalState extends State<BrokerModal> {
           children: [
             Expanded(
               flex: 3,
-              child: UiField(
-                label: 'Host',
-                controller: _host,
-                hint: 'e.g. broker.example.com',
-                textInputAction: TextInputAction.next,
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter a host' : null, //
-              ),
+              child: UiField(label: s.brokerModalFieldHost, controller: _host, hint: 'e.g. broker.example.com', textInputAction: TextInputAction.next, validator: (v) => (v == null || v.trim().isEmpty) ? s.brokerModalValidateHost : null),
             ),
 
             const HSpacer(10),
@@ -151,7 +141,7 @@ class _BrokerModalState extends State<BrokerModal> {
             Expanded(
               flex: 1,
               child: UiField(
-                label: 'Port',
+                label: s.brokerModalFieldPort,
                 controller: _port,
                 hint: '1883',
                 textInputAction: TextInputAction.next,
@@ -159,7 +149,7 @@ class _BrokerModalState extends State<BrokerModal> {
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 validator: (v) {
                   final n = int.tryParse(v ?? '');
-                  if (n == null || n < 1 || n > 65535) return '1–65535';
+                  if (n == null || n < 1 || n > 65535) return '1–65535:';
                   return null;
                 },
               ),
@@ -169,94 +159,87 @@ class _BrokerModalState extends State<BrokerModal> {
 
         const VSpacer(12),
 
-        UiSwitchRow(
-          label: 'Use SSL / TLS',
-          subtitle: 'Encrypts the connection using TLS',
-          value: _useSSL,
-          accent: accent,
-          bordered: true,
-          onChanged: (v) => setState(() => _useSSL = v), //
-        ),
+        UiSwitchRow(label: s.brokerModalUseSSL, subtitle: s.brokerModalUseSSLSubtitle, value: _useSSL, accent: accent, bordered: true, onChanged: (v) => setState(() => _useSSL = v)),
 
         const VSpacer(12),
 
-        UiSwitchRow(
-          label: 'Validate Certificates',
-          subtitle: 'Validates the brokers\'s SSL/TLS certificates',
-          value: _validateCertificates,
-          accent: accent,
-          bordered: true,
-          onChanged: (v) => setState(() => _validateCertificates = v), //
+        UiSwitchRow(label: s.brokerModalValidateCertificates, subtitle: s.brokerModalValidateCertificatesSubtitle, value: _validateCertificates, accent: accent, bordered: true, onChanged: (v) => setState(() => _validateCertificates = v)),
+      ],
+    );
+  }
+
+  Widget _buildAuthSection() {
+    final s = S.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _sectionLabel(context, s.brokerModalSectionAuthentication),
+        const VSpacer(10),
+        UiField(label: s.brokerModalFieldUsername, optional: true, controller: _username, hint: s.optional, textInputAction: TextInputAction.next),
+        const VSpacer(14),
+        UiField(
+          label: s.brokerModalFieldPassword,
+          optional: true,
+          controller: _password,
+          hint: s.optional,
+          obscureText: _obscurePassword,
+          textInputAction: TextInputAction.done,
+          suffixIcon: IconButton(
+            icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: context.tokens.textSecondary),
+            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildAuthSection() => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      _sectionLabel(context, 'Authentication'),
-      const VSpacer(10),
-      UiField(label: 'Username', optional: true, controller: _username, hint: 'Optional', textInputAction: TextInputAction.next),
-      const VSpacer(14),
-      UiField(
-        label: 'Password',
-        optional: true,
-        controller: _password,
-        hint: 'Optional',
-        obscureText: _obscurePassword,
-        textInputAction: TextInputAction.done,
-        suffixIcon: IconButton(
-          icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: context.tokens.textSecondary),
-          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+  Widget _buildSubscriptionsSection(Color accent) {
+    final s = S.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const VSpacer(10),
+        if (_subscriptions.isNotEmpty) ...[
+          UiSection(
+            label: s.brokerModalSectionTopics,
+            sortable: true,
+            onReorder: _reorderSubscriptions,
+            children: List.generate(_subscriptions.length, (i) {
+              final sub = _subscriptions[i];
+              final hasName = sub.name != null && sub.name!.isNotEmpty;
+              return UiSortableRow(
+                key: ValueKey('${sub.topic}_$i'),
+                index: i,
+                leading: QosTag(qos: sub.qos),
+                title: hasName ? sub.name! : sub.topic,
+                subtitle: hasName ? sub.topic : null,
+                onTap: () => _editSubscription(i),
+                onDelete: () => _removeSubscription(i),
+              );
+            }),
+          ),
+          const VSpacer(6),
+        ],
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: _addSubscription,
+            icon: const Icon(Icons.add_rounded, size: 16),
+            label: Text(s.brokerModalAddSubscription),
+            style: TextButton.styleFrom(foregroundColor: accent, padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6), visualDensity: VisualDensity.compact),
+          ),
         ),
-      ),
-    ],
-  );
-
-  Widget _buildSubscriptionsSection(Color accent) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      const VSpacer(10),
-      if (_subscriptions.isNotEmpty) ...[
-        UiSection(
-          label: 'Topics',
-          sortable: true,
-          onReorder: _reorderSubscriptions,
-          children: List.generate(_subscriptions.length, (i) {
-            final sub = _subscriptions[i];
-            final hasName = sub.name != null && sub.name!.isNotEmpty;
-            return UiSortableRow(
-              key: ValueKey('${sub.topic}_$i'),
-              index: i,
-              leading: QosTag(qos: sub.qos),
-              title: hasName ? sub.name! : sub.topic,
-              subtitle: hasName ? sub.topic : null,
-              onTap: () => _editSubscription(i),
-              onDelete: () => _removeSubscription(i),
-            );
-          }),
-        ),
-        const VSpacer(6),
       ],
-      Align(
-        alignment: Alignment.centerLeft,
-        child: TextButton.icon(
-          onPressed: _addSubscription,
-          icon: const Icon(Icons.add_rounded, size: 16),
-          label: const Text('Add Subscription'),
-          style: TextButton.styleFrom(foregroundColor: accent, padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6), visualDensity: VisualDensity.compact),
-        ),
-      ),
-    ],
-  );
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final accent = context.tokens.primary;
+    final s = S.of(context);
 
     return UiModalScaffold(
-      title: _isEditing ? 'Edit Broker' : 'Add Broker',
+      title: _isEditing ? s.brokerModalEditTitle : s.brokerModalAddTitle,
       isEditing: _isEditing,
       onDelete: (widget.onDelete != null)
           ? () {
@@ -266,7 +249,7 @@ class _BrokerModalState extends State<BrokerModal> {
           : null,
       onCancel: () => Navigator.pop(context),
       onSubmit: _submit,
-      submitLabel: _isEditing ? 'Save' : 'Add',
+      submitLabel: _isEditing ? s.save : s.add,
       body: Form(
         key: _formKey,
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [_buildConnectionSection(accent), const VSpacer(20), _buildAuthSection(), const VSpacer(20), _buildSubscriptionsSection(accent), const VSpacer(8)]),

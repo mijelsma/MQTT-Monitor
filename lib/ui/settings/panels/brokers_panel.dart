@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../generated/l10n.dart';
 import '../../../state/app_state.dart';
 import '../../../state/keys/settings_keys.dart';
 import '../../../theme/app_colors.dart';
@@ -51,16 +52,18 @@ class BrokersPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final brokers = context.watch<AppStateManager>().read(SettingsKeys.brokers);
 
+    final s = S.of(context);
+
     return UiPanelScaffold(
-      title: 'Brokers',
-      description: 'Configure MQTT brokers.',
+      title: s.brokersPanelTitle,
+      description: s.brokersPanelDescription,
       children: [
         // Connections section
         if (brokers.isEmpty)
-          const UiEmptyState(icon: Icons.dns_outlined, title: 'No brokers yet', message: "Tap 'Add Broker' to create your first broker.")
+          UiEmptyState(icon: Icons.dns_outlined, title: s.brokersPanelNoBrokersTitle, message: s.brokersPanelNoBrokersMessage)
         else
           UiSection(
-            label: 'Connections',
+            label: s.brokersPanelSectionConnections,
             sortable: true,
             onReorder: (o, n) => _reorder(context, o, n),
             children: [
@@ -92,7 +95,7 @@ class BrokersPanel extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: () => _openAdd(context),
               icon: const Icon(Icons.add_rounded, size: 20),
-              label: const Text('Add Broker'),
+              label: Text(s.brokersPanelAddBroker),
               style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52), textStyle: theme.textTheme.labelLarge),
             ),
           ),

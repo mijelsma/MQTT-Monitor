@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../generated/l10n.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 
 class UiSortableRow extends StatelessWidget {
@@ -49,7 +50,7 @@ class UiSortableRow extends StatelessWidget {
             if (onDelete != null)
               IconButton(
                 icon: Icon(Icons.delete_outline_rounded, size: 18, color: tokens.error),
-                tooltip: 'Remove',
+                tooltip: S.of(context).remove,
                 visualDensity: VisualDensity.compact,
                 padding: const EdgeInsets.all(6),
                 onPressed: onDelete,
