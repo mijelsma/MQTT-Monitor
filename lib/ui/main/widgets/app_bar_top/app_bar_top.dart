@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mqtt_monitor/ui/widgets/spacers.dart';
 import 'broker_selector.dart';
+import 'connection_button.dart';
 import 'settings_button.dart';
 
 class AppBarTop extends StatelessWidget implements PreferredSizeWidget {
@@ -17,7 +18,7 @@ class AppBarTop extends StatelessWidget implements PreferredSizeWidget {
         preferredSize: const Size.fromHeight(1),
         child: Container(height: 0.5, color: Theme.of(context).dividerColor),
       ),
-      actions: const [BrokerSelector(), HSpacer(8), SettingsButton(), HSpacer(8)],
+      actions: const [BrokerSelector(), HSpacer(8), ConnectionButton(), HSpacer(8), SettingsButton(), HSpacer(8)],
     );
   }
 

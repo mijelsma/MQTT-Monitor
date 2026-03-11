@@ -21,6 +21,9 @@ class MainScreen extends StatelessWidget {
     final activeBrokerId = state.read(AppKeys.activeBrokerId);
     final activeBroker = brokers.isEmpty ? null : brokers.firstWhere((b) => b.id == activeBrokerId, orElse: () => brokers.first);
 
+    final connectionStatus = state.read(AppKeys.connectionStatus);
+    final connectionError = state.read(AppKeys.connectionError);
+
     Widget body;
     if (brokers.isEmpty) {
       body = const NoBrokersState();
@@ -30,6 +33,11 @@ class MainScreen extends StatelessWidget {
       body = const NoMessagesState();
     }
 
-    return Scaffold(appBar: const AppBarTop(), backgroundColor: Theme.of(context).scaffoldBackgroundColor, body: body, bottomNavigationBar: showStatusBar ? const AppBarBottom() : null);
+    return Scaffold(
+      appBar: const AppBarTop(),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: body,
+      bottomNavigationBar: showStatusBar ? AppBarBottom(status: connectionStatus, brokerUrl: activeBroker?.displayAddress, errorDetail: connectionError) : null,
+    );
   }
 }
