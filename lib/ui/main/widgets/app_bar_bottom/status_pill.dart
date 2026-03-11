@@ -1,14 +1,30 @@
 import 'package:flutter/material.dart';
+import '../../../../services/mqtt/models/connection_status.dart';
 import '../../../../theme/app_colors.dart';
 
 class StatusPill extends StatelessWidget {
-  const StatusPill({super.key, required this.isConnected});
+  const StatusPill({super.key, required this.status, this.errorDetail});
 
-  final bool isConnected;
+  final ConnectionStatus status;
+  final String? errorDetail;
 
   @override
   Widget build(BuildContext context) {
-    final color = isConnected ? AppColors.success500 : AppColors.error500;
+    var (color, label) = switch (status) {
+      ConnectionStatus.connected => (AppColors.success500, 'Connected'),
+      ConnectionStatus.connecting => (AppColors.warning500, 'Connecting'),
+      ConnectionStatus.disconnected => (AppColors.error500, 'Disconnected'),
+      ConnectionStatus.errorHostNotFound => (AppColors.error500, 'Host not found'),
+      ConnectionStatus.errorNotPermitted => (AppColors.error500, 'Not permitted'),
+      ConnectionStatus.errorRefused => (AppColors.error500, 'Connection refused'),
+      ConnectionStatus.errorTlsHandshake => (AppColors.error500, 'TLS failed'),
+      ConnectionStatus.error => (AppColors.error500, 'Error'),
+    };
+
+    if (status == ConnectionStatus.error && errorDetail != null) {
+      final trimmed = errorDetail!.length > 28 ? '${errorDetail!.substring(0, 28)}…' : errorDetail!;
+      label = 'Error · $trimmed';
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
@@ -28,7 +44,7 @@ class StatusPill extends StatelessWidget {
 
           // Status text
           Text(
-            isConnected ? 'Connected' : 'Disconnected',
+            label,
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color, letterSpacing: -0.1),
           ),
         ],

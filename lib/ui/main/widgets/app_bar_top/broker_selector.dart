@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../generated/l10n.dart';
+import '../../../../services/mqtt/models/connection_status.dart';
 import '../../../../state/app_state.dart';
 import '../../../../state/keys/app_keys.dart';
 import '../../../../state/keys/settings_keys.dart';
@@ -23,6 +24,7 @@ class _BrokerSelectorState extends State<BrokerSelector> {
     final state = context.watch<AppStateManager>();
     final brokers = state.read(SettingsKeys.brokers);
     final activeBrokerId = state.read(AppKeys.activeBrokerId);
+    final connectionStatus = state.read(AppKeys.connectionStatus);
 
     // Resolve the active broker ID: use stored value if it still exists,
     String? effectiveId;
@@ -39,6 +41,12 @@ class _BrokerSelectorState extends State<BrokerSelector> {
 
     final accent = context.tokens.primary;
     final cs = Theme.of(context).colorScheme;
+
+    final dotColor = switch (connectionStatus) {
+      ConnectionStatus.connected => AppColors.success500,
+      ConnectionStatus.connecting => AppColors.warning500,
+      _ => AppColors.error500,
+    };
 
     const borderRadius = BorderRadius.all(Radius.circular(8));
 
@@ -69,9 +77,9 @@ class _BrokerSelectorState extends State<BrokerSelector> {
                   children: [
                     // Connection status dot
                     Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(color: AppColors.success500, shape: BoxShape.circle),
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
                     ),
 
                     // Spacer

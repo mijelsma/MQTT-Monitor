@@ -64,7 +64,7 @@ class _BrokerModalState extends State<BrokerModal> {
     _username = TextEditingController(text: b?.username ?? '');
     _password = TextEditingController(text: b?.password ?? '');
     _useSSL = b?.useSSL ?? false;
-    _validateCertificates = false;
+    _validateCertificates = b?.validateCertificates ?? true;
     _subscriptions = List.from(b?.subscriptions ?? []);
   }
 
@@ -88,6 +88,7 @@ class _BrokerModalState extends State<BrokerModal> {
         host: _host.text.trim(),
         port: int.tryParse(_port.text.trim()) ?? 1883,
         useSSL: _useSSL,
+        validateCertificates: _validateCertificates,
         username: _username.text.trim().isEmpty ? null : _username.text.trim(),
         password: _password.text.isEmpty ? null : _password.text,
         subscriptions: _subscriptions,
