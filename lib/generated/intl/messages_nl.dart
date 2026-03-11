@@ -51,6 +51,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "brokerModalEditTitle": MessageLookupByLibrary.simpleMessage(
       "Broker bewerken",
     ),
+    "brokerModalFieldClientId": MessageLookupByLibrary.simpleMessage(
+      "Client-ID",
+    ),
     "brokerModalFieldHost": MessageLookupByLibrary.simpleMessage("Host"),
     "brokerModalFieldName": MessageLookupByLibrary.simpleMessage("Naam"),
     "brokerModalFieldPassword": MessageLookupByLibrary.simpleMessage(
@@ -59,6 +62,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "brokerModalFieldPort": MessageLookupByLibrary.simpleMessage("Poort"),
     "brokerModalFieldUsername": MessageLookupByLibrary.simpleMessage(
       "Gebruikersnaam",
+    ),
+    "brokerModalRandomSuffix": MessageLookupByLibrary.simpleMessage(
+      "Willekeurig achtervoegsel",
+    ),
+    "brokerModalRandomSuffixSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Voegt een willekeurig 6-cijferig hex-achtervoegsel toe aan het Client-ID",
     ),
     "brokerModalSectionAuthentication": MessageLookupByLibrary.simpleMessage(
       "Verificatie",
@@ -177,6 +186,20 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "uiPanelPersistLayoutSubtitle": MessageLookupByLibrary.simpleMessage(
       "Panelgrootten en -posities herstellen bij opstart",
+    ),
+    "uiPanelPulseFade": MessageLookupByLibrary.simpleMessage("Pulsvervaging"),
+    "uiPanelPulseFadeSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Duur van de uitfaderingsanimatie",
+    ),
+    "uiPanelPulseRate": MessageLookupByLibrary.simpleMessage("Pulsnelheid"),
+    "uiPanelPulseRateSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Maximum activiteitspulsen per seconde",
+    ),
+    "uiPanelRateInterval": MessageLookupByLibrary.simpleMessage(
+      "Bijwerkinterval snelheid",
+    ),
+    "uiPanelRateIntervalSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Hoe vaak de berichtensnelheid wordt herberekend",
     ),
     "uiPanelSectionAppearance": MessageLookupByLibrary.simpleMessage(
       "Uiterlijk",

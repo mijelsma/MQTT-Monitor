@@ -45,6 +45,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "brokerModalAddTitle": MessageLookupByLibrary.simpleMessage("Add Broker"),
     "brokerModalEditTitle": MessageLookupByLibrary.simpleMessage("Edit Broker"),
+    "brokerModalFieldClientId": MessageLookupByLibrary.simpleMessage(
+      "Client ID",
+    ),
     "brokerModalFieldHost": MessageLookupByLibrary.simpleMessage("Host"),
     "brokerModalFieldName": MessageLookupByLibrary.simpleMessage("Name"),
     "brokerModalFieldPassword": MessageLookupByLibrary.simpleMessage(
@@ -53,6 +56,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "brokerModalFieldPort": MessageLookupByLibrary.simpleMessage("Port"),
     "brokerModalFieldUsername": MessageLookupByLibrary.simpleMessage(
       "Username",
+    ),
+    "brokerModalRandomSuffix": MessageLookupByLibrary.simpleMessage(
+      "Random Suffix",
+    ),
+    "brokerModalRandomSuffixSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Appends a random 6-digit hex suffix to the Client ID",
     ),
     "brokerModalSectionAuthentication": MessageLookupByLibrary.simpleMessage(
       "Authentication",
@@ -165,6 +174,20 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "uiPanelPersistLayoutSubtitle": MessageLookupByLibrary.simpleMessage(
       "Restore panel sizes and positions on restart",
+    ),
+    "uiPanelPulseFade": MessageLookupByLibrary.simpleMessage("Pulse fade"),
+    "uiPanelPulseFadeSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Duration of the fade-out animation",
+    ),
+    "uiPanelPulseRate": MessageLookupByLibrary.simpleMessage("Pulse rate"),
+    "uiPanelPulseRateSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Maximum activity pulses per second",
+    ),
+    "uiPanelRateInterval": MessageLookupByLibrary.simpleMessage(
+      "Rate update interval",
+    ),
+    "uiPanelRateIntervalSubtitle": MessageLookupByLibrary.simpleMessage(
+      "How often the message rate is recalculated",
     ),
     "uiPanelSectionAppearance": MessageLookupByLibrary.simpleMessage(
       "Appearance",

@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'widgets/app_bar_bottom/app_bar_bottom.dart';
 import 'widgets/app_bar_top/app_bar_top.dart';
 import 'widgets/empty_states/no_brokers_state.dart';
-import 'widgets/empty_states/no_messages_state.dart';
 import 'widgets/empty_states/no_subscriptions_state.dart';
+import 'widgets/topic_tree/topic_tree_widget.dart';
 import '../../state/app_state.dart';
 import '../../state/keys/app_keys.dart';
 import '../../state/keys/settings_keys.dart';
@@ -30,14 +30,14 @@ class MainScreen extends StatelessWidget {
     } else if (activeBroker != null && activeBroker.subscriptions.isEmpty) {
       body = NoSubscriptionsState(broker: activeBroker);
     } else {
-      body = const NoMessagesState();
+      body = const TopicTreeWidget();
     }
 
     return Scaffold(
       appBar: const AppBarTop(),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: body,
-      bottomNavigationBar: showStatusBar ? AppBarBottom(status: connectionStatus, brokerUrl: activeBroker?.displayAddress, errorDetail: connectionError) : null,
+      bottomNavigationBar: showStatusBar ? AppBarBottom(status: connectionStatus, brokerUrl: activeBroker?.displayAddress, errorDetail: connectionError, messageCount: state.read(AppKeys.messageCount), messageRate: state.read(AppKeys.messageRate)) : null,
     );
   }
 }

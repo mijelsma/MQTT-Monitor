@@ -47,8 +47,10 @@ class _BrokerModalState extends State<BrokerModal> {
   late final TextEditingController _port;
   late final TextEditingController _username;
   late final TextEditingController _password;
+  late final TextEditingController _clientId;
   late bool _useSSL;
   late bool _validateCertificates;
+  late bool _randomClientIdSuffix;
   bool _obscurePassword = true;
   late List<SubscriptionEntry> _subscriptions;
 
@@ -63,8 +65,10 @@ class _BrokerModalState extends State<BrokerModal> {
     _port = TextEditingController(text: b?.port.toString() ?? '1883');
     _username = TextEditingController(text: b?.username ?? '');
     _password = TextEditingController(text: b?.password ?? '');
+    _clientId = TextEditingController(text: b?.clientId ?? '');
     _useSSL = b?.useSSL ?? false;
     _validateCertificates = b?.validateCertificates ?? true;
+    _randomClientIdSuffix = b?.randomClientIdSuffix ?? true;
     _subscriptions = List.from(b?.subscriptions ?? []);
   }
 
@@ -75,6 +79,7 @@ class _BrokerModalState extends State<BrokerModal> {
     _port.dispose();
     _username.dispose();
     _password.dispose();
+    _clientId.dispose();
     super.dispose();
   }
 
@@ -91,6 +96,8 @@ class _BrokerModalState extends State<BrokerModal> {
         validateCertificates: _validateCertificates,
         username: _username.text.trim().isEmpty ? null : _username.text.trim(),
         password: _password.text.isEmpty ? null : _password.text,
+        clientId: _clientId.text.trim().isEmpty ? null : _clientId.text.trim(),
+        randomClientIdSuffix: _randomClientIdSuffix,
         subscriptions: _subscriptions,
       ),
     );
@@ -165,6 +172,14 @@ class _BrokerModalState extends State<BrokerModal> {
         const VSpacer(12),
 
         UiSwitchRow(label: s.brokerModalValidateCertificates, subtitle: s.brokerModalValidateCertificatesSubtitle, value: _validateCertificates, accent: accent, bordered: true, onChanged: (v) => setState(() => _validateCertificates = v)),
+
+        const VSpacer(14),
+
+        UiField(label: s.brokerModalFieldClientId, optional: true, controller: _clientId, hint: 'mqtt_monitor', textInputAction: TextInputAction.next),
+
+        const VSpacer(12),
+
+        UiSwitchRow(label: s.brokerModalRandomSuffix, subtitle: s.brokerModalRandomSuffixSubtitle, value: _randomClientIdSuffix, accent: accent, bordered: true, onChanged: (v) => setState(() => _randomClientIdSuffix = v)),
       ],
     );
   }

@@ -10,6 +10,8 @@ abstract final class AppKeys {
   static final connectionStatus = StateKey.forEnum('app.connectionStatus', ConnectionStatus.values, defaultValue: ConnectionStatus.disconnected, persist: Persist.never);
   static final connectionError = StateKey.nullableString('app.connectionError', persist: Persist.never);
   static final disconnected = StateKey.boolean('app.disconnected', defaultValue: false);
+  static final messageCount = StateKey.integer('app.messageCount', defaultValue: 0, persist: Persist.never);
+  static final messageRate = StateKey.integer('app.messageRate', defaultValue: 0, persist: Persist.never);
 
   static final List<StateKey> all = [activeBrokerId, disconnected];
 }
