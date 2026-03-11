@@ -209,6 +209,26 @@ class S {
     );
   }
 
+  /// `Rate update interval`
+  String get uiPanelRateInterval {
+    return Intl.message(
+      'Rate update interval',
+      name: 'uiPanelRateInterval',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `How often the message rate is recalculated`
+  String get uiPanelRateIntervalSubtitle {
+    return Intl.message(
+      'How often the message rate is recalculated',
+      name: 'uiPanelRateIntervalSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Data Display`
   String get uiPanelSectionDataDisplay {
     return Intl.message(
@@ -234,6 +254,46 @@ class S {
     return Intl.message(
       'Pulse topic when activity occurs',
       name: 'uiPanelShowActivitySubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Pulse rate`
+  String get uiPanelPulseRate {
+    return Intl.message(
+      'Pulse rate',
+      name: 'uiPanelPulseRate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Maximum activity pulses per second`
+  String get uiPanelPulseRateSubtitle {
+    return Intl.message(
+      'Maximum activity pulses per second',
+      name: 'uiPanelPulseRateSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Pulse fade`
+  String get uiPanelPulseFade {
+    return Intl.message(
+      'Pulse fade',
+      name: 'uiPanelPulseFade',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Duration of the fade-out animation`
+  String get uiPanelPulseFadeSubtitle {
+    return Intl.message(
+      'Duration of the fade-out animation',
+      name: 'uiPanelPulseFadeSubtitle',
       desc: '',
       args: [],
     );
@@ -599,6 +659,36 @@ class S {
     return Intl.message(
       'Validates the broker\'s SSL/TLS certificates',
       name: 'brokerModalValidateCertificatesSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Client ID`
+  String get brokerModalFieldClientId {
+    return Intl.message(
+      'Client ID',
+      name: 'brokerModalFieldClientId',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Random Suffix`
+  String get brokerModalRandomSuffix {
+    return Intl.message(
+      'Random Suffix',
+      name: 'brokerModalRandomSuffix',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Appends a random 6-digit hex suffix to the Client ID`
+  String get brokerModalRandomSuffixSubtitle {
+    return Intl.message(
+      'Appends a random 6-digit hex suffix to the Client ID',
+      name: 'brokerModalRandomSuffixSubtitle',
       desc: '',
       args: [],
     );

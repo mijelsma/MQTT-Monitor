@@ -12,8 +12,11 @@ abstract final class SettingsKeys {
   static final themeMode = StateKey.forEnum('settings.themeMode', ThemeMode.values, defaultValue: ThemeMode.system);
   static final showStatusBar = StateKey.boolean('settings.showStatusBar', defaultValue: true);
   static final showActivity = StateKey.boolean('settings.showActivity', defaultValue: true);
+  static final pulseRatePps = StateKey.integer('settings.pulseRatePps', defaultValue: 15);
+  static final pulseFadeMs = StateKey.integer('settings.pulseFadeMs', defaultValue: 500);
   static final persistLayout = StateKey.boolean('settings.persistLayout', defaultValue: true);
+  static final rateIntervalMs = StateKey.integer('settings.rateIntervalMs', defaultValue: 1000);
   static final language = StateKey.forKeyedEnum('settings.language', AppLanguage.values, defaultValue: AppLanguage.en);
 
-  static final List<StateKey> all = [themeMode, showStatusBar, showActivity, persistLayout, language, brokers];
+  static final List<StateKey> all = [themeMode, showStatusBar, showActivity, pulseRatePps, pulseFadeMs, persistLayout, rateIntervalMs, language, brokers];
 }
