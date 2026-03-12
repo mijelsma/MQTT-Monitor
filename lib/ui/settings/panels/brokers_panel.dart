@@ -75,7 +75,7 @@ class BrokersPanel extends StatelessWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: AppColors.brokerGradient),
+                      gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: AppColors.brokerGradientFor(brokers[i].colorIndex)),
                       borderRadius: BorderRadius.circular(9),
                     ),
                     child: const Icon(Icons.dns_rounded, size: 18, color: Colors.white),

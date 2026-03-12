@@ -3,7 +3,7 @@ import 'dart:math';
 import 'subscription_entry.dart';
 
 class BrokerEntry {
-  const BrokerEntry({required this.id, required this.name, required this.host, this.port = 1883, this.useSSL = false, this.validateCertificates = true, this.username, this.password, this.clientId, this.randomClientIdSuffix = true, this.subscriptions = const []});
+  const BrokerEntry({required this.id, required this.name, required this.host, this.port = 1883, this.useSSL = false, this.validateCertificates = true, this.username, this.password, this.clientId, this.randomClientIdSuffix = true, this.colorIndex = 0, this.subscriptions = const []});
 
   final String id;
   final String name;
@@ -15,6 +15,7 @@ class BrokerEntry {
   final String? password;
   final String? clientId;
   final bool randomClientIdSuffix;
+  final int colorIndex;
   final List<SubscriptionEntry> subscriptions;
 
   /// Returns the effective client ID, optionally with a random 6-digit hex suffix.
@@ -35,7 +36,7 @@ class BrokerEntry {
   // A user-friendly display string for the broker, e.g. "mqtts://example.com:8883".
   String get displayAddress => '${useSSL ? 'mqtts' : 'mqtt'}://$host:$port';
 
-  BrokerEntry copyWith({String? name, String? host, int? port, bool? useSSL, bool? validateCertificates, String? username, String? password, String? clientId, bool? randomClientIdSuffix, List<SubscriptionEntry>? subscriptions}) {
+  BrokerEntry copyWith({String? name, String? host, int? port, bool? useSSL, bool? validateCertificates, String? username, String? password, String? clientId, bool? randomClientIdSuffix, int? colorIndex, List<SubscriptionEntry>? subscriptions}) {
     return BrokerEntry(
       id: id,
       name: name ?? this.name,
@@ -47,6 +48,7 @@ class BrokerEntry {
       password: password ?? this.password,
       clientId: clientId ?? this.clientId,
       randomClientIdSuffix: randomClientIdSuffix ?? this.randomClientIdSuffix,
+      colorIndex: colorIndex ?? this.colorIndex,
       subscriptions: subscriptions ?? this.subscriptions,
     );
   }
@@ -62,6 +64,7 @@ class BrokerEntry {
     password: json['password'] as String?,
     clientId: json['clientId'] as String?,
     randomClientIdSuffix: json['randomClientIdSuffix'] as bool? ?? true,
+    colorIndex: json['colorIndex'] as int? ?? 0,
     subscriptions: (json['subscriptions'] as List<dynamic>? ?? []).map((e) => SubscriptionEntry.fromJson(e as Map<String, dynamic>)).toList(),
   );
 
@@ -76,6 +79,7 @@ class BrokerEntry {
     if (password != null) 'password': password,
     if (clientId != null) 'clientId': clientId,
     'randomClientIdSuffix': randomClientIdSuffix,
+    'colorIndex': colorIndex,
     'subscriptions': subscriptions.map((s) => s.toJson()).toList(),
   };
 }

@@ -584,6 +584,16 @@ class S {
     );
   }
 
+  /// `Color`
+  String get brokerModalFieldColor {
+    return Intl.message(
+      'Color',
+      name: 'brokerModalFieldColor',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Enter a name`
   String get brokerModalValidateName {
     return Intl.message(

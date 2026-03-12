@@ -118,7 +118,7 @@ class _BrokerSelectorState extends State<BrokerSelector> {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: AppColors.brokerGradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
+              gradient: LinearGradient(colors: AppColors.brokerGradientFor(broker.colorIndex), begin: Alignment.topLeft, end: Alignment.bottomRight),
               borderRadius: BorderRadius.circular(7),
             ),
             child: const Icon(Icons.dns_rounded, size: 14, color: Colors.white),
