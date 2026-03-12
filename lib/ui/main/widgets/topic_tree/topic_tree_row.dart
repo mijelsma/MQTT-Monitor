@@ -53,9 +53,15 @@ class _TopicTreeRowState extends State<TopicTreeRow> with SingleTickerProviderSt
     // pulseNotifier ticks for every message arriving at this node OR any
     // descendant — drives the flash animation for both leaves and branches.
     widget.node.pulseNotifier.addListener(_onPulse);
+    // countNotifier fires on every message, un-rate-limited, for live badge counts.
+    widget.node.countNotifier.addListener(_onCountChanged);
     // valueNotifier is only for keeping the displayed value up-to-date.
     widget.node.valueNotifier.addListener(_onValueChanged);
     _pulse.addListener(_onAnimTick);
+  }
+
+  void _onCountChanged() {
+    if (mounted) setState(() {});
   }
 
   // The controller already rate-limits pulses to the configured pps. Rows
@@ -78,6 +84,7 @@ class _TopicTreeRowState extends State<TopicTreeRow> with SingleTickerProviderSt
   @override
   void dispose() {
     widget.node.pulseNotifier.removeListener(_onPulse);
+    widget.node.countNotifier.removeListener(_onCountChanged);
     widget.node.valueNotifier.removeListener(_onValueChanged);
     _pulse.removeListener(_onAnimTick);
     _pulse.dispose();
@@ -137,9 +144,9 @@ class _TopicTreeRowState extends State<TopicTreeRow> with SingleTickerProviderSt
             // Badges (branches) or value (leaves)
             if (node.isBranch) ...[
               const Spacer(),
-              CountPill(count: node.subtreeTopicCount, label: 'topics', color: tokens.textSecondary),
+              CountPill(count: node.displayTopicCount, label: 'topics', color: tokens.textSecondary),
               const SizedBox(width: 4),
-              CountPill(count: node.subtreeMsgCount, label: 'msgs', color: tokens.primary),
+              CountPill(count: node.displayMsgCount, label: 'msgs', color: tokens.primary),
             ] else if (_currentValue != null) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 7),
@@ -157,7 +164,7 @@ class _TopicTreeRowState extends State<TopicTreeRow> with SingleTickerProviderSt
                 ),
               ),
               const SizedBox(width: 6),
-              CountPill(count: node.subtreeMsgCount, label: 'msgs', color: tokens.primary),
+              CountPill(count: node.displayMsgCount, label: 'msgs', color: tokens.primary),
             ] else
               const Expanded(child: SizedBox()),
           ],
