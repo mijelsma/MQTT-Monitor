@@ -71,6 +71,7 @@
     "brokerModalAddTitle": "Add Broker",
     "brokerModalSectionConnection": "Connection",
     "brokerModalFieldName": "Name",
+    "brokerModalFieldColor": "Color",
     "brokerModalValidateName": "Enter a name",
     "brokerModalFieldHost": "Host",
     "brokerModalValidateHost": "Enter a host",

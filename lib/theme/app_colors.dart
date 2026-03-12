@@ -91,6 +91,30 @@ abstract final class AppColors {
   static const Color dark900 = Color(0xFFFAFAFA);
 
   static const List<Color> brokerGradient = [Color(0xFF6366F1), Color(0xFF8B5CF6)];
+
+  /// Predefined broker icon color options.
+  static const List<Color> brokerColorOptions = [
+    Color(0xFF6366F1), // Indigo (default)
+    Color(0xFF8B5CF6), // Violet
+    Color(0xFFEC4899), // Pink
+    Color(0xFFEF4444), // Red
+    Color(0xFFF97316), // Orange
+    Color(0xFFF59E0B), // Amber
+    Color(0xFF22C55E), // Green
+    Color(0xFF10B981), // Emerald
+    Color(0xFF14B8A6), // Teal
+    Color(0xFF06B6D4), // Cyan
+    Color(0xFF0EA5E9), // Sky
+    Color(0xFF3B82F6), // Blue
+  ];
+
+  /// Returns a two-stop gradient for a broker given its [colorIndex].
+  static List<Color> brokerGradientFor(int? colorIndex) {
+    final base = brokerColorOptions[(colorIndex ?? 0).clamp(0, brokerColorOptions.length - 1)];
+    final light = Color.lerp(base, Colors.white, 0.25)!;
+    return [base, light];
+  }
+
   static const List<Color> subscriptionsGradient = [Color(0xFF0EA5E9), Color(0xFF6366F1)];
   static const List<Color> messagesGradient = [Color(0xFF10B981), Color(0xFF0EA5E9)];
   static const List<Color> languageGradient = [Color(0xFF0EA5E9), Color(0xFF06B6D4)];

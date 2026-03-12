@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../generated/l10n.dart';
+import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../models/broker_entry.dart';
 import '../models/subscription_entry.dart';
@@ -51,6 +52,7 @@ class _BrokerModalState extends State<BrokerModal> {
   late bool _useSSL;
   late bool _validateCertificates;
   late bool _randomClientIdSuffix;
+  late int _colorIndex;
   bool _obscurePassword = true;
   late List<SubscriptionEntry> _subscriptions;
 
@@ -69,6 +71,7 @@ class _BrokerModalState extends State<BrokerModal> {
     _useSSL = b?.useSSL ?? false;
     _validateCertificates = b?.validateCertificates ?? true;
     _randomClientIdSuffix = b?.randomClientIdSuffix ?? true;
+    _colorIndex = b?.colorIndex ?? 0;
     _subscriptions = List.from(b?.subscriptions ?? []);
   }
 
@@ -98,6 +101,7 @@ class _BrokerModalState extends State<BrokerModal> {
         password: _password.text.isEmpty ? null : _password.text,
         clientId: _clientId.text.trim().isEmpty ? null : _clientId.text.trim(),
         randomClientIdSuffix: _randomClientIdSuffix,
+        colorIndex: _colorIndex,
         subscriptions: _subscriptions,
       ),
     );
@@ -133,6 +137,11 @@ class _BrokerModalState extends State<BrokerModal> {
         _sectionLabel(context, s.brokerModalSectionConnection),
         const VSpacer(10),
         UiField(label: s.brokerModalFieldName, controller: _name, hint: 'e.g. Home Server', textInputAction: TextInputAction.next, validator: (v) => (v == null || v.trim().isEmpty) ? s.brokerModalValidateName : null),
+
+        const VSpacer(14),
+
+        // Color picker
+        _buildColorPicker(),
 
         const VSpacer(14),
 
@@ -180,6 +189,42 @@ class _BrokerModalState extends State<BrokerModal> {
         const VSpacer(12),
 
         UiSwitchRow(label: s.brokerModalRandomSuffix, subtitle: s.brokerModalRandomSuffixSubtitle, value: _randomClientIdSuffix, accent: accent, bordered: true, onChanged: (v) => setState(() => _randomClientIdSuffix = v)),
+      ],
+    );
+  }
+
+  Widget _buildColorPicker() {
+    final s = S.of(context);
+    final colors = AppColors.brokerColorOptions;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(s.brokerModalFieldColor, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: context.tokens.textSecondary)),
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: List.generate(colors.length, (i) {
+            final isSelected = i == _colorIndex;
+            final gradient = AppColors.brokerGradientFor(i);
+            return GestureDetector(
+              onTap: () => setState(() => _colorIndex = i),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(colors: gradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
+                  borderRadius: BorderRadius.circular(8),
+                  border: isSelected ? Border.all(color: colors[i], width: 2.5) : null,
+                  boxShadow: isSelected ? [BoxShadow(color: colors[i].withValues(alpha: 0.4), blurRadius: 6)] : null,
+                ),
+                child: isSelected ? const Icon(Icons.check_rounded, size: 16, color: Colors.white) : null,
+              ),
+            );
+          }),
+        ),
       ],
     );
   }

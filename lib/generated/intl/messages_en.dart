@@ -48,6 +48,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "brokerModalFieldClientId": MessageLookupByLibrary.simpleMessage(
       "Client ID",
     ),
+    "brokerModalFieldColor": MessageLookupByLibrary.simpleMessage("Color"),
     "brokerModalFieldHost": MessageLookupByLibrary.simpleMessage("Host"),
     "brokerModalFieldName": MessageLookupByLibrary.simpleMessage("Name"),
     "brokerModalFieldPassword": MessageLookupByLibrary.simpleMessage(

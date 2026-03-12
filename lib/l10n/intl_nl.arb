@@ -65,6 +65,7 @@
     "brokerModalAddTitle": "Broker toevoegen",
     "brokerModalSectionConnection": "Verbinding",
     "brokerModalFieldName": "Naam",
+    "brokerModalFieldColor": "Kleur",
     "brokerModalValidateName": "Voer een naam in",
     "brokerModalFieldHost": "Host",
     "brokerModalValidateHost": "Voer een host in",
