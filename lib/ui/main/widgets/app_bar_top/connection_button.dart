@@ -38,7 +38,7 @@ class ConnectionButton extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               borderRadius: borderRadius,
-              border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
+              border: Border.all(color: Theme.of(context).dividerColor, width: 1.0),
             ),
             child: Icon(icon, size: 18, color: iconColor),
           ),

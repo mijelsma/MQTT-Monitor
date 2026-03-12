@@ -70,7 +70,7 @@ class _BrokerSelectorState extends State<BrokerSelector> {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
                   borderRadius: borderRadius,
-                  border: Border.all(color: Theme.of(context).dividerColor, width: 0.5),
+                  border: Border.all(color: Theme.of(context).dividerColor, width: 1.0),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
