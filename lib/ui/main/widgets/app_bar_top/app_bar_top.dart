@@ -54,7 +54,7 @@ class _AppBarTopState extends State<AppBarTop> {
       toolbarHeight: AppBarTop._toolbarHeight,
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Container(height: 0.5, color: Theme.of(context).dividerColor),
+        child: Container(height: 1.0, color: Theme.of(context).dividerColor),
       ),
       title: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 280),
@@ -93,7 +93,7 @@ class _SearchBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: tokens.inputFill,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: tokens.border, width: 0.5),
+        border: Border.all(color: tokens.border, width: 1.0),
       ),
       child: Row(
         children: [

@@ -20,7 +20,7 @@ class AppBarBottom extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         // Divider
-        Container(height: .5, color: Theme.of(context).dividerColor),
+        Container(height: 1.0, color: Theme.of(context).dividerColor),
 
         BottomAppBar(
           color: Theme.of(context).scaffoldBackgroundColor,
