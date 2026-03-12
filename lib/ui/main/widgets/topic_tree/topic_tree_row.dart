@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../state/app_state.dart';
 import '../../../../state/keys/settings_keys.dart';
 import '../../../../theme/app_tokens/app_tokens.dart';
+import '../../../widgets/count_pill.dart';
 import 'topic_tree_node.dart';
 
 /// A single row in the topic tree.
@@ -133,8 +134,13 @@ class _TopicTreeRowState extends State<TopicTreeRow> with SingleTickerProviderSt
               node.segment,
               style: TextStyle(fontSize: 13, fontWeight: node.isBranch ? FontWeight.w600 : FontWeight.w400, color: node.isBranch ? tokens.textPrimary : tokens.textSecondary, height: 1.3),
             ),
-            // Equals + value
-            if (_currentValue != null) ...[
+            // Badges (branches) or value (leaves)
+            if (node.isBranch) ...[
+              const Spacer(),
+              CountPill(count: node.subtreeTopicCount, label: 'topics', color: tokens.textSecondary),
+              const SizedBox(width: 4),
+              CountPill(count: node.subtreeMsgCount, label: 'msgs', color: tokens.primary),
+            ] else if (_currentValue != null) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 7),
                 child: Text(
@@ -150,6 +156,8 @@ class _TopicTreeRowState extends State<TopicTreeRow> with SingleTickerProviderSt
                   maxLines: 1,
                 ),
               ),
+              const SizedBox(width: 6),
+              CountPill(count: node.subtreeMsgCount, label: 'msgs', color: tokens.primary),
             ] else
               const Expanded(child: SizedBox()),
           ],
