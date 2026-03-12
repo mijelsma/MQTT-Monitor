@@ -9,6 +9,9 @@ import '../../../../state/keys/app_keys.dart';
 import '../../../../state/keys/settings_keys.dart';
 import 'topic_tree_node.dart';
 
+/// Which part of a topic row is matched when filtering.
+enum SearchScope { all, topic, value }
+
 /// Manages the MQTT topic tree state, including message ingestion, tree structure, expand/collapse state, and filtering.
 /// Structural changes (new nodes, expand/collapse, filter) cause [notifyListeners] so the parent widget rebuilds the flat row list.
 /// Value changes for existing nodes are delivered exclusively through each node's [TopicTreeNode.valueNotifier] — the flat list
@@ -45,8 +48,20 @@ class TopicTreeController extends ChangeNotifier {
   // Current filter string applied to the topic tree.
   String _filter = '';
 
+  // Current search scope
+  SearchScope _scope = SearchScope.all;
+
   // Public getters for the current tree state.
   String get filter => _filter;
+  SearchScope get scope => _scope;
+
+  /// Number of leaf topic endpoints visible in the current filtered result.
+  /// 0 when no filter is active.
+  int filteredTopicCount = 0;
+
+  /// Total messages received on the leaf endpoints visible in the filtered
+  /// result. 0 when no filter is active.
+  int filteredMsgCount = 0;
 
   /// Handles changes in the global app state, such as switching the active broker.
   void _onStateChanged() {
@@ -102,22 +117,41 @@ class TopicTreeController extends ChangeNotifier {
 
     // Increment the subtree message counter for every node along the path so that
     // badge pills on ancestor rows show the cumulative message count.
+    // Also update displayMsgCount directly and fire countNotifier so row badges
+    // refresh immediately — no waiting for the next buildFlatList cycle.
     for (final node in visitedNodes) {
       node.subtreeMsgCount++;
+      node.displayMsgCount++;
+      node.countNotifier.value++;
     }
 
     /// After processing the message and updating the tree, we need to trigger pulse animations on the affected nodes.
     /// Pulses are rate-limited per node based on the configured pulse rate, so we schedule them accordingly.
     _schedulePulse(visitedNodes);
 
-    // Only rebuild the flat list when the tree structure actually changed.
-    if (structureChanged) notifyListeners();
+    // When a filter is active and this message's leaf matches, we need to
+    // (a) potentially notify listeners to update the live filtered msg count,
+    // (b) pulse only the matching nodes.
+    final bool leafMatchesFilter = _filter.isNotEmpty && _subtreeMatchesFilter(visitedNodes.last, _filter.toLowerCase().trim());
+
+    // Only rebuild the flat list when the tree structure actually changed,
+    // OR when filtering and this message affects the filtered result set
+    // (so filtered msg counts in the status bar stay live).
+    if (structureChanged || leafMatchesFilter) notifyListeners();
   }
 
   /// Schedules pulse animations for the given path of nodes, applying rate-limiting based on the configured pulse rate.
   void _schedulePulse(List<TopicTreeNode> path) {
     // If the path is empty, there's nothing to pulse.
     if (path.isEmpty) return;
+
+    // When a filter is active, only pulse if the leaf (the actual topic that
+    // received the message) matches the current filter + scope. This prevents
+    // unrelated rows from lighting up while the user is searching.
+    if (_filter.isNotEmpty) {
+      final filterLower = _filter.toLowerCase().trim();
+      if (!_subtreeMatchesFilter(path.last, filterLower)) return;
+    }
 
     // The leaf node is the last one in the path, which is the one that received the new value and should be rate-limited.
     final leaf = path.last;
@@ -160,9 +194,40 @@ class TopicTreeController extends ChangeNotifier {
   }
 
   /// Update the filter text; triggers a flat-list rebuild if changed.
+  /// When transitioning to a non-empty filter, matching branches are
+  /// automatically expanded so results are immediately visible. The user
+  /// can still collapse any branch afterwards.
   void setFilter(String value) {
     if (_filter == value) return;
+    final wasEmpty = _filter.isEmpty;
     _filter = value;
+    if (value.isNotEmpty && wasEmpty) {
+      _expandMatchingBranches(value.toLowerCase().trim());
+    }
+    notifyListeners();
+  }
+
+  /// Expand every branch that contains at least one match for [filterLower].
+  void _expandMatchingBranches(String filterLower) {
+    void visit(TopicTreeNode node) {
+      if (!node.isBranch) return;
+      if (_subtreeMatchesFilter(node, filterLower)) {
+        node.isExpanded = true;
+      }
+      for (final child in node.children.values) {
+        visit(child);
+      }
+    }
+
+    for (final root in _roots.values) {
+      visit(root);
+    }
+  }
+
+  /// Update the search scope; triggers a flat-list rebuild if changed.
+  void setScope(SearchScope value) {
+    if (_scope == value) return;
+    _scope = value;
     notifyListeners();
   }
 
@@ -218,8 +283,8 @@ class TopicTreeController extends ChangeNotifier {
 
       rows.add(FlatTreeRow(node: node, depth: depth));
 
-      // Show children only when expanded (filter overrides collapse).
-      if (node.children.isNotEmpty && (node.isExpanded || filterLower.isNotEmpty)) {
+      // Show children only when the node is expanded (user controls this).
+      if (node.children.isNotEmpty && node.isExpanded) {
         final sorted = node.children.values.toList()..sort((a, b) => a.segment.toLowerCase().compareTo(b.segment.toLowerCase()));
         for (final child in sorted) {
           visit(child, depth + 1);
@@ -232,16 +297,66 @@ class TopicTreeController extends ChangeNotifier {
       visit(root, 0);
     }
 
+    // Set display counts on every node that appears in the flat list so that
+    // row badges always reflect the current filter state.
+    final filterLow = filterLower;
+    for (final row in rows) {
+      final (t, m) = _computeDisplayCounts(row.node, filterLow);
+      row.node.displayTopicCount = t;
+      row.node.displayMsgCount = m;
+    }
+
+    // Compute filtered stats — leaf endpoints only (nodes with no children).
+    if (filterLower.isNotEmpty) {
+      int tCount = 0;
+      int mCount = 0;
+      for (final row in rows) {
+        if (row.node.children.isEmpty) {
+          tCount++;
+          mCount += row.node.subtreeMsgCount;
+        }
+      }
+      filteredTopicCount = tCount;
+      filteredMsgCount = mCount;
+    } else {
+      filteredTopicCount = 0;
+      filteredMsgCount = 0;
+    }
+
     return rows;
+  }
+
+  /// Recursively computes the (topicCount, msgCount) that should be displayed
+  /// on [node]'s badge, respecting the current filter.
+  ///
+  /// Topic count = number of **leaf endpoints** (no children) in the matching
+  /// sub-tree. Intermediate path segments are not counted.
+  /// Msg count = sum of [valueNotifier.seq] across all matching leaves.
+  (int, int) _computeDisplayCounts(TopicTreeNode node, String filterLower) {
+    // Leaf endpoint — counts as exactly one topic.
+    if (node.children.isEmpty) {
+      return (1, node.valueNotifier.value?.seq ?? 0);
+    }
+    int t = 0, m = 0;
+    for (final child in node.children.values) {
+      if (filterLower.isEmpty || _subtreeMatchesFilter(child, filterLower)) {
+        final (ct, cm) = _computeDisplayCounts(child, filterLower);
+        t += ct;
+        m += cm;
+      }
+    }
+    // If this branch node also carries its own direct value, count its messages.
+    m += node.valueNotifier.value?.seq ?? 0;
+    return (t, m);
   }
 
   /// Returns true when [node] or any of its descendants match [filterLower].
   bool _subtreeMatchesFilter(TopicTreeNode node, String filterLower) {
-    if (node.fullPath.toLowerCase().contains(filterLower)) return true;
+    final matchTopic = _scope != SearchScope.value && node.fullPath.toLowerCase().contains(filterLower);
+    if (matchTopic) return true;
     final payload = node.valueNotifier.value?.payload;
-    if (payload != null && payload.toLowerCase().contains(filterLower)) {
-      return true;
-    }
+    final matchValue = _scope != SearchScope.topic && payload != null && payload.toLowerCase().contains(filterLower);
+    if (matchValue) return true;
     for (final child in node.children.values) {
       if (_subtreeMatchesFilter(child, filterLower)) return true;
     }

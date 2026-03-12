@@ -33,17 +33,30 @@ class TopicTreeNode {
   /// Used by [TopicTreeRow] to trigger the pulse animation on ancestor rows.
   final ValueNotifier<int> pulseNotifier = ValueNotifier(0);
 
+  /// Incremented on every message, un-rate-limited, so row badges can update
+  /// immediately without waiting for a [TopicTreeController.notifyListeners] cycle.
+  final ValueNotifier<int> countNotifier = ValueNotifier(0);
+
   /// Total number of messages received at this node and all descendants.
   int subtreeMsgCount = 0;
 
-  /// Total number of descendant nodes (sub-topics) in this subtree.
+  /// Number of leaf endpoint topics in this subtree (nodes with no children).
+  /// `my/new/sensor/one` + `my/new/sensor/two` → 2, not 4.
   int get subtreeTopicCount {
-    int count = children.length;
+    if (children.isEmpty) return 1; // this node IS the endpoint
+    int count = 0;
     for (final child in children.values) {
       count += child.subtreeTopicCount;
     }
     return count;
   }
+
+  /// Display counts used by row badges — set by the controller in
+  /// [TopicTreeController.buildFlatList] on every rebuild.
+  /// When no filter is active these equal [subtreeTopicCount]/[subtreeMsgCount];
+  /// when a filter is active they reflect only the matching sub-tree.
+  int displayTopicCount = 0;
+  int displayMsgCount = 0;
 
   /// Whether the subtree below this node is currently expanded in the UI.
   bool isExpanded = false;
