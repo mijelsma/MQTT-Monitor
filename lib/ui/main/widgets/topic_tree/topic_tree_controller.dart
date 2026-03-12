@@ -100,6 +100,12 @@ class TopicTreeController extends ChangeNotifier {
       currentLevel = node.children;
     }
 
+    // Increment the subtree message counter for every node along the path so that
+    // badge pills on ancestor rows show the cumulative message count.
+    for (final node in visitedNodes) {
+      node.subtreeMsgCount++;
+    }
+
     /// After processing the message and updating the tree, we need to trigger pulse animations on the affected nodes.
     /// Pulses are rate-limited per node based on the configured pulse rate, so we schedule them accordingly.
     _schedulePulse(visitedNodes);

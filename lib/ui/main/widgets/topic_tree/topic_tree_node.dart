@@ -33,6 +33,18 @@ class TopicTreeNode {
   /// Used by [TopicTreeRow] to trigger the pulse animation on ancestor rows.
   final ValueNotifier<int> pulseNotifier = ValueNotifier(0);
 
+  /// Total number of messages received at this node and all descendants.
+  int subtreeMsgCount = 0;
+
+  /// Total number of descendant nodes (sub-topics) in this subtree.
+  int get subtreeTopicCount {
+    int count = children.length;
+    for (final child in children.values) {
+      count += child.subtreeTopicCount;
+    }
+    return count;
+  }
+
   /// Whether the subtree below this node is currently expanded in the UI.
   bool isExpanded = false;
 
