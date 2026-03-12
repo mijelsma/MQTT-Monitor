@@ -201,7 +201,10 @@ class _BrokerModalState extends State<BrokerModal> {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(s.brokerModalFieldColor, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: context.tokens.textSecondary)),
+          child: Text(
+            s.brokerModalFieldColor,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: context.tokens.textSecondary),
+          ),
         ),
         Wrap(
           spacing: 8,
