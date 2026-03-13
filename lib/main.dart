@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+
 import 'app.dart';
-import 'services/mqtt/mqtt_service.dart';
-import 'state/app_state.dart';
+import 'core/mqtt/mqtt_service.dart';
+import 'core/state/app_state.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -9,9 +10,10 @@ void main() async {
   // Initialize app state and load persisted values.
   await AppStateManager.instance.initialize();
 
-  // Initialize MQTT service
-  MqttService.instance.initialize();
+  // Create and initialize the MQTT service.
+  final mqttService = MqttService(AppStateManager.instance);
+  mqttService.initialize();
 
   // Run the app.
-  runApp(const App());
+  runApp(App(mqttService: mqttService));
 }
