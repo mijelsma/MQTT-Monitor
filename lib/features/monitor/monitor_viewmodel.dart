@@ -37,6 +37,17 @@ class MonitorViewModel extends ChangeNotifier {
   // The topic tree is represented as a map of root nodes. Each node has a map of children, allowing for a dynamic tree structure.
   final Map<String, TopicTreeNode> _roots = {};
 
+  // Currently selected node (for the detail panel).
+  TopicTreeNode? _selectedNode;
+  TopicTreeNode? get selectedNode => _selectedNode;
+
+  /// Selects a node to display in the detail panel.
+  void selectNode(TopicTreeNode? node) {
+    if (_selectedNode == node) return;
+    _selectedNode = node;
+    notifyListeners();
+  }
+
   // pendingTimers is used to track scheduled pulse animations for nodes, ensuring we respect the configured pulse
   // rate even under high message throughput.
   final Map<String, Timer> _pendingTimers = {};
@@ -139,7 +150,7 @@ class MonitorViewModel extends ChangeNotifier {
 
       if (i == segments.length - 1) {
         final prev = node.valueNotifier.value;
-        node.valueNotifier.value = TopicNodeValue(payload: msg.payload, seq: (prev?.seq ?? 0) + 1);
+        node.valueNotifier.value = TopicNodeValue(payload: msg.payload, seq: (prev?.seq ?? 0) + 1, receivedAt: msg.receivedAt, retain: msg.retain, qos: msg.qos);
       }
 
       currentLevel = node.children;
@@ -266,6 +277,7 @@ class MonitorViewModel extends ChangeNotifier {
     }
     _pendingTimers.clear();
     _roots.clear();
+    _selectedNode = null;
     notifyListeners();
   }
 

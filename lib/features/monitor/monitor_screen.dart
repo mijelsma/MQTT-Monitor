@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../../core/mqtt/mqtt_service.dart';
 import '../../core/state/app_state.dart';
+import '../../shared/widgets/resizable_split.dart';
 import 'monitor_viewmodel.dart';
+import 'widgets/detail_sidebar.dart';
 import 'widgets/monitor_app_bar.dart';
 import 'widgets/no_brokers_state.dart';
 import 'widgets/no_subscriptions_state.dart';
@@ -54,13 +56,30 @@ class _MonitorViewState extends State<_MonitorView> {
   Widget build(BuildContext context) {
     final vm = context.watch<MonitorViewModel>();
 
-    Widget body;
+    // Determine what the main content area should show.
+    final bool showTree;
+    Widget? emptyState;
     if (vm.brokers.isEmpty) {
-      body = const NoBrokersState();
+      showTree = false;
+      emptyState = const NoBrokersState();
     } else if (vm.activeBroker != null && vm.activeBroker!.subscriptions.isEmpty) {
-      body = NoSubscriptionsState(broker: vm.activeBroker!);
+      showTree = false;
+      emptyState = NoSubscriptionsState(broker: vm.activeBroker!);
     } else {
-      body = TopicTree(filterController: _filterController);
+      showTree = true;
+    }
+
+    Widget body;
+    if (!showTree) {
+      body = emptyState!;
+    } else {
+      body = ResizableSplit(
+        initialRatio: 0.55,
+        minRatio: 0.25,
+        maxRatio: 0.75,
+        first: TopicTree(filterController: _filterController),
+        second: const DetailSidebar(),
+      );
     }
 
     Widget? bottomBar;
