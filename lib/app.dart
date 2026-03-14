@@ -41,7 +41,7 @@ class _AppView extends StatelessWidget {
       theme: themeLight,
       darkTheme: themeDark,
       themeMode: themeMode,
-      locale: Locale(language.key),
+      locale: Locale(language.name),
       supportedLocales: S.delegate.supportedLocales,
       localizationsDelegates: const [S.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
       home: const MonitorScreen(),

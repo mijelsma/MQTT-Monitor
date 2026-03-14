@@ -15,11 +15,13 @@ import '../../../theme/app_tokens/app_tokens.dart';
 /// A brief highlight pulse (fade-out overlay) is driven by a per-row
 /// [AnimationController] that fires on every new pulse tick.
 class TopicTreeRow extends StatefulWidget {
-  const TopicTreeRow({super.key, required this.node, required this.depth, required this.onToggle});
+  const TopicTreeRow({super.key, required this.node, required this.depth, required this.onToggle, this.onSelect, this.selected = false});
 
   final TopicTreeNode node;
   final int depth;
   final VoidCallback onToggle;
+  final VoidCallback? onSelect;
+  final bool selected;
 
   @override
   State<TopicTreeRow> createState() => _TopicTreeRowState();
@@ -85,12 +87,18 @@ class _TopicTreeRowState extends State<TopicTreeRow> with SingleTickerProviderSt
     final pulseAlpha = (1.0 - _pulseAnim.value) * _kPeakAlpha;
 
     return InkWell(
-      onTap: node.isBranch ? widget.onToggle : null,
+      onTap: () {
+        if (node.isBranch) widget.onToggle();
+        widget.onSelect?.call();
+      },
       splashColor: tokens.primary.withValues(alpha: 0.07),
       highlightColor: tokens.selectedBg,
       child: Container(
-        color: tokens.primary.withValues(alpha: pulseAlpha),
-        padding: EdgeInsets.fromLTRB(10.0 + widget.depth * 18.0, 9, 14, 9),
+        decoration: BoxDecoration(
+          color: widget.selected ? tokens.selectedBg : tokens.primary.withValues(alpha: pulseAlpha),
+          border: widget.selected ? Border(left: BorderSide(color: tokens.primary, width: 2.5)) : null,
+        ),
+        padding: EdgeInsets.fromLTRB(widget.selected ? 7.5 + widget.depth * 18.0 : 10.0 + widget.depth * 18.0, 9, 14, 9),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [

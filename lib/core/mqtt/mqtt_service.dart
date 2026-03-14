@@ -161,7 +161,9 @@ class MqttService {
       for (final msg in messages) {
         final publish = msg.payload as MqttPublishMessage;
         final bytes = publish.payload.message;
-        _onMessage(msg.topic, Uint8List.fromList(bytes));
+        final retain = publish.header?.retain ?? false;
+        final qos = publish.header?.qos.index ?? 0;
+        _onMessage(msg.topic, Uint8List.fromList(bytes), retain: retain, qos: qos);
       }
     });
   }
@@ -198,9 +200,9 @@ class MqttService {
   }
 
   /// Handles an incoming message on the given topic.
-  void _onMessage(String topic, Uint8List payload) {
+  void _onMessage(String topic, Uint8List payload, {bool retain = false, int qos = 0}) {
     final data = utf8.decode(payload, allowMalformed: true);
-    _messages.add(MQTTMessage(topic: topic, payload: data, receivedAt: DateTime.now()));
+    _messages.add(MQTTMessage(topic: topic, payload: data, receivedAt: DateTime.now(), retain: retain, qos: qos));
     _rateCounter++;
     _messageCount++;
   }
