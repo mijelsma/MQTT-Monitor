@@ -7,27 +7,48 @@ import '../../theme/app_tokens/app_tokens.dart';
 /// Renders a JSON string with syntax-highlighted pretty-printing.
 ///
 /// Falls back to plain monospaced text if the input is not valid JSON.
+///
+/// The static [highlight] method produces coloured [TextSpan]s from raw
+/// JSON text and is reused by the publish-panel's editable controller so
+/// there is exactly *one* tokeniser for the entire app.
 class JsonHighlighter extends StatelessWidget {
-  const JsonHighlighter({super.key, required this.source});
+  const JsonHighlighter({super.key, required this.source, this.prettyPrint = true});
 
   final String source;
+
+  /// When `true` (default), the JSON is re-formatted with 4-space indentation
+  /// before highlighting. Set to `false` to highlight the raw text as-is.
+  final bool prettyPrint;
+
+  /// Returns `true` if [text] is valid JSON.
+  static bool isJson(String text) {
+    try {
+      jsonDecode(text);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final parsed = _tryParse(source);
-    if (parsed == null) {
-      // Not JSON — render as plain text
-      return SelectableText(
-        source,
-        style: TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 12.5, height: 1.5, color: tokens.textPrimary),
-      );
+    String displayText = source;
+    if (prettyPrint) {
+      final parsed = _tryParse(source);
+      if (parsed == null) {
+        // Not JSON — render as plain text
+        return SelectableText(
+          source,
+          style: TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 12.5, height: 1.5, color: tokens.textPrimary),
+        );
+      }
+      displayText = const JsonEncoder.withIndent('    ').convert(parsed);
     }
 
-    final pretty = const JsonEncoder.withIndent('    ').convert(parsed);
-    final spans = _highlight(pretty, isDark, tokens);
+    final spans = highlight(displayText, isDark, tokens);
 
     return SelectableText.rich(
       TextSpan(children: spans),
@@ -43,7 +64,11 @@ class JsonHighlighter extends StatelessWidget {
     }
   }
 
-  static List<TextSpan> _highlight(String json, bool isDark, AppTokens tokens) {
+  /// Produces syntax-highlighted [TextSpan]s for a JSON string.
+  ///
+  /// Exposed as a public static so other widgets (e.g. an editable JSON field)
+  /// can reuse the same colouring logic.
+  static List<TextSpan> highlight(String json, bool isDark, AppTokens tokens) {
     final spans = <TextSpan>[];
 
     // Derive all colors from the app theme palette

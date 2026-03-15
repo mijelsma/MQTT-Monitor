@@ -269,7 +269,7 @@ class _PayloadCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final isJson = _isJson(payload);
+    final isJson = JsonHighlighter.isJson(payload);
     final formatLabel = isJson ? 'JSON' : 'TEXT';
     final formatColor = isJson ? AppColors.success500 : tokens.textTertiary;
 
@@ -316,15 +316,6 @@ class _PayloadCard extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  static bool _isJson(String text) {
-    try {
-      jsonDecode(text);
-      return true;
-    } catch (_) {
-      return false;
-    }
   }
 }
 
