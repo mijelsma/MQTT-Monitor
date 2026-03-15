@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../../../shared/widgets/spacers.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../monitor_viewmodel.dart';
@@ -56,9 +58,16 @@ class _MonitorAppBarState extends State<MonitorAppBar> {
         preferredSize: const Size.fromHeight(1),
         child: Container(height: 1.0, color: Theme.of(context).dividerColor),
       ),
-      title: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 280),
-        child: _SearchBox(controller: widget.filterController, scope: widget.scope, hasText: hasText, onScopeChanged: widget.onScopeChanged),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 280),
+            child: _SearchBox(controller: widget.filterController, scope: widget.scope, hasText: hasText, onScopeChanged: widget.onScopeChanged),
+          ),
+          const HSpacer(8),
+          _CollapseExpandButton(),
+        ],
       ),
       titleSpacing: 10,
       actions: const [BrokerSelector(), HSpacer(8), ConnectionButton(), HSpacer(8), SettingsButton(), HSpacer(8)],
@@ -178,6 +187,25 @@ class _ScopePicker extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _CollapseExpandButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<MonitorViewModel>();
+    final tokens = context.tokens;
+    final expanded = vm.allExpanded;
+
+    return IconButton(
+      onPressed: expanded ? vm.collapseAll : vm.expandAll,
+      icon: Icon(expanded ? Icons.unfold_less_rounded : Icons.unfold_more_rounded, size: 18, color: tokens.textSecondary),
+      tooltip: expanded ? 'Collapse all' : 'Expand all',
+      splashRadius: 16,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+      visualDensity: VisualDensity.compact,
     );
   }
 }
