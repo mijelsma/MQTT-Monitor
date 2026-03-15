@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../shared/widgets/json_highlighter.dart';
-import '../../../shared/widgets/qos_tag.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../monitor_viewmodel.dart';
@@ -524,7 +523,7 @@ class _OptionsBar extends StatelessWidget {
   }
 }
 
-// A compact QoS selector showing the three QoS levels as selectable chips. Highlights the selected QoS level and calls back when changed.
+// A compact QoS selector showing the three QoS levels as selectable chips. Uses a single accent color, matching the subscription modal style.
 class _MiniQosSelector extends StatelessWidget {
   const _MiniQosSelector({required this.value, required this.onChanged});
 
@@ -534,6 +533,7 @@ class _MiniQosSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final accent = tokens.primary;
     return Container(
       decoration: BoxDecoration(
         color: tokens.inputFill,
@@ -547,11 +547,18 @@ class _MiniQosSelector extends StatelessWidget {
           final selected = value == i;
           return GestureDetector(
             onTap: () => onChanged(i),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
-              decoration: BoxDecoration(color: selected ? tokens.primary.withValues(alpha: 0.12) : Colors.transparent, borderRadius: BorderRadius.circular(4)),
-              child: QosTag(qos: i),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                curve: Curves.easeOut,
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(color: selected ? accent : Colors.transparent, borderRadius: BorderRadius.circular(4)),
+                child: Text(
+                  'Q$i',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: selected ? tokens.onPrimary : tokens.textSecondary),
+                ),
+              ),
             ),
           );
         }),
