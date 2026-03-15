@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../generated/l10n.dart';
+import '../../../models/startup_connection.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
@@ -86,6 +87,24 @@ class UiPanel extends StatelessWidget {
         UiSection(
           label: s.uiPanelSectionLayout,
           children: [UiSwitchRow(label: s.uiPanelPersistLayout, subtitle: s.uiPanelPersistLayoutSubtitle, value: vm.persistLayout, onChanged: (v) => vm.setPersistLayout(v))],
+        ),
+
+        // Connection
+        UiSection(
+          label: 'Connection',
+          children: [
+            UiSegmentRow<StartupConnection>(
+              label: 'Startup Behavior',
+              accent: accent,
+              value: vm.startupConnection,
+              onChanged: (v) => vm.setStartupConnection(v),
+              options: [
+                UiSegmentOption(value: StartupConnection.alwaysConnect, label: 'Connect', icon: Icons.power_rounded),
+                UiSegmentOption(value: StartupConnection.lastStatus, label: 'Last Status', icon: Icons.restore_rounded),
+                UiSegmentOption(value: StartupConnection.stayDisconnected, label: 'Disconnected', icon: Icons.power_off_rounded),
+              ],
+            ),
+          ],
         ),
       ],
     );

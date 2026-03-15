@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../models/broker_entry.dart';
 import '../../../models/language.dart';
+import '../../../models/startup_connection.dart';
 import '../state_key.dart';
 
 /// Defines the keys used in the app state for managing settings and preferences.
@@ -18,8 +19,11 @@ abstract final class SettingsKeys {
   static final pulseFadeMs = StateKey.integer('settings.pulseFadeMs', defaultValue: 500);
   static final persistLayout = StateKey.boolean('settings.persistLayout', defaultValue: true);
 
+  // Connection
+  static final startupConnection = StateKey.forEnum('settings.startupConnection', StartupConnection.values, defaultValue: StartupConnection.lastStatus);
+
   // Language panel
   static final language = StateKey.forEnum('settings.language', AppLanguage.values, defaultValue: AppLanguage.en);
 
-  static final List<StateKey> all = [themeMode, showStatusBar, showActivity, pulseRatePps, pulseFadeMs, persistLayout, rateIntervalMs, language, brokers];
+  static final List<StateKey> all = [themeMode, showStatusBar, showActivity, pulseRatePps, pulseFadeMs, persistLayout, rateIntervalMs, startupConnection, language, brokers];
 }

@@ -7,6 +7,7 @@ import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 
 import '../../models/broker_entry.dart';
+import '../../models/startup_connection.dart';
 import '../state/app_state.dart';
 import '../state/keys/app_keys.dart';
 import '../state/keys/settings_keys.dart';
@@ -25,6 +26,7 @@ class MqttService {
   StreamSubscription? _updatesSubscription;
   String? _currentBrokerId;
   int _sessionId = 0;
+  bool _isFirstSync = true;
 
   // Stream controller for incoming MQTT messages.
   final _messages = StreamController<MQTTMessage>.broadcast();
@@ -95,6 +97,20 @@ class MqttService {
     if (broker == null) {
       _teardown();
       return;
+    }
+
+    // On the very first sync (app startup), apply the startup connection preference.
+    if (_isFirstSync) {
+      _isFirstSync = false;
+      final mode = _state.read(SettingsKeys.startupConnection);
+      switch (mode) {
+        case StartupConnection.alwaysConnect:
+          _state.write(AppKeys.disconnected, false);
+        case StartupConnection.stayDisconnected:
+          _state.write(AppKeys.disconnected, true);
+        case StartupConnection.lastStatus:
+          break; // keep existing disconnected flag
+      }
     }
 
     if (_state.read(AppKeys.disconnected)) {
