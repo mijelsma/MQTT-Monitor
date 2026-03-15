@@ -6,6 +6,7 @@ import 'bottom_app_bar/light.dart';
 import 'divider/light.dart';
 import 'icon/light.dart';
 import 'card/light.dart';
+import 'popup_menu/light.dart';
 import 'text/light.dart';
 import 'app_tokens/app_tokens.dart';
 
@@ -15,6 +16,7 @@ final ThemeData themeLight = ThemeData(
   scaffoldBackgroundColor: AppColors.neutral50,
   appBarTheme: appBarThemeLight,
   cardTheme: cardThemeLight,
+  popupMenuTheme: popupMenuThemeLight,
   dividerTheme: dividerThemeLight,
   iconTheme: iconThemeLight,
   bottomAppBarTheme: bottomAppBarThemeLight,
