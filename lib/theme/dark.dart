@@ -6,6 +6,7 @@ import 'bottom_app_bar/dark.dart';
 import 'divider/dark.dart';
 import 'icon/dark.dart';
 import 'card/dark.dart';
+import 'popup_menu/dark.dart';
 import 'text/dark.dart';
 import 'app_tokens/app_tokens.dart';
 
@@ -15,6 +16,7 @@ final ThemeData themeDark = ThemeData(
   scaffoldBackgroundColor: AppColors.dark0,
   appBarTheme: appBarThemeDark,
   cardTheme: cardThemeDark,
+  popupMenuTheme: popupMenuThemeDark,
   dividerTheme: dividerThemeDark,
   iconTheme: iconThemeDark,
   bottomAppBarTheme: bottomAppBarThemeDark,
