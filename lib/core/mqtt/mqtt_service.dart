@@ -43,6 +43,24 @@ class MqttService {
     _sync();
   }
 
+  /// Publishes a message to the given topic.
+  /// Returns `true` if the message was sent, `false` if the client is not connected.
+  bool publish(String topic, String payload, {int qos = 0, bool retain = false}) {
+    final client = _client;
+    if (client == null || client.connectionStatus?.state != MqttConnectionState.connected) return false;
+
+    final mqttQos = switch (qos) {
+      1 => MqttQos.atLeastOnce,
+      2 => MqttQos.exactlyOnce,
+      _ => MqttQos.atMostOnce,
+    };
+
+    final builder = MqttClientPayloadBuilder();
+    builder.addString(payload);
+    client.publishMessage(topic, mqttQos, builder.payload!, retain: retain);
+    return true;
+  }
+
   /// Disconnect from the current broker (user-initiated).
   void disconnect() {
     _state.write(AppKeys.disconnected, true);

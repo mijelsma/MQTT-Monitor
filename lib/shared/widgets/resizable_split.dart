@@ -89,8 +89,8 @@ class _DividerHandle extends StatelessWidget {
   Widget build(BuildContext context) {
     final lineColor = hovering ? accentColor.withValues(alpha: 0.6) : borderColor;
     final gripColor = hovering ? accentColor.withValues(alpha: 0.8) : borderColor;
-    const hitArea = 8.0;
-    const gripLength = 32.0;
+    const hitArea = 14.0;
+    const gripLength = 40.0;
 
     return SizedBox(
       width: isHorizontal ? hitArea : double.infinity,
@@ -100,11 +100,11 @@ class _DividerHandle extends StatelessWidget {
         children: [
           // Thin divider line
           AnimatedContainer(duration: const Duration(milliseconds: 150), width: isHorizontal ? 1 : double.infinity, height: isHorizontal ? double.infinity : 1, color: lineColor),
-          // Grip dots
+          // Grip indicator
           AnimatedContainer(
             duration: const Duration(milliseconds: 150),
-            width: isHorizontal ? 3 : gripLength,
-            height: isHorizontal ? gripLength : 3,
+            width: isHorizontal ? 4 : gripLength,
+            height: isHorizontal ? gripLength : 4,
             decoration: BoxDecoration(color: gripColor, borderRadius: BorderRadius.circular(2)),
           ),
         ],

@@ -97,6 +97,15 @@ class MonitorViewModel extends ChangeNotifier {
   /// Reconnects to the active broker.
   void reconnect() => _mqtt.reconnect();
 
+  /// Publishes a message to the given topic.
+  /// Returns `true` if the message was sent.
+  bool publish(String topic, String payload, {int qos = 0, bool retain = false}) {
+    return _mqtt.publish(topic, payload, qos: qos, retain: retain);
+  }
+
+  /// Whether the client is currently connected.
+  bool get isConnected => connectionStatus == ConnectionStatus.connected;
+
   /// Adds a new broker and makes it the active one.
   void addBroker(BrokerEntry entry) {
     _state.write(SettingsKeys.brokers, [...brokers, entry]);
