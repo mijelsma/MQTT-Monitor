@@ -5,6 +5,7 @@ import '../../core/state/keys/app_keys.dart';
 import '../../core/state/keys/settings_keys.dart';
 import '../../models/broker_entry.dart';
 import '../../models/language.dart';
+import '../../models/startup_connection.dart';
 import 'settings_section.dart';
 
 class SettingsViewModel extends ChangeNotifier {
@@ -73,6 +74,9 @@ class SettingsViewModel extends ChangeNotifier {
 
   int get rateIntervalMs => _state.read(SettingsKeys.rateIntervalMs);
   void setRateIntervalMs(int v) => _state.write(SettingsKeys.rateIntervalMs, v);
+
+  StartupConnection get startupConnection => _state.read(SettingsKeys.startupConnection);
+  void setStartupConnection(StartupConnection v) => _state.write(SettingsKeys.startupConnection, v);
 
   // ── Language ─────────────────────────────────────────────────────────
 
