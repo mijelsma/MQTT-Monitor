@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/mqtt/connection_status.dart';
+import '../../../shared/widgets/app_bar_action_button.dart';
 import '../../../shared/widgets/spacers.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
+import '../../dashboard/dashboard_screen.dart';
+import '../../settings/settings_screen.dart';
 import '../monitor_viewmodel.dart';
 import 'broker_selector.dart';
-import 'connection_button.dart';
-import 'settings_button.dart';
 
 class MonitorAppBar extends StatefulWidget implements PreferredSizeWidget {
   const MonitorAppBar({super.key, required this.filterController, required this.scope, required this.onScopeChanged});
@@ -70,7 +72,7 @@ class _MonitorAppBarState extends State<MonitorAppBar> {
         ],
       ),
       titleSpacing: 10,
-      actions: const [BrokerSelector(), HSpacer(8), ConnectionButton(), HSpacer(8), SettingsButton(), HSpacer(8)],
+      actions: const [BrokerSelector(), HSpacer(8), _ConnectionButton(), HSpacer(4), _DashboardButton(), HSpacer(4), _SettingsButton(), HSpacer(8)],
     );
   }
 }
@@ -206,6 +208,64 @@ class _CollapseExpandButton extends StatelessWidget {
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
       visualDensity: VisualDensity.compact,
+    );
+  }
+}
+
+class _ConnectionButton extends StatelessWidget {
+  const _ConnectionButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<MonitorViewModel>();
+    if (vm.brokers.isEmpty) return const SizedBox.shrink();
+
+    final (icon, onTap) = switch (vm.connectionStatus) {
+      ConnectionStatus.connected || ConnectionStatus.connecting => (Icons.link_off_rounded, vm.disconnect as VoidCallback?),
+      _ => (Icons.link_rounded, vm.reconnect as VoidCallback?),
+    };
+
+    final tooltip = switch (vm.connectionStatus) {
+      ConnectionStatus.connected || ConnectionStatus.connecting => 'Disconnect',
+      _ => 'Reconnect',
+    };
+
+    return AppBarActionButton(icon: icon, tooltip: tooltip, onTap: onTap);
+  }
+}
+
+class _DashboardButton extends StatelessWidget {
+  const _DashboardButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<MonitorViewModel>();
+    final broker = vm.activeBroker;
+
+    return AppBarActionButton(
+      icon: Icons.bar_chart_rounded,
+      tooltip: 'Dashboard',
+      onTap: broker == null
+          ? null
+          : () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => GraphDashboardScreen(brokerId: broker.id, brokerName: broker.name),
+              ),
+            ),
+    );
+  }
+}
+
+class _SettingsButton extends StatelessWidget {
+  const _SettingsButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBarActionButton(
+      icon: Icons.tune_rounded,
+      tooltip: 'Settings',
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
     );
   }
 }
