@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
+import '../../core/state/keys/dashboard_keys.dart';
 import '../../core/state/keys/settings_keys.dart';
 import '../../models/broker_entry.dart';
+import '../../models/dashboard_layout.dart';
 import '../../models/language.dart';
 import '../../models/startup_connection.dart';
 import 'settings_section.dart';
@@ -17,12 +19,12 @@ class SettingsViewModel extends ChangeNotifier {
 
   void _onStateChanged() => notifyListeners();
 
-  // ── Section navigation ───────────────────────────────────────────────
+  //  Section navigation
 
   SettingsSection get activeSection => _state.read(AppKeys.activeSettingsSection);
   void selectSection(SettingsSection s) => _state.write(AppKeys.activeSettingsSection, s);
 
-  // ── Broker management ────────────────────────────────────────────────
+  //  Broker management
 
   List<BrokerEntry> get brokers => _state.read(SettingsKeys.brokers);
 
@@ -50,12 +52,43 @@ class SettingsViewModel extends ChangeNotifier {
     _state.write(SettingsKeys.brokers, list);
   }
 
-  // ── Theme ────────────────────────────────────────────────────────────
+  // Dashboard layouts
+
+  List<DashboardLayout> get layouts {
+    _state.load(DashboardKeys.layouts);
+    return _state.read(DashboardKeys.layouts);
+  }
+
+  void deleteLayout(String id) {
+    final list = layouts.where((p) => p.id != id).toList();
+    _state.write(DashboardKeys.layouts, list);
+  }
+
+  void reorderLayouts(int oldIndex, int newIndex) {
+    final list = [...layouts];
+    if (newIndex > oldIndex) newIndex--;
+    final item = list.removeAt(oldIndex);
+    list.insert(newIndex, item);
+    _state.write(DashboardKeys.layouts, list);
+  }
+
+  void addLayout(DashboardLayout layout) {
+    _state.write(DashboardKeys.layouts, [...layouts, layout]);
+  }
+
+  void updateLayout(DashboardLayout updated) {
+    final list = [...layouts];
+    final i = list.indexWhere((p) => p.id == updated.id);
+    if (i != -1) list[i] = updated;
+    _state.write(DashboardKeys.layouts, list);
+  }
+
+  // Theme
 
   ThemeMode get themeMode => _state.read(SettingsKeys.themeMode);
   void setThemeMode(ThemeMode m) => _state.write(SettingsKeys.themeMode, m);
 
-  // ── UI settings ──────────────────────────────────────────────────────
+  //  UI settings
 
   bool get showStatusBar => _state.read(SettingsKeys.showStatusBar);
   void setShowStatusBar(bool v) => _state.write(SettingsKeys.showStatusBar, v);
@@ -78,7 +111,7 @@ class SettingsViewModel extends ChangeNotifier {
   StartupConnection get startupConnection => _state.read(SettingsKeys.startupConnection);
   void setStartupConnection(StartupConnection v) => _state.write(SettingsKeys.startupConnection, v);
 
-  // ── Language ─────────────────────────────────────────────────────────
+  //  Language
 
   AppLanguage get language => _state.read(SettingsKeys.language);
   void setLanguage(AppLanguage lang) => _state.write(SettingsKeys.language, lang);

@@ -13,6 +13,7 @@ import 'settings_section.dart';
 import 'settings_viewmodel.dart';
 import 'layouts/settings_narrow_layout.dart';
 import 'layouts/settings_wide_layout.dart';
+import 'panels/dashboard_panel.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -21,6 +22,7 @@ class SettingsScreen extends StatelessWidget {
     final s = S.of(context);
     return [
       (section: SettingsSection.brokers, label: s.sectionBrokers, icon: Icons.dns_rounded, gradient: AppColors.brokerGradient),
+      (section: SettingsSection.dashboard, label: 'Dashboard', icon: Icons.dashboard_rounded, gradient: AppColors.dashboardGradient),
       (section: SettingsSection.ui, label: s.sectionUI, icon: Icons.palette_outlined, gradient: AppColors.uiGradient),
       (section: SettingsSection.language, label: s.sectionLanguage, icon: Icons.language_rounded, gradient: AppColors.languageGradient),
       (section: SettingsSection.about, label: s.sectionAbout, icon: Icons.info_outline_rounded, gradient: AppColors.aboutGradient),
@@ -41,6 +43,7 @@ class SettingsScreen extends StatelessWidget {
 
           Widget panel() => switch (current) {
             SettingsSection.brokers => const BrokersPanel(),
+            SettingsSection.dashboard => const DashboardPanel(),
             SettingsSection.ui => const UiPanel(),
             SettingsSection.language => const LanguagePanel(),
             SettingsSection.about => const AboutPanel(),
