@@ -120,4 +120,5 @@ abstract final class AppColors {
   static const List<Color> languageGradient = [Color(0xFF0EA5E9), Color(0xFF06B6D4)];
   static const List<Color> uiGradient = [Color(0xFFF59E0B), Color(0xFFEF4444)];
   static const List<Color> aboutGradient = [Color(0xFF10B981), Color(0xFF059669)];
+  static const List<Color> dashboardGradient = [Color(0xFFEC4899), Color(0xFFF43F5E)];
 }

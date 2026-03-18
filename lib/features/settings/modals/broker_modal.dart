@@ -6,6 +6,7 @@ import '../../../models/broker_entry.dart';
 import '../../../models/subscription_entry.dart';
 import '../../../shared/widgets/qos_tag.dart';
 import '../../../shared/widgets/spacers.dart';
+import '../../../shared/widgets/color_picker_field.dart';
 import '../../../shared/widgets/ui_field.dart';
 import '../../../shared/widgets/ui_modal_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
@@ -138,7 +139,14 @@ class _BrokerModalState extends State<BrokerModal> {
         const VSpacer(10),
         UiField(label: s.brokerModalFieldName, controller: _name, hint: 'e.g. Home Server', textInputAction: TextInputAction.next, validator: (v) => (v == null || v.trim().isEmpty) ? s.brokerModalValidateName : null),
         const VSpacer(14),
-        _buildColorPicker(),
+        ColorPickerField(
+          label: s.brokerModalFieldColor,
+          value: AppColors.brokerColorOptions[_colorIndex],
+          onChanged: (c) {
+            final idx = AppColors.brokerColorOptions.indexWhere((o) => o.toARGB32() == c.toARGB32());
+            if (idx >= 0) setState(() => _colorIndex = idx);
+          },
+        ),
         const VSpacer(14),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,45 +182,6 @@ class _BrokerModalState extends State<BrokerModal> {
         UiField(label: s.brokerModalFieldClientId, optional: true, controller: _clientId, hint: 'mqtt_monitor', textInputAction: TextInputAction.next),
         const VSpacer(12),
         UiSwitchRow(label: s.brokerModalRandomSuffix, subtitle: s.brokerModalRandomSuffixSubtitle, value: _randomClientIdSuffix, accent: accent, bordered: true, onChanged: (v) => setState(() => _randomClientIdSuffix = v)),
-      ],
-    );
-  }
-
-  Widget _buildColorPicker() {
-    final s = S.of(context);
-    final colors = AppColors.brokerColorOptions;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            s.brokerModalFieldColor,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: context.tokens.textSecondary),
-          ),
-        ),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: List.generate(colors.length, (i) {
-            final isSelected = i == _colorIndex;
-            final gradient = AppColors.brokerGradientFor(i);
-            return GestureDetector(
-              onTap: () => setState(() => _colorIndex = i),
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: gradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
-                  borderRadius: BorderRadius.circular(8),
-                  border: isSelected ? Border.all(color: colors[i], width: 2.5) : null,
-                  boxShadow: isSelected ? [BoxShadow(color: colors[i].withValues(alpha: 0.4), blurRadius: 6)] : null,
-                ),
-                child: isSelected ? const Icon(Icons.check_rounded, size: 16, color: Colors.white) : null,
-              ),
-            );
-          }),
-        ),
       ],
     );
   }

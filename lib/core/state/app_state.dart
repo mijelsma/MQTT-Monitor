@@ -32,6 +32,11 @@ class AppStateManager extends ChangeNotifier {
     }
   }
 
+  /// Loads a single dynamic key from SharedPreferences into the in-memory
+  /// store. Use this for keys that aren't in [_allKeys] (e.g. per-broker
+  /// dashboard cards).
+  void load<T>(StateKey<T> key) => _load(key);
+
   /// Returns the current value for [key], or its default if unset.
   T read<T>(StateKey<T> key) => _store[key.key] as T? ?? key.defaultValue;
 
