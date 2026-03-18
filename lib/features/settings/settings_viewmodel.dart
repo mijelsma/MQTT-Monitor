@@ -9,6 +9,7 @@ import '../../models/dashboard_layout.dart';
 import '../../models/language.dart';
 import '../../models/startup_connection.dart';
 import 'settings_section.dart';
+import '../../models/environment_variable.dart';
 
 class SettingsViewModel extends ChangeNotifier {
   SettingsViewModel({required AppStateManager state}) : _state = state {
@@ -81,6 +82,38 @@ class SettingsViewModel extends ChangeNotifier {
     final i = list.indexWhere((p) => p.id == updated.id);
     if (i != -1) list[i] = updated;
     _state.write(DashboardKeys.layouts, list);
+  }
+
+  // ── Environment variables ─────────────────────────────────────────────
+
+  List<EnvironmentVariable> get environmentVariables => _state.read(SettingsKeys.environmentVariables);
+
+  void addEnvironmentVariable(EnvironmentVariable variable) {
+    _state.write(SettingsKeys.environmentVariables, [...environmentVariables, variable]);
+  }
+
+  void updateEnvironmentVariable(String oldName, EnvironmentVariable updated) {
+    final list = [...environmentVariables];
+    final i = list.indexWhere((v) => v.name == oldName);
+    if (i != -1) {
+      list[i] = updated;
+      // If name changed, migrate the stored value.
+      if (oldName != updated.name) {
+        final values = Map<String, String>.from(_state.read(SettingsKeys.environmentVariableValues));
+        if (values.containsKey(oldName)) {
+          values[updated.name] = values.remove(oldName)!;
+          _state.write(SettingsKeys.environmentVariableValues, values);
+        }
+      }
+    }
+    _state.write(SettingsKeys.environmentVariables, list);
+  }
+
+  void deleteEnvironmentVariable(String name) {
+    _state.write(SettingsKeys.environmentVariables, environmentVariables.where((v) => v.name != name).toList());
+    final values = Map<String, String>.from(_state.read(SettingsKeys.environmentVariableValues));
+    values.remove(name);
+    _state.write(SettingsKeys.environmentVariableValues, values);
   }
 
   // Theme

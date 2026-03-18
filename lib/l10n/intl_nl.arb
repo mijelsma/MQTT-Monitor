@@ -1,6 +1,4 @@
 {
-    "hello": "Hallo",
-
     "save": "Opslaan",
     "add": "Toevoegen",
     "cancel": "Annuleren",
@@ -16,7 +14,7 @@
     "sectionLanguage": "Taal",
     "sectionAbout": "Over",
 
-    "uiPanelTitle": "UI",
+    "uiPanelTitle": "Gebruikersinterface",
     "uiPanelDescription": "Uiterlijk en lay-outvoorkeuren.",
     "uiPanelSectionAppearance": "Uiterlijk",
     "uiPanelThemeMode": "Thema",
@@ -24,16 +22,16 @@
     "uiPanelThemeLight": "Licht",
     "uiPanelThemeDark": "Donker",
     "uiPanelShowStatusBar": "Statusbalk tonen",
-    "uiPanelShowStatusBarSubtitle": "Toont de statusbalk onderaan",
-    "uiPanelRateInterval": "Bijwerkinterval snelheid",
+    "uiPanelShowStatusBarSubtitle": "Toont de statusbalk onder het scherm",
+    "uiPanelRateInterval": "Update-interval",
     "uiPanelRateIntervalSubtitle": "Hoe vaak de berichtensnelheid wordt herberekend",
-    "uiPanelSectionDataDisplay": "Gegevensweergave",
+    "uiPanelSectionDataDisplay": "Data weergave",
     "uiPanelShowActivity": "Activiteit tonen",
-    "uiPanelShowActivitySubtitle": "Knippert onderwerp bij activiteit",
+    "uiPanelShowActivitySubtitle": "Pluseer topic bij activiteit",
     "uiPanelPulseRate": "Pulsnelheid",
     "uiPanelPulseRateSubtitle": "Maximum activiteitspulsen per seconde",
     "uiPanelPulseFade": "Pulsvervaging",
-    "uiPanelPulseFadeSubtitle": "Duur van de uitfaderingsanimatie",
+    "uiPanelPulseFadeSubtitle": "Duur van de animatie",
     "uiPanelSectionLayout": "Lay-out",
     "uiPanelPersistLayout": "Lay-out bewaren",
     "uiPanelPersistLayoutSubtitle": "Panelgrootten en -posities herstellen bij opstart",
@@ -41,7 +39,7 @@
     "brokersPanelTitle": "Brokers",
     "brokersPanelDescription": "MQTT-brokers configureren.",
     "brokersPanelNoBrokersTitle": "Nog geen brokers",
-    "brokersPanelNoBrokersMessage": "Tik op 'Broker toevoegen' om je eerste broker aan te maken.",
+    "brokersPanelNoBrokersMessage": "Druk op 'Broker toevoegen' om je eerste broker aan te maken.",
     "brokersPanelSectionConnections": "Verbindingen",
     "brokersPanelAddBroker": "Broker toevoegen",
 
@@ -50,6 +48,12 @@
     "languagePanelSectionLabel": "Interfacetaal",
     "languagePanelChangesNote": "Wijzigingen worden toegepast bij de volgende start.",
 
+    "languageNameEn": "Engels",
+    "languageNameDe": "Duits",
+    "languageNameFr": "Frans",
+    "languageNameNl": "Nederlands",
+    "languageNameEs": "Spaans"
+    
     "aboutPanelTitle": "Over",
     "aboutPanelSectionDetails": "Details",
     "aboutPanelCommitHash": "Commit Hash",
@@ -57,7 +61,7 @@
     "aboutPanelAuthor": "Auteur",
     "aboutPanelSectionResources": "Bronnen",
     "aboutPanelSourceCode": "Broncode",
-    "aboutPanelChangelog": "Wijzigingenlogboek",
+    "aboutPanelChangelog": "Changelog",
     "aboutPanelReportIssue": "Probleem melden",
     "aboutPanelSupportProject": "Project ondersteunen",
 
@@ -99,10 +103,4 @@
 
     "noMessagesTitle": "Wachten op berichten",
     "noMessagesSubtitle": "Nog geen berichten ontvangen.",
-
-    "languageNameEn": "Engels",
-    "languageNameDe": "Duits",
-    "languageNameFr": "Frans",
-    "languageNameNl": "Nederlands",
-    "languageNameEs": "Spaans"
 }

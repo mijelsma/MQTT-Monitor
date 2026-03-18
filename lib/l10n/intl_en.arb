@@ -1,6 +1,4 @@
 {
-    "hello": "Hello",
-
     "save": "Save",
     "add": "Add",
     "cancel": "Cancel",
@@ -16,7 +14,7 @@
     "sectionLanguage": "Language",
     "sectionAbout": "About",
 
-    "uiPanelTitle": "UI",
+    "uiPanelTitle": "User Interface",
     "uiPanelDescription": "Appearance and layout preferences.",
     "uiPanelSectionAppearance": "Appearance",
     "uiPanelThemeMode": "Theme Mode",
