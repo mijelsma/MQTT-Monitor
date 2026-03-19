@@ -5,15 +5,18 @@ import '../../core/state/keys/dashboard_keys.dart';
 import '../../core/state/keys/settings_keys.dart';
 import '../../models/broker_entry.dart';
 import '../../models/dashboard_layout.dart';
+import '../../models/environment_variable.dart';
 
 /// ViewModel for the graph dashboard screen.
 ///
-/// Currently manages dashboard layout selection. Card management and MQTT data
-/// feeding will be added later.
+/// Manages dashboard layout selection, environment variables, and will later
+/// handle card management and MQTT data feeding.
 class DashboardViewModel extends ChangeNotifier {
   DashboardViewModel({required AppStateManager state, required this.brokerId}) : _state = state {
     _state.load(DashboardKeys.layouts);
     _state.load(DashboardKeys.activeLayoutForBroker(brokerId));
+    _state.load(SettingsKeys.environmentVariables);
+    _state.load(SettingsKeys.environmentVariableValues);
     _state.addListener(_onStateChanged);
   }
 
@@ -42,6 +45,20 @@ class DashboardViewModel extends ChangeNotifier {
   /// Switches to a different layout.
   Future<void> selectLayout(String layoutId) async {
     await _state.write(DashboardKeys.activeLayoutForBroker(brokerId), layoutId);
+    notifyListeners();
+  }
+
+  /// Saves the current dashboard as a new layout.
+  Future<void> saveLayout({required String title, List<String> brokerIds = const [], int colorIndex = 0}) async {
+    final id = 'layout_${DateTime.now().millisecondsSinceEpoch}';
+    final layout = DashboardLayout(id: id, title: title, brokerIds: brokerIds, colorIndex: colorIndex);
+
+    final all = List<DashboardLayout>.from(_state.read(DashboardKeys.layouts));
+    all.add(layout);
+    await _state.write(DashboardKeys.layouts, all);
+
+    // Activate the newly saved layout.
+    await _state.write(DashboardKeys.activeLayoutForBroker(brokerId), id);
     notifyListeners();
   }
 
@@ -78,6 +95,25 @@ class DashboardViewModel extends ChangeNotifier {
   List<BrokerEntry> get brokers {
     _state.load(SettingsKeys.brokers);
     return _state.read(SettingsKeys.brokers);
+  }
+
+  /// The defined environment variables visible to this broker (global + broker-scoped).
+  List<EnvironmentVariable> get environmentVariables {
+    final all = _state.read(SettingsKeys.environmentVariables);
+    return all.where((v) => v.isGlobal || v.brokerIds.contains(brokerId)).toList();
+  }
+
+  /// Current values for each environment variable.
+  Map<String, String> get variableValues {
+    return _state.read(SettingsKeys.environmentVariableValues);
+  }
+
+  /// Sets the value for a single environment variable.
+  void setVariableValue(String name, String value) {
+    final values = Map<String, String>.from(variableValues);
+    values[name] = value;
+    _state.write(SettingsKeys.environmentVariableValues, values);
+    notifyListeners();
   }
 
   @override
