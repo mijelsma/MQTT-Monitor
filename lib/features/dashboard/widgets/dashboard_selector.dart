@@ -78,8 +78,8 @@ class _DashboardSelectorState extends State<DashboardSelector> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      active?.title ?? 'Dashboard',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: cs.onSurface, letterSpacing: -0.1),
+                      active?.title ?? 'No layout selected',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: active != null ? cs.onSurface : cs.onSurfaceVariant, letterSpacing: -0.1, fontStyle: active != null ? FontStyle.normal : FontStyle.italic),
                     ),
                     const SizedBox(width: 3),
                     Icon(Icons.unfold_more_rounded, size: 14, color: cs.onSurfaceVariant),
@@ -92,8 +92,6 @@ class _DashboardSelectorState extends State<DashboardSelector> {
       ),
     );
   }
-
-  // ── Menu items ──────────────────────────────────────────────────────
 
   static const _kSaveLayout = '__save__';
   static const _kNewEmpty = '__new_empty__';
@@ -161,8 +159,6 @@ class _DashboardSelectorState extends State<DashboardSelector> {
       ),
     );
   }
-
-  // ── Selection handler ───────────────────────────────────────────────
 
   void _onSelected(BuildContext context, DashboardViewModel vm, String id) {
     switch (id) {
