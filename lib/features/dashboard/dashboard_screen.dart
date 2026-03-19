@@ -7,12 +7,13 @@ import '../../models/dashboard_layout.dart';
 import '../../shared/widgets/empty_state_shell.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_tokens/app_tokens.dart';
-import '../settings/modals/layout_modal.dart';
+import '../settings/dialogs/layout_modal.dart';
 import '../settings/settings_screen.dart';
 import '../settings/settings_section.dart';
 import 'dashboard_view_model.dart';
+import 'dialogs/new_empty_dashboard_dialog.dart';
+import 'dialogs/save_layout_dialog.dart';
 import 'widgets/dashboard_app_bar.dart';
-import 'widgets/save_preset_dialog.dart';
 import 'widgets/variable_bar.dart';
 
 class GraphDashboardScreen extends StatelessWidget {
@@ -43,17 +44,7 @@ class _DashboardView extends StatelessWidget {
   }
 
   void _newEmptyDashboard(BuildContext context, DashboardViewModel vm) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('New empty dashboard'),
-        content: const Text('This will clear all cards from the current dashboard. Continue?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Clear')),
-        ],
-      ),
-    );
+    final confirm = await showNewEmptyDashboardDialog(context);
     if (confirm != true) return;
     await vm.clearDashboard();
   }

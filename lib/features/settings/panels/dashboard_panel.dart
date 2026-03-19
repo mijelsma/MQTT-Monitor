@@ -7,7 +7,7 @@ import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
 import '../../../shared/widgets/ui_sortable_row.dart';
 import '../../../theme/app_colors.dart';
-import '../modals/layout_modal.dart';
+import '../dialogs/layout_modal.dart';
 import '../settings_viewmodel.dart';
 
 class DashboardPanel extends StatelessWidget {
