@@ -7,7 +7,7 @@ import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../modals/variable_modal.dart';
+import '../dialogs/variable_modal.dart';
 import '../settings_viewmodel.dart';
 
 class VariablesPanel extends StatelessWidget {

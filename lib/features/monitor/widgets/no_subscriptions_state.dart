@@ -5,7 +5,7 @@ import '../../../models/broker_entry.dart';
 import '../../../shared/widgets/empty_state_shell.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../../settings/modals/broker_modal.dart';
+import '../../settings/dialogs/broker_modal.dart';
 import '../monitor_viewmodel.dart';
 
 class NoSubscriptionsState extends StatelessWidget {
