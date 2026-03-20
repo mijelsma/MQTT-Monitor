@@ -4,8 +4,9 @@ import '../../theme/app_tokens/app_tokens.dart';
 import 'spacers.dart';
 
 class UiField extends StatelessWidget {
-  const UiField({super.key, required this.label, this.optional = false, this.controller, this.hint, this.validator, this.textInputAction, this.keyboardType, this.inputFormatters, this.obscureText = false, this.suffixIcon, this.onFieldSubmitted, this.style, this.child});
+  const UiField({super.key, this.margin, required this.label, this.optional = false, this.controller, this.hint, this.validator, this.textInputAction, this.keyboardType, this.inputFormatters, this.obscureText = false, this.suffixIcon, this.onFieldSubmitted, this.style, this.child});
 
+  final EdgeInsetsGeometry? margin;
   final String label;
   final bool optional;
   final TextEditingController? controller;
@@ -67,7 +68,7 @@ class UiField extends StatelessWidget {
           ),
         );
 
-    return Column(
+    Widget content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
@@ -80,5 +81,7 @@ class UiField extends StatelessWidget {
         field,
       ],
     );
+    if (margin != null) content = Padding(padding: margin!, child: content);
+    return content;
   }
 }

@@ -13,9 +13,9 @@ import '../../../shared/widgets/ui_slider_row.dart';
 import '../../../shared/widgets/ui_switch_row.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 
-/// Result returned from the graph card dialog (add or edit).
-class GraphCardDialogResult {
-  const GraphCardDialogResult({this.topic, required this.displayName, this.unit, required this.color, required this.chartType, required this.interpolation, required this.dotSize, required this.showFill, required this.fillOpacity, required this.maxDataPoints, this.yMin, this.yMax});
+/// Result returned from the edit graph dialog.
+class EditGraphResult {
+  const EditGraphResult({this.topic, required this.displayName, this.unit, required this.color, required this.chartType, required this.interpolation, required this.dotSize, required this.showFill, required this.fillOpacity, required this.maxDataPoints, this.yMin, this.yMax});
 
   final String? topic;
   final String displayName;
@@ -33,32 +33,32 @@ class GraphCardDialogResult {
 
 /// Shows a dialog for editing a graph card's properties.
 ///
-/// When [card] is provided, the dialog opens in edit mode with pre-filled values.
-/// Returns a [GraphCardDialogResult] if the user confirms, or `null` if dismissed.
-Future<GraphCardDialogResult?> showGraphCardDialog(BuildContext context, {required GraphCardModel card, VoidCallback? onDelete}) {
-  return showDialog<GraphCardDialogResult>(
+/// Returns an [EditGraphResult] if the user confirms, or `null` if dismissed.
+Future<EditGraphResult?> showEditGraphDialog(BuildContext context, {required GraphCardModel card, VoidCallback? onDelete}) {
+  return showDialog<EditGraphResult>(
     context: context,
-    builder: (_) => _GraphCardDialog(card: card, onDelete: onDelete),
+    builder: (_) => _EditGraphDialog(card: card, onDelete: onDelete),
   );
 }
 
-class _GraphCardDialog extends StatefulWidget {
-  const _GraphCardDialog({required this.card, this.onDelete});
+class _EditGraphDialog extends StatefulWidget {
+  const _EditGraphDialog({required this.card, this.onDelete});
 
   final GraphCardModel card;
   final VoidCallback? onDelete;
 
   @override
-  State<_GraphCardDialog> createState() => _GraphCardDialogState();
+  State<_EditGraphDialog> createState() => _EditGraphDialogState();
 }
 
-class _GraphCardDialogState extends State<_GraphCardDialog> {
+class _EditGraphDialogState extends State<_EditGraphDialog> {
+  late final TextEditingController _topicController;
   late final TextEditingController _nameController;
   late final TextEditingController _unitController;
-  late final TextEditingController _topicController;
+  late final TextEditingController _maxSamplesController;
   late final TextEditingController _yMinController;
   late final TextEditingController _yMaxController;
-  late final TextEditingController _maxSamplesController;
+
   late Color _color;
   late ChartType _chartType;
   late InterpolationMode _interpolation;
@@ -69,12 +69,12 @@ class _GraphCardDialogState extends State<_GraphCardDialog> {
   @override
   void initState() {
     super.initState();
+    _topicController = TextEditingController(text: widget.card.topic);
     _nameController = TextEditingController(text: widget.card.displayName);
     _unitController = TextEditingController(text: widget.card.unit ?? '');
-    _topicController = TextEditingController(text: widget.card.topic);
+    _maxSamplesController = TextEditingController(text: widget.card.maxDataPoints > 0 ? widget.card.maxDataPoints.toString() : '');
     _yMinController = TextEditingController(text: widget.card.yMin?.toString() ?? '');
     _yMaxController = TextEditingController(text: widget.card.yMax?.toString() ?? '');
-    _maxSamplesController = TextEditingController(text: widget.card.maxDataPoints > 0 ? widget.card.maxDataPoints.toString() : '');
     _color = widget.card.color;
     _chartType = widget.card.chartType;
     _interpolation = widget.card.interpolation;
@@ -85,13 +85,17 @@ class _GraphCardDialogState extends State<_GraphCardDialog> {
 
   @override
   void dispose() {
+    _topicController.dispose();
     _nameController.dispose();
     _unitController.dispose();
-    _topicController.dispose();
     _yMinController.dispose();
     _yMaxController.dispose();
     _maxSamplesController.dispose();
     super.dispose();
+  }
+
+  void _cancel() {
+    Navigator.of(context).pop();
   }
 
   void _submit() {
@@ -101,7 +105,7 @@ class _GraphCardDialogState extends State<_GraphCardDialog> {
     // Only include topic in the result if it was actually changed.
     final topicChanged = editedTopic.isNotEmpty && editedTopic != widget.card.topic;
     Navigator.of(context).pop(
-      GraphCardDialogResult(
+      EditGraphResult(
         topic: topicChanged ? editedTopic : null,
         displayName: name,
         unit: _unitController.text.trim().isEmpty ? null : _unitController.text.trim(),
@@ -121,6 +125,10 @@ class _GraphCardDialogState extends State<_GraphCardDialog> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    Widget sectionHeader(String text) => Text(
+      text,
+      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: tokens.textPrimary),
+    );
 
     return UiModalScaffold(
       title: 'Edit Graph',
@@ -131,24 +139,21 @@ class _GraphCardDialogState extends State<_GraphCardDialog> {
               Navigator.of(context).pop();
             }
           : null,
-      onCancel: () => Navigator.of(context).pop(),
+      onCancel: _cancel,
       onSubmit: _submit,
       submitLabel: 'Save',
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Topic (editable)
-          UiField(label: 'Topic', controller: _topicController, hint: 'e.g. my/sensor/[ID]/value'),
+          // Topic
+          UiField(label: 'Topic', controller: _topicController, hint: r'e.g. my/sensor/${ID}/value'),
           const VSpacer(4),
-          Text('Use [NAME] to insert an environment variable.', style: TextStyle(fontSize: 11, color: tokens.textTertiary)),
+          Text(r'Use ${NAME} to insert an environment variable.', style: TextStyle(fontSize: 11, color: tokens.textTertiary)),
 
           // JSON key path (if applicable)
           if (widget.card.jsonKeyPath != null) ...[
             const VSpacer(16),
-            Text(
-              'Key Path',
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: tokens.textPrimary),
-            ),
+            sectionHeader('Key Path'),
             const VSpacer(6),
             Container(
               width: double.infinity,
@@ -166,47 +171,28 @@ class _GraphCardDialogState extends State<_GraphCardDialog> {
           ],
 
           const VSpacer(16),
+
+          // Display name, unit, and color
           UiField(label: 'Display Name', controller: _nameController, hint: 'e.g. Temperature'),
+          UiField(margin: const EdgeInsets.only(top: 16), label: 'Unit', controller: _unitController, hint: 'e.g. °C, %, ms', optional: true),
+          ColorPickerField(margin: const EdgeInsets.only(top: 20), label: 'Color', value: _color, onChanged: (c) => setState(() => _color = c)),
 
-          const VSpacer(16),
-          UiField(label: 'Unit', controller: _unitController, hint: 'e.g. °C, %, ms', optional: true),
+          // Chart type, interpolation mode, and dot size
+          ChartTypeToggle(margin: const EdgeInsets.only(top: 20), label: 'Chart Type', value: _chartType, onChanged: (t) => setState(() => _chartType = t)),
+          InterpolationToggle(margin: const EdgeInsets.only(top: 20), label: 'Interpolation', value: _interpolation, onChanged: (m) => setState(() => _interpolation = m)),
+          UiSliderRow(margin: const EdgeInsets.only(top: 10, bottom: 6), label: 'Dot Size', value: _dotSize, min: 0, max: 8, divisions: 16, displayValue: _dotSize == 0 ? 'Off' : _dotSize.toStringAsFixed(1), onChanged: (v) => setState(() => _dotSize = v)),
 
-          const VSpacer(20),
-          ColorPickerField(label: 'Color', value: _color, onChanged: (c) => setState(() => _color = c)),
+          // Area fill
+          UiSwitchRow(contentPadding: const EdgeInsets.symmetric(vertical: 2), label: 'Area Fill', subtitle: 'Show a filled area below the line', value: _showFill, onChanged: (v) => setState(() => _showFill = v)),
+          if (_showFill) ...[UiSliderRow(margin: const EdgeInsets.only(bottom: 6), label: 'Fill Intensity', value: _fillOpacity, min: 0.02, max: 0.5, divisions: 24, displayValue: '${(_fillOpacity * 100).round()}%', onChanged: (v) => setState(() => _fillOpacity = v))],
 
-          const VSpacer(20),
-          Text(
-            'Chart Type',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: tokens.textPrimary),
-          ),
-          const VSpacer(8),
-          ChartTypeToggle(value: _chartType, onChanged: (t) => setState(() => _chartType = t)),
-
-          const VSpacer(20),
-          Text(
-            'Interpolation',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: tokens.textPrimary),
-          ),
-          const VSpacer(8),
-          InterpolationToggle(value: _interpolation, onChanged: (m) => setState(() => _interpolation = m)),
-
-          const VSpacer(20),
-          UiSliderRow(label: 'Dot Size', value: _dotSize, min: 0, max: 8, divisions: 16, displayValue: _dotSize == 0 ? 'Off' : _dotSize.toStringAsFixed(1), compact: true, onChanged: (v) => setState(() => _dotSize = v)),
-
-          const VSpacer(12),
-          UiSwitchRow(label: 'Area Fill', value: _showFill, compact: true, onChanged: (v) => setState(() => _showFill = v)),
-          if (_showFill) ...[const VSpacer(4), UiSliderRow(label: 'Fill Intensity', value: _fillOpacity, min: 0.02, max: 0.5, divisions: 24, displayValue: '${(_fillOpacity * 100).round()}%', compact: true, onChanged: (v) => setState(() => _fillOpacity = v))],
-
-          const VSpacer(16),
-          UiField(label: 'Max Samples', controller: _maxSamplesController, hint: 'Unlimited', optional: true),
-          const VSpacer(2),
+          // Max samples and Y-axis range
+          UiField(margin: const EdgeInsets.only(top: 16, bottom: 2), label: 'Max Samples', controller: _maxSamplesController, hint: 'Unlimited', optional: true),
           Text('Leave empty to keep all values', style: TextStyle(fontSize: 11, color: tokens.textTertiary)),
-
           const VSpacer(16),
-          Text(
-            'Y-Axis Range',
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: tokens.textPrimary),
-          ),
+
+          // Y-axis range
+          sectionHeader('Y-Axis Range'),
           const VSpacer(4),
           Text('Leave empty for auto range', style: TextStyle(fontSize: 11, color: tokens.textTertiary)),
           const VSpacer(8),
@@ -215,7 +201,7 @@ class _GraphCardDialogState extends State<_GraphCardDialog> {
               Expanded(
                 child: UiField(label: 'Min', controller: _yMinController, hint: 'Auto', optional: true),
               ),
-              const SizedBox(width: 12),
+              const HSpacer(12),
               Expanded(
                 child: UiField(label: 'Max', controller: _yMaxController, hint: 'Auto', optional: true),
               ),
