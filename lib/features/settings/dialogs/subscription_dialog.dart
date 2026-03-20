@@ -7,24 +7,24 @@ import '../../../shared/widgets/ui_field.dart';
 import '../../../shared/widgets/ui_modal_scaffold.dart';
 import '../../../shared/widgets/ui_segment_row.dart';
 
-Future<SubscriptionEntry?> showSubscriptionModal(BuildContext context, {SubscriptionEntry? entry}) {
+Future<SubscriptionEntry?> showSubscriptionDialog(BuildContext context, {SubscriptionEntry? entry}) {
   return showDialog<SubscriptionEntry>(
     context: context,
     barrierColor: Colors.black54,
-    builder: (_) => SubscriptionModal(entry: entry),
+    builder: (_) => SubscriptionDialog(entry: entry),
   );
 }
 
-class SubscriptionModal extends StatefulWidget {
-  const SubscriptionModal({super.key, this.entry});
+class SubscriptionDialog extends StatefulWidget {
+  const SubscriptionDialog({super.key, this.entry});
 
   final SubscriptionEntry? entry;
 
   @override
-  State<SubscriptionModal> createState() => _SubscriptionModalState();
+  State<SubscriptionDialog> createState() => _SubscriptionDialogState();
 }
 
-class _SubscriptionModalState extends State<SubscriptionModal> {
+class _SubscriptionDialogState extends State<SubscriptionDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _topic;
   late final TextEditingController _name;
@@ -66,8 +66,7 @@ class _SubscriptionModalState extends State<SubscriptionModal> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             UiField(label: s.subscriptionModalFieldTopicFilter, controller: _topic, hint: 'e.g. home/+/sensor/#', textInputAction: TextInputAction.next, validator: (v) => (v == null || v.trim().isEmpty) ? s.subscriptionModalValidateTopicFilter : null),
-            const VSpacer(14),
-            UiField(label: s.subscriptionModalFieldDisplayName, optional: true, controller: _name, hint: s.subscriptionModalHintDisplayName, textInputAction: TextInputAction.done, onFieldSubmitted: (_) => _submit()),
+            UiField(margin: const EdgeInsets.only(top: 14), label: s.subscriptionModalFieldDisplayName, optional: true, controller: _name, hint: s.subscriptionModalHintDisplayName, textInputAction: TextInputAction.done, onFieldSubmitted: (_) => _submit()),
             const VSpacer(18),
             UiSegmentRow<int>(
               label: s.subscriptionModalQoSLabel,

@@ -14,7 +14,7 @@ import '../../../shared/widgets/ui_sortable_row.dart';
 import '../../../shared/widgets/ui_switch_row.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import 'subscription_modal.dart';
+import 'subscription_dialog.dart';
 
 Widget _sectionLabel(BuildContext context, String label) => Padding(
   padding: const EdgeInsets.only(left: 4, bottom: 2),
@@ -24,25 +24,25 @@ Widget _sectionLabel(BuildContext context, String label) => Padding(
   ),
 );
 
-Future<BrokerEntry?> showBrokerModal(BuildContext context, {BrokerEntry? broker, VoidCallback? onDelete}) {
+Future<BrokerEntry?> showBrokerDialog(BuildContext context, {BrokerEntry? broker, VoidCallback? onDelete}) {
   return showDialog<BrokerEntry>(
     context: context,
     barrierColor: Colors.black54,
-    builder: (_) => BrokerModal(broker: broker, onDelete: onDelete),
+    builder: (_) => BrokerDialog(broker: broker, onDelete: onDelete),
   );
 }
 
-class BrokerModal extends StatefulWidget {
-  const BrokerModal({super.key, this.broker, this.onDelete});
+class BrokerDialog extends StatefulWidget {
+  const BrokerDialog({super.key, this.broker, this.onDelete});
 
   final BrokerEntry? broker;
   final VoidCallback? onDelete;
 
   @override
-  State<BrokerModal> createState() => _BrokerModalState();
+  State<BrokerDialog> createState() => _BrokerDialogState();
 }
 
-class _BrokerModalState extends State<BrokerModal> {
+class _BrokerDialogState extends State<BrokerDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
   late final TextEditingController _host;
@@ -53,7 +53,7 @@ class _BrokerModalState extends State<BrokerModal> {
   late bool _useSSL;
   late bool _validateCertificates;
   late bool _randomClientIdSuffix;
-  late int _colorIndex;
+  late Color _color;
   bool _obscurePassword = true;
   late List<SubscriptionEntry> _subscriptions;
 
@@ -72,7 +72,7 @@ class _BrokerModalState extends State<BrokerModal> {
     _useSSL = b?.useSSL ?? false;
     _validateCertificates = b?.validateCertificates ?? true;
     _randomClientIdSuffix = b?.randomClientIdSuffix ?? true;
-    _colorIndex = b?.colorIndex ?? 0;
+    _color = AppColors.brokerColorOptions[b?.colorIndex ?? 0];
     _subscriptions = List.from(b?.subscriptions ?? []);
   }
 
@@ -102,20 +102,20 @@ class _BrokerModalState extends State<BrokerModal> {
         password: _password.text.isEmpty ? null : _password.text,
         clientId: _clientId.text.trim().isEmpty ? null : _clientId.text.trim(),
         randomClientIdSuffix: _randomClientIdSuffix,
-        colorIndex: _colorIndex,
+        colorIndex: AppColors.colorIndex(_color),
         subscriptions: _subscriptions,
       ),
     );
   }
 
   Future<void> _addSubscription() async {
-    final sub = await showSubscriptionModal(context);
+    final sub = await showSubscriptionDialog(context);
     if (sub == null) return;
     setState(() => _subscriptions.add(sub));
   }
 
   Future<void> _editSubscription(int index) async {
-    final sub = await showSubscriptionModal(context, entry: _subscriptions[index]);
+    final sub = await showSubscriptionDialog(context, entry: _subscriptions[index]);
     if (sub == null) return;
     setState(() => _subscriptions[index] = sub);
   }
@@ -138,15 +138,7 @@ class _BrokerModalState extends State<BrokerModal> {
         _sectionLabel(context, s.brokerModalSectionConnection),
         const VSpacer(10),
         UiField(label: s.brokerModalFieldName, controller: _name, hint: 'e.g. Home Server', textInputAction: TextInputAction.next, validator: (v) => (v == null || v.trim().isEmpty) ? s.brokerModalValidateName : null),
-        const VSpacer(14),
-        ColorPickerField(
-          label: s.brokerModalFieldColor,
-          value: AppColors.brokerColorOptions[_colorIndex],
-          onChanged: (c) {
-            final idx = AppColors.brokerColorOptions.indexWhere((o) => o.toARGB32() == c.toARGB32());
-            if (idx >= 0) setState(() => _colorIndex = idx);
-          },
-        ),
+        ColorPickerField(margin: const EdgeInsets.only(top: 14), label: s.brokerModalFieldColor, value: _color, onChanged: (c) => setState(() => _color = c)),
         const VSpacer(14),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,14 +166,10 @@ class _BrokerModalState extends State<BrokerModal> {
             ),
           ],
         ),
-        const VSpacer(12),
-        UiSwitchRow(label: s.brokerModalUseSSL, subtitle: s.brokerModalUseSSLSubtitle, value: _useSSL, accent: accent, bordered: true, onChanged: (v) => setState(() => _useSSL = v)),
-        const VSpacer(12),
-        UiSwitchRow(label: s.brokerModalValidateCertificates, subtitle: s.brokerModalValidateCertificatesSubtitle, value: _validateCertificates, accent: accent, bordered: true, onChanged: (v) => setState(() => _validateCertificates = v)),
-        const VSpacer(14),
-        UiField(label: s.brokerModalFieldClientId, optional: true, controller: _clientId, hint: 'mqtt_monitor', textInputAction: TextInputAction.next),
-        const VSpacer(12),
-        UiSwitchRow(label: s.brokerModalRandomSuffix, subtitle: s.brokerModalRandomSuffixSubtitle, value: _randomClientIdSuffix, accent: accent, bordered: true, onChanged: (v) => setState(() => _randomClientIdSuffix = v)),
+        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerModalUseSSL, subtitle: s.brokerModalUseSSLSubtitle, value: _useSSL, accent: accent, bordered: true, onChanged: (v) => setState(() => _useSSL = v)),
+        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerModalValidateCertificates, subtitle: s.brokerModalValidateCertificatesSubtitle, value: _validateCertificates, accent: accent, bordered: true, onChanged: (v) => setState(() => _validateCertificates = v)),
+        UiField(margin: const EdgeInsets.only(top: 14), label: s.brokerModalFieldClientId, optional: true, controller: _clientId, hint: 'mqtt_monitor', textInputAction: TextInputAction.next),
+        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerModalRandomSuffix, subtitle: s.brokerModalRandomSuffixSubtitle, value: _randomClientIdSuffix, accent: accent, bordered: true, onChanged: (v) => setState(() => _randomClientIdSuffix = v)),
       ],
     );
   }
@@ -194,8 +182,8 @@ class _BrokerModalState extends State<BrokerModal> {
         _sectionLabel(context, s.brokerModalSectionAuthentication),
         const VSpacer(10),
         UiField(label: s.brokerModalFieldUsername, optional: true, controller: _username, hint: s.optional, textInputAction: TextInputAction.next),
-        const VSpacer(14),
         UiField(
+          margin: const EdgeInsets.only(top: 14),
           label: s.brokerModalFieldPassword,
           optional: true,
           controller: _password,
