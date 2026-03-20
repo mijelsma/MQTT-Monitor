@@ -8,7 +8,7 @@ Future<bool?> showNewEmptyDashboardDialog(BuildContext context) {
     context: context,
     builder: (_) => AlertDialog(
       title: const Text('New empty dashboard'),
-      content: const Text('This will clear all cards from the current dashboard. Continue?'),
+      content: const Text('This will clear any unsaved cards from the current dashboard. Continue?'),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
         FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Clear')),
