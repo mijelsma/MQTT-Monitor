@@ -7,8 +7,9 @@ import 'spacers.dart';
 /// A labeled field that shows a row of color swatches.
 /// The user taps one to select it; [onChanged] fires with the new [Color].
 class ColorPickerField extends StatelessWidget {
-  const ColorPickerField({super.key, required this.label, required this.value, required this.onChanged});
+  const ColorPickerField({super.key, this.margin, required this.label, required this.value, required this.onChanged});
 
+  final EdgeInsetsGeometry? margin;
   final String label;
   final Color value;
   final ValueChanged<Color> onChanged;
@@ -17,7 +18,7 @@ class ColorPickerField extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
 
-    return Column(
+    Widget content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
@@ -44,5 +45,7 @@ class ColorPickerField extends StatelessWidget {
         ),
       ],
     );
+    if (margin != null) content = Padding(padding: margin!, child: content);
+    return content;
   }
 }

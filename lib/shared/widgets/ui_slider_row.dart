@@ -3,8 +3,9 @@ import '../../theme/app_tokens/app_tokens.dart';
 import 'spacers.dart';
 
 class UiSliderRow extends StatelessWidget {
-  const UiSliderRow({super.key, required this.label, this.subtitle, required this.value, required this.min, required this.max, required this.divisions, required this.displayValue, required this.onChanged, this.accent});
+  const UiSliderRow({super.key, this.margin, required this.label, this.subtitle, required this.value, required this.min, required this.max, required this.divisions, required this.displayValue, required this.onChanged, this.accent});
 
+  final EdgeInsetsGeometry? margin;
   final String label;
   final String? subtitle;
   final double value;
@@ -21,7 +22,7 @@ class UiSliderRow extends StatelessWidget {
     final resolvedAccent = accent ?? tokens.primary;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+      padding: margin ?? const EdgeInsets.fromLTRB(14, 10, 14, 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
