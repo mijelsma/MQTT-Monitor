@@ -6,18 +6,23 @@ import '../../../shared/widgets/spacers.dart';
 import '../../settings/settings_screen.dart';
 import 'dashboard_selector.dart';
 
+/// App bar shown on the dashboard screen.
+///
+/// Contains a back button, the [DashboardSelector] dropdown,
+/// and a settings shortcut.
 class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const DashboardAppBar({super.key, required this.brokerName, this.onSaveLayout, this.onNewEmpty, this.onEditLayout, this.onManageDashboards, this.onManageVariables});
+  const DashboardAppBar({super.key, this.onSaveLayout, this.onUpdateLayout, this.onNewEmpty, this.onEditLayout, this.onManageDashboards, this.onManageVariables});
 
-  final String brokerName;
   final VoidCallback? onSaveLayout;
+  final VoidCallback? onUpdateLayout;
   final VoidCallback? onNewEmpty;
   final void Function(DashboardLayout layout)? onEditLayout;
   final VoidCallback? onManageDashboards;
   final VoidCallback? onManageVariables;
 
-  static const double _toolbarHeight = 62;
+  static const _toolbarHeight = 62.0;
 
+  // Extra 0.5 accounts for the bottom divider line.
   @override
   Size get preferredSize => const Size.fromHeight(_toolbarHeight + 0.5);
 
@@ -27,13 +32,11 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
       toolbarHeight: _toolbarHeight,
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Container(height: 1.0, color: Theme.of(context).dividerColor),
+        child: Container(height: 1, color: Theme.of(context).dividerColor),
       ),
       leading: IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: () => Navigator.of(context).pop()),
-      title: Text('$brokerName — Dashboard'),
-      titleSpacing: 0,
       actions: [
-        DashboardSelector(onSaveLayout: onSaveLayout, onNewEmpty: onNewEmpty, onEditLayout: onEditLayout, onManageDashboards: onManageDashboards, onManageVariables: onManageVariables),
+        DashboardSelector(onSaveLayout: onSaveLayout, onUpdateLayout: onUpdateLayout, onNewEmpty: onNewEmpty, onEditLayout: onEditLayout, onManageDashboards: onManageDashboards, onManageVariables: onManageVariables),
         const HSpacer(8),
         const _SettingsButton(),
         const HSpacer(8),
@@ -42,6 +45,7 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
+/// Opens the [SettingsScreen] when tapped.
 class _SettingsButton extends StatelessWidget {
   const _SettingsButton();
 
