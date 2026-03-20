@@ -8,7 +8,7 @@ import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
 import '../../../shared/widgets/ui_sortable_row.dart';
-import '../dialogs/broker_modal.dart';
+import '../dialogs/broker_dialog.dart';
 import '../settings_viewmodel.dart';
 
 class BrokersPanel extends StatelessWidget {
@@ -16,14 +16,14 @@ class BrokersPanel extends StatelessWidget {
 
   Future<void> _openAdd(BuildContext context) async {
     final vm = context.read<SettingsViewModel>();
-    final entry = await showBrokerModal(context);
+    final entry = await showBrokerDialog(context);
     if (entry == null) return;
     vm.addBroker(entry);
   }
 
   Future<void> _openEdit(BuildContext context, BrokerEntry broker) async {
     final vm = context.read<SettingsViewModel>();
-    final updated = await showBrokerModal(context, broker: broker, onDelete: () => vm.deleteBroker(broker.id));
+    final updated = await showBrokerDialog(context, broker: broker, onDelete: () => vm.deleteBroker(broker.id));
     if (updated == null) return;
     vm.updateBroker(updated);
   }

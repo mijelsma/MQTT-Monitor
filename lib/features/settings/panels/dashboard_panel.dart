@@ -2,27 +2,53 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../models/dashboard_layout.dart';
+import '../../../shared/widgets/chart_type_toggle.dart';
+import '../../../shared/widgets/color_picker_field.dart';
+import '../../../shared/widgets/interpolation_toggle.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
+import '../../../shared/widgets/ui_field.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
+import '../../../shared/widgets/ui_slider_row.dart';
 import '../../../shared/widgets/ui_sortable_row.dart';
 import '../../../theme/app_colors.dart';
-import '../dialogs/layout_modal.dart';
+import '../dialogs/create_dashboard_dialog.dart';
 import '../settings_viewmodel.dart';
 
-class DashboardPanel extends StatelessWidget {
+class DashboardPanel extends StatefulWidget {
   const DashboardPanel({super.key});
+
+  @override
+  State<DashboardPanel> createState() => _DashboardPanelState();
+}
+
+class _DashboardPanelState extends State<DashboardPanel> {
+  late final TextEditingController _maxSamplesController;
+
+  @override
+  void initState() {
+    super.initState();
+    final vm = context.read<SettingsViewModel>();
+    final val = vm.defaultMaxSamples;
+    _maxSamplesController = TextEditingController(text: val == 0 ? '' : val.toString());
+  }
+
+  @override
+  void dispose() {
+    _maxSamplesController.dispose();
+    super.dispose();
+  }
 
   Future<void> _openAdd(BuildContext context) async {
     final vm = context.read<SettingsViewModel>();
-    final layout = await showLayoutModal(context, brokers: vm.brokers);
+    final layout = await showCreateDashboardDialog(context, brokers: vm.brokers);
     if (layout == null) return;
     vm.addLayout(layout);
   }
 
   Future<void> _openEdit(BuildContext context, DashboardLayout layout) async {
     final vm = context.read<SettingsViewModel>();
-    final updated = await showLayoutModal(context, layout: layout, brokers: vm.brokers, onDelete: () => vm.deleteLayout(layout.id));
+    final updated = await showCreateDashboardDialog(context, dashboard: layout, brokers: vm.brokers, onDelete: () => vm.deleteLayout(layout.id));
     if (updated == null) return;
     vm.updateLayout(updated);
   }
@@ -36,6 +62,26 @@ class DashboardPanel extends StatelessWidget {
       title: 'Dashboard',
       description: 'Manage your saved dashboard layouts.',
       children: [
+        UiSection(
+          label: 'Defaults',
+          children: [
+            ColorPickerField(margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), label: 'Color', value: vm.defaultCardColor, onChanged: vm.setDefaultCardColor),
+            ChartTypeToggle(margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), label: 'Chart type', value: vm.defaultChartType, onChanged: vm.setDefaultChartType),
+            InterpolationToggle(margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), label: 'Interpolation', value: vm.defaultInterpolation, onChanged: vm.setDefaultInterpolation),
+            UiSliderRow(label: 'Dot size', value: vm.defaultDotSize, min: 0, max: 10, divisions: 20, displayValue: vm.defaultDotSize.toStringAsFixed(1), onChanged: vm.setDefaultDotSize),
+            UiField(
+              margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              label: 'Max samples',
+              hint: '0 = unlimited',
+              controller: _maxSamplesController,
+              keyboardType: TextInputType.number,
+              onFieldSubmitted: (v) {
+                final parsed = int.tryParse(v.trim()) ?? 0;
+                vm.setDefaultMaxSamples(parsed);
+              },
+            ),
+          ],
+        ),
         if (layouts.isEmpty)
           const UiEmptyState(icon: Icons.dashboard_outlined, title: 'No dashboards yet', message: 'Create dashboard or save from dashboard view')
         else
