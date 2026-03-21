@@ -110,7 +110,7 @@ class _DetailContent extends StatelessWidget {
           if (isHistorical) ...[_HistoricalBanner(seq: value.seq, onShowLatest: onClearSelection), const SizedBox(height: 12)],
           _TopicHeader(topic: node.fullPath),
           const SizedBox(height: 16),
-          _PropertiesCard(value: value),
+          _PropertiesCard(value: value, topic: node.fullPath, isHistorical: isHistorical),
           const SizedBox(height: 16),
           _PayloadCard(payload: value.payload, topic: node.fullPath, isHistorical: isHistorical),
           if (showComparison) ...[const SizedBox(height: 16), ComparisonSection(selected: value, previous: previousValue)],
@@ -159,9 +159,11 @@ class _TopicHeader extends StatelessWidget {
 // ── Properties card ─────────────────────────────────────────────────────
 
 class _PropertiesCard extends StatelessWidget {
-  const _PropertiesCard({required this.value});
+  const _PropertiesCard({required this.value, required this.topic, this.isHistorical = false});
 
   final TopicNodeValue value;
+  final String topic;
+  final bool isHistorical;
 
   static const _labelStyle = TextStyle(fontSize: 12, fontWeight: FontWeight.w500);
 
@@ -178,13 +180,45 @@ class _PropertiesCard extends StatelessWidget {
     return max;
   }
 
+  /// Computes a human-readable rate string from the last N messages.
+  String? _computeRate(BuildContext context) {
+    if (isHistorical) return null;
+    final history = context.read<MessageHistoryService>().getHistory(topic);
+    if (history.length < 2) return null;
+
+    final state = context.read<AppStateManager>();
+    state.load(SettingsKeys.messageRateSampleSize);
+    final sampleSize = state.read(SettingsKeys.messageRateSampleSize);
+
+    // Take the last N messages (or fewer if not enough yet).
+    final count = history.length < sampleSize ? history.length : sampleSize;
+    final recent = history.sublist(history.length - count);
+
+    final span = recent.last.receivedAt.difference(recent.first.receivedAt);
+    if (span.inMilliseconds <= 0) return null;
+
+    // Average interval = total span / (count - 1) gaps.
+    final avgMs = span.inMilliseconds / (recent.length - 1);
+
+    // Sub-second: show "X messages per second" instead.
+    if (avgMs < 1000) {
+      final perSecond = 1000 / avgMs;
+      final label = perSecond >= 10 ? perSecond.round().toString() : perSecond.toStringAsFixed(1);
+      return S.of(context).detailRatePerSecond(label);
+    }
+
+    final avgDuration = Duration(milliseconds: avgMs.round());
+    return S.of(context).detailRateValue(formatDurationHuman(avgDuration, context));
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final timeStr = formatTimestamp(value.receivedAt);
     final sizeStr = formatByteSize(value.payload);
+    final rateStr = _computeRate(context);
 
-    final labels = [S.of(context).detailQoS, S.of(context).detailRetained, S.of(context).detailReceived, S.of(context).detailSize, S.of(context).detailMessages];
+    final labels = [S.of(context).detailQoS, S.of(context).detailRetained, S.of(context).detailReceived, S.of(context).detailSize, S.of(context).detailMessages, if (rateStr != null) S.of(context).detailRate];
     final labelWidth = _measureLabels(labels);
 
     return Container(
@@ -252,6 +286,16 @@ class _PropertiesCard extends StatelessWidget {
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: tokens.primary, fontFeatures: const [FontFeature.tabularFigures()]),
             ),
           ),
+          if (rateStr != null) ...[
+            _divider(tokens),
+            _PropertyRow(
+              icon: Icons.speed_rounded,
+              iconColor: tokens.textTertiary,
+              label: S.of(context).detailRate,
+              labelWidth: labelWidth,
+              child: Text(rateStr, style: TextStyle(fontSize: 12, color: tokens.textSecondary)),
+            ),
+          ],
         ],
       ),
     );

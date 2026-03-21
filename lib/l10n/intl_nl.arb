@@ -78,6 +78,8 @@
     "monitoringPanelIncreasedBufferHint": "Berichten voor gemonitorde topics",
     "monitoringPanelIncreasedMonitoring": "Verhoogde monitoring",
     "monitoringPanelClearAll": "Alles wissen",
+    "monitoringPanelRateSampleSize": "Frequentie berekengrootte",
+    "monitoringPanelRateSampleHint": "Berichten voor frequentieberekening",
 
     "uiPanelTitle": "Gebruikersinterface",
     "uiPanelDescription": "Uiterlijk en lay-outvoorkeuren.",
@@ -104,7 +106,7 @@
     "uiPanelStartupBehavior": "Opstartgedrag",
     "uiPanelStartupConnect": "Verbinden",
     "uiPanelStartupLastStatus": "Laatste status",
-    "uiPanelStartupDisconnected": "Losgekoppeld",
+    "uiPanelStartupDisconnected": "Verbroken",
 
     "languagePanelTitle": "Taal",
     "languagePanelDescription": "Selecteer de interfacetaal.",
@@ -191,6 +193,19 @@
         }
     },
     "detailShowLatest": "Toon nieuwste",
+    "detailRate": "Frequentie",
+    "detailRateValue": "1 bericht elke {interval}",
+    "@detailRateValue": {
+        "placeholders": {
+            "interval": { "type": "String" }
+        }
+    },
+    "detailRatePerSecond": "{count} berichten per seconde",
+    "@detailRatePerSecond": {
+        "placeholders": {
+            "count": { "type": "String" }
+        }
+    },
 
     "filterNoMatchingTopics": "Geen overeenkomende topics",
     "filterNoMatchingTopicsSubtitle": "Probeer het filter aan te passen of te wissen.",
@@ -217,5 +232,25 @@
     "sidebarHistory": "GESCHIEDENIS",
     "sidebarPublish": "PUBLICEREN",
     "sidebarNoSelectionTitle": "Selecteer een topic om te bekijken",
-    "sidebarNoSelectionSubtitle": "Kies een topic uit de boom\nom berichtdetails te bekijken"
+    "sidebarNoSelectionSubtitle": "Kies een topic uit de boom\nom berichtdetails te bekijken",
+
+    "durationLessThanSecond": "< 1 seconde",
+    "durationSeconds": "{count} {count, plural, =1{seconde} other{seconden}}",
+    "@durationSeconds": {
+        "placeholders": {
+            "count": { "type": "int" }
+        }
+    },
+    "durationMinutes": "{count} {count, plural, =1{minuut} other{minuten}}",
+    "@durationMinutes": {
+        "placeholders": {
+            "count": { "type": "int" }
+        }
+    },
+    "durationHours": "{count} {count, plural, =1{uur} other{uur}}",
+    "@durationHours": {
+        "placeholders": {
+            "count": { "type": "int" }
+        }
+    }
 }

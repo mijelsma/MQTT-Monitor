@@ -1,9 +1,10 @@
 import 'dart:convert';
 
-const _months = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-];
+import 'package:flutter/widgets.dart';
+
+import '../generated/l10n.dart';
+
+const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 /// Formats a [DateTime] as a human-readable timestamp string.
 ///
@@ -48,4 +49,25 @@ String truncate(String text, int maxLen) {
   final clean = text.replaceAll(RegExp(r'\s+'), ' ').trim();
   if (clean.length <= maxLen) return clean;
   return '${clean.substring(0, maxLen)}\u2026';
+}
+
+/// Formats a [Duration] as a human-readable interval string.
+///
+/// Examples: "1 second", "2 minutes 30 seconds", "1 hour 5 minutes".
+/// Picks the two most significant non-zero units to keep it readable.
+String formatDurationHuman(Duration d, BuildContext context) {
+  final s = S.of(context);
+  final totalSeconds = d.inSeconds;
+  if (totalSeconds < 1) return s.durationLessThanSecond;
+
+  final hours = d.inHours;
+  final minutes = d.inMinutes % 60;
+  final seconds = totalSeconds % 60;
+
+  final parts = <String>[];
+  if (hours > 0) parts.add(s.durationHours(hours));
+  if (minutes > 0) parts.add(s.durationMinutes(minutes));
+  if (seconds > 0 && hours == 0) parts.add(s.durationSeconds(seconds));
+
+  return parts.join(' ');
 }

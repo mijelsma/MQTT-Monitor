@@ -2,36 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../generated/l10n.dart';
-import '../../../shared/widgets/ui_field.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
+import '../../../shared/widgets/ui_slider_row.dart';
 import '../settings_viewmodel.dart';
 
-class MonitoringPanel extends StatefulWidget {
+class MonitoringPanel extends StatelessWidget {
   const MonitoringPanel({super.key});
-
-  @override
-  State<MonitoringPanel> createState() => _MonitoringPanelState();
-}
-
-class _MonitoringPanelState extends State<MonitoringPanel> {
-  late final TextEditingController _defaultHistoryController;
-  late final TextEditingController _extendedHistoryController;
-
-  @override
-  void initState() {
-    super.initState();
-    final vm = context.read<SettingsViewModel>();
-    _defaultHistoryController = TextEditingController(text: vm.defaultHistorySize.toString());
-    _extendedHistoryController = TextEditingController(text: vm.increasedHistorySize.toString());
-  }
-
-  @override
-  void dispose() {
-    _defaultHistoryController.dispose();
-    _extendedHistoryController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,32 +22,9 @@ class _MonitoringPanelState extends State<MonitoringPanel> {
         UiSection(
           label: s.monitoringPanelHistoryBuffer,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: UiField(
-                label: s.monitoringPanelStandardBufferSize,
-                hint: s.monitoringPanelStandardBufferHint,
-                controller: _defaultHistoryController,
-                keyboardType: TextInputType.number,
-                onFieldSubmitted: (v) {
-                  final parsed = int.tryParse(v.trim()) ?? 50;
-                  vm.setDefaultHistorySize(parsed.clamp(1, 10000));
-                },
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: UiField(
-                label: s.monitoringPanelIncreasedBufferSize,
-                hint: s.monitoringPanelIncreasedBufferHint,
-                controller: _extendedHistoryController,
-                keyboardType: TextInputType.number,
-                onFieldSubmitted: (v) {
-                  final parsed = int.tryParse(v.trim()) ?? 500;
-                  vm.setIncreasedHistorySize(parsed.clamp(1, 100000));
-                },
-              ),
-            ),
+            UiSliderRow(label: s.monitoringPanelStandardBufferSize, subtitle: s.monitoringPanelStandardBufferHint, value: vm.defaultHistorySize.toDouble(), min: 10, max: 1000, divisions: 99, displayValue: '${vm.defaultHistorySize}', onChanged: (v) => vm.setDefaultHistorySize(v.round())),
+            UiSliderRow(label: s.monitoringPanelIncreasedBufferSize, subtitle: s.monitoringPanelIncreasedBufferHint, value: vm.increasedHistorySize.toDouble(), min: 100, max: 10000, divisions: 99, displayValue: '${vm.increasedHistorySize}', onChanged: (v) => vm.setIncreasedHistorySize(v.round())),
+            UiSliderRow(label: s.monitoringPanelRateSampleSize, subtitle: s.monitoringPanelRateSampleHint, value: vm.messageRateSampleSize.toDouble(), min: 2, max: 50, divisions: 48, displayValue: '${vm.messageRateSampleSize}', onChanged: (v) => vm.setMessageRateSampleSize(v.round())),
           ],
         ),
         if (vm.increasedMonitoringTopics.isNotEmpty)

@@ -20,7 +20,20 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'en';
 
-  static String m0(seq) => "Viewing message #${seq}";
+  static String m0(count) => "${count} messages per second";
+
+  static String m1(interval) => "1 message every ${interval}";
+
+  static String m2(seq) => "Viewing message #${seq}";
+
+  static String m3(count) =>
+      "${count} ${Intl.plural(count, one: 'hour', other: 'hours')}";
+
+  static String m4(count) =>
+      "${count} ${Intl.plural(count, one: 'minute', other: 'minutes')}";
+
+  static String m5(count) =>
+      "${count} ${Intl.plural(count, one: 'second', other: 'seconds')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -172,16 +185,25 @@ class MessageLookup extends MessageLookupByLibrary {
       "Pinned to dashboard",
     ),
     "detailQoS": MessageLookupByLibrary.simpleMessage("QoS"),
+    "detailRate": MessageLookupByLibrary.simpleMessage("Rate"),
+    "detailRatePerSecond": m0,
+    "detailRateValue": m1,
     "detailReceived": MessageLookupByLibrary.simpleMessage("Received"),
     "detailRetained": MessageLookupByLibrary.simpleMessage("Retained"),
     "detailShowLatest": MessageLookupByLibrary.simpleMessage("Show latest"),
     "detailSize": MessageLookupByLibrary.simpleMessage("Size"),
-    "detailViewingMessage": m0,
+    "detailViewingMessage": m2,
     "detailWaitingForMessages": MessageLookupByLibrary.simpleMessage(
       "Waiting for messages…",
     ),
     "detailYes": MessageLookupByLibrary.simpleMessage("Yes"),
     "disconnect": MessageLookupByLibrary.simpleMessage("Disconnect"),
+    "durationHours": m3,
+    "durationLessThanSecond": MessageLookupByLibrary.simpleMessage(
+      "< 1 second",
+    ),
+    "durationMinutes": m4,
+    "durationSeconds": m5,
     "expandAll": MessageLookupByLibrary.simpleMessage("Expand all"),
     "filterNoMatchingTopics": MessageLookupByLibrary.simpleMessage(
       "No matching topics",
@@ -221,6 +243,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "monitoringPanelIncreasedMonitoring": MessageLookupByLibrary.simpleMessage(
       "Increased monitoring",
+    ),
+    "monitoringPanelRateSampleHint": MessageLookupByLibrary.simpleMessage(
+      "Messages used to calculate rate",
+    ),
+    "monitoringPanelRateSampleSize": MessageLookupByLibrary.simpleMessage(
+      "Rate sample size",
     ),
     "monitoringPanelStandardBufferHint": MessageLookupByLibrary.simpleMessage(
       "Messages stored per topic",

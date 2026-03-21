@@ -78,6 +78,8 @@
     "monitoringPanelIncreasedBufferHint": "Messages for monitored topics",
     "monitoringPanelIncreasedMonitoring": "Increased monitoring",
     "monitoringPanelClearAll": "Clear all",
+    "monitoringPanelRateSampleSize": "Rate sample size",
+    "monitoringPanelRateSampleHint": "Messages used to calculate rate",
 
     "uiPanelTitle": "User Interface",
     "uiPanelDescription": "Appearance and layout preferences.",
@@ -191,6 +193,19 @@
         }
     },
     "detailShowLatest": "Show latest",
+    "detailRate": "Rate",
+    "detailRateValue": "1 message every {interval}",
+    "@detailRateValue": {
+        "placeholders": {
+            "interval": { "type": "String" }
+        }
+    },
+    "detailRatePerSecond": "{count} messages per second",
+    "@detailRatePerSecond": {
+        "placeholders": {
+            "count": { "type": "String" }
+        }
+    },
 
     "filterNoMatchingTopics": "No matching topics",
     "filterNoMatchingTopicsSubtitle": "Try adjusting or clearing the filter.",
@@ -217,5 +232,25 @@
     "sidebarHistory": "HISTORY",
     "sidebarPublish": "PUBLISH",
     "sidebarNoSelectionTitle": "Select a topic to inspect",
-    "sidebarNoSelectionSubtitle": "Choose a topic from the tree\nto view message details"
+    "sidebarNoSelectionSubtitle": "Choose a topic from the tree\nto view message details",
+
+    "durationLessThanSecond": "< 1 second",
+    "durationSeconds": "{count} {count, plural, =1{second} other{seconds}}",
+    "@durationSeconds": {
+        "placeholders": {
+            "count": { "type": "int" }
+        }
+    },
+    "durationMinutes": "{count} {count, plural, =1{minute} other{minutes}}",
+    "@durationMinutes": {
+        "placeholders": {
+            "count": { "type": "int" }
+        }
+    },
+    "durationHours": "{count} {count, plural, =1{hour} other{hours}}",
+    "@durationHours": {
+        "placeholders": {
+            "count": { "type": "int" }
+        }
+    }
 }

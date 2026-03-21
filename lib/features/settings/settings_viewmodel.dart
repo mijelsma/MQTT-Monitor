@@ -90,6 +90,9 @@ class SettingsViewModel extends ChangeNotifier {
     _state.write(SettingsKeys.increasedMonitoringTopics, list);
   }
 
+  int get messageRateSampleSize => _state.read(SettingsKeys.messageRateSampleSize);
+  void setMessageRateSampleSize(int value) => _state.write(SettingsKeys.messageRateSampleSize, value);
+
   List<DashboardLayout> get layouts => _state.read(DashboardKeys.layouts);
 
   void deleteLayout(String id) {

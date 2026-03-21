@@ -20,7 +20,20 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'nl';
 
-  static String m0(seq) => "Bericht #${seq} bekijken";
+  static String m0(count) => "${count} berichten per seconde";
+
+  static String m1(interval) => "1 bericht elke ${interval}";
+
+  static String m2(seq) => "Bericht #${seq} bekijken";
+
+  static String m3(count) =>
+      "${count} ${Intl.plural(count, one: 'uur', other: 'uur')}";
+
+  static String m4(count) =>
+      "${count} ${Intl.plural(count, one: 'minuut', other: 'minuten')}";
+
+  static String m5(count) =>
+      "${count} ${Intl.plural(count, one: 'seconde', other: 'seconden')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -186,16 +199,25 @@ class MessageLookup extends MessageLookupByLibrary {
       "Vastgezet op dashboard",
     ),
     "detailQoS": MessageLookupByLibrary.simpleMessage("QoS"),
+    "detailRate": MessageLookupByLibrary.simpleMessage("Frequentie"),
+    "detailRatePerSecond": m0,
+    "detailRateValue": m1,
     "detailReceived": MessageLookupByLibrary.simpleMessage("Ontvangen"),
     "detailRetained": MessageLookupByLibrary.simpleMessage("Vastgehouden"),
     "detailShowLatest": MessageLookupByLibrary.simpleMessage("Toon nieuwste"),
     "detailSize": MessageLookupByLibrary.simpleMessage("Grootte"),
-    "detailViewingMessage": m0,
+    "detailViewingMessage": m2,
     "detailWaitingForMessages": MessageLookupByLibrary.simpleMessage(
       "Wachten op berichten…",
     ),
     "detailYes": MessageLookupByLibrary.simpleMessage("Ja"),
     "disconnect": MessageLookupByLibrary.simpleMessage("Verbinding verbreken"),
+    "durationHours": m3,
+    "durationLessThanSecond": MessageLookupByLibrary.simpleMessage(
+      "< 1 seconde",
+    ),
+    "durationMinutes": m4,
+    "durationSeconds": m5,
     "expandAll": MessageLookupByLibrary.simpleMessage("Alles uitklappen"),
     "filterNoMatchingTopics": MessageLookupByLibrary.simpleMessage(
       "Geen overeenkomende topics",
@@ -235,6 +257,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "monitoringPanelIncreasedMonitoring": MessageLookupByLibrary.simpleMessage(
       "Verhoogde monitoring",
+    ),
+    "monitoringPanelRateSampleHint": MessageLookupByLibrary.simpleMessage(
+      "Berichten voor frequentieberekening",
+    ),
+    "monitoringPanelRateSampleSize": MessageLookupByLibrary.simpleMessage(
+      "Frequentie berekengrootte",
     ),
     "monitoringPanelStandardBufferHint": MessageLookupByLibrary.simpleMessage(
       "Berichten opgeslagen per topic",
@@ -382,7 +410,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "uiPanelStartupConnect": MessageLookupByLibrary.simpleMessage("Verbinden"),
     "uiPanelStartupDisconnected": MessageLookupByLibrary.simpleMessage(
-      "Losgekoppeld",
+      "Verbroken",
     ),
     "uiPanelStartupLastStatus": MessageLookupByLibrary.simpleMessage(
       "Laatste status",
