@@ -5,7 +5,7 @@ import '../../../models/broker_entry.dart';
 import '../../../shared/widgets/empty_state_shell.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../../settings/modals/broker_modal.dart';
+import '../../settings/dialogs/broker_dialog.dart';
 import '../monitor_viewmodel.dart';
 
 class NoSubscriptionsState extends StatelessWidget {
@@ -34,7 +34,7 @@ class NoSubscriptionsState extends StatelessWidget {
   Future<void> _openBrokerEditor(BuildContext context) async {
     final vm = context.read<MonitorViewModel>();
 
-    final updated = await showBrokerModal(context, broker: broker, onDelete: () => vm.deleteBroker(broker.id));
+    final updated = await showBrokerDialog(context, broker: broker, onDelete: () => vm.deleteBroker(broker.id));
 
     if (updated == null) return;
     vm.updateBroker(updated);
