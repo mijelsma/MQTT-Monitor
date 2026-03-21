@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../generated/git_info.dart';
 import '../../../generated/l10n.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
@@ -35,7 +37,7 @@ class AboutPanel extends StatelessWidget {
           const VSpacer(16),
           Text('MQTT Monitor', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.5)),
           const VSpacer(4),
-          Text(s.aboutPanelVersion, style: TextStyle(fontSize: 13, color: secondary)),
+          Text('Version ${GitInfo.version}', style: TextStyle(fontSize: 13, color: secondary)),
         ],
       ),
     );
@@ -47,7 +49,7 @@ class AboutPanel extends StatelessWidget {
         UiSection(
           label: s.aboutPanelSectionDetails,
           children: [
-            UiInfoRow(label: s.aboutPanelCommitHash, value: 'a1b2c3d'),
+            UiInfoRow(label: s.aboutPanelCommitHash, value: GitInfo.commitHash),
             UiInfoRow(label: s.aboutPanelLicense, value: 'MIT'),
             UiInfoRow(label: s.aboutPanelAuthor, value: 'Michel Jelsma'),
           ],
@@ -55,13 +57,20 @@ class AboutPanel extends StatelessWidget {
         UiSection(
           label: s.aboutPanelSectionResources,
           children: [
-            UiLinkRow(label: s.aboutPanelSourceCode, icon: Icons.code_rounded, accent: accent, onTap: () {}),
-            UiLinkRow(label: s.aboutPanelChangelog, icon: Icons.history_rounded, accent: accent, onTap: () {}),
-            UiLinkRow(label: s.aboutPanelReportIssue, icon: Icons.bug_report_outlined, accent: AppColors.error500, onTap: () {}),
+            UiLinkRow(label: s.aboutPanelSourceCode, icon: Icons.code_rounded, accent: accent, onTap: () => _openUrl('https://github.com/mijelsma/mqtt-monitor')),
+            UiLinkRow(label: s.aboutPanelChangelog, icon: Icons.history_rounded, accent: accent, onTap: () => _openUrl('https://github.com/mijelsma/mqtt-monitor/releases')),
+            UiLinkRow(label: s.aboutPanelReportIssue, icon: Icons.bug_report_outlined, accent: AppColors.error500, onTap: () => _openUrl('https://github.com/mijelsma/mqtt-monitor/issues')),
             UiLinkRow(label: s.aboutPanelSupportProject, icon: Icons.favorite_border_rounded, accent: accent, onTap: () {}),
           ],
         ),
       ],
     );
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 }
