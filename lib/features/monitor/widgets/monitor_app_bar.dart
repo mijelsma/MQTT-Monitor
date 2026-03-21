@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/mqtt/connection_status.dart';
+import '../../../generated/l10n.dart';
 import '../../../shared/widgets/app_bar_action_button.dart';
 import '../../../shared/widgets/spacers.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
@@ -85,12 +86,6 @@ class _SearchBox extends StatelessWidget {
   final bool hasText;
   final ValueChanged<SearchScope> onScopeChanged;
 
-  String _scopeLabel(SearchScope s) => switch (s) {
-    SearchScope.all => 'All',
-    SearchScope.topic => 'Topic',
-    SearchScope.value => 'Value',
-  };
-
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
@@ -112,7 +107,7 @@ class _SearchBox extends StatelessWidget {
               controller: controller,
               style: TextStyle(fontSize: 13, color: tokens.textPrimary, height: 1.0),
               decoration: InputDecoration(
-                hintText: 'Search ${_scopeLabel(scope).toLowerCase()}s…',
+                hintText: '${S.of(context).searchHint}…',
                 hintStyle: TextStyle(fontSize: 13, color: tokens.textTertiary, fontWeight: FontWeight.w400),
                 border: InputBorder.none,
                 isDense: true,
@@ -144,10 +139,10 @@ class _ScopePicker extends StatelessWidget {
   final SearchScope scope;
   final ValueChanged<SearchScope> onChanged;
 
-  String _label(SearchScope s) => switch (s) {
-    SearchScope.all => 'All',
-    SearchScope.topic => 'Topic',
-    SearchScope.value => 'Value',
+  String _label(BuildContext context, SearchScope s) => switch (s) {
+    SearchScope.all => S.of(context).searchScopeAll,
+    SearchScope.topic => S.of(context).searchScopeTopic,
+    SearchScope.value => S.of(context).searchScopeValue,
   };
 
   @override
@@ -169,7 +164,7 @@ class _ScopePicker extends StatelessWidget {
               value: s,
               height: 36,
               child: Text(
-                _label(s),
+                _label(context, s),
                 style: TextStyle(fontSize: 13, fontWeight: s == scope ? FontWeight.w600 : FontWeight.w400, color: s == scope ? tokens.primary : tokens.textSecondary),
               ),
             ),
@@ -181,7 +176,7 @@ class _ScopePicker extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              _label(scope),
+              _label(context, scope),
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: tokens.textSecondary),
             ),
             const SizedBox(width: 2),
@@ -203,7 +198,7 @@ class _CollapseExpandButton extends StatelessWidget {
     return IconButton(
       onPressed: expanded ? vm.collapseAll : vm.expandAll,
       icon: Icon(expanded ? Icons.unfold_less_rounded : Icons.unfold_more_rounded, size: 18, color: tokens.textSecondary),
-      tooltip: expanded ? 'Collapse all' : 'Expand all',
+      tooltip: expanded ? S.of(context).collapseAll : S.of(context).expandAll,
       splashRadius: 16,
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
@@ -226,8 +221,8 @@ class _ConnectionButton extends StatelessWidget {
     };
 
     final tooltip = switch (vm.connectionStatus) {
-      ConnectionStatus.connected || ConnectionStatus.connecting => 'Disconnect',
-      _ => 'Reconnect',
+      ConnectionStatus.connected || ConnectionStatus.connecting => S.of(context).disconnect,
+      _ => S.of(context).reconnect,
     };
 
     return AppBarActionButton(icon: icon, tooltip: tooltip, onTap: onTap);
@@ -244,7 +239,7 @@ class _DashboardButton extends StatelessWidget {
 
     return AppBarActionButton(
       icon: Icons.bar_chart_rounded,
-      tooltip: 'Dashboard',
+      tooltip: S.of(context).sectionDashboard,
       onTap: broker == null
           ? null
           : () => Navigator.push(
@@ -264,7 +259,7 @@ class _SettingsButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppBarActionButton(
       icon: Icons.tune_rounded,
-      tooltip: 'Settings',
+      tooltip: S.of(context).settings,
       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
     );
   }

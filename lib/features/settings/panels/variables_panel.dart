@@ -32,18 +32,19 @@ class VariablesPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<SettingsViewModel>();
+    final s = S.of(context);
     final variables = vm.environmentVariables;
     final tokens = context.tokens;
 
     return UiPanelScaffold(
-      title: 'Variables',
-      description: r'Define environment variables to use as placeholders in chart topic strings. Reference them with ${NAME} syntax.',
+      title: s.variablesPanelTitle,
+      description: s.variablesPanelDescription,
       children: [
         if (variables.isEmpty)
-          const UiEmptyState(icon: Icons.data_object_rounded, title: 'No variables yet', message: 'Add a variable to use as a placeholder\nin your chart topic strings.')
+          UiEmptyState(icon: Icons.data_object_rounded, title: s.variablesPanelNoVariablesTitle, message: s.variablesPanelNoVariablesMessage)
         else
           UiSection(
-            label: 'Defined Variables',
+            label: s.variablesPanelDefinedVariables,
             children: [for (int i = 0; i < variables.length; i++) _VariableRow(variable: variables[i], showDivider: i < variables.length - 1, onTap: () => _editVariable(context, variables[i]), onDelete: () => vm.deleteEnvironmentVariable(variables[i].name))],
           ),
         const SizedBox(height: 12),
@@ -51,7 +52,7 @@ class VariablesPanel extends StatelessWidget {
           alignment: Alignment.centerLeft,
           child: FilledButton.icon(
             icon: const Icon(Icons.add_rounded, size: 18),
-            label: const Text('Add Variable'),
+            label: Text(s.variablesPanelAddVariable),
             style: FilledButton.styleFrom(backgroundColor: tokens.primary, foregroundColor: tokens.onPrimary),
             onPressed: () => _addVariable(context),
           ),
@@ -71,10 +72,11 @@ class _VariableRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     final tokens = context.tokens;
     final optionCount = variable.options.length;
-    final scopeText = variable.isGlobal ? 'Global' : '${variable.brokerIds.length} broker${variable.brokerIds.length == 1 ? '' : 's'}';
-    final parts = <String>[optionCount == 0 ? 'No options' : '$optionCount option${optionCount == 1 ? '' : 's'}', scopeText];
+    final scopeText = variable.isGlobal ? s.scopeGlobal : '${variable.brokerIds.length} broker${variable.brokerIds.length == 1 ? '' : 's'}';
+    final parts = <String>[optionCount == 0 ? s.variablesPanelNoOptions : '$optionCount option${optionCount == 1 ? '' : 's'}', scopeText];
 
     return Column(
       mainAxisSize: MainAxisSize.min,

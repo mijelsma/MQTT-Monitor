@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../generated/l10n.dart';
 import '../../../models/dashboard_layout.dart';
 import '../../../shared/widgets/app_bar_action_button.dart';
 import '../../../shared/widgets/spacers.dart';
@@ -40,9 +41,9 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         DashboardSelector(onSaveLayout: onSaveLayout, onUpdateLayout: onUpdateLayout, onDiscardChanges: onDiscardChanges, onNewEmpty: onNewEmpty, onEditLayout: onEditLayout, onManageDashboards: onManageDashboards, onManageVariables: onManageVariables),
         const HSpacer(8),
-        AppBarActionButton(icon: Icons.delete_sweep_rounded, tooltip: 'Erase history', onTap: onEraseHistory),
+        AppBarActionButton(icon: Icons.delete_sweep_rounded, tooltip: S.of(context).dashboardEraseHistory, onTap: onEraseHistory),
         const HSpacer(8),
-        AppBarActionButton(icon: Icons.tune_rounded, tooltip: 'Settings', onTap: onOpenSettings),
+        AppBarActionButton(icon: Icons.tune_rounded, tooltip: S.of(context).settings, onTap: onOpenSettings),
         const HSpacer(8),
       ],
     );

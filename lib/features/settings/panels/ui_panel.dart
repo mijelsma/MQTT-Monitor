@@ -91,17 +91,17 @@ class UiPanel extends StatelessWidget {
 
         // Connection
         UiSection(
-          label: 'Connection',
+          label: s.uiPanelSectionConnection,
           children: [
             UiSegmentRow<StartupConnection>(
-              label: 'Startup Behavior',
+              label: s.uiPanelStartupBehavior,
               accent: accent,
               value: vm.startupConnection,
               onChanged: (v) => vm.setStartupConnection(v),
               options: [
-                UiSegmentOption(value: StartupConnection.alwaysConnect, label: 'Connect', icon: Icons.power_rounded),
-                UiSegmentOption(value: StartupConnection.lastStatus, label: 'Last Status', icon: Icons.restore_rounded),
-                UiSegmentOption(value: StartupConnection.stayDisconnected, label: 'Disconnected', icon: Icons.power_off_rounded),
+                UiSegmentOption(value: StartupConnection.alwaysConnect, label: s.uiPanelStartupConnect, icon: Icons.power_rounded),
+                UiSegmentOption(value: StartupConnection.lastStatus, label: s.uiPanelStartupLastStatus, icon: Icons.restore_rounded),
+                UiSegmentOption(value: StartupConnection.stayDisconnected, label: s.uiPanelStartupDisconnected, icon: Icons.power_off_rounded),
               ],
             ),
           ],

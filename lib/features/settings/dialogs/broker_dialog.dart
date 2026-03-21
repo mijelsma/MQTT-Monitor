@@ -135,23 +135,23 @@ class _BrokerDialogState extends State<BrokerDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _sectionLabel(context, s.brokerModalSectionConnection),
+        _sectionLabel(context, s.brokerDialogSectionConnection),
         const VSpacer(10),
-        UiField(label: s.brokerModalFieldName, controller: _name, hint: 'e.g. Home Server', textInputAction: TextInputAction.next, validator: (v) => (v == null || v.trim().isEmpty) ? s.brokerModalValidateName : null),
-        ColorPickerField(margin: const EdgeInsets.only(top: 14), label: s.brokerModalFieldColor, value: _color, onChanged: (c) => setState(() => _color = c)),
+        UiField(label: s.brokerDialogFieldName, controller: _name, hint: 'e.g. Home Server', textInputAction: TextInputAction.next, validator: (v) => (v == null || v.trim().isEmpty) ? s.brokerDialogValidateName : null),
+        ColorPickerField(margin: const EdgeInsets.only(top: 14), label: s.brokerDialogFieldColor, value: _color, onChanged: (c) => setState(() => _color = c)),
         const VSpacer(14),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               flex: 3,
-              child: UiField(label: s.brokerModalFieldHost, controller: _host, hint: 'e.g. broker.example.com', textInputAction: TextInputAction.next, validator: (v) => (v == null || v.trim().isEmpty) ? s.brokerModalValidateHost : null),
+              child: UiField(label: s.brokerDialogFieldHost, controller: _host, hint: 'e.g. broker.example.com', textInputAction: TextInputAction.next, validator: (v) => (v == null || v.trim().isEmpty) ? s.brokerDialogValidateHost : null),
             ),
             const HSpacer(10),
             Expanded(
               flex: 1,
               child: UiField(
-                label: s.brokerModalFieldPort,
+                label: s.brokerDialogFieldPort,
                 controller: _port,
                 hint: '1883',
                 textInputAction: TextInputAction.next,
@@ -166,10 +166,10 @@ class _BrokerDialogState extends State<BrokerDialog> {
             ),
           ],
         ),
-        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerModalUseSSL, subtitle: s.brokerModalUseSSLSubtitle, value: _useSSL, accent: accent, bordered: true, onChanged: (v) => setState(() => _useSSL = v)),
-        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerModalValidateCertificates, subtitle: s.brokerModalValidateCertificatesSubtitle, value: _validateCertificates, accent: accent, bordered: true, onChanged: (v) => setState(() => _validateCertificates = v)),
-        UiField(margin: const EdgeInsets.only(top: 14), label: s.brokerModalFieldClientId, optional: true, controller: _clientId, hint: 'mqtt_monitor', textInputAction: TextInputAction.next),
-        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerModalRandomSuffix, subtitle: s.brokerModalRandomSuffixSubtitle, value: _randomClientIdSuffix, accent: accent, bordered: true, onChanged: (v) => setState(() => _randomClientIdSuffix = v)),
+        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogUseSSL, subtitle: s.brokerDialogUseSSLSubtitle, value: _useSSL, accent: accent, bordered: true, onChanged: (v) => setState(() => _useSSL = v)),
+        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogValidateCertificates, subtitle: s.brokerDialogValidateCertificatesSubtitle, value: _validateCertificates, accent: accent, bordered: true, onChanged: (v) => setState(() => _validateCertificates = v)),
+        UiField(margin: const EdgeInsets.only(top: 14), label: s.brokerDialogFieldClientId, optional: true, controller: _clientId, hint: 'mqtt_monitor', textInputAction: TextInputAction.next),
+        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogRandomSuffix, subtitle: s.brokerDialogRandomSuffixSubtitle, value: _randomClientIdSuffix, accent: accent, bordered: true, onChanged: (v) => setState(() => _randomClientIdSuffix = v)),
       ],
     );
   }
@@ -179,12 +179,12 @@ class _BrokerDialogState extends State<BrokerDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _sectionLabel(context, s.brokerModalSectionAuthentication),
+        _sectionLabel(context, s.brokerDialogSectionAuthentication),
         const VSpacer(10),
-        UiField(label: s.brokerModalFieldUsername, optional: true, controller: _username, hint: s.optional, textInputAction: TextInputAction.next),
+        UiField(label: s.brokerDialogFieldUsername, optional: true, controller: _username, hint: s.optional, textInputAction: TextInputAction.next),
         UiField(
           margin: const EdgeInsets.only(top: 14),
-          label: s.brokerModalFieldPassword,
+          label: s.brokerDialogFieldPassword,
           optional: true,
           controller: _password,
           hint: s.optional,
@@ -207,7 +207,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
         const VSpacer(10),
         if (_subscriptions.isNotEmpty) ...[
           UiSection(
-            label: s.brokerModalSectionTopics,
+            label: s.brokerDialogSectionTopics,
             sortable: true,
             onReorder: _reorderSubscriptions,
             children: List.generate(_subscriptions.length, (i) {
@@ -231,7 +231,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
           child: TextButton.icon(
             onPressed: _addSubscription,
             icon: const Icon(Icons.add_rounded, size: 16),
-            label: Text(s.brokerModalAddSubscription),
+            label: Text(s.brokerDialogAddSubscription),
             style: TextButton.styleFrom(foregroundColor: accent, padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6), visualDensity: VisualDensity.compact),
           ),
         ),
@@ -245,7 +245,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
     final s = S.of(context);
 
     return UiModalScaffold(
-      title: _isEditing ? s.brokerModalEditTitle : s.brokerModalAddTitle,
+      title: _isEditing ? s.brokerDialogEditTitle : s.brokerDialogAddTitle,
       isEditing: _isEditing,
       onDelete: (widget.onDelete != null)
           ? () {

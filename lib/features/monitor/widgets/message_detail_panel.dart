@@ -5,6 +5,7 @@ import '../../../core/history/message_history_service.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/state/keys/dashboard_keys.dart';
 import '../../../core/state/keys/settings_keys.dart';
+import '../../../generated/l10n.dart';
 import '../../../models/graph_card_model.dart';
 import '../../../models/topic_node.dart';
 import '../../../models/topic_node_value.dart';
@@ -69,7 +70,7 @@ class _EmptyDetail extends StatelessWidget {
                 Icon(Icons.hourglass_empty_rounded, size: 32, color: tokens.muted),
                 const SizedBox(height: 12),
                 Text(
-                  'Waiting for messages\u2026',
+                  S.of(context).detailWaitingForMessages,
                   style: TextStyle(fontSize: 13, color: tokens.textTertiary, fontStyle: FontStyle.italic),
                 ),
               ],
@@ -179,7 +180,7 @@ class _PropertiesCard extends StatelessWidget {
           _PropertyRow(
             icon: Icons.swap_vert_rounded,
             iconColor: QosTag.colorFor(value.qos),
-            label: 'QoS',
+            label: S.of(context).detailQoS,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -193,19 +194,19 @@ class _PropertiesCard extends StatelessWidget {
           _PropertyRow(
             icon: Icons.push_pin_rounded,
             iconColor: value.retain ? AppColors.warning500 : tokens.muted,
-            label: 'Retained',
+            label: S.of(context).detailRetained,
             child: value.retain
                 ? Text(
-                    'Yes',
+                    S.of(context).detailYes,
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.warning500),
                   )
-                : Text('No', style: TextStyle(fontSize: 12, color: tokens.textTertiary)),
+                : Text(S.of(context).detailNo, style: TextStyle(fontSize: 12, color: tokens.textTertiary)),
           ),
           _divider(tokens),
           _PropertyRow(
             icon: Icons.schedule_rounded,
             iconColor: tokens.textTertiary,
-            label: 'Received',
+            label: S.of(context).detailReceived,
             child: Text(
               timeStr,
               style: TextStyle(fontSize: 12, color: tokens.textSecondary, fontFeatures: const [FontFeature.tabularFigures()]),
@@ -215,14 +216,14 @@ class _PropertiesCard extends StatelessWidget {
           _PropertyRow(
             icon: Icons.straighten_rounded,
             iconColor: tokens.textTertiary,
-            label: 'Size',
+            label: S.of(context).detailSize,
             child: Text(sizeStr, style: TextStyle(fontSize: 12, color: tokens.textSecondary)),
           ),
           _divider(tokens),
           _PropertyRow(
             icon: Icons.numbers_rounded,
             iconColor: tokens.primary.withValues(alpha: 0.6),
-            label: 'Messages',
+            label: S.of(context).detailMessages,
             child: Text(
               '#${value.seq}',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: tokens.primary, fontFeatures: const [FontFeature.tabularFigures()]),
@@ -458,7 +459,7 @@ void _onPin(BuildContext context, String topic, String? keyPath, String? default
   if (!context.mounted) return;
   final messenger = ScaffoldMessenger.of(context);
   messenger.clearSnackBars();
-  messenger.showSnackBar(SnackBar(content: const Text('Pinned to dashboard'), behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 2)));
+  messenger.showSnackBar(SnackBar(content: Text(S.of(context).detailPinnedToDashboard), behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 2)));
 }
 
 // ── Historical banner ───────────────────────────────────────────────────
@@ -486,7 +487,7 @@ class _HistoricalBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Viewing message #$seq',
+              S.of(context).detailViewingMessage(seq),
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.warning500),
             ),
           ),
@@ -504,7 +505,7 @@ class _HistoricalBanner extends StatelessWidget {
                     border: Border.all(color: tokens.border, width: 0.5),
                   ),
                   child: Text(
-                    'Show latest',
+                    S.of(context).detailShowLatest,
                     style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: tokens.textSecondary),
                   ),
                 ),

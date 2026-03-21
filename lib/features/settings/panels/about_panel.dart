@@ -15,6 +15,7 @@ class AboutPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final s = S.of(context);
     final accent = context.tokens.primary;
     final secondary = context.tokens.textSecondary;
 
@@ -34,12 +35,10 @@ class AboutPanel extends StatelessWidget {
           const VSpacer(16),
           Text('MQTT Monitor', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.5)),
           const VSpacer(4),
-          Text('Version 1.0.0  ·  Build 1', style: TextStyle(fontSize: 13, color: secondary)),
+          Text(s.aboutPanelVersion, style: TextStyle(fontSize: 13, color: secondary)),
         ],
       ),
     );
-
-    final s = S.of(context);
 
     return UiPanelScaffold(
       title: s.aboutPanelTitle,

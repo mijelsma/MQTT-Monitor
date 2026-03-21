@@ -20,6 +20,8 @@ typedef String MessageIfAbsent(String messageStr, List<dynamic> args);
 class MessageLookup extends MessageLookupByLibrary {
   String get localeName => 'en';
 
+  static String m0(seq) => "Viewing message #${seq}";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "aboutPanelAuthor": MessageLookupByLibrary.simpleMessage("Author"),
@@ -38,54 +40,59 @@ class MessageLookup extends MessageLookupByLibrary {
       "Support the Project",
     ),
     "aboutPanelTitle": MessageLookupByLibrary.simpleMessage("About"),
+    "aboutPanelVersion": MessageLookupByLibrary.simpleMessage(
+      "Version 1.0.0  ·  Build 1",
+    ),
     "add": MessageLookupByLibrary.simpleMessage("Add"),
     "back": MessageLookupByLibrary.simpleMessage("Back"),
-    "brokerModalAddSubscription": MessageLookupByLibrary.simpleMessage(
+    "brokerDialogAddSubscription": MessageLookupByLibrary.simpleMessage(
       "Add Subscription",
     ),
-    "brokerModalAddTitle": MessageLookupByLibrary.simpleMessage("Add Broker"),
-    "brokerModalEditTitle": MessageLookupByLibrary.simpleMessage("Edit Broker"),
-    "brokerModalFieldClientId": MessageLookupByLibrary.simpleMessage(
+    "brokerDialogAddTitle": MessageLookupByLibrary.simpleMessage("Add Broker"),
+    "brokerDialogEditTitle": MessageLookupByLibrary.simpleMessage(
+      "Edit Broker",
+    ),
+    "brokerDialogFieldClientId": MessageLookupByLibrary.simpleMessage(
       "Client ID",
     ),
-    "brokerModalFieldColor": MessageLookupByLibrary.simpleMessage("Color"),
-    "brokerModalFieldHost": MessageLookupByLibrary.simpleMessage("Host"),
-    "brokerModalFieldName": MessageLookupByLibrary.simpleMessage("Name"),
-    "brokerModalFieldPassword": MessageLookupByLibrary.simpleMessage(
+    "brokerDialogFieldColor": MessageLookupByLibrary.simpleMessage("Color"),
+    "brokerDialogFieldHost": MessageLookupByLibrary.simpleMessage("Host"),
+    "brokerDialogFieldName": MessageLookupByLibrary.simpleMessage("Name"),
+    "brokerDialogFieldPassword": MessageLookupByLibrary.simpleMessage(
       "Password",
     ),
-    "brokerModalFieldPort": MessageLookupByLibrary.simpleMessage("Port"),
-    "brokerModalFieldUsername": MessageLookupByLibrary.simpleMessage(
+    "brokerDialogFieldPort": MessageLookupByLibrary.simpleMessage("Port"),
+    "brokerDialogFieldUsername": MessageLookupByLibrary.simpleMessage(
       "Username",
     ),
-    "brokerModalRandomSuffix": MessageLookupByLibrary.simpleMessage(
+    "brokerDialogRandomSuffix": MessageLookupByLibrary.simpleMessage(
       "Random Suffix",
     ),
-    "brokerModalRandomSuffixSubtitle": MessageLookupByLibrary.simpleMessage(
+    "brokerDialogRandomSuffixSubtitle": MessageLookupByLibrary.simpleMessage(
       "Appends a random 6-digit hex suffix to the Client ID",
     ),
-    "brokerModalSectionAuthentication": MessageLookupByLibrary.simpleMessage(
+    "brokerDialogSectionAuthentication": MessageLookupByLibrary.simpleMessage(
       "Authentication",
     ),
-    "brokerModalSectionConnection": MessageLookupByLibrary.simpleMessage(
+    "brokerDialogSectionConnection": MessageLookupByLibrary.simpleMessage(
       "Connection",
     ),
-    "brokerModalSectionTopics": MessageLookupByLibrary.simpleMessage("Topics"),
-    "brokerModalUseSSL": MessageLookupByLibrary.simpleMessage("Use SSL / TLS"),
-    "brokerModalUseSSLSubtitle": MessageLookupByLibrary.simpleMessage(
+    "brokerDialogSectionTopics": MessageLookupByLibrary.simpleMessage("Topics"),
+    "brokerDialogUseSSL": MessageLookupByLibrary.simpleMessage("Use SSL / TLS"),
+    "brokerDialogUseSSLSubtitle": MessageLookupByLibrary.simpleMessage(
       "Encrypts the connection using TLS",
     ),
-    "brokerModalValidateCertificates": MessageLookupByLibrary.simpleMessage(
+    "brokerDialogValidateCertificates": MessageLookupByLibrary.simpleMessage(
       "Validate Certificates",
     ),
-    "brokerModalValidateCertificatesSubtitle":
+    "brokerDialogValidateCertificatesSubtitle":
         MessageLookupByLibrary.simpleMessage(
           "Validates the broker\'s SSL/TLS certificates",
         ),
-    "brokerModalValidateHost": MessageLookupByLibrary.simpleMessage(
+    "brokerDialogValidateHost": MessageLookupByLibrary.simpleMessage(
       "Enter a host",
     ),
-    "brokerModalValidateName": MessageLookupByLibrary.simpleMessage(
+    "brokerDialogValidateName": MessageLookupByLibrary.simpleMessage(
       "Enter a name",
     ),
     "brokersPanelAddBroker": MessageLookupByLibrary.simpleMessage("Add Broker"),
@@ -103,8 +110,85 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "brokersPanelTitle": MessageLookupByLibrary.simpleMessage("Brokers"),
     "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
+    "collapseAll": MessageLookupByLibrary.simpleMessage("Collapse all"),
+    "dashboardDialogEditTitle": MessageLookupByLibrary.simpleMessage(
+      "Edit Dashboard",
+    ),
+    "dashboardDialogFieldName": MessageLookupByLibrary.simpleMessage("Name"),
+    "dashboardDialogNewTitle": MessageLookupByLibrary.simpleMessage(
+      "New Dashboard",
+    ),
+    "dashboardDialogScopeBrokersSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Only for selected brokers",
+    ),
+    "dashboardDialogScopeGlobalSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Use dashboard across all brokers",
+    ),
+    "dashboardDialogSectionDetails": MessageLookupByLibrary.simpleMessage(
+      "Details",
+    ),
+    "dashboardDialogSectionScope": MessageLookupByLibrary.simpleMessage(
+      "Scope",
+    ),
+    "dashboardDialogValidateName": MessageLookupByLibrary.simpleMessage(
+      "Name is required",
+    ),
+    "dashboardEraseHistory": MessageLookupByLibrary.simpleMessage(
+      "Erase history",
+    ),
+    "dashboardPanelAddDashboard": MessageLookupByLibrary.simpleMessage(
+      "Add dashboard",
+    ),
+    "dashboardPanelChartType": MessageLookupByLibrary.simpleMessage(
+      "Chart type",
+    ),
+    "dashboardPanelColor": MessageLookupByLibrary.simpleMessage("Color"),
+    "dashboardPanelDashboards": MessageLookupByLibrary.simpleMessage(
+      "Dashboards",
+    ),
+    "dashboardPanelDefaults": MessageLookupByLibrary.simpleMessage("Defaults"),
+    "dashboardPanelDescription": MessageLookupByLibrary.simpleMessage(
+      "Manage saved dashboard layouts.",
+    ),
+    "dashboardPanelDotSize": MessageLookupByLibrary.simpleMessage("Dot size"),
+    "dashboardPanelInterpolation": MessageLookupByLibrary.simpleMessage(
+      "Interpolation",
+    ),
+    "dashboardPanelMaxSamples": MessageLookupByLibrary.simpleMessage("Samples"),
+    "dashboardPanelMaxSamplesHint": MessageLookupByLibrary.simpleMessage(
+      "0 = unlimited",
+    ),
+    "dashboardPanelNoDashboardsMessage": MessageLookupByLibrary.simpleMessage(
+      "Create dashboard or save from dashboard view",
+    ),
+    "dashboardPanelNoDashboardsTitle": MessageLookupByLibrary.simpleMessage(
+      "No dashboards yet",
+    ),
+    "dashboardPanelTitle": MessageLookupByLibrary.simpleMessage("Dashboard"),
     "delete": MessageLookupByLibrary.simpleMessage("Delete"),
-    "hello": MessageLookupByLibrary.simpleMessage("Hello"),
+    "detailMessages": MessageLookupByLibrary.simpleMessage("Messages"),
+    "detailNo": MessageLookupByLibrary.simpleMessage("No"),
+    "detailPinnedToDashboard": MessageLookupByLibrary.simpleMessage(
+      "Pinned to dashboard",
+    ),
+    "detailQoS": MessageLookupByLibrary.simpleMessage("QoS"),
+    "detailReceived": MessageLookupByLibrary.simpleMessage("Received"),
+    "detailRetained": MessageLookupByLibrary.simpleMessage("Retained"),
+    "detailShowLatest": MessageLookupByLibrary.simpleMessage("Show latest"),
+    "detailSize": MessageLookupByLibrary.simpleMessage("Size"),
+    "detailViewingMessage": m0,
+    "detailWaitingForMessages": MessageLookupByLibrary.simpleMessage(
+      "Waiting for messages…",
+    ),
+    "detailYes": MessageLookupByLibrary.simpleMessage("Yes"),
+    "disconnect": MessageLookupByLibrary.simpleMessage("Disconnect"),
+    "expandAll": MessageLookupByLibrary.simpleMessage("Expand all"),
+    "filterNoMatchingTopics": MessageLookupByLibrary.simpleMessage(
+      "No matching topics",
+    ),
+    "filterNoMatchingTopicsSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Try adjusting or clearing the filter.",
+    ),
     "languageNameDe": MessageLookupByLibrary.simpleMessage("German"),
     "languageNameEn": MessageLookupByLibrary.simpleMessage("English"),
     "languageNameEs": MessageLookupByLibrary.simpleMessage("Spanish"),
@@ -120,6 +204,31 @@ class MessageLookup extends MessageLookupByLibrary {
       "Interface Language",
     ),
     "languagePanelTitle": MessageLookupByLibrary.simpleMessage("Language"),
+    "monitoringPanelClearAll": MessageLookupByLibrary.simpleMessage(
+      "Clear all",
+    ),
+    "monitoringPanelDescription": MessageLookupByLibrary.simpleMessage(
+      "Configure message history retention for topics.",
+    ),
+    "monitoringPanelHistoryBuffer": MessageLookupByLibrary.simpleMessage(
+      "History buffer",
+    ),
+    "monitoringPanelIncreasedBufferHint": MessageLookupByLibrary.simpleMessage(
+      "Messages for monitored topics",
+    ),
+    "monitoringPanelIncreasedBufferSize": MessageLookupByLibrary.simpleMessage(
+      "Increased buffer size",
+    ),
+    "monitoringPanelIncreasedMonitoring": MessageLookupByLibrary.simpleMessage(
+      "Increased monitoring",
+    ),
+    "monitoringPanelStandardBufferHint": MessageLookupByLibrary.simpleMessage(
+      "Messages stored per topic",
+    ),
+    "monitoringPanelStandardBufferSize": MessageLookupByLibrary.simpleMessage(
+      "Standard buffer size",
+    ),
+    "monitoringPanelTitle": MessageLookupByLibrary.simpleMessage("Monitoring"),
     "noBroker": MessageLookupByLibrary.simpleMessage("No Broker"),
     "noMessagesSubtitle": MessageLookupByLibrary.simpleMessage(
       "No messages received yet.",
@@ -128,44 +237,88 @@ class MessageLookup extends MessageLookupByLibrary {
       "Waiting for messages",
     ),
     "optional": MessageLookupByLibrary.simpleMessage("Optional"),
+    "publishBadJson": MessageLookupByLibrary.simpleMessage("Bad JSON"),
+    "publishFailed": MessageLookupByLibrary.simpleMessage("Failed"),
+    "publishNoTopic": MessageLookupByLibrary.simpleMessage("No topic"),
+    "publishOffline": MessageLookupByLibrary.simpleMessage("Offline"),
+    "publishPrettifyJson": MessageLookupByLibrary.simpleMessage(
+      "Prettify JSON",
+    ),
+    "publishRetain": MessageLookupByLibrary.simpleMessage("Retain"),
+    "publishSent": MessageLookupByLibrary.simpleMessage("Sent"),
+    "publishTopicHint": MessageLookupByLibrary.simpleMessage(
+      "Topic  e.g. home/temp",
+    ),
+    "reconnect": MessageLookupByLibrary.simpleMessage("Reconnect"),
     "remove": MessageLookupByLibrary.simpleMessage("Remove"),
     "save": MessageLookupByLibrary.simpleMessage("Save"),
+    "scopeGlobal": MessageLookupByLibrary.simpleMessage("Global"),
+    "scopeSelectedBrokers": MessageLookupByLibrary.simpleMessage(
+      "Selected brokers",
+    ),
+    "scopeSpecificBrokers": MessageLookupByLibrary.simpleMessage(
+      "Specific brokers",
+    ),
+    "searchHint": MessageLookupByLibrary.simpleMessage("Search"),
+    "searchScopeAll": MessageLookupByLibrary.simpleMessage("All"),
+    "searchScopeTopic": MessageLookupByLibrary.simpleMessage("Topic"),
+    "searchScopeValue": MessageLookupByLibrary.simpleMessage("Value"),
     "sectionAbout": MessageLookupByLibrary.simpleMessage("About"),
     "sectionBrokers": MessageLookupByLibrary.simpleMessage("Brokers"),
+    "sectionDashboard": MessageLookupByLibrary.simpleMessage("Dashboard"),
     "sectionLanguage": MessageLookupByLibrary.simpleMessage("Language"),
+    "sectionMonitoring": MessageLookupByLibrary.simpleMessage("Monitoring"),
     "sectionUI": MessageLookupByLibrary.simpleMessage("User Interface"),
+    "sectionVariables": MessageLookupByLibrary.simpleMessage("Variables"),
     "settings": MessageLookupByLibrary.simpleMessage("Settings"),
-    "subscriptionModalAddTitle": MessageLookupByLibrary.simpleMessage(
+    "sidebarHistory": MessageLookupByLibrary.simpleMessage("HISTORY"),
+    "sidebarMessageDetail": MessageLookupByLibrary.simpleMessage(
+      "MESSAGE DETAIL",
+    ),
+    "sidebarNoSelectionSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Choose a topic from the tree\nto view message details",
+    ),
+    "sidebarNoSelectionTitle": MessageLookupByLibrary.simpleMessage(
+      "Select a topic to inspect",
+    ),
+    "sidebarPublish": MessageLookupByLibrary.simpleMessage("PUBLISH"),
+    "subscriptionDialogAddTitle": MessageLookupByLibrary.simpleMessage(
       "Add Subscription",
     ),
-    "subscriptionModalEditTitle": MessageLookupByLibrary.simpleMessage(
+    "subscriptionDialogEditTitle": MessageLookupByLibrary.simpleMessage(
       "Edit Subscription",
     ),
-    "subscriptionModalFieldDisplayName": MessageLookupByLibrary.simpleMessage(
+    "subscriptionDialogFieldDisplayName": MessageLookupByLibrary.simpleMessage(
       "Display Name",
     ),
-    "subscriptionModalFieldTopicFilter": MessageLookupByLibrary.simpleMessage(
+    "subscriptionDialogFieldTopicFilter": MessageLookupByLibrary.simpleMessage(
       "Topic Filter",
     ),
-    "subscriptionModalHintDisplayName": MessageLookupByLibrary.simpleMessage(
+    "subscriptionDialogHintDisplayName": MessageLookupByLibrary.simpleMessage(
       "Optional friendly name",
     ),
-    "subscriptionModalQoS0Description": MessageLookupByLibrary.simpleMessage(
+    "subscriptionDialogQoS0Description": MessageLookupByLibrary.simpleMessage(
       "At most once",
     ),
-    "subscriptionModalQoS0Label": MessageLookupByLibrary.simpleMessage("QoS 0"),
-    "subscriptionModalQoS1Description": MessageLookupByLibrary.simpleMessage(
+    "subscriptionDialogQoS0Label": MessageLookupByLibrary.simpleMessage(
+      "QoS 0",
+    ),
+    "subscriptionDialogQoS1Description": MessageLookupByLibrary.simpleMessage(
       "At least once",
     ),
-    "subscriptionModalQoS1Label": MessageLookupByLibrary.simpleMessage("QoS 1"),
-    "subscriptionModalQoS2Description": MessageLookupByLibrary.simpleMessage(
+    "subscriptionDialogQoS1Label": MessageLookupByLibrary.simpleMessage(
+      "QoS 1",
+    ),
+    "subscriptionDialogQoS2Description": MessageLookupByLibrary.simpleMessage(
       "Exactly once",
     ),
-    "subscriptionModalQoS2Label": MessageLookupByLibrary.simpleMessage("QoS 2"),
-    "subscriptionModalQoSLabel": MessageLookupByLibrary.simpleMessage(
+    "subscriptionDialogQoS2Label": MessageLookupByLibrary.simpleMessage(
+      "QoS 2",
+    ),
+    "subscriptionDialogQoSLabel": MessageLookupByLibrary.simpleMessage(
       "Quality of Service",
     ),
-    "subscriptionModalValidateTopicFilter":
+    "subscriptionDialogValidateTopicFilter":
         MessageLookupByLibrary.simpleMessage("Enter a topic filter"),
     "uiPanelDescription": MessageLookupByLibrary.simpleMessage(
       "Appearance and layout preferences.",
@@ -193,6 +346,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "uiPanelSectionAppearance": MessageLookupByLibrary.simpleMessage(
       "Appearance",
     ),
+    "uiPanelSectionConnection": MessageLookupByLibrary.simpleMessage(
+      "Connection",
+    ),
     "uiPanelSectionDataDisplay": MessageLookupByLibrary.simpleMessage(
       "Data Display",
     ),
@@ -209,10 +365,74 @@ class MessageLookup extends MessageLookupByLibrary {
     "uiPanelShowStatusBarSubtitle": MessageLookupByLibrary.simpleMessage(
       "Shows the bottom status bar",
     ),
+    "uiPanelStartupBehavior": MessageLookupByLibrary.simpleMessage(
+      "Startup Behavior",
+    ),
+    "uiPanelStartupConnect": MessageLookupByLibrary.simpleMessage("Connect"),
+    "uiPanelStartupDisconnected": MessageLookupByLibrary.simpleMessage(
+      "Disconnected",
+    ),
+    "uiPanelStartupLastStatus": MessageLookupByLibrary.simpleMessage(
+      "Last Status",
+    ),
     "uiPanelThemeDark": MessageLookupByLibrary.simpleMessage("Dark"),
     "uiPanelThemeLight": MessageLookupByLibrary.simpleMessage("Light"),
     "uiPanelThemeMode": MessageLookupByLibrary.simpleMessage("Theme Mode"),
     "uiPanelThemeSystem": MessageLookupByLibrary.simpleMessage("System"),
-    "uiPanelTitle": MessageLookupByLibrary.simpleMessage("UI"),
+    "uiPanelTitle": MessageLookupByLibrary.simpleMessage("User Interface"),
+    "variableDialogAddOption": MessageLookupByLibrary.simpleMessage(
+      "Add Option",
+    ),
+    "variableDialogAddTitle": MessageLookupByLibrary.simpleMessage(
+      "Add Variable",
+    ),
+    "variableDialogDisplayName": MessageLookupByLibrary.simpleMessage(
+      "Display name",
+    ),
+    "variableDialogEditTitle": MessageLookupByLibrary.simpleMessage(
+      "Edit Variable",
+    ),
+    "variableDialogFieldName": MessageLookupByLibrary.simpleMessage("Name"),
+    "variableDialogNameExists": MessageLookupByLibrary.simpleMessage(
+      "A variable with this name already exists",
+    ),
+    "variableDialogNameInvalid": MessageLookupByLibrary.simpleMessage(
+      "Name cannot contain spaces or special characters",
+    ),
+    "variableDialogOptionsHint": MessageLookupByLibrary.simpleMessage(
+      "Options let you pick from a list in the dashboard instead of typing each time.",
+    ),
+    "variableDialogPredefinedOptions": MessageLookupByLibrary.simpleMessage(
+      "Pre-defined Options",
+    ),
+    "variableDialogScopeBrokersSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Only for selected brokers",
+    ),
+    "variableDialogScopeGlobalSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Available across all brokers",
+    ),
+    "variableDialogValidateName": MessageLookupByLibrary.simpleMessage(
+      "Enter a variable name",
+    ),
+    "variableDialogValue": MessageLookupByLibrary.simpleMessage("Value"),
+    "variablesPanelAddVariable": MessageLookupByLibrary.simpleMessage(
+      "Add Variable",
+    ),
+    "variablesPanelDefinedVariables": MessageLookupByLibrary.simpleMessage(
+      "Defined Variables",
+    ),
+    "variablesPanelDescription": MessageLookupByLibrary.simpleMessage(
+      "Define environment variables to use as placeholders in chart topic strings.",
+    ),
+    "variablesPanelNoOptions": MessageLookupByLibrary.simpleMessage(
+      "No options",
+    ),
+    "variablesPanelNoVariablesMessage": MessageLookupByLibrary.simpleMessage(
+      "Add a variable to use as a placeholder\nin your chart topic strings.",
+    ),
+    "variablesPanelNoVariablesTitle": MessageLookupByLibrary.simpleMessage(
+      "No variables yet",
+    ),
+    "variablesPanelTitle": MessageLookupByLibrary.simpleMessage("Variables"),
   };
 }

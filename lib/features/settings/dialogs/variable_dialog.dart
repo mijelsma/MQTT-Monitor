@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../generated/l10n.dart';
 import '../../../models/broker_entry.dart';
 import '../../../models/environment_variable.dart';
 import '../../../shared/widgets/scope_picker.dart';
@@ -91,11 +92,12 @@ class _VariableDialogState extends State<_VariableDialog> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final s = S.of(context);
 
     return Form(
       key: _formKey,
       child: UiModalScaffold(
-        title: _isEditing ? 'Edit Variable' : 'Add Variable',
+        title: _isEditing ? s.variableDialogEditTitle : s.variableDialogAddTitle,
         isEditing: _isEditing,
         onDelete: widget.onDelete != null
             ? () {
@@ -105,19 +107,19 @@ class _VariableDialogState extends State<_VariableDialog> {
             : null,
         onCancel: () => Navigator.pop(context),
         onSubmit: _submit,
-        submitLabel: _isEditing ? 'Save' : 'Add',
+        submitLabel: _isEditing ? s.save : s.add,
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             UiField(
-              label: 'Name',
+              label: s.variableDialogFieldName,
               controller: _nameController,
               hint: 'e.g. SENSOR_ID',
               validator: (value) {
                 final trimmed = value?.trim() ?? '';
-                if (trimmed.isEmpty) return 'Enter a variable name';
-                if (widget.existingNames.contains(trimmed)) return 'A variable with this name already exists';
-                if (trimmed.contains(RegExp(r'[\s{}\$]'))) return 'Name cannot contain spaces or \${} characters';
+                if (trimmed.isEmpty) return s.variableDialogValidateName;
+                if (widget.existingNames.contains(trimmed)) return s.variableDialogNameExists;
+                if (trimmed.contains(RegExp(r'[\s{}\$]'))) return s.variableDialogNameInvalid;
                 return null;
               },
             ),
@@ -128,32 +130,32 @@ class _VariableDialogState extends State<_VariableDialog> {
             Row(
               children: [
                 Text(
-                  'Pre-defined Options',
+                  s.variableDialogPredefinedOptions,
                   style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: tokens.textPrimary),
                 ),
                 const SizedBox(width: 8),
-                Text('optional', style: TextStyle(fontSize: 11, color: tokens.textSecondary)),
+                Text(s.optional, style: TextStyle(fontSize: 11, color: tokens.textSecondary)),
               ],
             ),
             const VSpacer(4),
-            Text('Options let you pick from a list in the dashboard instead of typing each time.', style: TextStyle(fontSize: 11, color: tokens.textTertiary)),
+            Text(s.variableDialogOptionsHint, style: TextStyle(fontSize: 11, color: tokens.textTertiary)),
             const VSpacer(12),
 
             for (int i = 0; i < _options.length; i++) ...[_OptionRow(entry: _options[i], onRemove: () => _removeOption(i)), const VSpacer(8)],
 
             TextButton.icon(
               icon: const Icon(Icons.add_rounded, size: 16),
-              label: const Text('Add Option'),
+              label: Text(s.variableDialogAddOption),
               style: TextButton.styleFrom(foregroundColor: tokens.primary, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8)),
               onPressed: _addOption,
             ),
 
             const VSpacer(24),
-            sectionLabel(context, 'Scope'),
+            sectionLabel(context, s.dashboardDialogSectionScope),
             const VSpacer(10),
-            ScopeOption(label: 'Global', subtitle: 'Available across all brokers', icon: Icons.public_rounded, selected: _isGlobal, onTap: () => setState(() => _isGlobal = true)),
+            ScopeOption(label: s.scopeGlobal, subtitle: s.variableDialogScopeGlobalSubtitle, icon: Icons.public_rounded, selected: _isGlobal, onTap: () => setState(() => _isGlobal = true)),
             const VSpacer(6),
-            ScopeOption(label: 'Specific brokers', subtitle: 'Only for selected brokers', icon: Icons.dns_rounded, selected: !_isGlobal, onTap: () => setState(() => _isGlobal = false)),
+            ScopeOption(label: s.scopeSpecificBrokers, subtitle: s.variableDialogScopeBrokersSubtitle, icon: Icons.dns_rounded, selected: !_isGlobal, onTap: () => setState(() => _isGlobal = false)),
             if (!_isGlobal) ...[
               const VSpacer(12),
               BrokerCheckboxList(
@@ -190,6 +192,7 @@ class _OptionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final s = S.of(context);
 
     InputDecoration fieldDecoration(String hint) => InputDecoration(
       hintText: hint,
@@ -214,11 +217,11 @@ class _OptionRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: TextFormField(controller: entry.label, decoration: fieldDecoration('Display name')),
+          child: TextFormField(controller: entry.label, decoration: fieldDecoration(s.variableDialogDisplayName)),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: TextFormField(controller: entry.value, decoration: fieldDecoration('Value')),
+          child: TextFormField(controller: entry.value, decoration: fieldDecoration(s.variableDialogValue)),
         ),
         const SizedBox(width: 4),
         IconButton(

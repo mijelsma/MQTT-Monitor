@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../generated/l10n.dart';
 import '../../../shared/widgets/ui_field.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
@@ -35,19 +36,20 @@ class _MonitoringPanelState extends State<MonitoringPanel> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<SettingsViewModel>();
+    final s = S.of(context);
 
     return UiPanelScaffold(
-      title: 'Monitoring',
-      description: 'Configure message history retention for topics.',
+      title: s.monitoringPanelTitle,
+      description: s.monitoringPanelDescription,
       children: [
         UiSection(
-          label: 'History buffer',
+          label: s.monitoringPanelHistoryBuffer,
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               child: UiField(
-                label: 'Standard buffer size',
-                hint: 'Messages stored per topic',
+                label: s.monitoringPanelStandardBufferSize,
+                hint: s.monitoringPanelStandardBufferHint,
                 controller: _defaultHistoryController,
                 keyboardType: TextInputType.number,
                 onFieldSubmitted: (v) {
@@ -59,8 +61,8 @@ class _MonitoringPanelState extends State<MonitoringPanel> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               child: UiField(
-                label: 'Increased buffer size',
-                hint: 'Messages for monitored topics',
+                label: s.monitoringPanelIncreasedBufferSize,
+                hint: s.monitoringPanelIncreasedBufferHint,
                 controller: _extendedHistoryController,
                 keyboardType: TextInputType.number,
                 onFieldSubmitted: (v) {
@@ -73,7 +75,7 @@ class _MonitoringPanelState extends State<MonitoringPanel> {
         ),
         if (vm.increasedMonitoringTopics.isNotEmpty)
           UiSection(
-            label: 'Increased monitoring',
+            label: s.monitoringPanelIncreasedMonitoring,
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -84,7 +86,7 @@ class _MonitoringPanelState extends State<MonitoringPanel> {
                     ),
                     TextButton(
                       onPressed: () => vm.clearIncreasedMonitoringTopics(),
-                      child: const Text('Clear all', style: TextStyle(fontSize: 12)),
+                      child: Text(s.monitoringPanelClearAll, style: const TextStyle(fontSize: 12)),
                     ),
                   ],
                 ),
@@ -104,7 +106,7 @@ class _MonitoringPanelState extends State<MonitoringPanel> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      IconButton(onPressed: () => vm.removeIncreasedMonitoringTopic(topic), icon: const Icon(Icons.close_rounded, size: 14), padding: EdgeInsets.zero, constraints: const BoxConstraints(minWidth: 24, minHeight: 24), splashRadius: 14, tooltip: 'Remove'),
+                      IconButton(onPressed: () => vm.removeIncreasedMonitoringTopic(topic), icon: const Icon(Icons.close_rounded, size: 14), padding: EdgeInsets.zero, constraints: const BoxConstraints(minWidth: 24, minHeight: 24), splashRadius: 14, tooltip: s.remove),
                     ],
                   ),
                 ),
