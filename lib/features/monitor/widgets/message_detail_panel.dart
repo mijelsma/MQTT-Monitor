@@ -163,11 +163,32 @@ class _PropertiesCard extends StatelessWidget {
 
   final TopicNodeValue value;
 
+  static const _labelStyle = TextStyle(fontSize: 12, fontWeight: FontWeight.w500);
+
+  double _measureLabels(List<String> labels) {
+    double max = 0;
+    for (final text in labels) {
+      final tp = TextPainter(text: TextSpan(text: text, style: _labelStyle), textDirection: TextDirection.ltr)..layout();
+      if (tp.width > max) max = tp.width;
+      tp.dispose();
+    }
+    return max;
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final timeStr = formatTimestamp(value.receivedAt);
     final sizeStr = formatByteSize(value.payload);
+
+    final labels = [
+      S.of(context).detailQoS,
+      S.of(context).detailRetained,
+      S.of(context).detailReceived,
+      S.of(context).detailSize,
+      S.of(context).detailMessages,
+    ];
+    final labelWidth = _measureLabels(labels);
 
     return Container(
       decoration: BoxDecoration(
@@ -181,6 +202,7 @@ class _PropertiesCard extends StatelessWidget {
             icon: Icons.swap_vert_rounded,
             iconColor: QosTag.colorFor(value.qos),
             label: S.of(context).detailQoS,
+            labelWidth: labelWidth,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -195,6 +217,7 @@ class _PropertiesCard extends StatelessWidget {
             icon: Icons.push_pin_rounded,
             iconColor: value.retain ? AppColors.warning500 : tokens.muted,
             label: S.of(context).detailRetained,
+            labelWidth: labelWidth,
             child: value.retain
                 ? Text(
                     S.of(context).detailYes,
@@ -207,6 +230,7 @@ class _PropertiesCard extends StatelessWidget {
             icon: Icons.schedule_rounded,
             iconColor: tokens.textTertiary,
             label: S.of(context).detailReceived,
+            labelWidth: labelWidth,
             child: Text(
               timeStr,
               style: TextStyle(fontSize: 12, color: tokens.textSecondary, fontFeatures: const [FontFeature.tabularFigures()]),
@@ -217,6 +241,7 @@ class _PropertiesCard extends StatelessWidget {
             icon: Icons.straighten_rounded,
             iconColor: tokens.textTertiary,
             label: S.of(context).detailSize,
+            labelWidth: labelWidth,
             child: Text(sizeStr, style: TextStyle(fontSize: 12, color: tokens.textSecondary)),
           ),
           _divider(tokens),
@@ -224,6 +249,7 @@ class _PropertiesCard extends StatelessWidget {
             icon: Icons.numbers_rounded,
             iconColor: tokens.primary.withValues(alpha: 0.6),
             label: S.of(context).detailMessages,
+            labelWidth: labelWidth,
             child: Text(
               '#${value.seq}',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: tokens.primary, fontFeatures: const [FontFeature.tabularFigures()]),
@@ -240,11 +266,12 @@ class _PropertiesCard extends StatelessWidget {
 }
 
 class _PropertyRow extends StatelessWidget {
-  const _PropertyRow({required this.icon, required this.iconColor, required this.label, required this.child});
+  const _PropertyRow({required this.icon, required this.iconColor, required this.label, required this.labelWidth, required this.child});
 
   final IconData icon;
   final Color iconColor;
   final String label;
+  final double labelWidth;
   final Widget child;
 
   @override
@@ -257,12 +284,13 @@ class _PropertyRow extends StatelessWidget {
           Icon(icon, size: 14, color: iconColor),
           const SizedBox(width: 10),
           SizedBox(
-            width: 68,
+            width: labelWidth,
             child: Text(
               label,
               style: TextStyle(fontSize: 12, color: tokens.textTertiary, fontWeight: FontWeight.w500),
             ),
           ),
+          const SizedBox(width: 12),
           Expanded(child: child),
         ],
       ),
