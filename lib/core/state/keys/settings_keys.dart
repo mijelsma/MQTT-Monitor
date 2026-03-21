@@ -43,6 +43,7 @@ abstract final class SettingsKeys {
   static final defaultHistorySize = StateKey.integer('settings.defaultHistorySize', defaultValue: 50);
   static final increasedHistorySize = StateKey.integer('settings.increasedHistorySize', defaultValue: 500);
   static final increasedMonitoringTopics = StateKey.fromJson<List<String>>('settings.increasedMonitoringTopics', defaultValue: const [], toJson: (list) => list, fromJson: (raw) => (raw as List).cast<String>());
+  static final messageRateSampleSize = StateKey.integer('settings.messageRateSampleSize', defaultValue: 10);
 
   static final List<StateKey> all = [
     themeMode,
@@ -65,5 +66,6 @@ abstract final class SettingsKeys {
     defaultHistorySize,
     increasedHistorySize,
     increasedMonitoringTopics,
+    messageRateSampleSize,
   ];
 }

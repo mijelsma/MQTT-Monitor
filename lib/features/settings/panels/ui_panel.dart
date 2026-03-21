@@ -69,13 +69,13 @@ class UiPanel extends StatelessWidget {
                 label: s.uiPanelPulseFade,
                 subtitle: s.uiPanelPulseFadeSubtitle,
                 value: vm.pulseFadeMs.toDouble(),
-                min: 100,
+                min: 50,
                 max: 2000,
-                divisions: 19,
+                divisions: 39,
                 displayValue: '${vm.pulseFadeMs} ms',
                 accent: accent,
                 onChanged: (v) {
-                  final snapped = (v / 100).round() * 100;
+                  final snapped = (v / 50).round() * 50;
                   vm.setPulseFadeMs(snapped);
                 },
               ),

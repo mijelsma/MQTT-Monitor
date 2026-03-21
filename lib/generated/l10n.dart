@@ -719,6 +719,26 @@ class S {
     );
   }
 
+  /// `Rate sample size`
+  String get monitoringPanelRateSampleSize {
+    return Intl.message(
+      'Rate sample size',
+      name: 'monitoringPanelRateSampleSize',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Messages used to calculate rate`
+  String get monitoringPanelRateSampleHint {
+    return Intl.message(
+      'Messages used to calculate rate',
+      name: 'monitoringPanelRateSampleHint',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `User Interface`
   String get uiPanelTitle {
     return Intl.message(
@@ -1604,6 +1624,31 @@ class S {
     );
   }
 
+  /// `Rate`
+  String get detailRate {
+    return Intl.message('Rate', name: 'detailRate', desc: '', args: []);
+  }
+
+  /// `1 message every {interval}`
+  String detailRateValue(String interval) {
+    return Intl.message(
+      '1 message every $interval',
+      name: 'detailRateValue',
+      desc: '',
+      args: [interval],
+    );
+  }
+
+  /// `{count} messages per second`
+  String detailRatePerSecond(String count) {
+    return Intl.message(
+      '$count messages per second',
+      name: 'detailRatePerSecond',
+      desc: '',
+      args: [count],
+    );
+  }
+
   /// `No matching topics`
   String get filterNoMatchingTopics {
     return Intl.message(
@@ -1756,6 +1801,46 @@ class S {
       name: 'sidebarNoSelectionSubtitle',
       desc: '',
       args: [],
+    );
+  }
+
+  /// `< 1 second`
+  String get durationLessThanSecond {
+    return Intl.message(
+      '< 1 second',
+      name: 'durationLessThanSecond',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `{count} {count, plural, =1{second} other{seconds}}`
+  String durationSeconds(int count) {
+    return Intl.message(
+      '$count ${Intl.plural(count, one: 'second', other: 'seconds')}',
+      name: 'durationSeconds',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{count} {count, plural, =1{minute} other{minutes}}`
+  String durationMinutes(int count) {
+    return Intl.message(
+      '$count ${Intl.plural(count, one: 'minute', other: 'minutes')}',
+      name: 'durationMinutes',
+      desc: '',
+      args: [count],
+    );
+  }
+
+  /// `{count} {count, plural, =1{hour} other{hours}}`
+  String durationHours(int count) {
+    return Intl.message(
+      '$count ${Intl.plural(count, one: 'hour', other: 'hours')}',
+      name: 'durationHours',
+      desc: '',
+      args: [count],
     );
   }
 }
