@@ -132,7 +132,25 @@ class _TopicTreeRowState extends State<TopicTreeRow> with SingleTickerProviderSt
 
             // Badges (branches) or value (leaves)
             if (node.isBranch) ...[
-              const Spacer(),
+              if (_currentValue != null) ...[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 7),
+                  child: Text(
+                    '=',
+                    style: TextStyle(fontSize: 12, color: tokens.textTertiary, fontWeight: FontWeight.w300, height: 1.3),
+                  ),
+                ),
+                Flexible(
+                  child: Text(
+                    _currentValue!.payload,
+                    style: TextStyle(fontSize: 13, color: tokens.primary, fontWeight: FontWeight.w500, height: 1.3),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+                const SizedBox(width: 6),
+              ] else
+                const Spacer(),
               CountPill(count: node.displayTopicCount, label: 'topics', color: tokens.textSecondary),
               const SizedBox(width: 4),
               CountPill(count: node.displayMsgCount, label: 'msgs', color: tokens.primary),
