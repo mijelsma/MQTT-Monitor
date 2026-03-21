@@ -4,11 +4,12 @@ import '../../theme/app_tokens/app_tokens.dart';
 import 'spacers.dart';
 
 class UiField extends StatelessWidget {
-  const UiField({super.key, this.margin, required this.label, this.optional = false, this.controller, this.hint, this.validator, this.textInputAction, this.keyboardType, this.inputFormatters, this.obscureText = false, this.suffixIcon, this.onFieldSubmitted, this.style, this.child});
+  const UiField({super.key, this.margin, required this.label, this.optional = false, this.autofocus = false, this.controller, this.hint, this.validator, this.textInputAction, this.keyboardType, this.inputFormatters, this.obscureText = false, this.suffixIcon, this.onFieldSubmitted, this.style, this.child});
 
   final EdgeInsetsGeometry? margin;
   final String label;
   final bool optional;
+  final bool autofocus;
   final TextEditingController? controller;
   final String? hint;
   final FormFieldValidator<String>? validator;
@@ -31,6 +32,7 @@ class UiField extends StatelessWidget {
         child ??
         TextFormField(
           controller: controller,
+          autofocus: autofocus,
           obscureText: obscureText,
           textInputAction: textInputAction,
           keyboardType: keyboardType,

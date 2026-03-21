@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../core/history/message_history_service.dart';
 import '../../core/mqtt/connection_status.dart';
 import '../../core/mqtt/mqtt_message.dart';
 import '../../core/mqtt/mqtt_service.dart';
@@ -22,7 +23,7 @@ enum SearchScope { all, topic, value }
 /// Widgets read state from this ViewModel and call its methods for actions.
 class MonitorViewModel extends ChangeNotifier {
   // Constructor takes the MQTT service and app state manager, starts listening for messages.
-  MonitorViewModel({required MqttService mqttService, required AppStateManager state}) : _mqtt = mqttService, _state = state {
+  MonitorViewModel({required MqttService mqttService, required AppStateManager state, required MessageHistoryService historyService}) : _mqtt = mqttService, _state = state, _history = historyService {
     _subscription = _mqtt.messageStream.listen(_onMessage);
     _activeBrokerId = activeBroker?.id;
     _state.addListener(_onStateChanged);
@@ -31,6 +32,7 @@ class MonitorViewModel extends ChangeNotifier {
   // Internal state
   final MqttService _mqtt;
   final AppStateManager _state;
+  final MessageHistoryService _history;
   StreamSubscription<MQTTMessage>? _subscription;
   String? _activeBrokerId;
 
@@ -63,19 +65,12 @@ class MonitorViewModel extends ChangeNotifier {
   String get filter => _filter;
   SearchScope get scope => _scope;
 
-  // Counts of topics and messages currently displayed (after filtering)
-  int filteredTopicCount = 0;
-  int filteredMsgCount = 0;
-
   // Connection status and settings
   ConnectionStatus get connectionStatus => _state.read(AppKeys.connectionStatus);
   String? get connectionError => _state.read(AppKeys.connectionError);
   int get messageCount => _state.read(AppKeys.messageCount);
   int get messageRate => _state.read(AppKeys.messageRate);
   bool get showStatusBar => _state.read(SettingsKeys.showStatusBar);
-  bool get showActivity => _state.read(SettingsKeys.showActivity);
-  int get pulseFadeMs => _state.read(SettingsKeys.pulseFadeMs);
-
   // Brokers
   List<BrokerEntry> get brokers => _state.read(SettingsKeys.brokers);
 
@@ -131,6 +126,7 @@ class MonitorViewModel extends ChangeNotifier {
     if (newId != _activeBrokerId) {
       _activeBrokerId = newId;
       _clearTree();
+      _history.clear();
     }
     notifyListeners();
   }
@@ -276,9 +272,6 @@ class MonitorViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Clears the entire topic tree (public API).
-  void clearAll() => _clearTree();
-
   /// Cancels pending timers and clears all topic tree data.
   void _clearTree() {
     for (final t in _pendingTimers.values) {
@@ -319,21 +312,6 @@ class MonitorViewModel extends ChangeNotifier {
       row.node.displayMsgCount = m;
     }
 
-    if (filterLower.isNotEmpty) {
-      int tCount = 0;
-      int mCount = 0;
-      for (final row in rows) {
-        if (row.node.children.isEmpty) {
-          tCount++;
-          mCount += row.node.subtreeMsgCount;
-        }
-      }
-      filteredTopicCount = tCount;
-      filteredMsgCount = mCount;
-    } else {
-      filteredTopicCount = 0;
-      filteredMsgCount = 0;
-    }
 
     return rows;
   }

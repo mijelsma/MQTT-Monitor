@@ -1,5 +1,7 @@
+import 'graph_card_model.dart';
+
 class DashboardLayout {
-  DashboardLayout({required this.id, required this.title, this.brokerIds = const [], this.colorIndex = 0});
+  DashboardLayout({required this.id, required this.title, this.brokerIds = const [], this.colorIndex = 0, this.cards = const []});
 
   final String id;
   final String title;
@@ -11,16 +13,21 @@ class DashboardLayout {
   /// Color index into [AppColors.brokerColorOptions].
   final int colorIndex;
 
+  /// Snapshot of the graph cards in this layout.
+  final List<GraphCardModel> cards;
+
   bool get isGlobal => brokerIds.isEmpty;
 
-  DashboardLayout copyWith({String? title, List<String>? brokerIds, int? colorIndex}) {
-    return DashboardLayout(id: id, title: title ?? this.title, brokerIds: brokerIds ?? this.brokerIds, colorIndex: colorIndex ?? this.colorIndex);
+  DashboardLayout copyWith({String? title, List<String>? brokerIds, int? colorIndex, List<GraphCardModel>? cards}) {
+    return DashboardLayout(id: id, title: title ?? this.title, brokerIds: brokerIds ?? this.brokerIds, colorIndex: colorIndex ?? this.colorIndex, cards: cards ?? this.cards);
   }
 
   factory DashboardLayout.fromJson(Map<String, dynamic> json) {
     final ids = (json['brokerIds'] as List?)?.cast<String>() ?? [];
-    return DashboardLayout(id: json['id'] as String, title: json['title'] as String, brokerIds: ids, colorIndex: json['colorIndex'] as int? ?? 0);
+    final rawCards = (json['cards'] as List?) ?? [];
+    final cards = rawCards.map((e) => GraphCardModel.fromJson(e as Map<String, dynamic>)).toList();
+    return DashboardLayout(id: json['id'] as String, title: json['title'] as String, brokerIds: ids, colorIndex: json['colorIndex'] as int? ?? 0, cards: cards);
   }
 
-  Map<String, dynamic> toJson() => {'id': id, 'title': title, 'brokerIds': brokerIds, 'colorIndex': colorIndex};
+  Map<String, dynamic> toJson() => {'id': id, 'title': title, 'brokerIds': brokerIds, 'colorIndex': colorIndex, 'cards': cards.map((c) => c.toJson()).toList()};
 }

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../models/dashboard_layout.dart';
 import '../../../shared/widgets/app_bar_action_button.dart';
 import '../../../shared/widgets/spacers.dart';
-import '../../settings/settings_screen.dart';
 import 'dashboard_selector.dart';
 
 /// App bar shown on the dashboard screen.
@@ -11,14 +10,17 @@ import 'dashboard_selector.dart';
 /// Contains a back button, the [DashboardSelector] dropdown,
 /// and a settings shortcut.
 class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const DashboardAppBar({super.key, this.onSaveLayout, this.onUpdateLayout, this.onNewEmpty, this.onEditLayout, this.onManageDashboards, this.onManageVariables});
+  const DashboardAppBar({super.key, this.onSaveLayout, this.onUpdateLayout, this.onDiscardChanges, this.onNewEmpty, this.onEditLayout, this.onManageDashboards, this.onManageVariables, this.onEraseHistory, this.onOpenSettings});
 
   final VoidCallback? onSaveLayout;
   final VoidCallback? onUpdateLayout;
+  final VoidCallback? onDiscardChanges;
   final VoidCallback? onNewEmpty;
   final void Function(DashboardLayout layout)? onEditLayout;
   final VoidCallback? onManageDashboards;
   final VoidCallback? onManageVariables;
+  final VoidCallback? onEraseHistory;
+  final VoidCallback? onOpenSettings;
 
   static const _toolbarHeight = 62.0;
 
@@ -36,25 +38,13 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       leading: IconButton(icon: const Icon(Icons.arrow_back_rounded), onPressed: () => Navigator.of(context).pop()),
       actions: [
-        DashboardSelector(onSaveLayout: onSaveLayout, onUpdateLayout: onUpdateLayout, onNewEmpty: onNewEmpty, onEditLayout: onEditLayout, onManageDashboards: onManageDashboards, onManageVariables: onManageVariables),
+        DashboardSelector(onSaveLayout: onSaveLayout, onUpdateLayout: onUpdateLayout, onDiscardChanges: onDiscardChanges, onNewEmpty: onNewEmpty, onEditLayout: onEditLayout, onManageDashboards: onManageDashboards, onManageVariables: onManageVariables),
         const HSpacer(8),
-        const _SettingsButton(),
+        AppBarActionButton(icon: Icons.delete_sweep_rounded, tooltip: 'Erase history', onTap: onEraseHistory),
+        const HSpacer(8),
+        AppBarActionButton(icon: Icons.tune_rounded, tooltip: 'Settings', onTap: onOpenSettings),
         const HSpacer(8),
       ],
-    );
-  }
-}
-
-/// Opens the [SettingsScreen] when tapped.
-class _SettingsButton extends StatelessWidget {
-  const _SettingsButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return AppBarActionButton(
-      icon: Icons.tune_rounded,
-      tooltip: 'Settings',
-      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
     );
   }
 }

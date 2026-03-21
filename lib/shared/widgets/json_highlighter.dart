@@ -4,21 +4,34 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 
+/// Callback that fires when a user taps a pin icon next to a numeric JSON value.
+///
+/// [keyPath] is the dot-separated path (e.g. `"sensor.temperature"`).
+/// [label] is the leaf key name.
+typedef JsonPinCallback = void Function(String keyPath, String label);
+
 /// Renders a JSON string with syntax-highlighted pretty-printing.
 ///
 /// Falls back to plain monospaced text if the input is not valid JSON.
+///
+/// When [onPin] is provided, small action icons are rendered in-line before
+/// every JSON key whose value is numeric, allowing users to pin that value
+/// to the graph dashboard.
 ///
 /// The static [highlight] method produces coloured [TextSpan]s from raw
 /// JSON text and is reused by the publish-panel's editable controller so
 /// there is exactly *one* tokeniser for the entire app.
 class JsonHighlighter extends StatelessWidget {
-  const JsonHighlighter({super.key, required this.source, this.prettyPrint = true});
+  const JsonHighlighter({super.key, required this.source, this.prettyPrint = true, this.onPin});
 
   final String source;
 
   /// When `true` (default), the JSON is re-formatted with 4-space indentation
   /// before highlighting. Set to `false` to highlight the raw text as-is.
   final bool prettyPrint;
+
+  /// Optional callback to enable inline pin icons next to numeric values.
+  final JsonPinCallback? onPin;
 
   /// Returns `true` if [text] is valid JSON.
   static bool isJson(String text) {
@@ -36,10 +49,10 @@ class JsonHighlighter extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     String displayText = source;
+    Object? parsed;
     if (prettyPrint) {
-      final parsed = _tryParse(source);
+      parsed = _tryParse(source);
       if (parsed == null) {
-        // Not JSON — render as plain text
         return SelectableText(
           source,
           style: TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 12.5, height: 1.5, color: tokens.textPrimary),
@@ -50,9 +63,46 @@ class JsonHighlighter extends StatelessWidget {
 
     final spans = highlight(displayText, isDark, tokens);
 
-    return SelectableText.rich(
-      TextSpan(children: spans),
-      style: TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 12.5, height: 1.5, color: tokens.textPrimary),
+    // No pin callback → simple selectable text (original behaviour).
+    if (onPin == null || parsed == null) {
+      return SelectableText.rich(
+        TextSpan(children: spans),
+        style: TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 12.5, height: 1.5, color: tokens.textPrimary),
+      );
+    }
+
+    // Build a line-indexed map of pinnable key paths, then render per-line
+    // rows so we can prepend a small icon without disturbing the formatting.
+    final pinnableLines = _buildPinnableLineMap(parsed, displayText);
+    final lineSpans = _splitSpansByLine(spans);
+    const baseStyle = TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 12.5, height: 1.5);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < lineSpans.length; i++)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (pinnableLines.containsKey(i))
+                _InlinePinButton(
+                  onTap: () {
+                    final info = pinnableLines[i]!;
+                    onPin!(info.keyPath, info.label);
+                  },
+                  tokens: tokens,
+                )
+              else
+                const SizedBox(width: 20),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(children: lineSpans[i]),
+                  style: baseStyle.copyWith(color: tokens.textPrimary),
+                ),
+              ),
+            ],
+          ),
+      ],
     );
   }
 
@@ -64,7 +114,105 @@ class JsonHighlighter extends StatelessWidget {
     }
   }
 
-  /// Produces syntax-highlighted [TextSpan]s for a JSON string.
+  // ── Pin-line mapping ────────────────────────────────────────────────
+
+  /// Splits a flat list of TextSpans into per-line groups at newline boundaries.
+  static List<List<TextSpan>> _splitSpansByLine(List<TextSpan> spans) {
+    final lines = <List<TextSpan>>[[]];
+    for (final span in spans) {
+      final text = span.text ?? '';
+      final parts = text.split('\n');
+      for (var j = 0; j < parts.length; j++) {
+        if (j > 0) lines.add([]);
+        if (parts[j].isNotEmpty) {
+          lines.last.add(TextSpan(text: parts[j], style: span.style));
+        }
+      }
+    }
+    return lines;
+  }
+
+  /// Maps line numbers (0-based) to key-path info for lines holding a numeric value.
+  static Map<int, _PinnableInfo> _buildPinnableLineMap(Object parsed, String prettyJson) {
+    final result = <int, _PinnableInfo>{};
+    final lines = prettyJson.split('\n');
+    final numPattern = RegExp(r'^\s*"([^"]+)"\s*:\s*(-?\d+\.?\d*([eE][+-]?\d+)?)\s*,?\s*$');
+    final pathStack = <String>[];
+    // Track the current array index at each nesting level that is an array.
+    // When we push an array marker, we store the running index here.
+    final arrayIndexStack = <int>[];
+    // Whether each level on pathStack is an array (true) or object (false).
+    final isArrayStack = <bool>[];
+
+    for (var i = 0; i < lines.length; i++) {
+      final trimmed = lines[i].trim();
+
+      // ── Object open ──
+      if (trimmed.endsWith('{') || trimmed == '{') {
+        // If the parent is an array, this object is an array element.
+        // Increment the parent array index (except for the very first element).
+        if (isArrayStack.isNotEmpty && isArrayStack.last) {
+          arrayIndexStack[arrayIndexStack.length - 1]++;
+        }
+        final m = RegExp(r'^\s*"([^"]+)"\s*:\s*\{').firstMatch(lines[i]);
+        pathStack.add(m != null ? m.group(1)! : '');
+        isArrayStack.add(false);
+        continue;
+      }
+      // ── Object close ──
+      if (trimmed.startsWith('}')) {
+        if (pathStack.isNotEmpty) {
+          pathStack.removeLast();
+          isArrayStack.removeLast();
+        }
+        continue;
+      }
+
+      // ── Array open ──
+      if (trimmed.endsWith('[') || trimmed == '[') {
+        final m = RegExp(r'^\s*"([^"]+)"\s*:\s*\[').firstMatch(lines[i]);
+        pathStack.add(m != null ? m.group(1)! : '');
+        isArrayStack.add(true);
+        // Start index at -1; it gets incremented to 0 on the first child.
+        arrayIndexStack.add(-1);
+        continue;
+      }
+      // ── Array close ──
+      if (trimmed.startsWith(']')) {
+        if (pathStack.isNotEmpty) {
+          pathStack.removeLast();
+          isArrayStack.removeLast();
+        }
+        if (arrayIndexStack.isNotEmpty) arrayIndexStack.removeLast();
+        continue;
+      }
+
+      final m = numPattern.firstMatch(lines[i]);
+      if (m != null) {
+        final key = m.group(1)!;
+        final segments = <String>[];
+        for (var s = 0; s < pathStack.length; s++) {
+          if (pathStack[s].isNotEmpty) segments.add(pathStack[s]);
+          // If this level is an array, append the current index.
+          if (isArrayStack[s]) {
+            // Find the corresponding array index counter.
+            int arrayLevel = 0;
+            for (var a = 0; a <= s; a++) {
+              if (isArrayStack[a]) arrayLevel++;
+            }
+            if (arrayLevel > 0 && arrayLevel <= arrayIndexStack.length) {
+              segments.add('[${arrayIndexStack[arrayLevel - 1]}]');
+            }
+          }
+        }
+        segments.add(key);
+        result[i] = _PinnableInfo(keyPath: segments.join('.'), label: key);
+      }
+    }
+    return result;
+  }
+
+  // ── Syntax highlighting ─────────────────────────────────────────────
   ///
   /// Exposed as a public static so other widgets (e.g. an editable JSON field)
   /// can reuse the same colouring logic.
@@ -188,5 +336,49 @@ class JsonHighlighter extends StatelessWidget {
       return c == '{' || c == ',';
     }
     return true;
+  }
+}
+
+// ── Private helpers ─────────────────────────────────────────────────────
+
+class _PinnableInfo {
+  const _PinnableInfo({required this.keyPath, required this.label});
+  final String keyPath;
+  final String label;
+}
+
+class _InlinePinButton extends StatefulWidget {
+  const _InlinePinButton({required this.onTap, required this.tokens});
+
+  final VoidCallback onTap;
+  final AppTokens tokens;
+
+  @override
+  State<_InlinePinButton> createState() => _InlinePinButtonState();
+}
+
+class _InlinePinButtonState extends State<_InlinePinButton> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _hovering ? widget.tokens.primary : widget.tokens.muted;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: 20,
+          height: 12.5 * 1.5, // match line height
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Icon(Icons.scatter_plot_rounded, size: 12, color: color),
+          ),
+        ),
+      ),
+    );
   }
 }

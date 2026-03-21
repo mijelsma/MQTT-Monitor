@@ -7,7 +7,7 @@ import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../dialogs/variable_modal.dart';
+import '../dialogs/variable_dialog.dart';
 import '../settings_viewmodel.dart';
 
 class VariablesPanel extends StatelessWidget {
@@ -16,7 +16,7 @@ class VariablesPanel extends StatelessWidget {
   void _addVariable(BuildContext context) async {
     final vm = context.read<SettingsViewModel>();
     final existing = vm.environmentVariables.map((v) => v.name).toSet();
-    final result = await showVariableModal(context, existingNames: existing, brokers: vm.brokers);
+    final result = await showVariableDialog(context, existingNames: existing, brokers: vm.brokers);
     if (result == null) return;
     vm.addEnvironmentVariable(result);
   }
@@ -24,7 +24,7 @@ class VariablesPanel extends StatelessWidget {
   void _editVariable(BuildContext context, EnvironmentVariable variable) async {
     final vm = context.read<SettingsViewModel>();
     final existing = vm.environmentVariables.map((v) => v.name).where((n) => n != variable.name).toSet();
-    final result = await showVariableModal(context, variable: variable, existingNames: existing, brokers: vm.brokers, onDelete: () => vm.deleteEnvironmentVariable(variable.name));
+    final result = await showVariableDialog(context, variable: variable, existingNames: existing, brokers: vm.brokers, onDelete: () => vm.deleteEnvironmentVariable(variable.name));
     if (result == null) return;
     vm.updateEnvironmentVariable(variable.name, result);
   }
@@ -37,7 +37,7 @@ class VariablesPanel extends StatelessWidget {
 
     return UiPanelScaffold(
       title: 'Variables',
-      description: 'Define environment variables to use as placeholders in chart topic strings. Reference them with [NAME] syntax.',
+      description: r'Define environment variables to use as placeholders in chart topic strings. Reference them with ${NAME} syntax.',
       children: [
         if (variables.isEmpty)
           const UiEmptyState(icon: Icons.data_object_rounded, title: 'No variables yet', message: 'Add a variable to use as a placeholder\nin your chart topic strings.')

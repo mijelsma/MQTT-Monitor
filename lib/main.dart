@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app.dart';
+import 'core/history/message_history_service.dart';
 import 'core/mqtt/mqtt_service.dart';
 import 'core/state/app_state.dart';
 
@@ -14,6 +15,10 @@ void main() async {
   final mqttService = MqttService(AppStateManager.instance);
   mqttService.initialize();
 
+  // Create and initialize the global history service.
+  final historyService = MessageHistoryService(mqttService, AppStateManager.instance);
+  historyService.initialize();
+
   // Run the app.
-  runApp(App(mqttService: mqttService));
+  runApp(App(mqttService: mqttService, historyService: historyService));
 }

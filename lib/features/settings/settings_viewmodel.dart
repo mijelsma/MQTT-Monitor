@@ -5,7 +5,9 @@ import '../../core/state/keys/app_keys.dart';
 import '../../core/state/keys/dashboard_keys.dart';
 import '../../core/state/keys/settings_keys.dart';
 import '../../models/broker_entry.dart';
+import '../../models/chart_type.dart';
 import '../../models/dashboard_layout.dart';
+import '../../models/interpolation_mode.dart';
 import '../../models/language.dart';
 import '../../models/startup_connection.dart';
 import 'settings_section.dart';
@@ -13,6 +15,7 @@ import '../../models/environment_variable.dart';
 
 class SettingsViewModel extends ChangeNotifier {
   SettingsViewModel({required AppStateManager state}) : _state = state {
+    _state.load(DashboardKeys.layouts);
     _state.addListener(_onStateChanged);
   }
 
@@ -55,10 +58,39 @@ class SettingsViewModel extends ChangeNotifier {
 
   // Dashboard layouts
 
-  List<DashboardLayout> get layouts {
-    _state.load(DashboardKeys.layouts);
-    return _state.read(DashboardKeys.layouts);
+  // Dashboard defaults
+
+  double get defaultDotSize => _state.read(SettingsKeys.defaultDotSize);
+  void setDefaultDotSize(double value) => _state.write(SettingsKeys.defaultDotSize, value);
+
+  Color get defaultCardColor => Color(_state.read(SettingsKeys.defaultCardColor));
+  void setDefaultCardColor(Color value) => _state.write(SettingsKeys.defaultCardColor, value.toARGB32());
+
+  ChartType get defaultChartType => _state.read(SettingsKeys.defaultChartType);
+  void setDefaultChartType(ChartType value) => _state.write(SettingsKeys.defaultChartType, value);
+
+  InterpolationMode get defaultInterpolation => _state.read(SettingsKeys.defaultInterpolation);
+  void setDefaultInterpolation(InterpolationMode value) => _state.write(SettingsKeys.defaultInterpolation, value);
+
+  int get defaultMaxSamples => _state.read(SettingsKeys.defaultMaxSamples);
+  void setDefaultMaxSamples(int value) => _state.write(SettingsKeys.defaultMaxSamples, value);
+
+  // History & monitoring
+
+  int get defaultHistorySize => _state.read(SettingsKeys.defaultHistorySize);
+  void setDefaultHistorySize(int value) => _state.write(SettingsKeys.defaultHistorySize, value);
+
+  int get increasedHistorySize => _state.read(SettingsKeys.increasedHistorySize);
+  void setIncreasedHistorySize(int value) => _state.write(SettingsKeys.increasedHistorySize, value);
+
+  List<String> get increasedMonitoringTopics => _state.read(SettingsKeys.increasedMonitoringTopics);
+  void clearIncreasedMonitoringTopics() => _state.write(SettingsKeys.increasedMonitoringTopics, <String>[]);
+  void removeIncreasedMonitoringTopic(String topic) {
+    final list = increasedMonitoringTopics.where((t) => t != topic).toList();
+    _state.write(SettingsKeys.increasedMonitoringTopics, list);
   }
+
+  List<DashboardLayout> get layouts => _state.read(DashboardKeys.layouts);
 
   void deleteLayout(String id) {
     final list = layouts.where((p) => p.id != id).toList();

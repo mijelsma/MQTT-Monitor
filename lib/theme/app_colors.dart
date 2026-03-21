@@ -108,6 +108,12 @@ abstract final class AppColors {
     Color(0xFF3B82F6), // Blue
   ];
 
+  /// Returns the index of [color] in [brokerColorOptions], or 0 if not found.
+  static int colorIndex(Color color) {
+    final idx = brokerColorOptions.indexWhere((o) => o.toARGB32() == color.toARGB32());
+    return idx < 0 ? 0 : idx;
+  }
+
   /// Returns a two-stop gradient for a broker given its [colorIndex].
   static List<Color> brokerGradientFor(int? colorIndex) {
     final base = brokerColorOptions[(colorIndex ?? 0).clamp(0, brokerColorOptions.length - 1)];
@@ -122,4 +128,5 @@ abstract final class AppColors {
   static const List<Color> aboutGradient = [Color(0xFF10B981), Color(0xFF059669)];
   static const List<Color> dashboardGradient = [Color(0xFFEC4899), Color(0xFFF43F5E)];
   static const List<Color> variablesGradient = [Color(0xFF8B5CF6), Color(0xFFA78BFA)];
+  static const List<Color> monitoringGradient = [Color(0xFF06B6D4), Color(0xFF10B981)];
 }
