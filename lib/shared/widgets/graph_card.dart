@@ -50,8 +50,6 @@ class GraphCard extends StatelessWidget {
   }
 }
 
-// ── Header ──────────────────────────────────────────────────────────────
-
 class _Header extends StatelessWidget {
   const _Header({required this.model, this.onEdit, this.onRemove});
 
@@ -128,8 +126,6 @@ class _Header extends StatelessWidget {
   }
 }
 
-// ── Empty state ─────────────────────────────────────────────────────────
-
 class _EmptyChart extends StatelessWidget {
   const _EmptyChart({required this.tokens});
 
@@ -152,8 +148,6 @@ class _EmptyChart extends StatelessWidget {
     );
   }
 }
-
-// ── Line chart ──────────────────────────────────────────────────────────
 
 class _LineChart extends StatelessWidget {
   const _LineChart({required this.model, required this.tokens});
@@ -212,15 +206,25 @@ class _LineChart extends StatelessWidget {
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
             getTooltipColor: (_) => tokens.elevated,
-            getTooltipItems: (touchedSpots) => touchedSpots.map((s) => LineTooltipItem(_formatValue(s.y), TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: model.color))).toList(),
+            getTooltipItems: (touchedSpots) => touchedSpots.map((s) {
+              final timestamp = _formatTimestamp(s.x);
+              return LineTooltipItem(
+                '${_formatValue(s.y)}\n',
+                TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: model.color),
+                children: [
+                  TextSpan(
+                    text: timestamp,
+                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.normal, color: tokens.textSecondary),
+                  ),
+                ],
+              );
+            }).toList(),
           ),
         ),
       ),
     );
   }
 }
-
-// ── Bar chart ───────────────────────────────────────────────────────────
 
 class _BarChart extends StatelessWidget {
   const _BarChart({required this.model, required this.tokens});
@@ -271,15 +275,26 @@ class _BarChart extends StatelessWidget {
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
             getTooltipColor: (_) => tokens.elevated,
-            getTooltipItem: (group, groupIndex, rod, rodIndex) => BarTooltipItem(_formatValue(rod.toY), TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: model.color)),
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              final idx = group.x;
+              final timestamp = idx >= 0 && idx < model.dataPoints.length ? _formatTimestamp(model.dataPoints[idx].timestamp.millisecondsSinceEpoch.toDouble()) : '';
+              return BarTooltipItem(
+                '${_formatValue(rod.toY)}\n',
+                TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: model.color),
+                children: [
+                  TextSpan(
+                    text: timestamp,
+                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.normal, color: tokens.textSecondary),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
     );
   }
 }
-
-// ── Helpers ─────────────────────────────────────────────────────────────
 
 ({double minY, double maxY, double yInterval}) _yConfig(GraphCardModel model) {
   final (autoMin, autoMax) = _yRange(model.dataPoints);
@@ -311,8 +326,7 @@ AxisTitles _leftAxisTitles(AppTokens tokens, double yInterval) => AxisTitles(
 
 List<FlSpot> _buildSpots(List<DataPoint> points) {
   if (points.isEmpty) return [];
-  final origin = points.first.timestamp.millisecondsSinceEpoch.toDouble();
-  return points.map((p) => FlSpot(p.timestamp.millisecondsSinceEpoch.toDouble() - origin, p.value)).toList();
+  return points.map((p) => FlSpot(p.timestamp.millisecondsSinceEpoch.toDouble(), p.value)).toList();
 }
 
 (double, double) _yRange(List<DataPoint> points) {
@@ -360,12 +374,21 @@ double _xInterval(List<DataPoint> points) {
 
 Widget _timeLabel(double msValue, AppTokens tokens) {
   final dt = DateTime.fromMillisecondsSinceEpoch(msValue.toInt());
+  final h = dt.hour.toString().padLeft(2, '0');
   final m = dt.minute.toString().padLeft(2, '0');
   final s = dt.second.toString().padLeft(2, '0');
   return Padding(
     padding: const EdgeInsets.only(top: 2),
-    child: Text('$m:$s', style: TextStyle(fontSize: 8, color: tokens.textTertiary)),
+    child: Text('$h:$m:$s', style: TextStyle(fontSize: 8, color: tokens.textTertiary)),
   );
+}
+
+String _formatTimestamp(double msValue) {
+  final dt = DateTime.fromMillisecondsSinceEpoch(msValue.toInt());
+  final h = dt.hour.toString().padLeft(2, '0');
+  final m = dt.minute.toString().padLeft(2, '0');
+  final s = dt.second.toString().padLeft(2, '0');
+  return '$h:$m:$s';
 }
 
 String _formatValue(double v) {
