@@ -2,6 +2,17 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Generate git info",
+            "type": "shell",
+            "command": "dart run scripts/generate_git_info.dart",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": []
+        },
+        {
             "label": "Generate translations",
             "type": "shell",
             "command": "dart run intl_utils:generate",
@@ -27,6 +38,9 @@
             "label": "Run — macOS (debug)",
             "type": "shell",
             "command": "flutter run -d macos",
+            "dependsOn": [
+                "Generate git info"
+            ],
             "group": "test",
             "isBackground": true,
             "presentation": {
@@ -50,6 +64,9 @@
             "label": "Run — Windows (debug)",
             "type": "shell",
             "command": "flutter run -d windows",
+            "dependsOn": [
+                "Generate git info"
+            ],
             "group": "test",
             "isBackground": true,
             "presentation": {
@@ -62,6 +79,9 @@
             "label": "Run — Linux (debug)",
             "type": "shell",
             "command": "flutter run -d linux",
+            "dependsOn": [
+                "Generate git info"
+            ],
             "group": "test",
             "isBackground": true,
             "presentation": {
@@ -74,6 +94,9 @@
             "label": "Build — macOS (release)",
             "type": "shell",
             "command": "flutter build macos --release",
+            "dependsOn": [
+                "Generate git info"
+            ],
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -90,6 +113,9 @@
             "label": "Build — Windows (release)",
             "type": "shell",
             "command": "flutter build windows --release",
+            "dependsOn": [
+                "Generate git info"
+            ],
             "group": "build",
             "presentation": {
                 "reveal": "always",
@@ -103,6 +129,9 @@
             "label": "Build — Linux (release)",
             "type": "shell",
             "command": "flutter build linux --release",
+            "dependsOn": [
+                "Generate git info"
+            ],
             "group": "build",
             "presentation": {
                 "reveal": "always",
