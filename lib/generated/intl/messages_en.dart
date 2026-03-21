@@ -296,9 +296,51 @@ class MessageLookup extends MessageLookupByLibrary {
     "sectionDashboard": MessageLookupByLibrary.simpleMessage("Dashboard"),
     "sectionLanguage": MessageLookupByLibrary.simpleMessage("Language"),
     "sectionMonitoring": MessageLookupByLibrary.simpleMessage("Monitoring"),
+    "sectionShortcuts": MessageLookupByLibrary.simpleMessage("Shortcuts"),
     "sectionUI": MessageLookupByLibrary.simpleMessage("User Interface"),
     "sectionVariables": MessageLookupByLibrary.simpleMessage("Variables"),
     "settings": MessageLookupByLibrary.simpleMessage("Settings"),
+    "shortcutDialogAddTitle": MessageLookupByLibrary.simpleMessage(
+      "Add Shortcut",
+    ),
+    "shortcutDialogEditTitle": MessageLookupByLibrary.simpleMessage(
+      "Edit Shortcut",
+    ),
+    "shortcutDialogFieldColor": MessageLookupByLibrary.simpleMessage("Color"),
+    "shortcutDialogFieldName": MessageLookupByLibrary.simpleMessage("Name"),
+    "shortcutDialogFieldTopic": MessageLookupByLibrary.simpleMessage("Topic"),
+    "shortcutDialogRetain": MessageLookupByLibrary.simpleMessage("Retain"),
+    "shortcutDialogRetainSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Broker stores the message for new subscribers",
+    ),
+    "shortcutDialogScopeBrokersSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Only for selected brokers",
+    ),
+    "shortcutDialogScopeGlobalSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Available across all brokers",
+    ),
+    "shortcutDialogValidateName": MessageLookupByLibrary.simpleMessage(
+      "Enter a name",
+    ),
+    "shortcutDialogValidateTopic": MessageLookupByLibrary.simpleMessage(
+      "Enter a topic",
+    ),
+    "shortcutsPanelAddShortcut": MessageLookupByLibrary.simpleMessage(
+      "Add Shortcut",
+    ),
+    "shortcutsPanelDefinedShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Defined Shortcuts",
+    ),
+    "shortcutsPanelDescription": MessageLookupByLibrary.simpleMessage(
+      "Define publish shortcuts for quickly sending messages to topics.",
+    ),
+    "shortcutsPanelNoShortcutsMessage": MessageLookupByLibrary.simpleMessage(
+      "Add a shortcut to quickly publish\nto your favorite topics.",
+    ),
+    "shortcutsPanelNoShortcutsTitle": MessageLookupByLibrary.simpleMessage(
+      "No shortcuts yet",
+    ),
+    "shortcutsPanelTitle": MessageLookupByLibrary.simpleMessage("Shortcuts"),
     "sidebarHistory": MessageLookupByLibrary.simpleMessage("HISTORY"),
     "sidebarMessageDetail": MessageLookupByLibrary.simpleMessage(
       "MESSAGE DETAIL",

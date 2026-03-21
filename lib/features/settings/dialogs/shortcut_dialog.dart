@@ -1,0 +1,137 @@
+import 'package:flutter/material.dart';
+
+import '../../../generated/l10n.dart';
+import '../../../models/broker_entry.dart';
+import '../../../models/publish_shortcut.dart';
+import '../../../shared/widgets/color_picker_field.dart';
+import '../../../shared/widgets/scope_picker.dart';
+import '../../../shared/widgets/spacers.dart';
+import '../../../shared/widgets/ui_field.dart';
+import '../../../shared/widgets/ui_modal_scaffold.dart';
+import '../../../shared/widgets/ui_segment_row.dart';
+import '../../../shared/widgets/ui_switch_row.dart';
+import '../../../theme/app_colors.dart';
+
+/// Shows a dialog for creating or editing a publish shortcut.
+///
+/// Returns the resulting [PublishShortcut] on save, or null if dismissed.
+Future<PublishShortcut?> showShortcutDialog(BuildContext context, {PublishShortcut? shortcut, List<BrokerEntry> brokers = const [], VoidCallback? onDelete}) {
+  return showDialog<PublishShortcut>(
+    context: context,
+    barrierColor: Colors.black54,
+    builder: (_) => _ShortcutDialog(shortcut: shortcut, brokers: brokers, onDelete: onDelete),
+  );
+}
+
+class _ShortcutDialog extends StatefulWidget {
+  const _ShortcutDialog({this.shortcut, required this.brokers, this.onDelete});
+
+  final PublishShortcut? shortcut;
+  final List<BrokerEntry> brokers;
+  final VoidCallback? onDelete;
+
+  @override
+  State<_ShortcutDialog> createState() => _ShortcutDialogState();
+}
+
+class _ShortcutDialogState extends State<_ShortcutDialog> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nameController;
+  late final TextEditingController _topicController;
+  late int _qos;
+  late bool _retain;
+  late Color _color;
+  late bool _isGlobal;
+  late Set<String> _selectedBrokerIds;
+
+  bool get _isEditing => widget.shortcut != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.shortcut?.name ?? '');
+    _topicController = TextEditingController(text: widget.shortcut?.topic ?? '');
+    _qos = widget.shortcut?.qos ?? 0;
+    _retain = widget.shortcut?.retain ?? false;
+    _color = widget.shortcut?.displayColor ?? AppColors.brokerColorOptions.first;
+    _isGlobal = widget.shortcut?.isGlobal ?? true;
+    _selectedBrokerIds = {...?widget.shortcut?.brokerIds};
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _topicController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    Navigator.pop(context, PublishShortcut(name: _nameController.text.trim(), topic: _topicController.text.trim(), qos: _qos, retain: _retain, color: _color.toARGB32(), brokerIds: _isGlobal ? [] : _selectedBrokerIds.toList()));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+
+    return Form(
+      key: _formKey,
+      child: UiModalScaffold(
+        title: _isEditing ? s.shortcutDialogEditTitle : s.shortcutDialogAddTitle,
+        isEditing: _isEditing,
+        onDelete: widget.onDelete != null
+            ? () {
+                widget.onDelete!();
+                Navigator.pop(context);
+              }
+            : null,
+        onCancel: () => Navigator.pop(context),
+        onSubmit: _submit,
+        submitLabel: _isEditing ? s.save : s.add,
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            UiField(label: s.shortcutDialogFieldName, controller: _nameController, hint: 'e.g. Turn on lights', validator: (v) => (v == null || v.trim().isEmpty) ? s.shortcutDialogValidateName : null),
+            const VSpacer(14),
+            UiField(label: s.shortcutDialogFieldTopic, controller: _topicController, hint: 'e.g. home/lights/toggle', validator: (v) => (v == null || v.trim().isEmpty) ? s.shortcutDialogValidateTopic : null),
+            const VSpacer(14),
+            ColorPickerField(label: s.shortcutDialogFieldColor, value: _color, onChanged: (c) => setState(() => _color = c)),
+            const VSpacer(18),
+            UiSegmentRow<int>(
+              label: s.subscriptionDialogQoSLabel,
+              options: [
+                UiSegmentOption(value: 0, label: s.subscriptionDialogQoS0Label, description: s.subscriptionDialogQoS0Description),
+                UiSegmentOption(value: 1, label: s.subscriptionDialogQoS1Label, description: s.subscriptionDialogQoS1Description),
+                UiSegmentOption(value: 2, label: s.subscriptionDialogQoS2Label, description: s.subscriptionDialogQoS2Description),
+              ],
+              value: _qos,
+              onChanged: (v) => setState(() => _qos = v),
+            ),
+            const VSpacer(8),
+            UiSwitchRow(label: s.shortcutDialogRetain, subtitle: s.shortcutDialogRetainSubtitle, value: _retain, onChanged: (v) => setState(() => _retain = v)),
+            const VSpacer(18),
+            sectionLabel(context, s.dashboardDialogSectionScope),
+            const VSpacer(10),
+            ScopeOption(label: s.scopeGlobal, subtitle: s.shortcutDialogScopeGlobalSubtitle, icon: Icons.public_rounded, selected: _isGlobal, onTap: () => setState(() => _isGlobal = true)),
+            const VSpacer(6),
+            ScopeOption(label: s.scopeSpecificBrokers, subtitle: s.shortcutDialogScopeBrokersSubtitle, icon: Icons.dns_rounded, selected: !_isGlobal, onTap: () => setState(() => _isGlobal = false)),
+            if (!_isGlobal) ...[
+              const VSpacer(12),
+              BrokerCheckboxList(
+                brokers: widget.brokers,
+                selectedIds: _selectedBrokerIds,
+                onToggle: (id) => setState(() {
+                  if (_selectedBrokerIds.contains(id)) {
+                    _selectedBrokerIds.remove(id);
+                  } else {
+                    _selectedBrokerIds.add(id);
+                  }
+                }),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}

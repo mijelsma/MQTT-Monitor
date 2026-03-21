@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../generated/l10n.dart';
 import '../../../theme/app_colors.dart';
 import '../../../models/broker_entry.dart';
+import '../../../shared/widgets/ui_add_button.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
@@ -30,7 +31,6 @@ class BrokersPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final vm = context.watch<SettingsViewModel>();
     final brokers = vm.brokers;
     final s = S.of(context);
@@ -67,17 +67,7 @@ class BrokersPanel extends StatelessWidget {
                 ),
             ],
           ),
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: FilledButton.icon(
-              onPressed: () => _openAdd(context),
-              icon: const Icon(Icons.add_rounded, size: 20),
-              label: Text(s.brokersPanelAddBroker),
-              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52), textStyle: theme.textTheme.labelLarge),
-            ),
-          ),
-        ),
+        UiAddButton(label: s.brokersPanelAddBroker, onPressed: () => _openAdd(context)),
       ],
     );
   }

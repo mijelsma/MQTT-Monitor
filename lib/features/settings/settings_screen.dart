@@ -8,6 +8,7 @@ import 'panels/about_panel.dart';
 import 'panels/brokers_panel.dart';
 import 'panels/language_panel.dart';
 import 'panels/monitoring_panel.dart';
+import 'panels/shortcuts_panel.dart';
 import 'panels/ui_panel.dart';
 import 'panels/variables_panel.dart';
 import 'settings_item.dart';
@@ -26,6 +27,7 @@ class SettingsScreen extends StatelessWidget {
       (section: SettingsSection.brokers, label: s.sectionBrokers, icon: Icons.dns_rounded, gradient: AppColors.brokerGradient),
       (section: SettingsSection.dashboard, label: s.sectionDashboard, icon: Icons.dashboard_rounded, gradient: AppColors.dashboardGradient),
       (section: SettingsSection.variables, label: s.sectionVariables, icon: Icons.data_object_rounded, gradient: AppColors.variablesGradient),
+      (section: SettingsSection.shortcuts, label: s.sectionShortcuts, icon: Icons.bolt_rounded, gradient: AppColors.shortcutsGradient),
       (section: SettingsSection.monitoring, label: s.sectionMonitoring, icon: Icons.monitor_heart_rounded, gradient: AppColors.monitoringGradient),
       (section: SettingsSection.ui, label: s.sectionUI, icon: Icons.palette_outlined, gradient: AppColors.uiGradient),
       (section: SettingsSection.language, label: s.sectionLanguage, icon: Icons.language_rounded, gradient: AppColors.languageGradient),
@@ -49,6 +51,7 @@ class SettingsScreen extends StatelessWidget {
             SettingsSection.brokers => const BrokersPanel(),
             SettingsSection.dashboard => const DashboardPanel(),
             SettingsSection.variables => const VariablesPanel(),
+            SettingsSection.shortcuts => const ShortcutsPanel(),
             SettingsSection.monitoring => const MonitoringPanel(),
             SettingsSection.ui => const UiPanel(),
             SettingsSection.language => const LanguagePanel(),

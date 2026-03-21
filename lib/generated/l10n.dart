@@ -124,6 +124,16 @@ class S {
     );
   }
 
+  /// `Shortcuts`
+  String get sectionShortcuts {
+    return Intl.message(
+      'Shortcuts',
+      name: 'sectionShortcuts',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Monitoring`
   String get sectionMonitoring {
     return Intl.message(
@@ -624,6 +634,176 @@ class S {
     return Intl.message(
       'Value',
       name: 'variableDialogValue',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Shortcuts`
+  String get shortcutsPanelTitle {
+    return Intl.message(
+      'Shortcuts',
+      name: 'shortcutsPanelTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Define publish shortcuts for quickly sending messages to topics.`
+  String get shortcutsPanelDescription {
+    return Intl.message(
+      'Define publish shortcuts for quickly sending messages to topics.',
+      name: 'shortcutsPanelDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No shortcuts yet`
+  String get shortcutsPanelNoShortcutsTitle {
+    return Intl.message(
+      'No shortcuts yet',
+      name: 'shortcutsPanelNoShortcutsTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add a shortcut to quickly publish\nto your favorite topics.`
+  String get shortcutsPanelNoShortcutsMessage {
+    return Intl.message(
+      'Add a shortcut to quickly publish\nto your favorite topics.',
+      name: 'shortcutsPanelNoShortcutsMessage',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Defined Shortcuts`
+  String get shortcutsPanelDefinedShortcuts {
+    return Intl.message(
+      'Defined Shortcuts',
+      name: 'shortcutsPanelDefinedShortcuts',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add Shortcut`
+  String get shortcutsPanelAddShortcut {
+    return Intl.message(
+      'Add Shortcut',
+      name: 'shortcutsPanelAddShortcut',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Edit Shortcut`
+  String get shortcutDialogEditTitle {
+    return Intl.message(
+      'Edit Shortcut',
+      name: 'shortcutDialogEditTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Add Shortcut`
+  String get shortcutDialogAddTitle {
+    return Intl.message(
+      'Add Shortcut',
+      name: 'shortcutDialogAddTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Name`
+  String get shortcutDialogFieldName {
+    return Intl.message(
+      'Name',
+      name: 'shortcutDialogFieldName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter a name`
+  String get shortcutDialogValidateName {
+    return Intl.message(
+      'Enter a name',
+      name: 'shortcutDialogValidateName',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Topic`
+  String get shortcutDialogFieldTopic {
+    return Intl.message(
+      'Topic',
+      name: 'shortcutDialogFieldTopic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter a topic`
+  String get shortcutDialogValidateTopic {
+    return Intl.message(
+      'Enter a topic',
+      name: 'shortcutDialogValidateTopic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Color`
+  String get shortcutDialogFieldColor {
+    return Intl.message(
+      'Color',
+      name: 'shortcutDialogFieldColor',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Retain`
+  String get shortcutDialogRetain {
+    return Intl.message(
+      'Retain',
+      name: 'shortcutDialogRetain',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Broker stores the message for new subscribers`
+  String get shortcutDialogRetainSubtitle {
+    return Intl.message(
+      'Broker stores the message for new subscribers',
+      name: 'shortcutDialogRetainSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Available across all brokers`
+  String get shortcutDialogScopeGlobalSubtitle {
+    return Intl.message(
+      'Available across all brokers',
+      name: 'shortcutDialogScopeGlobalSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Only for selected brokers`
+  String get shortcutDialogScopeBrokersSubtitle {
+    return Intl.message(
+      'Only for selected brokers',
+      name: 'shortcutDialogScopeBrokersSubtitle',
       desc: '',
       args: [],
     );
