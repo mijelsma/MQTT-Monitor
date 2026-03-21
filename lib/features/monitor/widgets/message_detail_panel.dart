@@ -168,7 +168,10 @@ class _PropertiesCard extends StatelessWidget {
   double _measureLabels(List<String> labels) {
     double max = 0;
     for (final text in labels) {
-      final tp = TextPainter(text: TextSpan(text: text, style: _labelStyle), textDirection: TextDirection.ltr)..layout();
+      final tp = TextPainter(
+        text: TextSpan(text: text, style: _labelStyle),
+        textDirection: TextDirection.ltr,
+      )..layout();
       if (tp.width > max) max = tp.width;
       tp.dispose();
     }
@@ -181,13 +184,7 @@ class _PropertiesCard extends StatelessWidget {
     final timeStr = formatTimestamp(value.receivedAt);
     final sizeStr = formatByteSize(value.payload);
 
-    final labels = [
-      S.of(context).detailQoS,
-      S.of(context).detailRetained,
-      S.of(context).detailReceived,
-      S.of(context).detailSize,
-      S.of(context).detailMessages,
-    ];
+    final labels = [S.of(context).detailQoS, S.of(context).detailRetained, S.of(context).detailReceived, S.of(context).detailSize, S.of(context).detailMessages];
     final labelWidth = _measureLabels(labels);
 
     return Container(
