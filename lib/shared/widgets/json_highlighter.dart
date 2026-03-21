@@ -208,6 +208,34 @@ class JsonHighlighter extends StatelessWidget {
         segments.add(key);
         result[i] = _PinnableInfo(keyPath: segments.join('.'), label: key);
       }
+
+      // ── Bare array element ──
+      // Lines directly inside an array that aren't "key": value pairs.
+      // Increment the index for every element; only pin numeric ones.
+      if (m == null && isArrayStack.isNotEmpty && isArrayStack.last) {
+        arrayIndexStack[arrayIndexStack.length - 1]++;
+        final bareNum = RegExp(r'^\s*(-?\d+\.?\d*([eE][+-]?\d+)?)\s*,?\s*$');
+        final bm = bareNum.firstMatch(lines[i]);
+        if (bm != null) {
+          final currentIndex = arrayIndexStack.last;
+          final segments = <String>[];
+          for (var s = 0; s < pathStack.length; s++) {
+            if (pathStack[s].isNotEmpty) segments.add(pathStack[s]);
+            if (isArrayStack[s]) {
+              int arrayLevel = 0;
+              for (var a = 0; a <= s; a++) {
+                if (isArrayStack[a]) arrayLevel++;
+              }
+              if (arrayLevel > 0 && arrayLevel <= arrayIndexStack.length) {
+                segments.add('[${arrayIndexStack[arrayLevel - 1]}]');
+              }
+            }
+          }
+          final parentKey = pathStack.isNotEmpty ? pathStack.last : '';
+          final label = parentKey.isNotEmpty ? '$parentKey[$currentIndex]' : '[$currentIndex]';
+          result[i] = _PinnableInfo(keyPath: segments.join('.'), label: label);
+        }
+      }
     }
     return result;
   }
@@ -375,7 +403,7 @@ class _InlinePinButtonState extends State<_InlinePinButton> {
           height: 12.5 * 1.5, // match line height
           child: Align(
             alignment: Alignment.centerLeft,
-            child: Icon(Icons.scatter_plot_rounded, size: 12, color: color),
+            child: Icon(Icons.push_pin_rounded, size: 12, color: color),
           ),
         ),
       ),

@@ -398,7 +398,7 @@ class _PinnableValueState extends State<_PinnableValue> {
             behavior: HitTestBehavior.opaque,
             child: Padding(
               padding: const EdgeInsets.only(right: 6),
-              child: Icon(Icons.scatter_plot_rounded, size: 12, color: color),
+              child: Icon(Icons.push_pin_rounded, size: 12, color: color),
             ),
           ),
         ),
