@@ -11,10 +11,11 @@ import '../dashboard_view_model.dart';
 /// Wraps a hidden [PopupMenuButton] that is triggered programmatically
 /// so the entire visible area acts as the tap target.
 class DashboardSelector extends StatefulWidget {
-  const DashboardSelector({super.key, this.onSaveLayout, this.onUpdateLayout, this.onNewEmpty, this.onEditLayout, this.onManageDashboards, this.onManageVariables});
+  const DashboardSelector({super.key, this.onSaveLayout, this.onUpdateLayout, this.onDiscardChanges, this.onNewEmpty, this.onEditLayout, this.onManageDashboards, this.onManageVariables});
 
   final VoidCallback? onSaveLayout;
   final VoidCallback? onUpdateLayout;
+  final VoidCallback? onDiscardChanges;
   final VoidCallback? onNewEmpty;
   final void Function(DashboardLayout layout)? onEditLayout;
   final VoidCallback? onManageDashboards;
@@ -30,6 +31,7 @@ class _DashboardSelectorState extends State<DashboardSelector> {
   // Menu item identifiers for action entries (non-layout items).
   static const _kSaveLayout = '__save__';
   static const _kUpdateLayout = '__update__';
+  static const _kDiscardChanges = '__discard__';
   static const _kNewEmpty = '__new_empty__';
   static const _kManageDashboards = '__manage_dashboards__';
   static const _kManageVariables = '__manage_variables__';
@@ -61,10 +63,6 @@ class _DashboardSelectorState extends State<DashboardSelector> {
       ),
     );
   }
-
-  // ------------------------------------------------------------------
-  // Build helpers
-  // ------------------------------------------------------------------
 
   /// The visible chip that shows the active layout name and status.
   Widget _buildSelector(DashboardLayout? active, DashboardViewModel vm, ColorScheme cs, BorderRadius borderRadius) {
@@ -128,10 +126,6 @@ class _DashboardSelectorState extends State<DashboardSelector> {
     );
   }
 
-  // ------------------------------------------------------------------
-  // Menu items
-  // ------------------------------------------------------------------
-
   /// Builds all popup menu entries: saved layouts + action items.
   List<PopupMenuEntry<String>> _buildMenuItems(DashboardViewModel vm, AppTokens tokens) {
     final layouts = vm.layouts;
@@ -150,6 +144,9 @@ class _DashboardSelectorState extends State<DashboardSelector> {
     final actionColor = tokens.textSecondary;
     if (active != null) {
       items.add(_actionItem(Icons.save_rounded, 'Save "${active.title}"', _kUpdateLayout, actionColor));
+      if (vm.hasUnsavedChanges) {
+        items.add(_actionItem(Icons.undo_rounded, 'Discard changes', _kDiscardChanges, actionColor));
+      }
     }
     items.add(_actionItem(Icons.save_outlined, 'Save as new layout…', _kSaveLayout, actionColor));
     items.add(_actionItem(Icons.note_add_outlined, 'New empty dashboard', _kNewEmpty, actionColor));
@@ -196,10 +193,6 @@ class _DashboardSelectorState extends State<DashboardSelector> {
     );
   }
 
-  // ------------------------------------------------------------------
-  // Selection handling
-  // ------------------------------------------------------------------
-
   /// Called when the user picks an item from the popup menu.
   void _onSelected(DashboardViewModel vm, String id) {
     switch (id) {
@@ -207,6 +200,8 @@ class _DashboardSelectorState extends State<DashboardSelector> {
         widget.onSaveLayout?.call();
       case _kUpdateLayout:
         widget.onUpdateLayout?.call();
+      case _kDiscardChanges:
+        widget.onDiscardChanges?.call();
       case _kNewEmpty:
         widget.onNewEmpty?.call();
       case _kManageDashboards:
@@ -224,10 +219,6 @@ class _DashboardSelectorState extends State<DashboardSelector> {
     }
   }
 }
-
-// ------------------------------------------------------------------
-// Small shared widget
-// ------------------------------------------------------------------
 
 /// A tiny square with a gradient background and a bar-chart icon.
 /// Used for the color swatch next to layout names.

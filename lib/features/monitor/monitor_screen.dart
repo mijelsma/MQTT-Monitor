@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/history/message_history_service.dart';
 import '../../core/mqtt/mqtt_service.dart';
 import '../../core/state/app_state.dart';
 import '../../shared/widgets/resizable_split.dart';
@@ -18,7 +19,7 @@ class MonitorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (ctx) => MonitorViewModel(mqttService: ctx.read<MqttService>(), state: ctx.read<AppStateManager>()),
+      create: (ctx) => MonitorViewModel(mqttService: ctx.read<MqttService>(), state: ctx.read<AppStateManager>(), historyService: ctx.read<MessageHistoryService>()),
       child: const _MonitorView(),
     );
   }

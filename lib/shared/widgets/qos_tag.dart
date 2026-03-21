@@ -9,10 +9,11 @@ class QosTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BadgeTag(label: 'Q$qos', color: _color(qos));
+    return BadgeTag(label: 'Q$qos', color: colorFor(qos));
   }
 
-  static Color _color(int qos) => switch (qos) {
+  /// Returns the semantic color for a given QoS level.
+  static Color colorFor(int qos) => switch (qos) {
     0 => AppColors.neutral400,
     1 => AppColors.info500,
     2 => AppColors.warning500,

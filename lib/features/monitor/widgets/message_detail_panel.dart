@@ -1,30 +1,48 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
+import '../../../core/history/message_history_service.dart';
+import '../../../core/state/app_state.dart';
+import '../../../core/state/keys/dashboard_keys.dart';
+import '../../../core/state/keys/settings_keys.dart';
+import '../../../models/graph_card_model.dart';
 import '../../../models/topic_node.dart';
 import '../../../models/topic_node_value.dart';
+import '../../../shared/format_helpers.dart';
+import '../../../shared/widgets/copy_button.dart';
 import '../../../shared/widgets/json_highlighter.dart';
 import '../../../shared/widgets/qos_tag.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
+import '../monitor_viewmodel.dart';
+import 'comparison_section.dart';
 
 /// Shows the details of the currently selected MQTT message.
+///
+/// When [selectedHistory] is provided, shows that historical message
+/// instead of the latest. Also displays a comparison section when
+/// the historical message differs from the latest.
 class MessageDetailPanel extends StatelessWidget {
-  const MessageDetailPanel({super.key, required this.node});
+  const MessageDetailPanel({super.key, required this.node, this.selectedHistory, this.onClearSelection});
 
   final TopicTreeNode node;
+
+  /// A historical value selected from the history panel, or null for latest.
+  final TopicNodeValue? selectedHistory;
+
+  /// Called when the user wants to return to viewing the latest message.
+  final VoidCallback? onClearSelection;
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<TopicNodeValue?>(
       valueListenable: node.valueNotifier,
-      builder: (context, value, _) {
-        if (value == null) {
+      builder: (context, latestValue, _) {
+        final displayValue = selectedHistory ?? latestValue;
+        if (displayValue == null) {
           return _EmptyDetail(topic: node.fullPath);
         }
-        return _DetailContent(node: node, value: value);
+        return _DetailContent(node: node, value: displayValue, latestValue: latestValue, isHistorical: selectedHistory != null, onClearSelection: onClearSelection);
       },
     );
   }
@@ -64,23 +82,37 @@ class _EmptyDetail extends StatelessWidget {
 }
 
 class _DetailContent extends StatelessWidget {
-  const _DetailContent({required this.node, required this.value});
+  const _DetailContent({required this.node, required this.value, this.latestValue, this.isHistorical = false, this.onClearSelection});
 
   final TopicTreeNode node;
   final TopicNodeValue value;
+  final TopicNodeValue? latestValue;
+  final bool isHistorical;
+  final VoidCallback? onClearSelection;
 
   @override
   Widget build(BuildContext context) {
+    // Find the message immediately before the selected one in history.
+    TopicNodeValue? previousValue;
+    if (isHistorical) {
+      final history = context.read<MessageHistoryService>().getHistory(node.fullPath);
+      final idx = history.indexWhere((v) => v.seq == value.seq);
+      if (idx > 0) previousValue = history[idx - 1];
+    }
+    final showComparison = previousValue != null;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (isHistorical) ...[_HistoricalBanner(seq: value.seq, onShowLatest: onClearSelection), const SizedBox(height: 12)],
           _TopicHeader(topic: node.fullPath),
           const SizedBox(height: 16),
           _PropertiesCard(value: value),
           const SizedBox(height: 16),
-          _PayloadCard(payload: value.payload),
+          _PayloadCard(payload: value.payload, topic: node.fullPath, isHistorical: isHistorical),
+          if (showComparison) ...[const SizedBox(height: 16), ComparisonSection(selected: value, previous: previousValue)],
         ],
       ),
     );
@@ -116,7 +148,7 @@ class _TopicHeader extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          _CopyButton(text: topic, size: 14),
+          CopyButton(text: topic, size: 14),
         ],
       ),
     );
@@ -133,8 +165,8 @@ class _PropertiesCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final timeStr = _formatTime(value.receivedAt);
-    final sizeStr = _formatSize(value.payload);
+    final timeStr = formatTimestamp(value.receivedAt);
+    final sizeStr = formatByteSize(value.payload);
 
     return Container(
       decoration: BoxDecoration(
@@ -146,7 +178,7 @@ class _PropertiesCard extends StatelessWidget {
         children: [
           _PropertyRow(
             icon: Icons.swap_vert_rounded,
-            iconColor: _qosColor(value.qos),
+            iconColor: QosTag.colorFor(value.qos),
             label: 'QoS',
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -204,28 +236,6 @@ class _PropertiesCard extends StatelessWidget {
   Widget _divider(AppTokens tokens) {
     return Divider(height: 0.5, thickness: 0.5, color: tokens.border, indent: 36);
   }
-
-  static Color _qosColor(int qos) => switch (qos) {
-    0 => AppColors.neutral400,
-    1 => AppColors.info500,
-    2 => AppColors.warning500,
-    _ => AppColors.neutral400,
-  };
-
-  static String _formatTime(DateTime dt) {
-    final h = dt.hour.toString().padLeft(2, '0');
-    final m = dt.minute.toString().padLeft(2, '0');
-    final s = dt.second.toString().padLeft(2, '0');
-    final ms = dt.millisecond.toString().padLeft(3, '0');
-    return '$h:$m:$s.$ms';
-  }
-
-  static String _formatSize(String payload) {
-    final bytes = utf8.encode(payload).length;
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-  }
 }
 
 class _PropertyRow extends StatelessWidget {
@@ -261,112 +271,246 @@ class _PropertyRow extends StatelessWidget {
 
 // ── Payload card ────────────────────────────────────────────────────────
 
-class _PayloadCard extends StatelessWidget {
-  const _PayloadCard({required this.payload});
+class _PayloadCard extends StatefulWidget {
+  const _PayloadCard({required this.payload, required this.topic, this.isHistorical = false});
 
   final String payload;
+  final String topic;
+  final bool isHistorical;
+
+  @override
+  State<_PayloadCard> createState() => _PayloadCardState();
+}
+
+class _PayloadCardState extends State<_PayloadCard> {
+  bool _expanded = true;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final isJson = JsonHighlighter.isJson(payload);
+    final isJson = JsonHighlighter.isJson(widget.payload);
+    final showPin = !widget.isHistorical;
+    final numericParts = (!isJson && showPin) ? parseNumericPayload(widget.payload) : null;
+    final isNumeric = numericParts != null;
     final formatLabel = isJson ? 'JSON' : 'TEXT';
     final formatColor = isJson ? AppColors.success500 : tokens.textTertiary;
+
+    // Build the main payload content widget.
+    Widget content;
+    if (isNumeric) {
+      content = _PinnableValue(payload: widget.payload, topic: widget.topic, unit: numericParts.$2);
+    } else if (isJson && showPin) {
+      content = JsonHighlighter(source: widget.payload, onPin: (keyPath, label) => _onPin(context, widget.topic, keyPath, label));
+    } else {
+      content = SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: JsonHighlighter(source: widget.payload),
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(Icons.code_rounded, size: 13, color: tokens.textTertiary),
-            const SizedBox(width: 6),
-            Text(
-              'PAYLOAD',
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.8, color: tokens.textTertiary),
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () => setState(() => _expanded = !_expanded),
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                AnimatedRotation(
+                  turns: _expanded ? 0 : -0.25,
+                  duration: const Duration(milliseconds: 150),
+                  child: Icon(Icons.expand_more_rounded, size: 16, color: tokens.textTertiary),
+                ),
+                const SizedBox(width: 4),
+                Icon(Icons.code_rounded, size: 13, color: tokens.textTertiary),
+                const SizedBox(width: 6),
+                Text(
+                  'PAYLOAD',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.8, color: tokens.textTertiary),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(color: formatColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
+                  child: Text(
+                    formatLabel,
+                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: formatColor, letterSpacing: 0.5),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              decoration: BoxDecoration(color: formatColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-              child: Text(
-                formatLabel,
-                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: formatColor, letterSpacing: 0.5),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: tokens.inputFill,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: tokens.border, width: 0.5),
-          ),
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(right: 28),
-                child: JsonHighlighter(source: payload),
-              ),
-              Positioned(top: 0, right: 0, child: _CopyButton(text: payload, size: 14)),
-            ],
           ),
         ),
+        if (_expanded) ...[
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: tokens.inputFill,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: widget.isHistorical ? AppColors.warning500.withValues(alpha: 0.6) : tokens.border, width: widget.isHistorical ? 1.5 : 0.5),
+            ),
+            child: Stack(
+              children: [
+                Padding(padding: const EdgeInsets.only(right: 28), child: content),
+                Positioned(top: 0, right: 0, child: CopyButton(text: widget.payload, size: 14)),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
 }
 
-// ── Copy button ─────────────────────────────────────────────────────────
+/// Small inline widget for a bare numeric payload with a pin icon.
+class _PinnableValue extends StatefulWidget {
+  const _PinnableValue({required this.payload, required this.topic, this.unit});
 
-class _CopyButton extends StatefulWidget {
-  const _CopyButton({required this.text, this.size = 16});
-
-  final String text;
-  final double size;
+  final String payload;
+  final String topic;
+  final String? unit;
 
   @override
-  State<_CopyButton> createState() => _CopyButtonState();
+  State<_PinnableValue> createState() => _PinnableValueState();
 }
 
-class _CopyButtonState extends State<_CopyButton> {
-  bool _copied = false;
+class _PinnableValueState extends State<_PinnableValue> {
   bool _hovering = false;
-
-  void _copy() async {
-    await Clipboard.setData(ClipboardData(text: widget.text));
-    if (!mounted) return;
-    setState(() => _copied = true);
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (!mounted) return;
-    setState(() => _copied = false);
-  }
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final color = _copied
-        ? AppColors.success400
-        : _hovering
-        ? tokens.textPrimary
-        : tokens.textTertiary;
+    final color = _hovering ? tokens.primary : tokens.muted;
 
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
-      child: GestureDetector(
-        onTap: _copy,
-        behavior: HitTestBehavior.opaque,
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 150),
-            child: Icon(_copied ? Icons.check_rounded : Icons.copy_rounded, key: ValueKey(_copied), size: widget.size, color: color),
+    return Row(
+      children: [
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          onEnter: (_) => setState(() => _hovering = true),
+          onExit: (_) => setState(() => _hovering = false),
+          child: GestureDetector(
+            onTap: () => _onPin(context, widget.topic, null, null, unit: widget.unit),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Icon(Icons.scatter_plot_rounded, size: 12, color: color),
+            ),
           ),
         ),
+        Expanded(child: JsonHighlighter(source: widget.payload)),
+      ],
+    );
+  }
+}
+
+/// Tries to split a payload like "13.58 dB" into (value, unit).
+/// Returns null if no leading number is found.
+(double, String?)? parseNumericPayload(String raw) {
+  final trimmed = raw.trim();
+  // Fast path: pure number.
+  final plain = double.tryParse(trimmed);
+  if (plain != null) return (plain, null);
+
+  // Match a leading number (with optional sign/decimal) followed by a unit (space optional).
+  final match = RegExp(r'^([+-]?\d+\.?\d*)\s*([a-zA-Z°/%].*)$').firstMatch(trimmed);
+  if (match == null) return null;
+  final value = double.tryParse(match.group(1)!);
+  if (value == null) return null;
+  return (value, match.group(2)!.trim());
+}
+
+/// Directly pins a value to the dashboard without a dialog.
+void _onPin(BuildContext context, String topic, String? keyPath, String? defaultName, {String? unit}) async {
+  final vm = context.read<MonitorViewModel>();
+  final brokerId = vm.activeBroker?.id;
+  if (brokerId == null) return;
+
+  final state = context.read<AppStateManager>();
+  final key = DashboardKeys.cardsForBroker(brokerId);
+  final cards = List.of(state.read(key));
+
+  // Read all defaults from settings.
+  state.load(SettingsKeys.defaultCardColor);
+  state.load(SettingsKeys.defaultDotSize);
+  state.load(SettingsKeys.defaultChartType);
+  state.load(SettingsKeys.defaultInterpolation);
+  state.load(SettingsKeys.defaultMaxSamples);
+
+  final color = Color(state.read(SettingsKeys.defaultCardColor));
+  final dotSize = state.read(SettingsKeys.defaultDotSize);
+  final chartType = state.read(SettingsKeys.defaultChartType);
+  final interpolation = state.read(SettingsKeys.defaultInterpolation);
+  final maxSamples = state.read(SettingsKeys.defaultMaxSamples);
+
+  final id = '${DateTime.now().millisecondsSinceEpoch}_${cards.length}';
+  cards.add(GraphCardModel(id: id, topic: topic, jsonKeyPath: keyPath, displayName: defaultName ?? keyPath ?? topic.split('/').last, unit: unit, color: color, chartType: chartType, interpolation: interpolation, dotSize: dotSize, maxDataPoints: maxSamples, position: cards.length));
+  await state.write(key, cards);
+
+  // Auto-enable increased monitoring for pinned topics.
+  if (context.mounted) {
+    context.read<MessageHistoryService>().enableIncreased(topic);
+  }
+
+  if (!context.mounted) return;
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.clearSnackBars();
+  messenger.showSnackBar(SnackBar(content: const Text('Pinned to dashboard'), behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 2)));
+}
+
+// ── Historical banner ───────────────────────────────────────────────────
+
+class _HistoricalBanner extends StatelessWidget {
+  const _HistoricalBanner({required this.seq, this.onShowLatest});
+
+  final int seq;
+  final VoidCallback? onShowLatest;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.warning500.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.warning500.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.history_rounded, size: 14, color: AppColors.warning500),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Viewing message #$seq',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.warning500),
+            ),
+          ),
+          if (onShowLatest != null)
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: onShowLatest,
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: tokens.surface,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: tokens.border, width: 0.5),
+                  ),
+                  child: Text(
+                    'Show latest',
+                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: tokens.textSecondary),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
