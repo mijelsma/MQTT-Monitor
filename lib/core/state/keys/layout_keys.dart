@@ -1,6 +1,4 @@
-import '../persist.dart';
 import '../state_key.dart';
-import 'settings_keys.dart';
 
 /// Defines the keys used in the app state for managing layout-related settings and preferences.
 abstract final class LayoutKeys {

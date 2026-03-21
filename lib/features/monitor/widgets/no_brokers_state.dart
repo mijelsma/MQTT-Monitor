@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../shared/widgets/empty_state_shell.dart';
 import '../../../theme/app_colors.dart';
-import '../../settings/modals/broker_modal.dart';
+import '../../settings/dialogs/broker_dialog.dart';
 import '../monitor_viewmodel.dart';
 
 class NoBrokersState extends StatelessWidget {
@@ -22,7 +22,7 @@ class NoBrokersState extends StatelessWidget {
 
   Future<void> _addBroker(BuildContext context) async {
     final vm = context.read<MonitorViewModel>();
-    final entry = await showBrokerModal(context);
+    final entry = await showBrokerDialog(context);
     if (entry == null) return;
     vm.addBroker(entry);
   }

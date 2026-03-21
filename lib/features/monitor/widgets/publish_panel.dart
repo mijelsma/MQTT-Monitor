@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../../generated/l10n.dart';
 import '../../../shared/widgets/json_highlighter.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
@@ -167,7 +168,7 @@ class _TopicInput extends StatelessWidget {
           child: Icon(Icons.tag_rounded, size: 14, color: tokens.muted),
         ),
         prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
-        hintText: 'Topic  e.g. home/temp',
+        hintText: S.of(context).publishTopicHint,
         hintStyle: TextStyle(fontSize: 12, color: tokens.muted, fontFamily: null),
         filled: true,
         fillColor: tokens.inputFill,
@@ -467,7 +468,7 @@ class _PrettifyButtonState extends State<_PrettifyButton> {
         onTap: widget.onPressed,
         behavior: HitTestBehavior.opaque,
         child: Tooltip(
-          message: 'Prettify JSON',
+          message: S.of(context).publishPrettifyJson,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 120),
             padding: const EdgeInsets.all(4),
@@ -596,7 +597,7 @@ class _RetainPill extends StatelessWidget {
               Icon(Icons.push_pin_rounded, size: 11, color: color),
               const SizedBox(width: 4),
               Text(
-                'Retain',
+                S.of(context).publishRetain,
                 style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color),
               ),
             ],
@@ -616,11 +617,11 @@ class _FeedbackBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (icon, color, text) = switch (feedback) {
-      _PublishFeedback.success => (Icons.check_circle_rounded, AppColors.success500, 'Sent'),
-      _PublishFeedback.failed => (Icons.error_rounded, AppColors.error500, 'Failed'),
-      _PublishFeedback.notConnected => (Icons.cloud_off_rounded, AppColors.warning500, 'Offline'),
-      _PublishFeedback.emptyTopic => (Icons.warning_rounded, AppColors.warning500, 'No topic'),
-      _PublishFeedback.invalidJson => (Icons.warning_rounded, AppColors.error400, 'Bad JSON'),
+      _PublishFeedback.success => (Icons.check_circle_rounded, AppColors.success500, S.of(context).publishSent),
+      _PublishFeedback.failed => (Icons.error_rounded, AppColors.error500, S.of(context).publishFailed),
+      _PublishFeedback.notConnected => (Icons.cloud_off_rounded, AppColors.warning500, S.of(context).publishOffline),
+      _PublishFeedback.emptyTopic => (Icons.warning_rounded, AppColors.warning500, S.of(context).publishNoTopic),
+      _PublishFeedback.invalidJson => (Icons.warning_rounded, AppColors.error400, S.of(context).publishBadJson),
     };
     return Row(
       mainAxisSize: MainAxisSize.min,
