@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../generated/l10n.dart';
 import '../../../models/broker_entry.dart';
 import '../../../models/dashboard_layout.dart';
 import '../../../shared/widgets/color_picker_field.dart';
@@ -70,8 +71,9 @@ class _CreateDashboardDialogState extends State<_CreateDashboardDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context);
     return UiModalScaffold(
-      title: _isEditing ? 'Edit Dashboard' : 'New Dashboard',
+      title: _isEditing ? s.dashboardDialogEditTitle : s.dashboardDialogNewTitle,
       isEditing: _isEditing,
       onDelete: widget.onDelete != null
           ? () {
@@ -81,21 +83,21 @@ class _CreateDashboardDialogState extends State<_CreateDashboardDialog> {
           : null,
       onCancel: _cancel,
       onSubmit: _submit,
-      submitLabel: 'Save',
+      submitLabel: s.save,
       body: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Dashboard details section: name and color.
-            sectionLabel(context, 'Details'),
-            UiField(margin: const EdgeInsets.only(top: 20), label: 'Name', controller: _title, hint: 'e.g. Sensors', textInputAction: TextInputAction.done, validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null, onFieldSubmitted: (_) => _submit()),
-            ColorPickerField(margin: const EdgeInsets.only(top: 14, bottom: 20), label: 'Color', value: _color, onChanged: (c) => setState(() => _color = c)),
+            sectionLabel(context, s.dashboardDialogSectionDetails),
+            UiField(margin: const EdgeInsets.only(top: 20), label: s.dashboardDialogFieldName, controller: _title, hint: 'e.g. Sensors', textInputAction: TextInputAction.done, validator: (v) => (v == null || v.trim().isEmpty) ? s.dashboardDialogValidateName : null, onFieldSubmitted: (_) => _submit()),
+            ColorPickerField(margin: const EdgeInsets.only(top: 14, bottom: 20), label: s.dashboardPanelColor, value: _color, onChanged: (c) => setState(() => _color = c)),
 
             // Scope section: global or selected brokers.
-            sectionLabel(context, 'Scope'),
-            ScopeOption(margin: const EdgeInsets.only(top: 20), label: 'Global', subtitle: 'Use dashboard across all brokers', icon: Icons.public_rounded, selected: _isGlobal, onTap: () => setState(() => _isGlobal = true)),
-            ScopeOption(margin: const EdgeInsets.only(top: 6), label: 'Selected brokers', subtitle: 'Only for selected brokers', icon: Icons.dns_rounded, selected: !_isGlobal, onTap: () => setState(() => _isGlobal = false)),
+            sectionLabel(context, s.dashboardDialogSectionScope),
+            ScopeOption(margin: const EdgeInsets.only(top: 20), label: s.scopeGlobal, subtitle: s.dashboardDialogScopeGlobalSubtitle, icon: Icons.public_rounded, selected: _isGlobal, onTap: () => setState(() => _isGlobal = true)),
+            ScopeOption(margin: const EdgeInsets.only(top: 6), label: s.scopeSelectedBrokers, subtitle: s.dashboardDialogScopeBrokersSubtitle, icon: Icons.dns_rounded, selected: !_isGlobal, onTap: () => setState(() => _isGlobal = false)),
 
             // If "Selected brokers" is chosen, show the broker checklist.
             if (!_isGlobal) ...[

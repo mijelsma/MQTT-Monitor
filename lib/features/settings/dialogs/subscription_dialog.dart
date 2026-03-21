@@ -56,7 +56,7 @@ class _SubscriptionDialogState extends State<SubscriptionDialog> {
   Widget build(BuildContext context) {
     final s = S.of(context);
     return UiModalScaffold(
-      title: _isEditing ? s.subscriptionModalEditTitle : s.subscriptionModalAddTitle,
+      title: _isEditing ? s.subscriptionDialogEditTitle : s.subscriptionDialogAddTitle,
       onCancel: () => Navigator.pop(context),
       onSubmit: _submit,
       submitLabel: _isEditing ? s.save : s.add,
@@ -65,15 +65,15 @@ class _SubscriptionDialogState extends State<SubscriptionDialog> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            UiField(label: s.subscriptionModalFieldTopicFilter, controller: _topic, hint: 'e.g. home/+/sensor/#', textInputAction: TextInputAction.next, validator: (v) => (v == null || v.trim().isEmpty) ? s.subscriptionModalValidateTopicFilter : null),
-            UiField(margin: const EdgeInsets.only(top: 14), label: s.subscriptionModalFieldDisplayName, optional: true, controller: _name, hint: s.subscriptionModalHintDisplayName, textInputAction: TextInputAction.done, onFieldSubmitted: (_) => _submit()),
+            UiField(label: s.subscriptionDialogFieldTopicFilter, controller: _topic, hint: 'e.g. home/+/sensor/#', textInputAction: TextInputAction.next, validator: (v) => (v == null || v.trim().isEmpty) ? s.subscriptionDialogValidateTopicFilter : null),
+            UiField(margin: const EdgeInsets.only(top: 14), label: s.subscriptionDialogFieldDisplayName, optional: true, controller: _name, hint: s.subscriptionDialogHintDisplayName, textInputAction: TextInputAction.done, onFieldSubmitted: (_) => _submit()),
             const VSpacer(18),
             UiSegmentRow<int>(
-              label: s.subscriptionModalQoSLabel,
+              label: s.subscriptionDialogQoSLabel,
               options: [
-                UiSegmentOption(value: 0, label: s.subscriptionModalQoS0Label, description: s.subscriptionModalQoS0Description),
-                UiSegmentOption(value: 1, label: s.subscriptionModalQoS1Label, description: s.subscriptionModalQoS1Description),
-                UiSegmentOption(value: 2, label: s.subscriptionModalQoS2Label, description: s.subscriptionModalQoS2Description),
+                UiSegmentOption(value: 0, label: s.subscriptionDialogQoS0Label, description: s.subscriptionDialogQoS0Description),
+                UiSegmentOption(value: 1, label: s.subscriptionDialogQoS1Label, description: s.subscriptionDialogQoS1Description),
+                UiSegmentOption(value: 2, label: s.subscriptionDialogQoS2Label, description: s.subscriptionDialogQoS2Description),
               ],
               value: _qos,
               onChanged: (v) => setState(() => _qos = v),

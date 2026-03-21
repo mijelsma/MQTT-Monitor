@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../generated/l10n.dart';
 import '../../../models/topic_node_value.dart';
 import '../../../shared/widgets/resizable_split.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
@@ -42,10 +43,11 @@ class _DetailSidebarState extends State<DetailSidebar> {
     final historyContent = selected != null ? HistoryPanel(key: ValueKey('history_${selected.fullPath}'), node: selected, selectedValue: _selectedHistoryValue, onSelect: (value) => setState(() => _selectedHistoryValue = value)) : const _NoSelection();
 
     // Fixed-order section definitions — order never changes.
+    final s = S.of(context);
     final sections = [
-      (collapsed: _detailCollapsed, title: 'MESSAGE DETAIL', icon: Icons.info_outline_rounded, content: detailContent, toggle: () => setState(() => _detailCollapsed = !_detailCollapsed)),
-      (collapsed: _historyCollapsed, title: 'HISTORY', icon: Icons.history_rounded, content: historyContent, toggle: () => setState(() => _historyCollapsed = !_historyCollapsed)),
-      (collapsed: _publishCollapsed, title: 'PUBLISH', icon: Icons.send_rounded, content: const PublishPanel(), toggle: () => setState(() => _publishCollapsed = !_publishCollapsed)),
+      (collapsed: _detailCollapsed, title: s.sidebarMessageDetail, icon: Icons.info_outline_rounded, content: detailContent, toggle: () => setState(() => _detailCollapsed = !_detailCollapsed)),
+      (collapsed: _historyCollapsed, title: s.sidebarHistory, icon: Icons.history_rounded, content: historyContent, toggle: () => setState(() => _historyCollapsed = !_historyCollapsed)),
+      (collapsed: _publishCollapsed, title: s.sidebarPublish, icon: Icons.send_rounded, content: const PublishPanel(), toggle: () => setState(() => _publishCollapsed = !_publishCollapsed)),
     ];
 
     // ── Build layout keeping headers in strict visual order ──
@@ -239,10 +241,10 @@ class _NoSelection extends StatelessWidget {
               child: Icon(Icons.touch_app_rounded, size: 28, color: tokens.muted),
             ),
             const SizedBox(height: 14),
-            Text('Select a topic to inspect', style: TextStyle(fontSize: 13, color: tokens.textTertiary)),
+            Text(S.of(context).sidebarNoSelectionTitle, style: TextStyle(fontSize: 13, color: tokens.textTertiary)),
             const SizedBox(height: 4),
             Text(
-              'Choose a topic from the tree\nto view message details',
+              S.of(context).sidebarNoSelectionSubtitle,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 11, color: tokens.muted, height: 1.5),
             ),

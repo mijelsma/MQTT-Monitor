@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../generated/l10n.dart';
 import '../../../models/dashboard_layout.dart';
 import '../../../shared/widgets/chart_type_toggle.dart';
 import '../../../shared/widgets/color_picker_field.dart';
@@ -56,23 +57,24 @@ class _DashboardPanelState extends State<DashboardPanel> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<SettingsViewModel>();
+    final s = S.of(context);
     final layouts = vm.layouts;
 
     return UiPanelScaffold(
-      title: 'Dashboard',
-      description: 'Manage your saved dashboard layouts.',
+      title: s.dashboardPanelTitle,
+      description: s.dashboardPanelDescription,
       children: [
         UiSection(
-          label: 'Defaults',
+          label: s.dashboardPanelDefaults,
           children: [
-            ColorPickerField(margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), label: 'Color', value: vm.defaultCardColor, onChanged: vm.setDefaultCardColor),
-            ChartTypeToggle(margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), label: 'Chart type', value: vm.defaultChartType, onChanged: vm.setDefaultChartType),
-            InterpolationToggle(margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), label: 'Interpolation', value: vm.defaultInterpolation, onChanged: vm.setDefaultInterpolation),
-            UiSliderRow(label: 'Dot size', value: vm.defaultDotSize, min: 0, max: 10, divisions: 20, displayValue: vm.defaultDotSize.toStringAsFixed(1), onChanged: vm.setDefaultDotSize),
+            ColorPickerField(margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), label: s.dashboardPanelColor, value: vm.defaultCardColor, onChanged: vm.setDefaultCardColor),
+            ChartTypeToggle(margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), label: s.dashboardPanelChartType, value: vm.defaultChartType, onChanged: vm.setDefaultChartType),
+            InterpolationToggle(margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), label: s.dashboardPanelInterpolation, value: vm.defaultInterpolation, onChanged: vm.setDefaultInterpolation),
+            UiSliderRow(label: s.dashboardPanelDotSize, value: vm.defaultDotSize, min: 0, max: 10, divisions: 20, displayValue: vm.defaultDotSize.toStringAsFixed(1), onChanged: vm.setDefaultDotSize),
             UiField(
               margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              label: 'Max samples',
-              hint: '0 = unlimited',
+              label: s.dashboardPanelMaxSamples,
+              hint: s.dashboardPanelMaxSamplesHint,
               controller: _maxSamplesController,
               keyboardType: TextInputType.number,
               onFieldSubmitted: (v) {
@@ -83,10 +85,10 @@ class _DashboardPanelState extends State<DashboardPanel> {
           ],
         ),
         if (layouts.isEmpty)
-          const UiEmptyState(icon: Icons.dashboard_outlined, title: 'No dashboards yet', message: 'Create dashboard or save from dashboard view')
+          UiEmptyState(icon: Icons.dashboard_outlined, title: s.dashboardPanelNoDashboardsTitle, message: s.dashboardPanelNoDashboardsMessage)
         else
           UiSection(
-            label: 'Dashboards',
+            label: s.dashboardPanelDashboards,
             sortable: true,
             onReorder: (o, n) => vm.reorderLayouts(o, n),
             children: [
@@ -115,7 +117,7 @@ class _DashboardPanelState extends State<DashboardPanel> {
             child: FilledButton.icon(
               onPressed: () => _openAdd(context),
               icon: const Icon(Icons.add_rounded, size: 20),
-              label: const Text('Add dashboard'),
+              label: Text(s.dashboardPanelAddDashboard),
               style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52), textStyle: Theme.of(context).textTheme.labelLarge),
             ),
           ),
