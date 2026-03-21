@@ -6,6 +6,8 @@ import '../../../models/dashboard_layout.dart';
 import '../../../shared/widgets/chart_type_toggle.dart';
 import '../../../shared/widgets/color_picker_field.dart';
 import '../../../shared/widgets/interpolation_toggle.dart';
+import '../../../shared/widgets/scope_badge.dart';
+import '../../../shared/widgets/ui_add_button.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../shared/widgets/ui_field.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
@@ -103,25 +105,16 @@ class _DashboardPanelState extends State<DashboardPanel> {
                       gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: AppColors.brokerGradientFor(layouts[i].colorIndex)),
                       borderRadius: BorderRadius.circular(9),
                     ),
-                    child: Icon(layouts[i].isGlobal ? Icons.public_rounded : Icons.dns_rounded, size: 18, color: Colors.white),
+                    child: const Icon(Icons.dashboard_rounded, size: 18, color: Colors.white),
                   ),
                   title: layouts[i].title,
+                  trailing: [ScopeBadge(isGlobal: layouts[i].isGlobal, brokerCount: layouts[i].brokerIds.length)],
                   onTap: () => _openEdit(context, layouts[i]),
                   onDelete: () => vm.deleteLayout(layouts[i].id),
                 ),
             ],
           ),
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
-            child: FilledButton.icon(
-              onPressed: () => _openAdd(context),
-              icon: const Icon(Icons.add_rounded, size: 20),
-              label: Text(s.dashboardPanelAddDashboard),
-              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52), textStyle: Theme.of(context).textTheme.labelLarge),
-            ),
-          ),
-        ),
+        UiAddButton(label: s.dashboardPanelAddDashboard, onPressed: () => _openAdd(context)),
       ],
     );
   }

@@ -308,9 +308,53 @@ class MessageLookup extends MessageLookupByLibrary {
     "sectionDashboard": MessageLookupByLibrary.simpleMessage("Dashboard"),
     "sectionLanguage": MessageLookupByLibrary.simpleMessage("Taal"),
     "sectionMonitoring": MessageLookupByLibrary.simpleMessage("Monitoring"),
+    "sectionShortcuts": MessageLookupByLibrary.simpleMessage("Snelkoppelingen"),
     "sectionUI": MessageLookupByLibrary.simpleMessage("Gebruikersinterface"),
     "sectionVariables": MessageLookupByLibrary.simpleMessage("Variabelen"),
     "settings": MessageLookupByLibrary.simpleMessage("Instellingen"),
+    "shortcutDialogAddTitle": MessageLookupByLibrary.simpleMessage(
+      "Snelkoppeling toevoegen",
+    ),
+    "shortcutDialogEditTitle": MessageLookupByLibrary.simpleMessage(
+      "Snelkoppeling bewerken",
+    ),
+    "shortcutDialogFieldColor": MessageLookupByLibrary.simpleMessage("Kleur"),
+    "shortcutDialogFieldName": MessageLookupByLibrary.simpleMessage("Naam"),
+    "shortcutDialogFieldTopic": MessageLookupByLibrary.simpleMessage("Topic"),
+    "shortcutDialogRetain": MessageLookupByLibrary.simpleMessage("Retain"),
+    "shortcutDialogRetainSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Broker slaat het bericht op voor nieuwe abonnees",
+    ),
+    "shortcutDialogScopeBrokersSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Alleen voor geselecteerde brokers",
+    ),
+    "shortcutDialogScopeGlobalSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Beschikbaar voor alle brokers",
+    ),
+    "shortcutDialogValidateName": MessageLookupByLibrary.simpleMessage(
+      "Voer een naam in",
+    ),
+    "shortcutDialogValidateTopic": MessageLookupByLibrary.simpleMessage(
+      "Voer een topic in",
+    ),
+    "shortcutsPanelAddShortcut": MessageLookupByLibrary.simpleMessage(
+      "Snelkoppeling toevoegen",
+    ),
+    "shortcutsPanelDefinedShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Gedefinieerde snelkoppelingen",
+    ),
+    "shortcutsPanelDescription": MessageLookupByLibrary.simpleMessage(
+      "Definieer publiceer snelkoppelingen om snel berichten naar topics te sturen.",
+    ),
+    "shortcutsPanelNoShortcutsMessage": MessageLookupByLibrary.simpleMessage(
+      "Voeg een snelkoppeling toe om snel\nnaar je favoriete topics te publiceren.",
+    ),
+    "shortcutsPanelNoShortcutsTitle": MessageLookupByLibrary.simpleMessage(
+      "Nog geen snelkoppelingen",
+    ),
+    "shortcutsPanelTitle": MessageLookupByLibrary.simpleMessage(
+      "Snelkoppelingen",
+    ),
     "sidebarHistory": MessageLookupByLibrary.simpleMessage("GESCHIEDENIS"),
     "sidebarMessageDetail": MessageLookupByLibrary.simpleMessage(
       "BERICHTDETAILS",

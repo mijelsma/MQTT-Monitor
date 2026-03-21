@@ -1,1 +1,1 @@
-enum SettingsSection { brokers, dashboard, variables, monitoring, ui, language, about }
+enum SettingsSection { brokers, dashboard, variables, shortcuts, monitoring, ui, language, about }

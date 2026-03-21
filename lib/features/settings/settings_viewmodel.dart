@@ -12,6 +12,7 @@ import '../../models/language.dart';
 import '../../models/startup_connection.dart';
 import 'settings_section.dart';
 import '../../models/environment_variable.dart';
+import '../../models/publish_shortcut.dart';
 
 class SettingsViewModel extends ChangeNotifier {
   SettingsViewModel({required AppStateManager state}) : _state = state {
@@ -149,6 +150,42 @@ class SettingsViewModel extends ChangeNotifier {
     final values = Map<String, String>.from(_state.read(SettingsKeys.environmentVariableValues));
     values.remove(name);
     _state.write(SettingsKeys.environmentVariableValues, values);
+  }
+
+  void reorderEnvironmentVariables(int oldIndex, int newIndex) {
+    final list = [...environmentVariables];
+    if (newIndex > oldIndex) newIndex--;
+    final item = list.removeAt(oldIndex);
+    list.insert(newIndex, item);
+    _state.write(SettingsKeys.environmentVariables, list);
+  }
+
+  // ── Shortcuts ─────────────────────────────────────────────────────────
+
+  List<PublishShortcut> get shortcuts => _state.read(SettingsKeys.shortcuts);
+
+  void addShortcut(PublishShortcut shortcut) {
+    _state.write(SettingsKeys.shortcuts, [...shortcuts, shortcut]);
+  }
+
+  void updateShortcut(int index, PublishShortcut updated) {
+    final list = [...shortcuts];
+    if (index >= 0 && index < list.length) list[index] = updated;
+    _state.write(SettingsKeys.shortcuts, list);
+  }
+
+  void deleteShortcut(int index) {
+    final list = [...shortcuts];
+    if (index >= 0 && index < list.length) list.removeAt(index);
+    _state.write(SettingsKeys.shortcuts, list);
+  }
+
+  void reorderShortcuts(int oldIndex, int newIndex) {
+    final list = [...shortcuts];
+    if (newIndex > oldIndex) newIndex--;
+    final item = list.removeAt(oldIndex);
+    list.insert(newIndex, item);
+    _state.write(SettingsKeys.shortcuts, list);
   }
 
   // Theme

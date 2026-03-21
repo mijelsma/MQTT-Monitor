@@ -7,6 +7,7 @@ import '../../../models/language.dart';
 import '../../../models/startup_connection.dart';
 import '../state_key.dart';
 import '../../../models/environment_variable.dart';
+import '../../../models/publish_shortcut.dart';
 
 /// Defines the keys used in the app state for managing settings and preferences.
 abstract final class SettingsKeys {
@@ -25,6 +26,9 @@ abstract final class SettingsKeys {
   // Environment variables
   static final environmentVariables = StateKey.fromJson<List<EnvironmentVariable>>('settings.environmentVariables', defaultValue: const [], toJson: (list) => list.map((e) => e.toJson()).toList(), fromJson: (raw) => (raw as List).map((e) => EnvironmentVariable.fromJson(e as Map<String, dynamic>)).toList());
   static final environmentVariableValues = StateKey.fromJson<Map<String, String>>('settings.environmentVariableValues', defaultValue: const {}, toJson: (map) => map, fromJson: (raw) => Map<String, String>.from(raw as Map));
+
+  // Shortcuts
+  static final shortcuts = StateKey.fromJson<List<PublishShortcut>>('settings.shortcuts', defaultValue: const [], toJson: (list) => list.map((e) => e.toJson()).toList(), fromJson: (raw) => (raw as List).map((e) => PublishShortcut.fromJson(e as Map<String, dynamic>)).toList());
 
   // Connection
   static final startupConnection = StateKey.forEnum('settings.startupConnection', StartupConnection.values, defaultValue: StartupConnection.lastStatus);
@@ -67,5 +71,6 @@ abstract final class SettingsKeys {
     increasedHistorySize,
     increasedMonitoringTopics,
     messageRateSampleSize,
+    shortcuts,
   ];
 }
