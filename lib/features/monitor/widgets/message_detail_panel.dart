@@ -13,6 +13,7 @@ import '../../../shared/format_helpers.dart';
 import '../../../shared/widgets/copy_button.dart';
 import '../../../shared/widgets/json_highlighter.dart';
 import '../../../shared/widgets/qos_tag.dart';
+import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../monitor_viewmodel.dart';
@@ -56,27 +57,17 @@ class _EmptyDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _TopicHeader(topic: topic),
-          const SizedBox(height: 48),
-          Center(
-            child: Column(
-              children: [
-                Icon(Icons.hourglass_empty_rounded, size: 32, color: tokens.muted),
-                const SizedBox(height: 12),
-                Text(
-                  S.of(context).detailWaitingForMessages,
-                  style: TextStyle(fontSize: 13, color: tokens.textTertiary, fontStyle: FontStyle.italic),
-                ),
-              ],
-            ),
-          ),
-        ],
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _TopicHeader(topic: topic),
+            const SizedBox(height: 24),
+            UiEmptyState.compact(icon: Icons.hourglass_empty_rounded, title: S.of(context).detailWaitingForMessages),
+          ],
+        ),
       ),
     );
   }

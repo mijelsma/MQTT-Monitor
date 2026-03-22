@@ -7,6 +7,7 @@ import '../../../models/topic_node_value.dart';
 import '../../../shared/format_helpers.dart';
 import '../../../shared/widgets/copy_button.dart';
 import '../../../shared/widgets/qos_tag.dart';
+import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 
@@ -77,7 +78,7 @@ class _HistoryPanelState extends State<HistoryPanel> {
         final history = historyService.getHistory(widget.node.fullPath);
 
         if (history.isEmpty) {
-          return _EmptyHistory(tokens: tokens);
+          return const _EmptyHistory();
         }
 
         // Keep newest on top when user hasn't scrolled away.
@@ -136,31 +137,11 @@ class _HistoryPanelState extends State<HistoryPanel> {
 // ── Empty state ─────────────────────────────────────────────────────────
 
 class _EmptyHistory extends StatelessWidget {
-  const _EmptyHistory({required this.tokens});
-
-  final AppTokens tokens;
+  const _EmptyHistory();
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.history_rounded, size: 28, color: tokens.muted),
-            const SizedBox(height: 10),
-            Text('No history yet', style: TextStyle(fontSize: 12, color: tokens.textTertiary)),
-            const SizedBox(height: 4),
-            Text(
-              'Messages will appear here\nas they arrive',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, color: tokens.muted, height: 1.4),
-            ),
-          ],
-        ),
-      ),
-    );
+    return const UiEmptyState.compact(icon: Icons.history_rounded, title: 'No history yet', message: 'Messages will appear here\nas they arrive');
   }
 }
 
@@ -338,7 +319,7 @@ class _HistoryRow extends StatelessWidget {
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: tokens.textSecondary, fontFeatures: const [FontFeature.tabularFigures()]),
                       ),
                       const SizedBox(width: 8),
-                      _MiniQos(qos: value.qos),
+                      QosChip(qos: value.qos),
                       if (value.retain) ...[const SizedBox(width: 6), Icon(Icons.push_pin_rounded, size: 9, color: AppColors.warning500)],
                       if (isLatest) ...[
                         const SizedBox(width: 6),
@@ -373,22 +354,3 @@ class _HistoryRow extends StatelessWidget {
 }
 
 // ── Tiny QoS indicator ──────────────────────────────────────────────────
-
-class _MiniQos extends StatelessWidget {
-  const _MiniQos({required this.qos});
-
-  final int qos;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = QosTag.colorFor(qos);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 0.5),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(3)),
-      child: Text(
-        'Q$qos',
-        style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w700, color: color),
-      ),
-    );
-  }
-}

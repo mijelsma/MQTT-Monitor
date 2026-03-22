@@ -1,9 +1,9 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../generated/l10n.dart';
+import '../../../shared/format_helpers.dart';
+import '../../../shared/widgets/feedback_badge.dart';
 import '../../../shared/widgets/payload_editor.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
@@ -17,13 +17,12 @@ class PublishPanel extends StatefulWidget {
   State<PublishPanel> createState() => _PublishPanelState();
 }
 
-class _PublishPanelState extends State<PublishPanel> {
+class _PublishPanelState extends State<PublishPanel> with FeedbackMixin<PublishPanel> {
   final _topicController = TextEditingController();
   final _payloadController = HighlightingController();
   int _qos = 0;
   bool _retain = false;
   PayloadFormat _format = PayloadFormat.text;
-  _PublishFeedback? _feedback;
   String? _validationError;
 
   @override
@@ -42,30 +41,10 @@ class _PublishPanelState extends State<PublishPanel> {
   // Called whenever the payload text changes, to update validation state.
   void _onPayloadChanged() {
     if (_format == PayloadFormat.json) {
-      final error = _validateJson(_payloadController.text);
+      final error = validateJson(_payloadController.text);
       if (error != _validationError) setState(() => _validationError = error);
     } else if (_validationError != null) {
       setState(() => _validationError = null);
-    }
-  }
-
-  // Validates the JSON payload and returns an error message if invalid, or `null` if valid.
-  String? _validateJson(String text) {
-    if (text.trim().isEmpty) return null;
-    try {
-      jsonDecode(text);
-      return null;
-    } on FormatException catch (e) {
-      final offset = e.offset;
-      if (offset != null && offset <= text.length) {
-        // Count line and column from the offset.
-        final prefix = text.substring(0, offset);
-        final line = '\n'.allMatches(prefix).length + 1;
-        final lastNl = prefix.lastIndexOf('\n');
-        final col = lastNl == -1 ? offset + 1 : offset - lastNl;
-        return 'Ln $line, Col $col — ${e.message}';
-      }
-      return e.message;
     }
   }
 
@@ -73,32 +52,23 @@ class _PublishPanelState extends State<PublishPanel> {
   void _publish() {
     final topic = _topicController.text.trim();
     if (topic.isEmpty) {
-      _showFeedback(_PublishFeedback.emptyTopic);
+      showFeedback(PublishFeedbackKind.emptyTopic);
       return;
     }
 
     if (_format == PayloadFormat.json && _validationError != null) {
-      _showFeedback(_PublishFeedback.invalidJson);
+      showFeedback(PublishFeedbackKind.invalidJson);
       return;
     }
 
     final vm = context.read<MonitorViewModel>();
     if (!vm.isConnected) {
-      _showFeedback(_PublishFeedback.notConnected);
+      showFeedback(PublishFeedbackKind.offline);
       return;
     }
 
     final sent = vm.publish(topic, _payloadController.text, qos: _qos, retain: _retain);
-    _showFeedback(sent ? _PublishFeedback.success : _PublishFeedback.failed);
-  }
-
-  // Shows a temporary feedback badge at the Publish button, indicating success or failure.
-  void _showFeedback(_PublishFeedback fb) {
-    setState(() => _feedback = fb);
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      setState(() => _feedback = null);
-    });
+    showFeedback(sent ? PublishFeedbackKind.success : PublishFeedbackKind.failed);
   }
 
   @override
@@ -133,7 +103,7 @@ class _PublishPanelState extends State<PublishPanel> {
           const SizedBox(height: 8),
 
           // ── Options bar: QoS · Retain · Publish ─────────────────────
-          _OptionsBar(qos: _qos, retain: _retain, connected: connected, feedback: _feedback, onQosChanged: (v) => setState(() => _qos = v), onRetainChanged: (v) => setState(() => _retain = v), onPublish: _publish),
+          _OptionsBar(qos: _qos, retain: _retain, connected: connected, feedback: feedback, onQosChanged: (v) => setState(() => _qos = v), onRetainChanged: (v) => setState(() => _retain = v), onPublish: _publish),
         ],
       ),
     );
@@ -181,9 +151,6 @@ class _TopicInput extends StatelessWidget {
   }
 }
 
-// Publish feedback badge shown temporarily after publishing, indicating success or failure of the publish action.
-enum _PublishFeedback { success, failed, notConnected, emptyTopic, invalidJson }
-
 // Publish options bar containing QoS selector, Retain toggle, and Publish button, along with any feedback badge.
 class _OptionsBar extends StatelessWidget {
   const _OptionsBar({required this.qos, required this.retain, required this.connected, required this.feedback, required this.onQosChanged, required this.onRetainChanged, required this.onPublish});
@@ -191,7 +158,7 @@ class _OptionsBar extends StatelessWidget {
   final int qos;
   final bool retain;
   final bool connected;
-  final _PublishFeedback? feedback;
+  final PublishFeedbackKind? feedback;
   final ValueChanged<int> onQosChanged;
   final ValueChanged<bool> onRetainChanged;
   final VoidCallback onPublish;
@@ -209,7 +176,7 @@ class _OptionsBar extends StatelessWidget {
         const SizedBox(width: 8),
 
         // Feedback badge (overlays between options and button)
-        if (feedback != null) ...[_FeedbackBadge(feedback: feedback!), const SizedBox(width: 8)],
+        if (feedback != null) ...[_buildFeedbackBadge(context), const SizedBox(width: 8)],
 
         const Spacer(),
 
@@ -217,6 +184,18 @@ class _OptionsBar extends StatelessWidget {
         _PublishChip(connected: connected, onPressed: onPublish),
       ],
     );
+  }
+
+  Widget _buildFeedbackBadge(BuildContext context) {
+    final s = S.of(context);
+    final label = switch (feedback!) {
+      PublishFeedbackKind.success => s.publishSent,
+      PublishFeedbackKind.failed => s.publishFailed,
+      PublishFeedbackKind.offline => s.publishOffline,
+      PublishFeedbackKind.emptyTopic => s.publishNoTopic,
+      PublishFeedbackKind.invalidJson => s.publishBadJson,
+    };
+    return FeedbackBadge(kind: feedback!, label: label);
   }
 }
 
@@ -300,35 +279,6 @@ class _RetainPill extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-// A badge showing feedback after a publish action. Displays an icon and text based on the feedback type.
-class _FeedbackBadge extends StatelessWidget {
-  const _FeedbackBadge({required this.feedback});
-
-  final _PublishFeedback feedback;
-
-  @override
-  Widget build(BuildContext context) {
-    final (icon, color, text) = switch (feedback) {
-      _PublishFeedback.success => (Icons.check_circle_rounded, AppColors.success500, S.of(context).publishSent),
-      _PublishFeedback.failed => (Icons.error_rounded, AppColors.error500, S.of(context).publishFailed),
-      _PublishFeedback.notConnected => (Icons.cloud_off_rounded, AppColors.warning500, S.of(context).publishOffline),
-      _PublishFeedback.emptyTopic => (Icons.warning_rounded, AppColors.warning500, S.of(context).publishNoTopic),
-      _PublishFeedback.invalidJson => (Icons.warning_rounded, AppColors.error400, S.of(context).publishBadJson),
-    };
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 12, color: color),
-        const SizedBox(width: 3),
-        Text(
-          text,
-          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color),
-        ),
-      ],
     );
   }
 }

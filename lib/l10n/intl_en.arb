@@ -251,6 +251,9 @@
     "sidebarMessageDetail": "MESSAGE DETAIL",
     "sidebarHistory": "HISTORY",
     "sidebarPublish": "PUBLISH",
+    "sidebarShortcuts": "SHORTCUTS",
+    "sidebarShortcutsEmpty": "No shortcuts available.\nAdd shortcuts in Settings.",
+    "sidebarShortcutsManage": "Manage Shortcuts",
     "sidebarNoSelectionTitle": "Select a topic to inspect",
     "sidebarNoSelectionSubtitle": "Choose a topic from the tree\nto view message details",
 

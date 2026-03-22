@@ -1,17 +1,16 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 
 import '../../../generated/l10n.dart';
 import '../../../models/broker_entry.dart';
 import '../../../models/publish_shortcut.dart';
+import '../../../shared/format_helpers.dart';
 import '../../../shared/widgets/color_picker_field.dart';
 import '../../../shared/widgets/payload_editor.dart';
 import '../../../shared/widgets/scope_picker.dart';
+import '../../../shared/widgets/ui_segment_row.dart';
 import '../../../shared/widgets/spacers.dart';
 import '../../../shared/widgets/ui_field.dart';
 import '../../../shared/widgets/ui_modal_scaffold.dart';
-import '../../../shared/widgets/ui_segment_row.dart';
 import '../../../shared/widgets/ui_switch_row.dart';
 import '../../../theme/app_colors.dart';
 
@@ -78,28 +77,10 @@ class _ShortcutDialogState extends State<_ShortcutDialog> {
 
   void _onPayloadChanged() {
     if (_format == PayloadFormat.json) {
-      final error = _validateJson(_payloadController.text);
+      final error = validateJson(_payloadController.text);
       if (error != _validationError) setState(() => _validationError = error);
     } else if (_validationError != null) {
       setState(() => _validationError = null);
-    }
-  }
-
-  String? _validateJson(String text) {
-    if (text.trim().isEmpty) return null;
-    try {
-      jsonDecode(text);
-      return null;
-    } on FormatException catch (e) {
-      final offset = e.offset;
-      if (offset != null && offset <= text.length) {
-        final prefix = text.substring(0, offset);
-        final line = '\n'.allMatches(prefix).length + 1;
-        final lastNl = prefix.lastIndexOf('\n');
-        final col = lastNl == -1 ? offset + 1 : offset - lastNl;
-        return 'Ln $line, Col $col — ${e.message}';
-      }
-      return e.message;
     }
   }
 

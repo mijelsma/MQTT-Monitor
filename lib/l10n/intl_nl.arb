@@ -251,6 +251,9 @@
     "sidebarMessageDetail": "BERICHTDETAILS",
     "sidebarHistory": "GESCHIEDENIS",
     "sidebarPublish": "PUBLICEREN",
+    "sidebarShortcuts": "SNELKOPPELINGEN",
+    "sidebarShortcutsEmpty": "Geen snelkoppelingen beschikbaar.\nVoeg ze toe via Instellingen.",
+    "sidebarShortcutsManage": "Snelkoppelingen beheren",
     "sidebarNoSelectionTitle": "Selecteer een topic om te bekijken",
     "sidebarNoSelectionSubtitle": "Kies een topic uit de boom\nom berichtdetails te bekijken",
 

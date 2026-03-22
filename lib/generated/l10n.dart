@@ -1964,6 +1964,36 @@ class S {
     return Intl.message('PUBLISH', name: 'sidebarPublish', desc: '', args: []);
   }
 
+  /// `SHORTCUTS`
+  String get sidebarShortcuts {
+    return Intl.message(
+      'SHORTCUTS',
+      name: 'sidebarShortcuts',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No shortcuts available.\nAdd shortcuts in Settings.`
+  String get sidebarShortcutsEmpty {
+    return Intl.message(
+      'No shortcuts available.\nAdd shortcuts in Settings.',
+      name: 'sidebarShortcutsEmpty',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Manage Shortcuts`
+  String get sidebarShortcutsManage {
+    return Intl.message(
+      'Manage Shortcuts',
+      name: 'sidebarShortcutsManage',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Select a topic to inspect`
   String get sidebarNoSelectionTitle {
     return Intl.message(
