@@ -94,11 +94,10 @@ class JsonHighlighter extends StatelessWidget {
                 )
               else
                 const SizedBox(width: 20),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(children: lineSpans[i]),
-                  style: baseStyle.copyWith(color: tokens.textPrimary),
-                ),
+              Text.rich(
+                TextSpan(children: lineSpans[i]),
+                style: baseStyle.copyWith(color: tokens.textPrimary),
+                softWrap: false,
               ),
             ],
           ),

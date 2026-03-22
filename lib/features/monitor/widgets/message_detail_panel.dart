@@ -473,9 +473,15 @@ class _PayloadCardState extends State<_PayloadCard> {
     // Build the main payload content widget.
     Widget content;
     if (isNumeric) {
-      content = _PinnableValue(payload: widget.payload, topic: widget.topic, unit: numericParts.$2);
+      content = SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: _PinnableValue(payload: widget.payload, topic: widget.topic, unit: numericParts.$2),
+      );
     } else if (isJson && showPin) {
-      content = JsonHighlighter(source: widget.payload, onPin: (keyPath, label) => _onPin(context, widget.topic, keyPath, label));
+      content = SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: JsonHighlighter(source: widget.payload, onPin: (keyPath, label) => _onPin(context, widget.topic, keyPath, label)),
+      );
     } else {
       content = SingleChildScrollView(
         scrollDirection: Axis.horizontal,
