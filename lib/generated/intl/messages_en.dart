@@ -123,6 +123,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "brokersPanelTitle": MessageLookupByLibrary.simpleMessage("Brokers"),
     "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
+    "clearAllTopics": MessageLookupByLibrary.simpleMessage("Clear all topics"),
     "collapseAll": MessageLookupByLibrary.simpleMessage("Collapse all"),
     "dashboardDialogEditTitle": MessageLookupByLibrary.simpleMessage(
       "Edit Dashboard",
@@ -179,6 +180,10 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "dashboardPanelTitle": MessageLookupByLibrary.simpleMessage("Dashboard"),
     "delete": MessageLookupByLibrary.simpleMessage("Delete"),
+    "detailClearRetained": MessageLookupByLibrary.simpleMessage(
+      "Clear retained message",
+    ),
+    "detailDeleteTopic": MessageLookupByLibrary.simpleMessage("Delete topic"),
     "detailMessages": MessageLookupByLibrary.simpleMessage("Messages"),
     "detailNo": MessageLookupByLibrary.simpleMessage("No"),
     "detailPinnedToDashboard": MessageLookupByLibrary.simpleMessage(
@@ -190,8 +195,15 @@ class MessageLookup extends MessageLookupByLibrary {
     "detailRateValue": m1,
     "detailReceived": MessageLookupByLibrary.simpleMessage("Received"),
     "detailRetained": MessageLookupByLibrary.simpleMessage("Retained"),
+    "detailRetainedClearFailed": MessageLookupByLibrary.simpleMessage(
+      "Failed to clear — not connected",
+    ),
+    "detailRetainedCleared": MessageLookupByLibrary.simpleMessage(
+      "Retained message cleared",
+    ),
     "detailShowLatest": MessageLookupByLibrary.simpleMessage("Show latest"),
     "detailSize": MessageLookupByLibrary.simpleMessage("Size"),
+    "detailTopicDeleted": MessageLookupByLibrary.simpleMessage("Topic deleted"),
     "detailViewingMessage": m2,
     "detailWaitingForMessages": MessageLookupByLibrary.simpleMessage(
       "Waiting for messages…",

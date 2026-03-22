@@ -275,5 +275,12 @@
         "placeholders": {
             "count": { "type": "int" }
         }
-    }
+    },
+
+    "detailDeleteTopic": "Topic verwijderen",
+    "detailTopicDeleted": "Topic verwijderd",
+    "detailClearRetained": "Retained bericht wissen",
+    "detailRetainedCleared": "Retained bericht gewist",
+    "detailRetainedClearFailed": "Wissen mislukt — niet verbonden",
+    "clearAllTopics": "Alle topics wissen"
 }

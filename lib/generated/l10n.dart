@@ -2053,6 +2053,66 @@ class S {
       args: [count],
     );
   }
+
+  /// `Delete topic`
+  String get detailDeleteTopic {
+    return Intl.message(
+      'Delete topic',
+      name: 'detailDeleteTopic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Topic deleted`
+  String get detailTopicDeleted {
+    return Intl.message(
+      'Topic deleted',
+      name: 'detailTopicDeleted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear retained message`
+  String get detailClearRetained {
+    return Intl.message(
+      'Clear retained message',
+      name: 'detailClearRetained',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Retained message cleared`
+  String get detailRetainedCleared {
+    return Intl.message(
+      'Retained message cleared',
+      name: 'detailRetainedCleared',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Failed to clear — not connected`
+  String get detailRetainedClearFailed {
+    return Intl.message(
+      'Failed to clear — not connected',
+      name: 'detailRetainedClearFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear all topics`
+  String get clearAllTopics {
+    return Intl.message(
+      'Clear all topics',
+      name: 'clearAllTopics',
+      desc: '',
+      args: [],
+    );
+  }
 }
 
 class AppLocalizationDelegate extends LocalizationsDelegate<S> {

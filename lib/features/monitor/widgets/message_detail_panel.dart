@@ -99,9 +99,33 @@ class _DetailContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (isHistorical) ...[_HistoricalBanner(seq: value.seq, onShowLatest: onClearSelection), const SizedBox(height: 12)],
-          _TopicHeader(topic: node.fullPath),
+          _TopicHeader(
+            topic: node.fullPath,
+            onDelete: isHistorical
+                ? null
+                : () {
+                    final vm = context.read<MonitorViewModel>();
+                    vm.deleteTopic(node);
+                    final messenger = ScaffoldMessenger.of(context);
+                    messenger.clearSnackBars();
+                    messenger.showSnackBar(SnackBar(content: Text(S.of(context).detailTopicDeleted), behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 2)));
+                  },
+          ),
           const SizedBox(height: 16),
-          _PropertiesCard(value: value, topic: node.fullPath, isHistorical: isHistorical),
+          _PropertiesCard(
+            value: value,
+            topic: node.fullPath,
+            isHistorical: isHistorical,
+            onClearRetained: isHistorical
+                ? null
+                : () {
+                    final vm = context.read<MonitorViewModel>();
+                    final ok = vm.clearRetainedMessage(node.fullPath);
+                    final messenger = ScaffoldMessenger.of(context);
+                    messenger.clearSnackBars();
+                    messenger.showSnackBar(SnackBar(content: Text(ok ? S.of(context).detailRetainedCleared : S.of(context).detailRetainedClearFailed), behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 2)));
+                  },
+          ),
           const SizedBox(height: 16),
           _PayloadCard(payload: value.payload, topic: node.fullPath, isHistorical: isHistorical),
           if (showComparison) ...[const SizedBox(height: 16), ComparisonSection(selected: value, previous: previousValue)],
@@ -114,9 +138,10 @@ class _DetailContent extends StatelessWidget {
 // ── Topic header ────────────────────────────────────────────────────────
 
 class _TopicHeader extends StatelessWidget {
-  const _TopicHeader({required this.topic});
+  const _TopicHeader({required this.topic, this.onDelete});
 
   final String topic;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -141,6 +166,7 @@ class _TopicHeader extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           CopyButton(text: topic, size: 14),
+          if (onDelete != null) ...[const SizedBox(width: 4), _DeleteTopicButton(onDelete: onDelete!)],
         ],
       ),
     );
@@ -150,11 +176,12 @@ class _TopicHeader extends StatelessWidget {
 // ── Properties card ─────────────────────────────────────────────────────
 
 class _PropertiesCard extends StatelessWidget {
-  const _PropertiesCard({required this.value, required this.topic, this.isHistorical = false});
+  const _PropertiesCard({required this.value, required this.topic, this.isHistorical = false, this.onClearRetained});
 
   final TopicNodeValue value;
   final String topic;
   final bool isHistorical;
+  final VoidCallback? onClearRetained;
 
   static const _labelStyle = TextStyle(fontSize: 12, fontWeight: FontWeight.w500);
 
@@ -241,9 +268,15 @@ class _PropertiesCard extends StatelessWidget {
             label: S.of(context).detailRetained,
             labelWidth: labelWidth,
             child: value.retain
-                ? Text(
-                    S.of(context).detailYes,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.warning500),
+                ? Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        S.of(context).detailYes,
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.warning500),
+                      ),
+                      if (onClearRetained != null) ...[const SizedBox(width: 8), _ClearRetainedButton(onTap: onClearRetained!)],
+                    ],
                   )
                 : Text(S.of(context).detailNo, style: TextStyle(fontSize: 12, color: tokens.textTertiary)),
           ),
@@ -325,6 +358,87 @@ class _PropertyRow extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(child: child),
         ],
+      ),
+    );
+  }
+}
+
+// ── Inline action buttons ───────────────────────────────────────────────
+
+class _DeleteTopicButton extends StatefulWidget {
+  const _DeleteTopicButton({required this.onDelete});
+
+  final VoidCallback onDelete;
+
+  @override
+  State<_DeleteTopicButton> createState() => _DeleteTopicButtonState();
+}
+
+class _DeleteTopicButtonState extends State<_DeleteTopicButton> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Tooltip(
+      message: S.of(context).detailDeleteTopic,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovering = true),
+        onExit: (_) => setState(() => _hovering = false),
+        child: GestureDetector(
+          onTap: widget.onDelete,
+          behavior: HitTestBehavior.opaque,
+          child: Icon(Icons.delete_outline_rounded, size: 14, color: _hovering ? AppColors.error500 : tokens.textTertiary),
+        ),
+      ),
+    );
+  }
+}
+
+class _ClearRetainedButton extends StatefulWidget {
+  const _ClearRetainedButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  State<_ClearRetainedButton> createState() => _ClearRetainedButtonState();
+}
+
+class _ClearRetainedButtonState extends State<_ClearRetainedButton> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: S.of(context).detailClearRetained,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovering = true),
+        onExit: (_) => setState(() => _hovering = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: _hovering ? AppColors.warning500.withValues(alpha: 0.12) : Colors.transparent,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: AppColors.warning500.withValues(alpha: 0.3), width: 0.5),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.delete_outline_rounded, size: 11, color: AppColors.warning500),
+                const SizedBox(width: 3),
+                Text(
+                  S.of(context).detailClearRetained,
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: AppColors.warning500),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
