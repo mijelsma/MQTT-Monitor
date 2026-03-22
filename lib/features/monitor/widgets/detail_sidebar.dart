@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/state/app_state.dart';
+import '../../../core/state/keys/layout_keys.dart';
 import '../../../generated/l10n.dart';
 import '../../../models/topic_node_value.dart';
 import '../../../shared/widgets/resizable_split.dart';
@@ -23,12 +25,22 @@ class DetailSidebar extends StatefulWidget {
 class _DetailSidebarState extends State<DetailSidebar> {
   bool _detailCollapsed = false;
   bool _historyCollapsed = true;
-  bool _publishCollapsed = false;
+  bool _publishCollapsed = true;
   bool _shortcutsCollapsed = true;
 
   /// The history value currently selected, or null if showing latest.
   TopicNodeValue? _selectedHistoryValue;
   String? _lastTopicPath;
+
+  @override
+  void initState() {
+    super.initState();
+    final state = context.read<AppStateManager>();
+    _detailCollapsed = state.read(LayoutKeys.sidebarDetailCollapsed);
+    _historyCollapsed = state.read(LayoutKeys.sidebarHistoryCollapsed);
+    _publishCollapsed = state.read(LayoutKeys.sidebarPublishCollapsed);
+    _shortcutsCollapsed = state.read(LayoutKeys.sidebarShortcutsCollapsed);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,11 +59,24 @@ class _DetailSidebarState extends State<DetailSidebar> {
 
     // Fixed-order section definitions — order never changes.
     final s = S.of(context);
+    final state = context.read<AppStateManager>();
     final sections = [
-      (collapsed: _detailCollapsed, title: s.sidebarMessageDetail, icon: Icons.info_outline_rounded, content: detailContent, toggle: () => setState(() => _detailCollapsed = !_detailCollapsed)),
-      (collapsed: _historyCollapsed, title: s.sidebarHistory, icon: Icons.history_rounded, content: historyContent, toggle: () => setState(() => _historyCollapsed = !_historyCollapsed)),
-      (collapsed: _publishCollapsed, title: s.sidebarPublish, icon: Icons.send_rounded, content: const PublishPanel(), toggle: () => setState(() => _publishCollapsed = !_publishCollapsed)),
-      (collapsed: _shortcutsCollapsed, title: s.sidebarShortcuts, icon: Icons.bolt_rounded, content: const ShortcutsPanel(), toggle: () => setState(() => _shortcutsCollapsed = !_shortcutsCollapsed)),
+      (collapsed: _detailCollapsed, title: s.sidebarMessageDetail, icon: Icons.info_outline_rounded, content: detailContent, toggle: () => setState(() {
+        _detailCollapsed = !_detailCollapsed;
+        state.write(LayoutKeys.sidebarDetailCollapsed, _detailCollapsed);
+      })),
+      (collapsed: _historyCollapsed, title: s.sidebarHistory, icon: Icons.history_rounded, content: historyContent, toggle: () => setState(() {
+        _historyCollapsed = !_historyCollapsed;
+        state.write(LayoutKeys.sidebarHistoryCollapsed, _historyCollapsed);
+      })),
+      (collapsed: _publishCollapsed, title: s.sidebarPublish, icon: Icons.send_rounded, content: const PublishPanel(), toggle: () => setState(() {
+        _publishCollapsed = !_publishCollapsed;
+        state.write(LayoutKeys.sidebarPublishCollapsed, _publishCollapsed);
+      })),
+      (collapsed: _shortcutsCollapsed, title: s.sidebarShortcuts, icon: Icons.bolt_rounded, content: const ShortcutsPanel(), toggle: () => setState(() {
+        _shortcutsCollapsed = !_shortcutsCollapsed;
+        state.write(LayoutKeys.sidebarShortcutsCollapsed, _shortcutsCollapsed);
+      })),
     ];
 
     // ── Build layout keeping headers in strict visual order ──
