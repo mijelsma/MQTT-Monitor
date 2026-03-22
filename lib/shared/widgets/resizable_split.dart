@@ -5,7 +5,7 @@ import '../../theme/app_tokens/app_tokens.dart';
 ///
 /// Uses flex-based layout so it never overflows.
 class ResizableSplit extends StatefulWidget {
-  const ResizableSplit({super.key, required this.first, required this.second, this.initialRatio = 0.5, this.minRatio = 0.2, this.maxRatio = 0.8, this.axis = Axis.horizontal});
+  const ResizableSplit({super.key, required this.first, required this.second, this.initialRatio = 0.5, this.minRatio = 0.2, this.maxRatio = 0.8, this.axis = Axis.horizontal, this.onRatioChanged});
 
   final Widget first;
   final Widget second;
@@ -13,6 +13,9 @@ class ResizableSplit extends StatefulWidget {
   final double minRatio;
   final double maxRatio;
   final Axis axis;
+
+  /// Called once when the user finishes dragging the divider.
+  final ValueChanged<double>? onRatioChanged;
 
   @override
   State<ResizableSplit> createState() => _ResizableSplitState();
@@ -33,6 +36,10 @@ class _ResizableSplitState extends State<ResizableSplit> {
     setState(() {
       _ratio = (_ratio + delta / totalSize).clamp(widget.minRatio, widget.maxRatio);
     });
+  }
+
+  void _onDragEnd(DragEndDetails _) {
+    widget.onRatioChanged?.call(_ratio);
   }
 
   @override
@@ -57,6 +64,8 @@ class _ResizableSplitState extends State<ResizableSplit> {
               behavior: HitTestBehavior.opaque,
               onHorizontalDragUpdate: isHorizontal ? (d) => _onDragUpdate(d, totalSize) : null,
               onVerticalDragUpdate: !isHorizontal ? (d) => _onDragUpdate(d, totalSize) : null,
+              onHorizontalDragEnd: isHorizontal ? _onDragEnd : null,
+              onVerticalDragEnd: !isHorizontal ? _onDragEnd : null,
               child: _DividerHandle(isHorizontal: isHorizontal, hovering: _hovering, borderColor: tokens.border, accentColor: tokens.primary),
             ),
           ),

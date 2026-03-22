@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/history/message_history_service.dart';
 import '../../core/mqtt/mqtt_service.dart';
 import '../../core/state/app_state.dart';
+import '../../core/state/keys/layout_keys.dart';
 import '../../shared/widgets/resizable_split.dart';
 import 'monitor_viewmodel.dart';
 import 'widgets/detail_sidebar.dart';
@@ -34,10 +35,12 @@ class _MonitorView extends StatefulWidget {
 
 class _MonitorViewState extends State<_MonitorView> {
   final TextEditingController _filterController = TextEditingController();
+  late double _splitRatio;
 
   @override
   void initState() {
     super.initState();
+    _splitRatio = context.read<AppStateManager>().read(LayoutKeys.monitorSplitRatio);
     _filterController.addListener(() {
       context.read<MonitorViewModel>().setFilter(_filterController.text);
     });
@@ -75,9 +78,10 @@ class _MonitorViewState extends State<_MonitorView> {
       body = emptyState!;
     } else {
       body = ResizableSplit(
-        initialRatio: 0.55,
+        initialRatio: _splitRatio,
         minRatio: 0.25,
         maxRatio: 0.75,
+        onRatioChanged: (ratio) => context.read<AppStateManager>().write(LayoutKeys.monitorSplitRatio, ratio),
         first: TopicTree(filterController: _filterController),
         second: const DetailSidebar(),
       );
