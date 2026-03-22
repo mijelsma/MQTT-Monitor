@@ -131,6 +131,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "brokersPanelTitle": MessageLookupByLibrary.simpleMessage("Brokers"),
     "cancel": MessageLookupByLibrary.simpleMessage("Annuleren"),
+    "clearAllTopics": MessageLookupByLibrary.simpleMessage(
+      "Alle topics wissen",
+    ),
     "collapseAll": MessageLookupByLibrary.simpleMessage("Alles inklappen"),
     "dashboardDialogEditTitle": MessageLookupByLibrary.simpleMessage(
       "Dashboard bewerken",
@@ -193,6 +196,12 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "dashboardPanelTitle": MessageLookupByLibrary.simpleMessage("Dashboard"),
     "delete": MessageLookupByLibrary.simpleMessage("Verwijderen"),
+    "detailClearRetained": MessageLookupByLibrary.simpleMessage(
+      "Retained bericht wissen",
+    ),
+    "detailDeleteTopic": MessageLookupByLibrary.simpleMessage(
+      "Topic verwijderen",
+    ),
     "detailMessages": MessageLookupByLibrary.simpleMessage("Berichten"),
     "detailNo": MessageLookupByLibrary.simpleMessage("Nee"),
     "detailPinnedToDashboard": MessageLookupByLibrary.simpleMessage(
@@ -204,8 +213,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "detailRateValue": m1,
     "detailReceived": MessageLookupByLibrary.simpleMessage("Ontvangen"),
     "detailRetained": MessageLookupByLibrary.simpleMessage("Vastgehouden"),
+    "detailRetainedClearFailed": MessageLookupByLibrary.simpleMessage(
+      "Wissen mislukt — niet verbonden",
+    ),
+    "detailRetainedCleared": MessageLookupByLibrary.simpleMessage(
+      "Retained bericht gewist",
+    ),
     "detailShowLatest": MessageLookupByLibrary.simpleMessage("Toon nieuwste"),
     "detailSize": MessageLookupByLibrary.simpleMessage("Grootte"),
+    "detailTopicDeleted": MessageLookupByLibrary.simpleMessage(
+      "Topic verwijderd",
+    ),
     "detailViewingMessage": m2,
     "detailWaitingForMessages": MessageLookupByLibrary.simpleMessage(
       "Wachten op berichten…",

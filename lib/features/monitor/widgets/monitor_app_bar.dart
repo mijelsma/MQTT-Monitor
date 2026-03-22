@@ -70,6 +70,8 @@ class _MonitorAppBarState extends State<MonitorAppBar> {
           ),
           const HSpacer(8),
           _CollapseExpandButton(),
+          const HSpacer(4),
+          _ClearAllTopicsButton(),
         ],
       ),
       titleSpacing: 10,
@@ -199,6 +201,24 @@ class _CollapseExpandButton extends StatelessWidget {
       onPressed: expanded ? vm.collapseAll : vm.expandAll,
       icon: Icon(expanded ? Icons.unfold_less_rounded : Icons.unfold_more_rounded, size: 18, color: tokens.textSecondary),
       tooltip: expanded ? S.of(context).collapseAll : S.of(context).expandAll,
+      splashRadius: 16,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+      visualDensity: VisualDensity.compact,
+    );
+  }
+}
+
+class _ClearAllTopicsButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<MonitorViewModel>();
+    final tokens = context.tokens;
+
+    return IconButton(
+      onPressed: vm.clearAllTopics,
+      icon: Icon(Icons.delete_sweep_rounded, size: 18, color: tokens.textSecondary),
+      tooltip: S.of(context).clearAllTopics,
       splashRadius: 16,
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 28, minHeight: 28),

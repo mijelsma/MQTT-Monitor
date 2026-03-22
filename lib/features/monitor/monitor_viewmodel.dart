@@ -282,6 +282,77 @@ class MonitorViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Removes a single topic from the tree (and its children).
+  ///
+  /// Also clears history for any topics in the removed subtree.
+  void deleteTopic(TopicTreeNode node) {
+    final segments = node.fullPath.split('/').where((s) => s.isNotEmpty).toList();
+    if (segments.isEmpty) return;
+
+    // Collect all topic paths in the subtree so we can clear history.
+    final removedTopics = <String>[];
+    void collectPaths(TopicTreeNode n) {
+      if (n.valueNotifier.value != null) removedTopics.add(n.fullPath);
+      for (final child in n.children.values) {
+        collectPaths(child);
+      }
+    }
+
+    collectPaths(node);
+
+    // Navigate to the parent level and remove the node.
+    Map<String, TopicTreeNode> level = _roots;
+    for (int i = 0; i < segments.length - 1; i++) {
+      final parent = level[segments[i]];
+      if (parent == null) return;
+      level = parent.children;
+    }
+    level.remove(segments.last);
+
+    // Prune empty ancestors.
+    _pruneEmptyAncestors(segments);
+
+    // Clear history for removed topics.
+    _history.clearTopics(removedTopics);
+
+    // Deselect if the deleted node was selected.
+    if (_selectedNode != null && _selectedNode!.fullPath.startsWith(node.fullPath)) {
+      _selectedNode = null;
+    }
+
+    _pendingTimers.remove(node.fullPath)?.cancel();
+    notifyListeners();
+  }
+
+  /// Removes empty ancestor nodes after a topic deletion.
+  void _pruneEmptyAncestors(List<String> segments) {
+    for (int depth = segments.length - 2; depth >= 0; depth--) {
+      Map<String, TopicTreeNode> level = _roots;
+      for (int i = 0; i < depth; i++) {
+        final n = level[segments[i]];
+        if (n == null) return;
+        level = n.children;
+      }
+      final node = level[segments[depth]];
+      if (node != null && node.children.isEmpty && node.valueNotifier.value == null) {
+        level.remove(segments[depth]);
+      } else {
+        break;
+      }
+    }
+  }
+
+  /// Publishes an empty retained message to clear the retained value on the broker.
+  bool clearRetainedMessage(String topic) {
+    return _mqtt.publish(topic, '', qos: 0, retain: true);
+  }
+
+  /// Clears all topics from the tree and history.
+  void clearAllTopics() {
+    _clearTree();
+    _history.clear();
+  }
+
   /// Cancels pending timers and clears all topic tree data.
   void _clearTree() {
     for (final t in _pendingTimers.values) {
