@@ -197,7 +197,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "dashboardPanelTitle": MessageLookupByLibrary.simpleMessage("Dashboard"),
     "delete": MessageLookupByLibrary.simpleMessage("Verwijderen"),
     "detailClearRetained": MessageLookupByLibrary.simpleMessage(
-      "Retained bericht wissen",
+      "Retained bericht verwijderen",
     ),
     "detailDeleteTopic": MessageLookupByLibrary.simpleMessage(
       "Topic verwijderen",
@@ -217,7 +217,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Wissen mislukt — niet verbonden",
     ),
     "detailRetainedCleared": MessageLookupByLibrary.simpleMessage(
-      "Retained bericht gewist",
+      "Retained bericht verwijderd",
     ),
     "detailShowLatest": MessageLookupByLibrary.simpleMessage("Toon nieuwste"),
     "detailSize": MessageLookupByLibrary.simpleMessage("Grootte"),

@@ -279,8 +279,8 @@
 
     "detailDeleteTopic": "Topic verwijderen",
     "detailTopicDeleted": "Topic verwijderd",
-    "detailClearRetained": "Retained bericht wissen",
-    "detailRetainedCleared": "Retained bericht gewist",
+    "detailClearRetained": "Retained bericht verwijderen",
+    "detailRetainedCleared": "Retained bericht verwijderd",
     "detailRetainedClearFailed": "Wissen mislukt — niet verbonden",
     "clearAllTopics": "Alle topics wissen"
 }
