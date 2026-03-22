@@ -61,22 +61,46 @@ class _DetailSidebarState extends State<DetailSidebar> {
     final s = S.of(context);
     final state = context.read<AppStateManager>();
     final sections = [
-      (collapsed: _detailCollapsed, title: s.sidebarMessageDetail, icon: Icons.info_outline_rounded, content: detailContent, toggle: () => setState(() {
-        _detailCollapsed = !_detailCollapsed;
-        state.write(LayoutKeys.sidebarDetailCollapsed, _detailCollapsed);
-      })),
-      (collapsed: _historyCollapsed, title: s.sidebarHistory, icon: Icons.history_rounded, content: historyContent, toggle: () => setState(() {
-        _historyCollapsed = !_historyCollapsed;
-        state.write(LayoutKeys.sidebarHistoryCollapsed, _historyCollapsed);
-      })),
-      (collapsed: _publishCollapsed, title: s.sidebarPublish, icon: Icons.send_rounded, content: const PublishPanel(), toggle: () => setState(() {
-        _publishCollapsed = !_publishCollapsed;
-        state.write(LayoutKeys.sidebarPublishCollapsed, _publishCollapsed);
-      })),
-      (collapsed: _shortcutsCollapsed, title: s.sidebarShortcuts, icon: Icons.bolt_rounded, content: const ShortcutsPanel(), toggle: () => setState(() {
-        _shortcutsCollapsed = !_shortcutsCollapsed;
-        state.write(LayoutKeys.sidebarShortcutsCollapsed, _shortcutsCollapsed);
-      })),
+      (
+        collapsed: _detailCollapsed,
+        title: s.sidebarMessageDetail,
+        icon: Icons.info_outline_rounded,
+        content: detailContent,
+        toggle: () => setState(() {
+          _detailCollapsed = !_detailCollapsed;
+          state.write(LayoutKeys.sidebarDetailCollapsed, _detailCollapsed);
+        }),
+      ),
+      (
+        collapsed: _historyCollapsed,
+        title: s.sidebarHistory,
+        icon: Icons.history_rounded,
+        content: historyContent,
+        toggle: () => setState(() {
+          _historyCollapsed = !_historyCollapsed;
+          state.write(LayoutKeys.sidebarHistoryCollapsed, _historyCollapsed);
+        }),
+      ),
+      (
+        collapsed: _publishCollapsed,
+        title: s.sidebarPublish,
+        icon: Icons.send_rounded,
+        content: const PublishPanel(),
+        toggle: () => setState(() {
+          _publishCollapsed = !_publishCollapsed;
+          state.write(LayoutKeys.sidebarPublishCollapsed, _publishCollapsed);
+        }),
+      ),
+      (
+        collapsed: _shortcutsCollapsed,
+        title: s.sidebarShortcuts,
+        icon: Icons.bolt_rounded,
+        content: const ShortcutsPanel(),
+        toggle: () => setState(() {
+          _shortcutsCollapsed = !_shortcutsCollapsed;
+          state.write(LayoutKeys.sidebarShortcutsCollapsed, _shortcutsCollapsed);
+        }),
+      ),
     ];
 
     // ── Build layout keeping headers in strict visual order ──
