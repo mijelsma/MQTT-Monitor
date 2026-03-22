@@ -4,11 +4,13 @@ import 'package:provider/provider.dart';
 import '../../../generated/l10n.dart';
 import '../../../models/topic_node_value.dart';
 import '../../../shared/widgets/resizable_split.dart';
+import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../monitor_viewmodel.dart';
 import 'history_panel.dart';
 import 'message_detail_panel.dart';
 import 'publish_panel.dart';
+import 'shortcuts_panel.dart';
 
 /// The right-hand sidebar showing the selected message detail, history, and publish panel.
 class DetailSidebar extends StatefulWidget {
@@ -22,6 +24,7 @@ class _DetailSidebarState extends State<DetailSidebar> {
   bool _detailCollapsed = false;
   bool _historyCollapsed = true;
   bool _publishCollapsed = false;
+  bool _shortcutsCollapsed = true;
 
   /// The history value currently selected, or null if showing latest.
   TopicNodeValue? _selectedHistoryValue;
@@ -48,6 +51,7 @@ class _DetailSidebarState extends State<DetailSidebar> {
       (collapsed: _detailCollapsed, title: s.sidebarMessageDetail, icon: Icons.info_outline_rounded, content: detailContent, toggle: () => setState(() => _detailCollapsed = !_detailCollapsed)),
       (collapsed: _historyCollapsed, title: s.sidebarHistory, icon: Icons.history_rounded, content: historyContent, toggle: () => setState(() => _historyCollapsed = !_historyCollapsed)),
       (collapsed: _publishCollapsed, title: s.sidebarPublish, icon: Icons.send_rounded, content: const PublishPanel(), toggle: () => setState(() => _publishCollapsed = !_publishCollapsed)),
+      (collapsed: _shortcutsCollapsed, title: s.sidebarShortcuts, icon: Icons.bolt_rounded, content: const ShortcutsPanel(), toggle: () => setState(() => _shortcutsCollapsed = !_shortcutsCollapsed)),
     ];
 
     // ── Build layout keeping headers in strict visual order ──
@@ -98,7 +102,7 @@ class _DetailSidebarState extends State<DetailSidebar> {
           child: Column(
             children: [
               headerFor(chunk.expandedIndex, collapsed: false),
-              Expanded(child: sections[chunk.expandedIndex].content),
+              Expanded(child: ClipRect(child: sections[chunk.expandedIndex].content)),
             ],
           ),
         ),
@@ -132,7 +136,7 @@ class _DetailSidebarState extends State<DetailSidebar> {
             children: [
               for (final ci in collapsedBefore) headerFor(ci, collapsed: true),
               headerFor(chunk.expandedIndex, collapsed: false),
-              Expanded(child: sections[chunk.expandedIndex].content),
+              Expanded(child: ClipRect(child: sections[chunk.expandedIndex].content)),
             ],
           ),
         );
@@ -228,29 +232,6 @@ class _NoSelection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(color: tokens.primary.withValues(alpha: 0.05), shape: BoxShape.circle),
-              child: Icon(Icons.touch_app_rounded, size: 28, color: tokens.muted),
-            ),
-            const SizedBox(height: 14),
-            Text(S.of(context).sidebarNoSelectionTitle, style: TextStyle(fontSize: 13, color: tokens.textTertiary)),
-            const SizedBox(height: 4),
-            Text(
-              S.of(context).sidebarNoSelectionSubtitle,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11, color: tokens.muted, height: 1.5),
-            ),
-          ],
-        ),
-      ),
-    );
+    return UiEmptyState.compact(icon: Icons.touch_app_rounded, title: S.of(context).sidebarNoSelectionTitle, message: S.of(context).sidebarNoSelectionSubtitle);
   }
 }

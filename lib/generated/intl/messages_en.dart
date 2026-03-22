@@ -352,6 +352,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "Select a topic to inspect",
     ),
     "sidebarPublish": MessageLookupByLibrary.simpleMessage("PUBLISH"),
+    "sidebarShortcuts": MessageLookupByLibrary.simpleMessage("SHORTCUTS"),
+    "sidebarShortcutsEmpty": MessageLookupByLibrary.simpleMessage(
+      "No shortcuts available.\nAdd shortcuts in Settings.",
+    ),
+    "sidebarShortcutsManage": MessageLookupByLibrary.simpleMessage(
+      "Manage Shortcuts",
+    ),
     "subscriptionDialogAddTitle": MessageLookupByLibrary.simpleMessage(
       "Add Subscription",
     ),

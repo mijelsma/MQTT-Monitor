@@ -6,6 +6,26 @@ import '../generated/l10n.dart';
 
 const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+/// Validates a JSON string and returns a human-readable error, or `null` if
+/// the string is valid (or empty).
+String? validateJson(String text) {
+  if (text.trim().isEmpty) return null;
+  try {
+    jsonDecode(text);
+    return null;
+  } on FormatException catch (e) {
+    final offset = e.offset;
+    if (offset != null && offset <= text.length) {
+      final prefix = text.substring(0, offset);
+      final line = '\n'.allMatches(prefix).length + 1;
+      final lastNl = prefix.lastIndexOf('\n');
+      final col = lastNl == -1 ? offset + 1 : offset - lastNl;
+      return 'Ln $line, Col $col — ${e.message}';
+    }
+    return e.message;
+  }
+}
+
 /// Formats a [DateTime] as a human-readable timestamp string.
 ///
 /// When [verbose] is true (default), today's timestamps read "Today at HH:mm:ss.SSS".

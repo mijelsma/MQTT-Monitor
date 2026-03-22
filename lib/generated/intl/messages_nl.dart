@@ -366,6 +366,13 @@ class MessageLookup extends MessageLookupByLibrary {
       "Selecteer een topic om te bekijken",
     ),
     "sidebarPublish": MessageLookupByLibrary.simpleMessage("PUBLICEREN"),
+    "sidebarShortcuts": MessageLookupByLibrary.simpleMessage("SNELKOPPELINGEN"),
+    "sidebarShortcutsEmpty": MessageLookupByLibrary.simpleMessage(
+      "Geen snelkoppelingen beschikbaar.\nVoeg ze toe via Instellingen.",
+    ),
+    "sidebarShortcutsManage": MessageLookupByLibrary.simpleMessage(
+      "Snelkoppelingen beheren",
+    ),
     "subscriptionDialogAddTitle": MessageLookupByLibrary.simpleMessage(
       "Abonnement toevoegen",
     ),

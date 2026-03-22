@@ -11,6 +11,7 @@ import '../../core/state/keys/app_keys.dart';
 import '../../core/state/keys/settings_keys.dart';
 import '../../models/broker_entry.dart';
 import '../../models/flat_tree_row.dart';
+import '../../models/publish_shortcut.dart';
 import '../../models/topic_node.dart';
 import '../../models/topic_node_value.dart';
 
@@ -100,6 +101,15 @@ class MonitorViewModel extends ChangeNotifier {
 
   /// Whether the client is currently connected.
   bool get isConnected => connectionStatus == ConnectionStatus.connected;
+
+  /// Shortcuts available for the currently active broker.
+  ///
+  /// Returns global shortcuts plus any scoped to the active broker.
+  List<PublishShortcut> get availableShortcuts {
+    final all = _state.read(SettingsKeys.shortcuts);
+    final brokerId = activeBroker?.id;
+    return all.where((s) => s.isGlobal || (brokerId != null && s.brokerIds.contains(brokerId))).toList();
+  }
 
   /// Adds a new broker and makes it the active one.
   void addBroker(BrokerEntry entry) {
@@ -311,7 +321,6 @@ class MonitorViewModel extends ChangeNotifier {
       row.node.displayTopicCount = t;
       row.node.displayMsgCount = m;
     }
-
 
     return rows;
   }
