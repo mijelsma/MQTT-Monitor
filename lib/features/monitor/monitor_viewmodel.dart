@@ -59,8 +59,8 @@ class MonitorViewModel extends ChangeNotifier {
   String _filter = '';
   SearchScope _scope = SearchScope.all;
 
-  // Whether all nodes are currently expanded (used to toggle between expand/collapse all).
-  bool allExpanded = false;
+  // Whether any node is currently expanded (used to toggle between collapse/expand all).
+  bool anyExpanded = false;
 
   // ── Filter & scope ────────────────────────────────────────────────────
   String get filter => _filter;
@@ -260,7 +260,7 @@ class MonitorViewModel extends ChangeNotifier {
   /// Toggles the expanded state of a single node.
   void toggleExpand(TopicTreeNode node) {
     node.isExpanded = !node.isExpanded;
-    allExpanded = _allNodes(_roots.values).every((n) => !n.isBranch || n.isExpanded);
+    anyExpanded = _allNodes(_roots.values).any((n) => n.isBranch && n.isExpanded);
     notifyListeners();
   }
 
@@ -269,7 +269,7 @@ class MonitorViewModel extends ChangeNotifier {
     for (final node in _allNodes(_roots.values)) {
       node.isExpanded = false;
     }
-    allExpanded = false;
+    anyExpanded = false;
     notifyListeners();
   }
 
@@ -278,7 +278,7 @@ class MonitorViewModel extends ChangeNotifier {
     for (final node in _allNodes(_roots.values)) {
       node.isExpanded = true;
     }
-    allExpanded = true;
+    anyExpanded = true;
     notifyListeners();
   }
 

@@ -195,12 +195,12 @@ class _CollapseExpandButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = context.watch<MonitorViewModel>();
     final tokens = context.tokens;
-    final expanded = vm.allExpanded;
+    final anyExpanded = vm.anyExpanded;
 
     return IconButton(
-      onPressed: expanded ? vm.collapseAll : vm.expandAll,
-      icon: Icon(expanded ? Icons.unfold_less_rounded : Icons.unfold_more_rounded, size: 18, color: tokens.textSecondary),
-      tooltip: expanded ? S.of(context).collapseAll : S.of(context).expandAll,
+      onPressed: anyExpanded ? vm.collapseAll : vm.expandAll,
+      icon: Icon(anyExpanded ? Icons.unfold_less_rounded : Icons.unfold_more_rounded, size: 18, color: tokens.textSecondary),
+      tooltip: anyExpanded ? S.of(context).collapseAll : S.of(context).expandAll,
       splashRadius: 16,
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
