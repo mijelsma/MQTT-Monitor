@@ -2,22 +2,22 @@ import 'package:flutter/material.dart';
 
 import '../../../models/environment_variable.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../dashboard_view_model.dart';
 
-/// A horizontal bar shown at the top of the dashboard that lets the user
-/// set the current value for each environment variable.
+/// A horizontal bar that lets the user set the current value for each
+/// environment variable. Accepts variables, current values, and a callback
+/// so it can be reused in both the dashboard and the shortcuts panel.
 class VariableBar extends StatelessWidget {
-  const VariableBar({super.key, required this.vm});
+  const VariableBar({super.key, required this.variables, required this.values, required this.onChanged});
 
-  final DashboardViewModel vm;
+  final List<EnvironmentVariable> variables;
+  final Map<String, String> values;
+  final void Function(String name, String value) onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final variables = vm.environmentVariables;
     if (variables.isEmpty) return const SizedBox.shrink();
 
     final tokens = context.tokens;
-    final values = vm.variableValues;
 
     return Container(
       width: double.infinity,
@@ -32,7 +32,7 @@ class VariableBar extends StatelessWidget {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Icon(Icons.data_object_rounded, size: 16, color: tokens.textSecondary),
-          for (final variable in variables) _VariableChip(variable: variable, currentValue: values[variable.name] ?? '', onChanged: (v) => vm.setVariableValue(variable.name, v)),
+          for (final variable in variables) _VariableChip(variable: variable, currentValue: values[variable.name] ?? '', onChanged: (v) => onChanged(variable.name, v)),
         ],
       ),
     );

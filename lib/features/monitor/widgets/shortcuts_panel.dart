@@ -10,6 +10,7 @@ import '../../../shared/widgets/qos_tag.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
+import '../../dashboard/widgets/variable_bar.dart';
 import '../../settings/settings_screen.dart';
 import '../../settings/settings_section.dart';
 import '../monitor_viewmodel.dart';
@@ -33,6 +34,7 @@ class ShortcutsPanel extends StatelessWidget {
       color: tokens.bg,
       child: Column(
         children: [
+          VariableBar(variables: vm.environmentVariables, values: vm.variableValues, onChanged: vm.setVariableValue),
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
@@ -73,7 +75,8 @@ class _ShortcutCardState extends State<_ShortcutCard> with FeedbackMixin<_Shortc
       return;
     }
 
-    final sent = vm.publish(widget.shortcut.topic, widget.shortcut.payload, qos: widget.shortcut.qos, retain: widget.shortcut.retain);
+    final resolvedTopic = vm.resolveShortcutTopic(widget.shortcut.topic);
+    final sent = vm.publish(resolvedTopic, widget.shortcut.payload, qos: widget.shortcut.qos, retain: widget.shortcut.retain);
 
     showFeedback(sent ? PublishFeedbackKind.success : PublishFeedbackKind.failed);
   }
@@ -95,6 +98,8 @@ class _ShortcutCardState extends State<_ShortcutCard> with FeedbackMixin<_Shortc
     final sc = widget.shortcut;
     final color = sc.displayColor;
     final hasFeedback = feedback != null;
+    final resolvedTopic = context.watch<MonitorViewModel>().resolveShortcutTopic(sc.topic);
+    final topicHasVariables = resolvedTopic != sc.topic;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -135,9 +140,9 @@ class _ShortcutCardState extends State<_ShortcutCard> with FeedbackMixin<_Shortc
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        sc.topic,
+                        resolvedTopic,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 10, color: tokens.muted, fontFamily: 'SF Mono, Menlo, monospace', letterSpacing: -0.2),
+                        style: TextStyle(fontSize: 10, color: topicHasVariables ? tokens.primary.withValues(alpha: 0.75) : tokens.muted, fontFamily: 'SF Mono, Menlo, monospace', letterSpacing: -0.2),
                       ),
                     ],
                   ),

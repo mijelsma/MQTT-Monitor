@@ -10,10 +10,14 @@ import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
 import '../../core/state/keys/settings_keys.dart';
 import '../../models/broker_entry.dart';
+import '../../models/environment_variable.dart';
 import '../../models/flat_tree_row.dart';
 import '../../models/publish_shortcut.dart';
 import '../../models/topic_node.dart';
 import '../../models/topic_node_value.dart';
+
+/// Regex that matches `${VAR_NAME}` placeholders in topic templates.
+final _variablePlaceholderPattern = RegExp(r'\$\{([^}]+)\}');
 
 /// Which part of a topic row is matched when filtering.
 enum SearchScope { all, topic, value }
@@ -25,6 +29,8 @@ enum SearchScope { all, topic, value }
 class MonitorViewModel extends ChangeNotifier {
   // Constructor takes the MQTT service and app state manager, starts listening for messages.
   MonitorViewModel({required MqttService mqttService, required AppStateManager state, required MessageHistoryService historyService}) : _mqtt = mqttService, _state = state, _history = historyService {
+    _state.load(SettingsKeys.environmentVariables);
+    _state.load(SettingsKeys.environmentVariableValues);
     _subscription = _mqtt.messageStream.listen(_onMessage);
     _activeBrokerId = activeBroker?.id;
     _state.addListener(_onStateChanged);
@@ -109,6 +115,28 @@ class MonitorViewModel extends ChangeNotifier {
     final all = _state.read(SettingsKeys.shortcuts);
     final brokerId = activeBroker?.id;
     return all.where((s) => s.isGlobal || (brokerId != null && s.brokerIds.contains(brokerId))).toList();
+  }
+
+  /// Environment variables visible to the currently active broker.
+  List<EnvironmentVariable> get environmentVariables {
+    final all = _state.read(SettingsKeys.environmentVariables);
+    final brokerId = activeBroker?.id;
+    return all.where((v) => v.isGlobal || (brokerId != null && v.brokerIds.contains(brokerId))).toList();
+  }
+
+  /// Current values for each environment variable.
+  Map<String, String> get variableValues => _state.read(SettingsKeys.environmentVariableValues);
+
+  /// Sets the value for a single environment variable.
+  void setVariableValue(String name, String value) {
+    final updated = Map<String, String>.from(variableValues)..[name] = value;
+    _state.write(SettingsKeys.environmentVariableValues, updated);
+  }
+
+  /// Resolves `\${VAR_NAME}` placeholders in a shortcut topic using current variable values.
+  String resolveShortcutTopic(String topic) {
+    final values = variableValues;
+    return topic.replaceAllMapped(_variablePlaceholderPattern, (m) => values[m.group(1)!] ?? m.group(0)!);
   }
 
   /// Adds a new broker and makes it the active one.
