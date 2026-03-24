@@ -60,7 +60,7 @@ class _DashboardScaffold extends StatelessWidget {
       backgroundColor: tokens.bg,
       body: Column(
         children: [
-          VariableBar(vm: vm),
+          VariableBar(variables: vm.environmentVariables, values: vm.variableValues, onChanged: vm.setVariableValue),
           Expanded(child: _buildBody(vm)),
         ],
       ),
