@@ -3,16 +3,20 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:mqtt_client/mqtt_client.dart';
-import 'package:mqtt_client/mqtt_server_client.dart';
+import 'package:mqtt_client/mqtt_client.dart' as mqtt3;
+import 'package:mqtt_client/mqtt_server_client.dart' as mqtt3_server;
+import 'package:mqtt5_client/mqtt5_client.dart' as mqtt5;
+import 'package:mqtt5_client/mqtt5_server_client.dart' as mqtt5_server;
 
 import '../../models/broker_entry.dart';
+import '../../models/mqtt_protocol_version.dart';
 import '../../models/startup_connection.dart';
 import '../state/app_state.dart';
 import '../state/keys/app_keys.dart';
 import '../state/keys/settings_keys.dart';
 import 'connection_status.dart';
 import 'mqtt_message.dart';
+import 'mqtt_reason.dart';
 
 /// Service responsible for managing the MQTT connection and message flow.
 class MqttService {
@@ -22,8 +26,11 @@ class MqttService {
   // Reference to the app state manager for reading settings and updating connection status.
   final AppStateManager _state;
 
-  MqttServerClient? _client;
+  mqtt3_server.MqttServerClient? _client3;
+  mqtt5_server.MqttServerClient? _client5;
   StreamSubscription? _updatesSubscription;
+  StreamSubscription? _protocolSubscription;
+  MqttProtocolVersion? _activeProtocol;
   String? _currentBrokerId;
   int _sessionId = 0;
   bool _isFirstSync = true;
@@ -47,18 +54,40 @@ class MqttService {
 
   /// Publishes a message to the given topic.
   /// Returns `true` if the message was sent, `false` if the client is not connected.
-  bool publish(String topic, String payload, {int qos = 0, bool retain = false}) {
-    final client = _client;
-    if (client == null || client.connectionStatus?.state != MqttConnectionState.connected) return false;
+  bool publish(
+    String topic,
+    String payload, {
+    int qos = 0,
+    bool retain = false,
+  }) {
+    if (_activeProtocol == MqttProtocolVersion.v5) {
+      final client = _client5;
+      if (client == null ||
+          client.connectionStatus?.state !=
+              mqtt5.MqttConnectionState.connected) {
+        return false;
+      }
+      final mqttQos = switch (qos) {
+        1 => mqtt5.MqttQos.atLeastOnce,
+        2 => mqtt5.MqttQos.exactlyOnce,
+        _ => mqtt5.MqttQos.atMostOnce,
+      };
+      final builder = mqtt5.MqttPayloadBuilder()..addString(payload);
+      client.publishMessage(topic, mqttQos, builder.payload!, retain: retain);
+      return true;
+    }
 
+    final client = _client3;
+    if (client == null ||
+        client.connectionStatus?.state != mqtt3.MqttConnectionState.connected) {
+      return false;
+    }
     final mqttQos = switch (qos) {
-      1 => MqttQos.atLeastOnce,
-      2 => MqttQos.exactlyOnce,
-      _ => MqttQos.atMostOnce,
+      1 => mqtt3.MqttQos.atLeastOnce,
+      2 => mqtt3.MqttQos.exactlyOnce,
+      _ => mqtt3.MqttQos.atMostOnce,
     };
-
-    final builder = MqttClientPayloadBuilder();
-    builder.addString(payload);
+    final builder = mqtt3.MqttClientPayloadBuilder()..addString(payload);
     client.publishMessage(topic, mqttQos, builder.payload!, retain: retain);
     return true;
   }
@@ -89,7 +118,12 @@ class MqttService {
     final brokers = _state.read(SettingsKeys.brokers);
     final activeBrokerId = _state.read(AppKeys.activeBrokerId);
 
-    final broker = brokers.isEmpty ? null : brokers.firstWhere((b) => b.id == activeBrokerId, orElse: () => brokers.first);
+    final broker = brokers.isEmpty
+        ? null
+        : brokers.firstWhere(
+            (b) => b.id == activeBrokerId,
+            orElse: () => brokers.first,
+          );
 
     if (broker?.id == _currentBrokerId) return;
     _currentBrokerId = broker?.id;
@@ -131,7 +165,20 @@ class MqttService {
     _state.write(AppKeys.connectionStatus, ConnectionStatus.connecting);
     _state.write(AppKeys.connectionError, null);
 
-    final client = MqttServerClient.withPort(broker.host, broker.effectiveClientId, broker.port);
+    _activeProtocol = broker.protocolVersion;
+    if (broker.protocolVersion == MqttProtocolVersion.v5) {
+      await _connectV5(broker, session);
+    } else {
+      await _connectV311(broker, session);
+    }
+  }
+
+  Future<void> _connectV311(BrokerEntry broker, int session) async {
+    final client = mqtt3_server.MqttServerClient.withPort(
+      broker.host,
+      broker.effectiveClientId,
+      broker.port,
+    );
     client.secure = broker.useSSL;
     client.keepAlivePeriod = 30;
     client.autoReconnect = true;
@@ -145,19 +192,25 @@ class MqttService {
       if (session == _sessionId) _onConnected();
     };
     client.onDisconnected = () {
-      if (session == _sessionId) _onDisconnected();
+      if (session == _sessionId) _onDisconnected311();
+    };
+    client.onAutoReconnect = () {
+      if (session == _sessionId) _onDisconnected311();
     };
     client.onAutoReconnected = () {
       if (session == _sessionId) _onConnected();
     };
 
-    _client = client;
+    _client3 = client;
 
     try {
       await client.connect(broker.username, broker.password);
     } on HandshakeException {
       if (session != _sessionId) return;
-      _state.write(AppKeys.connectionStatus, ConnectionStatus.errorTlsHandshake);
+      _state.write(
+        AppKeys.connectionStatus,
+        ConnectionStatus.errorTlsHandshake,
+      );
       _state.write(AppKeys.connectionError, null);
       return;
     } on SocketException catch (e) {
@@ -181,11 +234,20 @@ class MqttService {
 
     if (session != _sessionId) return;
 
+    if (client.connectionStatus?.state != mqtt3.MqttConnectionState.connected) {
+      _state.write(AppKeys.connectionStatus, ConnectionStatus.error);
+      _state.write(
+        AppKeys.connectionError,
+        client.connectionStatus?.toString(),
+      );
+      return;
+    }
+
     for (final sub in broker.subscriptions) {
       final qos = switch (sub.qos) {
-        1 => MqttQos.atLeastOnce,
-        2 => MqttQos.exactlyOnce,
-        _ => MqttQos.atMostOnce,
+        1 => mqtt3.MqttQos.atLeastOnce,
+        2 => mqtt3.MqttQos.exactlyOnce,
+        _ => mqtt3.MqttQos.atMostOnce,
       };
       client.subscribe(sub.topic, qos);
     }
@@ -193,11 +255,139 @@ class MqttService {
     _updatesSubscription = client.updates?.listen((messages) {
       if (session != _sessionId) return;
       for (final msg in messages) {
-        final publish = msg.payload as MqttPublishMessage;
+        final publish = msg.payload as mqtt3.MqttPublishMessage;
         final bytes = publish.payload.message;
         final retain = publish.header?.retain ?? false;
         final qos = publish.header?.qos.index ?? 0;
-        _onMessage(msg.topic, Uint8List.fromList(bytes), retain: retain, qos: qos);
+        _onMessage(
+          msg.topic,
+          Uint8List.fromList(bytes),
+          retain: retain,
+          qos: qos,
+        );
+      }
+    });
+  }
+
+  Future<void> _connectV5(BrokerEntry broker, int session) async {
+    final client = mqtt5_server.MqttServerClient.withPort(
+      broker.host,
+      broker.effectiveClientId,
+      broker.port,
+    );
+    client.secure = broker.useSSL;
+    client.keepAlivePeriod = 30;
+    client.autoReconnect = true;
+    client.logging(on: false);
+
+    if (broker.useSSL && !broker.validateCertificates) {
+      client.onBadCertificate = (_) => true;
+    }
+
+    client.onConnected = () {
+      if (session == _sessionId) _onConnected();
+    };
+    client.onDisconnected = () {
+      if (session == _sessionId) _onDisconnectedV5(client);
+    };
+    client.onAutoReconnect = () {
+      if (session == _sessionId) {
+        _state.write(AppKeys.connectionStatus, ConnectionStatus.connecting);
+      }
+    };
+    client.onAutoReconnected = () {
+      if (session == _sessionId) _onConnected();
+    };
+
+    _client5 = client;
+
+    try {
+      await client.connect(broker.username, broker.password);
+    } on HandshakeException {
+      if (session != _sessionId) return;
+      _state.write(
+        AppKeys.connectionStatus,
+        ConnectionStatus.errorTlsHandshake,
+      );
+      _state.write(AppKeys.connectionError, null);
+      return;
+    } on SocketException catch (e) {
+      if (session != _sessionId) return;
+      final code = e.osError?.errorCode;
+      final status = switch (code) {
+        1 => ConnectionStatus.errorNotPermitted,
+        8 => ConnectionStatus.errorHostNotFound,
+        61 || 111 => ConnectionStatus.errorRefused,
+        _ => ConnectionStatus.error,
+      };
+      _state.write(AppKeys.connectionStatus, status);
+      _state.write(AppKeys.connectionError, null);
+      return;
+    } catch (e) {
+      if (session != _sessionId) return;
+      _state.write(AppKeys.connectionStatus, ConnectionStatus.error);
+      _state.write(AppKeys.connectionError, e.toString());
+      return;
+    }
+
+    if (session != _sessionId) return;
+
+    final connectionStatus = client.connectionStatus;
+    if (connectionStatus?.state != mqtt5.MqttConnectionState.connected) {
+      final notice = _connectNotice(connectionStatus);
+      _state.write(AppKeys.connectionStatus, ConnectionStatus.error);
+      _state.write(
+        AppKeys.connectionError,
+        notice?.message ?? connectionStatus?.toString(),
+      );
+      return;
+    }
+
+    final connackNotice = _connectNotice(connectionStatus);
+    if (connackNotice != null &&
+        (connackNotice.reasonCodes.any((code) => code != 0) ||
+            _hasReasonString(connackNotice))) {
+      _surfaceReason(connackNotice);
+    }
+
+    // mqtt5_client exposes decoded protocol events through its event bus. The
+    // bus is created during connect, so register immediately after CONNACK for
+    // subsequent PUBACK/PUBREC/SUBACK/UNSUBACK/DISCONNECT packets.
+    // ignore: invalid_use_of_protected_member
+    _protocolSubscription = client.clientEventBus
+        ?.on<mqtt5.MqttMessageAvailable>()
+        .listen((event) {
+          if (session != _sessionId || event.message == null) return;
+          final notice = MqttReasonNotice.fromMqtt5Message(event.message!);
+          if (notice != null &&
+              (notice.reasonCodes.any((code) => code != 0) ||
+                  _hasReasonString(notice))) {
+            _surfaceReason(notice);
+          }
+        });
+
+    for (final sub in broker.subscriptions) {
+      final qos = switch (sub.qos) {
+        1 => mqtt5.MqttQos.atLeastOnce,
+        2 => mqtt5.MqttQos.exactlyOnce,
+        _ => mqtt5.MqttQos.atMostOnce,
+      };
+      client.subscribe(sub.topic, qos);
+    }
+
+    _updatesSubscription = client.updates?.listen((messages) {
+      if (session != _sessionId) return;
+      for (final msg in messages) {
+        final publish = msg.payload as mqtt5.MqttPublishMessage;
+        final bytes = publish.payload.message;
+        final retain = publish.header?.retain ?? false;
+        final qos = publish.header?.qos.index ?? 0;
+        _onMessage(
+          msg.topic ?? '',
+          Uint8List.fromList(bytes ?? const []),
+          retain: retain,
+          qos: qos,
+        );
       }
     });
   }
@@ -215,10 +405,16 @@ class MqttService {
   void _cleanup() {
     _updatesSubscription?.cancel();
     _updatesSubscription = null;
+    _protocolSubscription?.cancel();
+    _protocolSubscription = null;
     try {
-      _client?.disconnect();
+      _client3?.disconnect();
     } catch (_) {}
-    _client = null;
+    try {
+      _client5?.disconnect();
+    } catch (_) {}
+    _client3 = null;
+    _client5 = null;
   }
 
   /// Callback called when the client successfully connects.
@@ -228,15 +424,60 @@ class MqttService {
   }
 
   /// Callback called when the client disconnects.
-  void _onDisconnected() {
+  void _onDisconnected311() {
     _state.write(AppKeys.connectionStatus, ConnectionStatus.disconnected);
-    _state.write(AppKeys.connectionError, null);
+    _state.write(AppKeys.connectionError, mqtt311BrokerDisconnectMessage);
+  }
+
+  void _onDisconnectedV5(mqtt5_server.MqttServerClient client) {
+    _state.write(AppKeys.connectionStatus, ConnectionStatus.disconnected);
+    MqttReasonNotice? notice;
+    try {
+      notice = MqttReasonNotice.fromMqtt5Message(
+        client.connectionStatus!.disconnectMessage,
+      );
+    } catch (_) {
+      // A raw network loss has no MQTT DISCONNECT packet.
+    }
+    _state.write(
+      AppKeys.connectionError,
+      notice?.message ?? brokerDisconnectMessage(MqttProtocolVersion.v5),
+    );
+  }
+
+  MqttReasonNotice? _connectNotice(mqtt5.MqttConnectionStatus? status) {
+    if (status == null) return null;
+    try {
+      return MqttReasonNotice.fromMqtt5Message(status.connectAckMessage);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  bool _hasReasonString(MqttReasonNotice notice) =>
+      notice.reasonString?.trim().isNotEmpty ?? false;
+
+  void _surfaceReason(MqttReasonNotice notice) {
+    _state.write(AppKeys.connectionError, notice.message);
   }
 
   /// Handles an incoming message on the given topic.
-  void _onMessage(String topic, Uint8List payload, {bool retain = false, int qos = 0}) {
+  void _onMessage(
+    String topic,
+    Uint8List payload, {
+    bool retain = false,
+    int qos = 0,
+  }) {
     final data = utf8.decode(payload, allowMalformed: true);
-    _messages.add(MQTTMessage(topic: topic, payload: data, receivedAt: DateTime.now(), retain: retain, qos: qos));
+    _messages.add(
+      MQTTMessage(
+        topic: topic,
+        payload: data,
+        receivedAt: DateTime.now(),
+        retain: retain,
+        qos: qos,
+      ),
+    );
     _rateCounter++;
     _messageCount++;
   }
@@ -249,7 +490,10 @@ class MqttService {
     _rateCounter = 0;
 
     _rateTimer = Timer.periodic(Duration(milliseconds: intervalMs), (_) {
-      _state.write(AppKeys.messageRate, (_rateCounter * 1000 / intervalMs).round());
+      _state.write(
+        AppKeys.messageRate,
+        (_rateCounter * 1000 / intervalMs).round(),
+      );
       _state.write(AppKeys.messageCount, _messageCount);
       _rateCounter = 0;
     });
