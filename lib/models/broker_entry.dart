@@ -1,7 +1,8 @@
 import 'dart:math';
 
-import 'subscription_entry.dart';
+import 'client_certificate_config.dart';
 import 'mqtt_protocol_version.dart';
+import 'subscription_entry.dart';
 
 class BrokerEntry {
   const BrokerEntry({
@@ -10,6 +11,7 @@ class BrokerEntry {
     required this.host,
     this.port = 1883,
     this.protocolVersion = MqttProtocolVersion.v311,
+    this.clientCertificates = const ClientCertificateConfig(),
     this.useSSL = false,
     this.validateCertificates = true,
     this.username,
@@ -25,6 +27,7 @@ class BrokerEntry {
   final String host;
   final int port;
   final MqttProtocolVersion protocolVersion;
+  final ClientCertificateConfig clientCertificates;
   final bool useSSL;
   final bool validateCertificates;
   final String? username;
@@ -54,6 +57,7 @@ class BrokerEntry {
     String? host,
     int? port,
     MqttProtocolVersion? protocolVersion,
+    ClientCertificateConfig? clientCertificates,
     bool? useSSL,
     bool? validateCertificates,
     String? username,
@@ -69,6 +73,7 @@ class BrokerEntry {
       host: host ?? this.host,
       port: port ?? this.port,
       protocolVersion: protocolVersion ?? this.protocolVersion,
+      clientCertificates: clientCertificates ?? this.clientCertificates,
       useSSL: useSSL ?? this.useSSL,
       validateCertificates: validateCertificates ?? this.validateCertificates,
       username: username ?? this.username,
@@ -89,6 +94,11 @@ class BrokerEntry {
       (value) => value.name == json['protocolVersion'],
       orElse: () => MqttProtocolVersion.v311,
     ),
+    clientCertificates: json['clientCertificates'] is Map<String, dynamic>
+        ? ClientCertificateConfig.fromJson(
+            json['clientCertificates'] as Map<String, dynamic>,
+          )
+        : const ClientCertificateConfig(),
     useSSL: json['useSSL'] as bool? ?? false,
     validateCertificates: json['validateCertificates'] as bool? ?? true,
     username: json['username'] as String?,
@@ -107,6 +117,8 @@ class BrokerEntry {
     'host': host,
     'port': port,
     'protocolVersion': protocolVersion.name,
+    if (!clientCertificates.isEmpty)
+      'clientCertificates': clientCertificates.toJson(),
     'useSSL': useSSL,
     'validateCertificates': validateCertificates,
     if (username != null) 'username': username,

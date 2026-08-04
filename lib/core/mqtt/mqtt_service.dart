@@ -14,6 +14,7 @@ import '../../models/startup_connection.dart';
 import '../state/app_state.dart';
 import '../state/keys/app_keys.dart';
 import '../state/keys/settings_keys.dart';
+import 'client_certificate_service.dart';
 import 'connection_status.dart';
 import 'mqtt_message.dart';
 import 'mqtt_reason.dart';
@@ -21,10 +22,12 @@ import 'mqtt_reason.dart';
 /// Service responsible for managing the MQTT connection and message flow.
 class MqttService {
   // Constructor takes the app state manager to read settings and update connection status.
-  MqttService(this._state);
+  MqttService(this._state, {ClientCertificateService? certificateService})
+    : _certificateService = certificateService ?? ClientCertificateService();
 
   // Reference to the app state manager for reading settings and updating connection status.
   final AppStateManager _state;
+  final ClientCertificateService _certificateService;
 
   mqtt3_server.MqttServerClient? _client3;
   mqtt5_server.MqttServerClient? _client5;
@@ -179,10 +182,12 @@ class MqttService {
       broker.effectiveClientId,
       broker.port,
     );
-    client.secure = broker.useSSL;
+    client.secure = broker.useSSL || !broker.clientCertificates.isEmpty;
     client.keepAlivePeriod = 30;
     client.autoReconnect = true;
     client.logging(on: false);
+
+    if (!await _configureTlsContext(client, broker, session)) return;
 
     if (broker.useSSL && !broker.validateCertificates) {
       client.onBadCertificate = (_) => true;
@@ -275,10 +280,12 @@ class MqttService {
       broker.effectiveClientId,
       broker.port,
     );
-    client.secure = broker.useSSL;
+    client.secure = broker.useSSL || !broker.clientCertificates.isEmpty;
     client.keepAlivePeriod = 30;
     client.autoReconnect = true;
     client.logging(on: false);
+
+    if (!await _configureTlsContext(client, broker, session)) return;
 
     if (broker.useSSL && !broker.validateCertificates) {
       client.onBadCertificate = (_) => true;
@@ -459,6 +466,29 @@ class MqttService {
 
   void _surfaceReason(MqttReasonNotice notice) {
     _state.write(AppKeys.connectionError, notice.message);
+  }
+
+  Future<bool> _configureTlsContext(
+    dynamic client,
+    BrokerEntry broker,
+    int session,
+  ) async {
+    final certificates = broker.clientCertificates;
+    if (certificates.isEmpty) return true;
+    try {
+      client.securityContext = await _certificateService.buildSecurityContext(
+        certificates,
+      );
+      return true;
+    } catch (error) {
+      if (session != _sessionId) return false;
+      _state.write(
+        AppKeys.connectionStatus,
+        ConnectionStatus.errorTlsHandshake,
+      );
+      _state.write(AppKeys.connectionError, error.toString());
+      return false;
+    }
   }
 
   /// Handles an incoming message on the given topic.

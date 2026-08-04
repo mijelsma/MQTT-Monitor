@@ -1,8 +1,14 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path/path.dart' as path;
 
+import '../../../core/mqtt/client_certificate_service.dart';
 import '../../../generated/l10n.dart';
 import '../../../models/broker_entry.dart';
+import '../../../models/client_certificate_config.dart';
 import '../../../models/mqtt_protocol_version.dart';
 import '../../../models/subscription_entry.dart';
 import '../../../shared/widgets/qos_tag.dart';
@@ -63,6 +69,11 @@ class _BrokerDialogState extends State<BrokerDialog> {
   late final TextEditingController _clientId;
   late bool _useSSL;
   late MqttProtocolVersion _protocolVersion;
+  late ClientCertificateConfig _clientCertificates;
+  late final String _brokerId;
+  final _certificateService = ClientCertificateService();
+  final _certificateStorage = AppPrivateCertificateStorage.standard();
+  String? _certificateError;
   late bool _validateCertificates;
   late bool _randomClientIdSuffix;
   late Color _color;
@@ -75,6 +86,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
   void initState() {
     super.initState();
     final b = widget.broker;
+    _brokerId = b?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
     _name = TextEditingController(text: b?.name ?? '');
     _host = TextEditingController(text: b?.host ?? '');
     _port = TextEditingController(text: b?.port.toString() ?? '1883');
@@ -83,6 +95,8 @@ class _BrokerDialogState extends State<BrokerDialog> {
     _clientId = TextEditingController(text: b?.clientId ?? '');
     _useSSL = b?.useSSL ?? false;
     _protocolVersion = b?.protocolVersion ?? MqttProtocolVersion.v311;
+    _clientCertificates =
+        b?.clientCertificates ?? const ClientCertificateConfig();
     _validateCertificates = b?.validateCertificates ?? true;
     _randomClientIdSuffix = b?.randomClientIdSuffix ?? true;
     _color = AppColors.brokerColorOptions[b?.colorIndex ?? 0];
@@ -100,18 +114,31 @@ class _BrokerDialogState extends State<BrokerDialog> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!_clientCertificates.isEmpty && !_useSSL) {
+      setState(
+        () => _certificateError = 'mTLS requires an SSL/TLS connection.',
+      );
+      return;
+    }
+    try {
+      await _certificateService.validateConfiguration(_clientCertificates);
+    } on CertificateValidationException catch (error) {
+      if (!mounted) return;
+      setState(() => _certificateError = error.message);
+      return;
+    }
+    if (!mounted) return;
     Navigator.pop(
       context,
       BrokerEntry(
-        id:
-            widget.broker?.id ??
-            DateTime.now().millisecondsSinceEpoch.toString(),
+        id: _brokerId,
         name: _name.text.trim(),
         host: _host.text.trim(),
         port: int.tryParse(_port.text.trim()) ?? 1883,
         protocolVersion: _protocolVersion,
+        clientCertificates: _clientCertificates,
         useSSL: _useSSL,
         validateCertificates: _validateCertificates,
         username: _username.text.trim().isEmpty ? null : _username.text.trim(),
@@ -122,6 +149,76 @@ class _BrokerDialogState extends State<BrokerDialog> {
         subscriptions: _subscriptions,
       ),
     );
+  }
+
+  Future<void> _pickCertificate(ClientCertificateKind kind) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['pem', 'crt', 'cer', 'key'],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+
+    final selected = result.files.single;
+    try {
+      final Uint8List bytes;
+      if (selected.bytes != null) {
+        bytes = selected.bytes!;
+      } else if (selected.path != null) {
+        bytes = await File(selected.path!).readAsBytes();
+      } else {
+        throw const CertificateValidationException(
+          'The selected file could not be read.',
+        );
+      }
+      _certificateService.validateBytes(kind, bytes);
+      final storedPath = await _certificateStorage.store(
+        _brokerId,
+        kind,
+        bytes,
+      );
+      if (!mounted) return;
+      setState(() {
+        _useSSL = true;
+        _certificateError = null;
+        _clientCertificates = switch (kind) {
+          ClientCertificateKind.rootCa => _clientCertificates.copyWith(
+            rootCaPath: storedPath,
+          ),
+          ClientCertificateKind.privateKey => _clientCertificates.copyWith(
+            clientPrivateKeyPath: storedPath,
+          ),
+          ClientCertificateKind.clientCertificate =>
+            _clientCertificates.copyWith(clientCertificatePath: storedPath),
+        };
+      });
+    } on CertificateValidationException catch (error) {
+      if (mounted) setState(() => _certificateError = error.message);
+    } catch (error) {
+      if (mounted) {
+        setState(
+          () =>
+              _certificateError = 'Could not import the selected file: $error',
+        );
+      }
+    }
+  }
+
+  void _clearCertificate(ClientCertificateKind kind) {
+    setState(() {
+      _certificateError = null;
+      _clientCertificates = switch (kind) {
+        ClientCertificateKind.rootCa => _clientCertificates.copyWith(
+          clearRootCa: true,
+        ),
+        ClientCertificateKind.privateKey => _clientCertificates.copyWith(
+          clearClientPrivateKey: true,
+        ),
+        ClientCertificateKind.clientCertificate => _clientCertificates.copyWith(
+          clearClientCertificate: true,
+        ),
+      };
+    });
   }
 
   Future<void> _addSubscription() async {
@@ -292,9 +389,50 @@ class _BrokerDialogState extends State<BrokerDialog> {
                 setState(() => _obscurePassword = !_obscurePassword),
           ),
         ),
+        const VSpacer(18),
+        _CertificatePickerRow(
+          label: 'Root CA certificate',
+          fileName: _fileName(_clientCertificates.rootCaPath),
+          onSelect: () => _pickCertificate(ClientCertificateKind.rootCa),
+          onClear: _clientCertificates.rootCaPath == null
+              ? null
+              : () => _clearCertificate(ClientCertificateKind.rootCa),
+        ),
+        _CertificatePickerRow(
+          label: 'Client private key',
+          fileName: _fileName(_clientCertificates.clientPrivateKeyPath),
+          onSelect: () => _pickCertificate(ClientCertificateKind.privateKey),
+          onClear: _clientCertificates.clientPrivateKeyPath == null
+              ? null
+              : () => _clearCertificate(ClientCertificateKind.privateKey),
+        ),
+        _CertificatePickerRow(
+          label: 'Client certificate',
+          fileName: _fileName(_clientCertificates.clientCertificatePath),
+          onSelect: () =>
+              _pickCertificate(ClientCertificateKind.clientCertificate),
+          onClear: _clientCertificates.clientCertificatePath == null
+              ? null
+              : () =>
+                    _clearCertificate(ClientCertificateKind.clientCertificate),
+        ),
+        if (_certificateError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              _certificateError!,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
+          ),
       ],
     );
   }
+
+  String _fileName(String? filePath) =>
+      filePath == null ? 'Not configured' : path.basename(filePath);
 
   Widget _buildSubscriptionsSection(Color accent) {
     final s = S.of(context);
@@ -370,6 +508,71 @@ class _BrokerDialogState extends State<BrokerDialog> {
             const VSpacer(8),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CertificatePickerRow extends StatelessWidget {
+  const _CertificatePickerRow({
+    required this.label,
+    required this.fileName,
+    required this.onSelect,
+    this.onClear,
+  });
+
+  final String label;
+  final String fileName;
+  final VoidCallback onSelect;
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: tokens.inputFill,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: tokens.border, width: 0.5),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.verified_user_outlined, size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  fileName,
+                  style: TextStyle(fontSize: 11, color: tokens.textSecondary),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: onSelect,
+            child: Text(onClear == null ? 'Choose' : 'Replace'),
+          ),
+          if (onClear != null)
+            IconButton(
+              onPressed: onClear,
+              tooltip: 'Clear',
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.clear_rounded, size: 16),
+            ),
+        ],
       ),
     );
   }
