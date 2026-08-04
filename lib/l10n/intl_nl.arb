@@ -108,6 +108,7 @@
     "uiPanelThemeSystem": "Systeem",
     "uiPanelThemeLight": "Licht",
     "uiPanelThemeDark": "Donker",
+    "uiPanelAccentColor": "Accentkleur",
     "uiPanelShowStatusBar": "Statusbalk tonen",
     "uiPanelShowStatusBarSubtitle": "Toont de statusbalk onder het scherm",
     "uiPanelRateInterval": "Update-interval",

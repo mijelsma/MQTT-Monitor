@@ -193,6 +193,9 @@ class SettingsViewModel extends ChangeNotifier {
   ThemeMode get themeMode => _state.read(SettingsKeys.themeMode);
   void setThemeMode(ThemeMode m) => _state.write(SettingsKeys.themeMode, m);
 
+  Color get accentColor => Color(_state.read(SettingsKeys.accentColor));
+  void setAccentColor(Color value) => _state.write(SettingsKeys.accentColor, value.toARGB32());
+
   //  UI settings
 
   bool get showStatusBar => _state.read(SettingsKeys.showStatusBar);

@@ -16,6 +16,7 @@ abstract final class SettingsKeys {
 
   // UI panel
   static final themeMode = StateKey.forEnum('settings.themeMode', ThemeMode.values, defaultValue: ThemeMode.system);
+  static final accentColor = StateKey.integer('settings.accentColor', defaultValue: 0xFF6366F1);
   static final showStatusBar = StateKey.boolean('settings.showStatusBar', defaultValue: true);
   static final rateIntervalMs = StateKey.integer('settings.rateIntervalMs', defaultValue: 1000);
   static final showActivity = StateKey.boolean('settings.showActivity', defaultValue: true);
@@ -53,6 +54,7 @@ abstract final class SettingsKeys {
 
   static final List<StateKey> all = [
     themeMode,
+    accentColor,
     showStatusBar,
     showActivity,
     pulseRatePps,

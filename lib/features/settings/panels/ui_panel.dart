@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../generated/l10n.dart';
 import '../../../models/startup_connection.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
+import '../../../shared/widgets/color_picker_field.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
 import '../../../shared/widgets/ui_segment_row.dart';
@@ -38,6 +39,10 @@ class UiPanel extends StatelessWidget {
                 UiSegmentOption(value: ThemeMode.light, label: s.uiPanelThemeLight, icon: Icons.light_mode_rounded),
                 UiSegmentOption(value: ThemeMode.dark, label: s.uiPanelThemeDark, icon: Icons.dark_mode_rounded),
               ],
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: ColorPickerField(label: s.uiPanelAccentColor, value: vm.accentColor, onChanged: (c) => vm.setAccentColor(c)),
             ),
             UiSwitchRow(label: s.uiPanelShowStatusBar, subtitle: s.uiPanelShowStatusBarSubtitle, value: vm.showStatusBar, onChanged: (v) => vm.setShowStatusBar(v)),
             if (vm.showStatusBar)
