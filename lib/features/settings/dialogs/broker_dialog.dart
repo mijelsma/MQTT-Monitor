@@ -152,15 +152,15 @@ class _BrokerDialogState extends State<BrokerDialog> {
   }
 
   Future<void> _pickCertificate(ClientCertificateKind kind) async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['pem', 'crt', 'cer', 'key'],
-      withData: true,
-    );
-    if (result == null || result.files.isEmpty) return;
-
-    final selected = result.files.single;
     try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['pem', 'crt', 'cer', 'key'],
+        withData: true,
+      );
+      if (result == null || result.files.isEmpty) return;
+
+      final selected = result.files.single;
       final Uint8List bytes;
       if (selected.bytes != null) {
         bytes = selected.bytes!;
@@ -192,6 +192,13 @@ class _BrokerDialogState extends State<BrokerDialog> {
             _clientCertificates.copyWith(clientCertificatePath: storedPath),
         };
       });
+    } on PlatformException catch (error) {
+      if (mounted) {
+        setState(
+          () => _certificateError =
+              'Could not open the file picker: ${error.message ?? error.code}',
+        );
+      }
     } on CertificateValidationException catch (error) {
       if (mounted) setState(() => _certificateError = error.message);
     } catch (error) {
