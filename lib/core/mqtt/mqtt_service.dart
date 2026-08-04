@@ -125,15 +125,18 @@ class MqttService {
     if (_activeProtocol == MqttProtocolVersion.v5) {
       final client = _client5;
       if (client == null ||
-          client.connectionStatus?.state != mqtt5.MqttConnectionState.connected)
+          client.connectionStatus?.state !=
+              mqtt5.MqttConnectionState.connected) {
         return false;
+      }
       client.subscribe(topic, _mqtt5Qos(qos));
       return true;
     }
     final client = _client3;
     if (client == null ||
-        client.connectionStatus?.state != mqtt3.MqttConnectionState.connected)
+        client.connectionStatus?.state != mqtt3.MqttConnectionState.connected) {
       return false;
+    }
     client.subscribe(topic, _mqtt3Qos(qos));
     return true;
   }
@@ -142,15 +145,18 @@ class MqttService {
     if (_activeProtocol == MqttProtocolVersion.v5) {
       final client = _client5;
       if (client == null ||
-          client.connectionStatus?.state != mqtt5.MqttConnectionState.connected)
+          client.connectionStatus?.state !=
+              mqtt5.MqttConnectionState.connected) {
         return false;
+      }
       client.unsubscribeStringTopic(topic);
       return true;
     }
     final client = _client3;
     if (client == null ||
-        client.connectionStatus?.state != mqtt3.MqttConnectionState.connected)
+        client.connectionStatus?.state != mqtt3.MqttConnectionState.connected) {
       return false;
+    }
     client.unsubscribe(topic);
     return true;
   }
@@ -191,8 +197,9 @@ class MqttService {
 
     final brokerSignature = broker == null ? null : jsonEncode(broker.toJson());
     if (broker?.id == _currentBrokerId &&
-        brokerSignature == _currentBrokerSignature)
+        brokerSignature == _currentBrokerSignature) {
       return;
+    }
     _currentBrokerId = broker?.id;
     _currentBrokerSignature = brokerSignature;
 

@@ -75,8 +75,9 @@ class _TopicTreeRowState extends State<TopicTreeRow>
   }
 
   void _onValueChanged() {
-    if (mounted)
+    if (mounted) {
       setState(() => _currentValue = widget.node.valueNotifier.value);
+    }
   }
 
   void _onAnimTick() {
