@@ -28,11 +28,16 @@ class AboutPanel extends StatelessWidget {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: AppColors.aboutGradient),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [BoxShadow(color: AppColors.aboutGradient.first.withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 6))],
             ),
-            child: const Icon(Icons.broadcast_on_home_rounded, size: 38, color: Colors.white),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.asset(
+                'macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_512.png',
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
           const VSpacer(16),
           Text('MQTT Monitor', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.5)),
