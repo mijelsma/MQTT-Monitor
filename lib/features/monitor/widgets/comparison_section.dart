@@ -12,7 +12,11 @@ import '../../../theme/app_tokens/app_tokens.dart';
 /// Shows a side-by-side comparison of two historical messages,
 /// with optional unified diff view.
 class ComparisonSection extends StatefulWidget {
-  const ComparisonSection({super.key, required this.selected, required this.previous});
+  const ComparisonSection({
+    super.key,
+    required this.selected,
+    required this.previous,
+  });
 
   final TopicNodeValue selected;
   final TopicNodeValue previous;
@@ -46,21 +50,38 @@ class _ComparisonSectionState extends State<ComparisonSection> {
                     AnimatedRotation(
                       turns: _expanded ? 0 : -0.25,
                       duration: const Duration(milliseconds: 150),
-                      child: Icon(Icons.expand_more_rounded, size: 16, color: tokens.textTertiary),
+                      child: Icon(
+                        Icons.expand_more_rounded,
+                        size: 16,
+                        color: tokens.textTertiary,
+                      ),
                     ),
                     const SizedBox(width: 4),
-                    Icon(Icons.compare_arrows_rounded, size: 13, color: tokens.textTertiary),
+                    Icon(
+                      Icons.compare_arrows_rounded,
+                      size: 13,
+                      color: tokens.textTertiary,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       'COMPARE WITH PREVIOUS',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.8, color: tokens.textTertiary),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.8,
+                        color: tokens.textTertiary,
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
             const Spacer(),
-            if (_expanded) _DiffModeToggle(diffMode: _diffMode, onChanged: (v) => setState(() => _diffMode = v)),
+            if (_expanded)
+              _DiffModeToggle(
+                diffMode: _diffMode,
+                onChanged: (v) => setState(() => _diffMode = v),
+              ),
           ],
         ),
         if (_expanded) ...[
@@ -72,11 +93,21 @@ class _ComparisonSectionState extends State<ComparisonSection> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: _ComparePanel(label: 'Previous (#${widget.previous.seq})', timestamp: widget.previous.receivedAt, value: widget.previous, color: AppColors.info500),
+                  child: _ComparePanel(
+                    label: 'Previous (#${widget.previous.seq})',
+                    timestamp: widget.previous.receivedAt,
+                    value: widget.previous,
+                    color: AppColors.info500,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _ComparePanel(label: 'Selected (#${widget.selected.seq})', timestamp: widget.selected.receivedAt, value: widget.selected, color: AppColors.warning500),
+                  child: _ComparePanel(
+                    label: 'Selected (#${widget.selected.seq})',
+                    timestamp: widget.selected.receivedAt,
+                    value: widget.selected,
+                    color: AppColors.warning500,
+                  ),
                 ),
               ],
             ),
@@ -106,8 +137,16 @@ class _DiffModeToggle extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _ToggleOption(label: 'Side by side', selected: !diffMode, onTap: () => onChanged(false)),
-          _ToggleOption(label: 'Diff', selected: diffMode, onTap: () => onChanged(true)),
+          _ToggleOption(
+            label: 'Side by side',
+            selected: !diffMode,
+            onTap: () => onChanged(false),
+          ),
+          _ToggleOption(
+            label: 'Diff',
+            selected: diffMode,
+            onTap: () => onChanged(true),
+          ),
         ],
       ),
     );
@@ -115,7 +154,11 @@ class _DiffModeToggle extends StatelessWidget {
 }
 
 class _ToggleOption extends StatefulWidget {
-  const _ToggleOption({required this.label, required this.selected, required this.onTap});
+  const _ToggleOption({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final String label;
   final bool selected;
@@ -150,7 +193,11 @@ class _ToggleOptionState extends State<_ToggleOption> {
           ),
           child: Text(
             widget.label,
-            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: widget.selected ? tokens.primary : tokens.textTertiary),
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              color: widget.selected ? tokens.primary : tokens.textTertiary,
+            ),
           ),
         ),
       ),
@@ -180,7 +227,11 @@ class _DiffView extends StatelessWidget {
     final diffLines = _computeDiff(oldLines, newLines);
     final rows = _buildRows(diffLines);
 
-    const monoStyle = TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 11, height: 1.5);
+    const monoStyle = TextStyle(
+      fontFamily: 'SF Mono, Menlo, monospace',
+      fontSize: 11,
+      height: 1.5,
+    );
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,11 +243,27 @@ class _DiffView extends StatelessWidget {
             decoration: BoxDecoration(
               color: tokens.inputFill,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.warning500.withValues(alpha: 0.2), width: 0.5),
+              border: Border.all(
+                color: AppColors.warning500.withValues(alpha: 0.2),
+                width: 0.5,
+              ),
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_diffColumnHeader(tokens, 'Previous (#${previous.seq})', previous.receivedAt, AppColors.info500), const SizedBox(height: 4), for (final row in rows) _diffCell(row.left, monoStyle, tokens)]),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _diffColumnHeader(
+                    tokens,
+                    'Previous (#${previous.seq})',
+                    previous.receivedAt,
+                    AppColors.info500,
+                  ),
+                  const SizedBox(height: 4),
+                  for (final row in rows)
+                    _diffCell(row.left, monoStyle, tokens),
+                ],
+              ),
             ),
           ),
         ),
@@ -208,11 +275,27 @@ class _DiffView extends StatelessWidget {
             decoration: BoxDecoration(
               color: tokens.inputFill,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.warning500.withValues(alpha: 0.2), width: 0.5),
+              border: Border.all(
+                color: AppColors.warning500.withValues(alpha: 0.2),
+                width: 0.5,
+              ),
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_diffColumnHeader(tokens, 'Selected (#${selected.seq})', selected.receivedAt, AppColors.warning500), const SizedBox(height: 4), for (final row in rows) _diffCell(row.right, monoStyle, tokens)]),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _diffColumnHeader(
+                    tokens,
+                    'Selected (#${selected.seq})',
+                    selected.receivedAt,
+                    AppColors.warning500,
+                  ),
+                  const SizedBox(height: 4),
+                  for (final row in rows)
+                    _diffCell(row.right, monoStyle, tokens),
+                ],
+              ),
             ),
           ),
         ),
@@ -220,7 +303,12 @@ class _DiffView extends StatelessWidget {
     );
   }
 
-  Widget _diffColumnHeader(AppTokens tokens, String label, DateTime timestamp, Color color) {
+  Widget _diffColumnHeader(
+    AppTokens tokens,
+    String label,
+    DateTime timestamp,
+    Color color,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -235,7 +323,12 @@ class _DiffView extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color, letterSpacing: 0.3),
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: color,
+                letterSpacing: 0.3,
+              ),
             ),
           ],
         ),
@@ -244,9 +337,16 @@ class _DiffView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(width: 12),
-            Icon(Icons.access_time_rounded, size: 9, color: tokens.textTertiary),
+            Icon(
+              Icons.access_time_rounded,
+              size: 9,
+              color: tokens.textTertiary,
+            ),
             const SizedBox(width: 3),
-            Text(formatTimestamp(timestamp), style: TextStyle(fontSize: 9, color: tokens.textTertiary)),
+            Text(
+              formatTimestamp(timestamp),
+              style: TextStyle(fontSize: 9, color: tokens.textTertiary),
+            ),
           ],
         ),
       ],
@@ -255,7 +355,10 @@ class _DiffView extends StatelessWidget {
 
   Widget _diffCell(_DiffLine? line, TextStyle base, AppTokens tokens) {
     if (line == null) {
-      return SizedBox(height: base.fontSize! * (base.height ?? 1.5), child: const SizedBox.shrink());
+      return SizedBox(
+        height: base.fontSize! * (base.height ?? 1.5),
+        child: const SizedBox.shrink(),
+      );
     }
 
     final isChange = line.type != _DiffLineType.same;
@@ -275,7 +378,10 @@ class _DiffView extends StatelessWidget {
       color: bgColor,
       child: Text(
         line.text,
-        style: base.copyWith(color: color, fontWeight: isChange ? FontWeight.w600 : FontWeight.normal),
+        style: base.copyWith(
+          color: color,
+          fontWeight: isChange ? FontWeight.w600 : FontWeight.normal,
+        ),
       ),
     );
   }
@@ -299,9 +405,16 @@ class _DiffView extends StatelessWidget {
           added.add(diff[i]);
           i++;
         }
-        final count = removed.length > added.length ? removed.length : added.length;
+        final count = removed.length > added.length
+            ? removed.length
+            : added.length;
         for (var j = 0; j < count; j++) {
-          rows.add(_DiffRow(left: j < removed.length ? removed[j] : null, right: j < added.length ? added[j] : null));
+          rows.add(
+            _DiffRow(
+              left: j < removed.length ? removed[j] : null,
+              right: j < added.length ? added[j] : null,
+            ),
+          );
         }
       } else {
         rows.add(_DiffRow(left: null, right: line));
@@ -324,7 +437,12 @@ class _DiffView extends StatelessWidget {
 // ── Compare panel ───────────────────────────────────────────────────────
 
 class _ComparePanel extends StatelessWidget {
-  const _ComparePanel({required this.label, required this.timestamp, required this.value, required this.color});
+  const _ComparePanel({
+    required this.label,
+    required this.timestamp,
+    required this.value,
+    required this.color,
+  });
 
   final String label;
   final DateTime timestamp;
@@ -357,20 +475,32 @@ class _ComparePanel extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color, letterSpacing: 0.3),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                    letterSpacing: 0.3,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              CopyButton(text: value.payload, size: 12),
+              CopyButton.payload(text: value.payload, size: 12),
             ],
           ),
           const SizedBox(height: 3),
           Row(
             children: [
               const SizedBox(width: 12),
-              Icon(Icons.access_time_rounded, size: 9, color: tokens.textTertiary),
+              Icon(
+                Icons.access_time_rounded,
+                size: 9,
+                color: tokens.textTertiary,
+              ),
               const SizedBox(width: 3),
-              Text(formatTimestamp(timestamp), style: TextStyle(fontSize: 9, color: tokens.textTertiary)),
+              Text(
+                formatTimestamp(timestamp),
+                style: TextStyle(fontSize: 9, color: tokens.textTertiary),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -380,7 +510,12 @@ class _ComparePanel extends StatelessWidget {
                 ? JsonHighlighter(source: value.payload)
                 : SelectableText(
                     value.payload,
-                    style: TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 11, color: tokens.textPrimary, height: 1.5),
+                    style: TextStyle(
+                      fontFamily: 'SF Mono, Menlo, monospace',
+                      fontSize: 11,
+                      color: tokens.textPrimary,
+                      height: 1.5,
+                    ),
                   ),
           ),
         ],

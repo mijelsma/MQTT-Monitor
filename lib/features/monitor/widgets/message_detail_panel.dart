@@ -726,7 +726,7 @@ class _PayloadCardState extends State<_PayloadCard> {
                 Positioned(
                   top: 0,
                   right: 0,
-                  child: CopyButton(text: widget.payload, size: 14),
+                  child: CopyButton.payload(text: widget.payload, size: 14),
                 ),
               ],
             ),
