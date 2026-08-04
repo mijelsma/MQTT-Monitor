@@ -108,6 +108,7 @@
     "uiPanelThemeSystem": "System",
     "uiPanelThemeLight": "Light",
     "uiPanelThemeDark": "Dark",
+    "uiPanelAccentColor": "Accent color",
     "uiPanelShowStatusBar": "Show status bar",
     "uiPanelShowStatusBarSubtitle": "Shows the bottom status bar",
     "uiPanelRateInterval": "Rate update interval",

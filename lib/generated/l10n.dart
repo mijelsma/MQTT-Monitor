@@ -979,6 +979,16 @@ class S {
     return Intl.message('Dark', name: 'uiPanelThemeDark', desc: '', args: []);
   }
 
+  /// `Accent color`
+  String get uiPanelAccentColor {
+    return Intl.message(
+      'Accent color',
+      name: 'uiPanelAccentColor',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Show status bar`
   String get uiPanelShowStatusBar {
     return Intl.message(

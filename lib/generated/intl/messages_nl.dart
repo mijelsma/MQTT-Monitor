@@ -498,6 +498,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Laatste status",
     ),
     "uiPanelThemeDark": MessageLookupByLibrary.simpleMessage("Donker"),
+    "uiPanelAccentColor": MessageLookupByLibrary.simpleMessage("Accentkleur"),
     "uiPanelThemeLight": MessageLookupByLibrary.simpleMessage("Licht"),
     "uiPanelThemeMode": MessageLookupByLibrary.simpleMessage("Thema"),
     "uiPanelThemeSystem": MessageLookupByLibrary.simpleMessage("Systeem"),
