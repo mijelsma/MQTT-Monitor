@@ -24,13 +24,9 @@ class AboutPanel extends StatelessWidget {
     final appBranding = Center(
       child: Column(
         children: [
-          Container(
+          SizedBox(
             width: 80,
             height: 80,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: AppColors.aboutGradient.first.withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 6))],
-            ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: Image.asset(
@@ -40,9 +36,18 @@ class AboutPanel extends StatelessWidget {
             ),
           ),
           const VSpacer(16),
-          Text('MQTT Monitor', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, letterSpacing: -0.5)),
+          Text(
+            'MQTT Monitor',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.5,
+            ),
+          ),
           const VSpacer(4),
-          Text('Version ${GitInfo.version}', style: TextStyle(fontSize: 13, color: secondary)),
+          Text(
+            'Version ${GitInfo.version}',
+            style: TextStyle(fontSize: 13, color: secondary),
+          ),
         ],
       ),
     );
@@ -62,10 +67,32 @@ class AboutPanel extends StatelessWidget {
         UiSection(
           label: s.aboutPanelSectionResources,
           children: [
-            UiLinkRow(label: s.aboutPanelSourceCode, icon: Icons.code_rounded, accent: accent, onTap: () => _openUrl('https://github.com/mijelsma/mqtt-monitor')),
-            UiLinkRow(label: s.aboutPanelChangelog, icon: Icons.history_rounded, accent: accent, onTap: () => _openUrl('https://github.com/mijelsma/mqtt-monitor/releases')),
-            UiLinkRow(label: s.aboutPanelReportIssue, icon: Icons.bug_report_outlined, accent: AppColors.error500, onTap: () => _openUrl('https://github.com/mijelsma/mqtt-monitor/issues')),
-            UiLinkRow(label: s.aboutPanelSupportProject, icon: Icons.favorite_border_rounded, accent: accent, onTap: () {}),
+            UiLinkRow(
+              label: s.aboutPanelSourceCode,
+              icon: Icons.code_rounded,
+              accent: accent,
+              onTap: () => _openUrl('https://github.com/mijelsma/mqtt-monitor'),
+            ),
+            UiLinkRow(
+              label: s.aboutPanelChangelog,
+              icon: Icons.history_rounded,
+              accent: accent,
+              onTap: () =>
+                  _openUrl('https://github.com/mijelsma/mqtt-monitor/releases'),
+            ),
+            UiLinkRow(
+              label: s.aboutPanelReportIssue,
+              icon: Icons.bug_report_outlined,
+              accent: AppColors.error500,
+              onTap: () =>
+                  _openUrl('https://github.com/mijelsma/mqtt-monitor/issues'),
+            ),
+            UiLinkRow(
+              label: s.aboutPanelSupportProject,
+              icon: Icons.favorite_border_rounded,
+              accent: accent,
+              onTap: () {},
+            ),
           ],
         ),
       ],
