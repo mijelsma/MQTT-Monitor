@@ -94,8 +94,9 @@ class MonitorViewModel extends ChangeNotifier {
     final list = brokers;
     if (list.isEmpty) return null;
     final id = _state.read(AppKeys.activeBrokerId);
-    if (id != null && list.any((b) => b.id == id))
+    if (id != null && list.any((b) => b.id == id)) {
       return list.firstWhere((b) => b.id == id);
+    }
     return list.first;
   }
 
