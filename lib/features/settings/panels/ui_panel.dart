@@ -86,7 +86,27 @@ class UiPanel extends StatelessWidget {
         // Layout
         UiSection(
           label: s.uiPanelSectionLayout,
-          children: [UiSwitchRow(label: s.uiPanelPersistLayout, subtitle: s.uiPanelPersistLayoutSubtitle, value: vm.persistLayout, onChanged: (v) => vm.setPersistLayout(v))],
+          children: [
+            UiSwitchRow(label: s.uiPanelPersistLayout, subtitle: s.uiPanelPersistLayoutSubtitle, value: vm.persistLayout, onChanged: (v) => vm.setPersistLayout(v)),
+            UiSwitchRow(
+              label: s.uiPanelSidebarAnimations,
+              subtitle: s.uiPanelSidebarAnimationsSubtitle,
+              value: vm.sidebarAnimationsEnabled,
+              onChanged: (v) => vm.setSidebarAnimationsEnabled(v),
+            ),
+            if (vm.sidebarAnimationsEnabled)
+              UiSliderRow(
+                label: s.uiPanelSidebarAnimationSpeed,
+                subtitle: s.uiPanelSidebarAnimationSpeedSubtitle,
+                value: vm.sidebarAnimationSpeed.toDouble(),
+                min: 10,
+                max: 100,
+                divisions: 9,
+                displayValue: '${vm.sidebarAnimationSpeed}%',
+                accent: accent,
+                onChanged: (v) => vm.setSidebarAnimationSpeed(v.round()),
+              ),
+          ],
         ),
 
         // Connection

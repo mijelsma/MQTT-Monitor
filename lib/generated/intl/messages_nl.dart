@@ -474,6 +474,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "uiPanelShowStatusBarSubtitle": MessageLookupByLibrary.simpleMessage(
       "Toont de statusbalk onder het scherm",
     ),
+    "uiPanelSidebarAnimationSpeed": MessageLookupByLibrary.simpleMessage(
+      "Animatiesnelheid panelen",
+    ),
+    "uiPanelSidebarAnimationSpeedSubtitle":
+        MessageLookupByLibrary.simpleMessage(
+          "Hoe snel de rechterpanelen bewegen",
+        ),
+    "uiPanelSidebarAnimations": MessageLookupByLibrary.simpleMessage(
+      "Animaties rechterpanelen",
+    ),
+    "uiPanelSidebarAnimationsSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Animeer panelen bij uit- en inklappen",
+    ),
     "uiPanelStartupBehavior": MessageLookupByLibrary.simpleMessage(
       "Opstartgedrag",
     ),
