@@ -37,6 +37,7 @@ class IoCertificateFileAccess implements CertificateFileAccess {
 }
 
 typedef CertificateDirectoryProvider = Future<String> Function();
+typedef CertificateNameTokenProvider = String Function();
 
 /// Copies credentials into app-private storage. Only these paths are persisted
 /// in SharedPreferences; private-key bytes are never stored there.
@@ -44,8 +45,12 @@ class AppPrivateCertificateStorage {
   AppPrivateCertificateStorage({
     required CertificateFileAccess files,
     required CertificateDirectoryProvider directoryProvider,
+    CertificateNameTokenProvider? nameTokenProvider,
   }) : _files = files,
-       _directoryProvider = directoryProvider;
+       _directoryProvider = directoryProvider,
+       _nameTokenProvider =
+           nameTokenProvider ??
+           (() => DateTime.now().microsecondsSinceEpoch.toString());
 
   factory AppPrivateCertificateStorage.standard() {
     return AppPrivateCertificateStorage(
@@ -57,6 +62,7 @@ class AppPrivateCertificateStorage {
 
   final CertificateFileAccess _files;
   final CertificateDirectoryProvider _directoryProvider;
+  final CertificateNameTokenProvider _nameTokenProvider;
 
   Future<String> store(
     String brokerId,
@@ -64,11 +70,12 @@ class AppPrivateCertificateStorage {
     Uint8List bytes,
   ) async {
     final root = await _directoryProvider();
-    final fileName = switch (kind) {
-      ClientCertificateKind.rootCa => 'root_ca.pem',
-      ClientCertificateKind.privateKey => 'client_private_key.pem',
-      ClientCertificateKind.clientCertificate => 'client_certificate.pem',
+    final stem = switch (kind) {
+      ClientCertificateKind.rootCa => 'root_ca',
+      ClientCertificateKind.privateKey => 'client_private_key',
+      ClientCertificateKind.clientCertificate => 'client_certificate',
     };
+    final fileName = '${stem}_${_nameTokenProvider()}.pem';
     final destination = path.join(
       root,
       'mqtt_certificates',

@@ -113,6 +113,7 @@ void main() {
     final storage = AppPrivateCertificateStorage(
       files: files,
       directoryProvider: () async => '/app-support',
+      nameTokenProvider: () => 'selection-1',
     );
 
     final storedPath = await storage.store(
@@ -123,7 +124,7 @@ void main() {
 
     expect(
       storedPath,
-      '/app-support/mqtt_certificates/broker-1/client_private_key.pem',
+      '/app-support/mqtt_certificates/broker-1/client_private_key_selection-1.pem',
     );
     expect(files.values[storedPath], testPrivateKeyPem);
   });
