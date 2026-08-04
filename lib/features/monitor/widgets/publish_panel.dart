@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../generated/l10n.dart';
-import '../../../shared/format_helpers.dart';
 import '../../../shared/widgets/feedback_badge.dart';
 import '../../../shared/widgets/payload_editor.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../monitor_viewmodel.dart';
+import '../publish_draft_controller.dart';
 
 /// A panel for publishing MQTT messages to a topic.
 class PublishPanel extends StatefulWidget {
@@ -17,46 +17,18 @@ class PublishPanel extends StatefulWidget {
   State<PublishPanel> createState() => _PublishPanelState();
 }
 
-class _PublishPanelState extends State<PublishPanel> with FeedbackMixin<PublishPanel> {
-  final _topicController = TextEditingController();
-  final _payloadController = HighlightingController();
-  int _qos = 0;
-  bool _retain = false;
-  PayloadFormat _format = PayloadFormat.text;
-  String? _validationError;
-
-  @override
-  void initState() {
-    super.initState();
-    _payloadController.addListener(_onPayloadChanged);
-  }
-
-  @override
-  void dispose() {
-    _topicController.dispose();
-    _payloadController.dispose();
-    super.dispose();
-  }
-
-  // Called whenever the payload text changes, to update validation state.
-  void _onPayloadChanged() {
-    if (_format == PayloadFormat.json) {
-      final error = validateJson(_payloadController.text);
-      if (error != _validationError) setState(() => _validationError = error);
-    } else if (_validationError != null) {
-      setState(() => _validationError = null);
-    }
-  }
-
+class _PublishPanelState extends State<PublishPanel>
+    with FeedbackMixin<PublishPanel> {
   // Handles the Publish button tap: validates input and attempts to publish via the ViewModel.
   void _publish() {
-    final topic = _topicController.text.trim();
+    final draft = context.read<PublishDraftController>();
+    final topic = draft.topicController.text.trim();
     if (topic.isEmpty) {
       showFeedback(PublishFeedbackKind.emptyTopic);
       return;
     }
 
-    if (_format == PayloadFormat.json && _validationError != null) {
+    if (draft.format == PayloadFormat.json && draft.validationError != null) {
       showFeedback(PublishFeedbackKind.invalidJson);
       return;
     }
@@ -67,14 +39,22 @@ class _PublishPanelState extends State<PublishPanel> with FeedbackMixin<PublishP
       return;
     }
 
-    final sent = vm.publish(topic, _payloadController.text, qos: _qos, retain: _retain);
-    showFeedback(sent ? PublishFeedbackKind.success : PublishFeedbackKind.failed);
+    final sent = vm.publish(
+      topic,
+      draft.payloadController.text,
+      qos: draft.qos,
+      retain: draft.retain,
+    );
+    showFeedback(
+      sent ? PublishFeedbackKind.success : PublishFeedbackKind.failed,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final vm = context.watch<MonitorViewModel>();
+    final draft = context.watch<PublishDraftController>();
     final connected = vm.isConnected;
 
     return Container(
@@ -84,26 +64,30 @@ class _PublishPanelState extends State<PublishPanel> with FeedbackMixin<PublishP
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // ── Topic field ──────────────────────────────────────────────
-          _TopicInput(controller: _topicController),
+          _TopicInput(controller: draft.topicController),
           const SizedBox(height: 8),
 
           // ── Payload editor (shared widget) ──────────────────────────
           Expanded(
             child: PayloadEditor(
-              controller: _payloadController,
-              format: _format,
-              onFormatChanged: (f) {
-                setState(() => _format = f);
-                _payloadController.highlightJson = f == PayloadFormat.json;
-                _onPayloadChanged();
-              },
-              validationError: _validationError,
+              controller: draft.payloadController,
+              format: draft.format,
+              onFormatChanged: draft.setFormat,
+              validationError: draft.validationError,
             ),
           ),
           const SizedBox(height: 8),
 
           // ── Options bar: QoS · Retain · Publish ─────────────────────
-          _OptionsBar(qos: _qos, retain: _retain, connected: connected, feedback: feedback, onQosChanged: (v) => setState(() => _qos = v), onRetainChanged: (v) => setState(() => _retain = v), onPublish: _publish),
+          _OptionsBar(
+            qos: draft.qos,
+            retain: draft.retain,
+            connected: connected,
+            feedback: feedback,
+            onQosChanged: draft.setQos,
+            onRetainChanged: draft.setRetain,
+            onPublish: _publish,
+          ),
         ],
       ),
     );
@@ -120,8 +104,14 @@ class _TopicInput extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     return TextField(
+      key: const Key('publish-topic-field'),
       controller: controller,
-      style: TextStyle(fontSize: 12.5, color: tokens.textPrimary, fontFamily: 'SF Mono, Menlo, monospace', letterSpacing: -0.2),
+      style: TextStyle(
+        fontSize: 12.5,
+        color: tokens.textPrimary,
+        fontFamily: 'SF Mono, Menlo, monospace',
+        letterSpacing: -0.2,
+      ),
       decoration: InputDecoration(
         prefixIcon: Padding(
           padding: const EdgeInsets.only(left: 10, right: 6),
@@ -129,7 +119,11 @@ class _TopicInput extends StatelessWidget {
         ),
         prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
         hintText: S.of(context).publishTopicHint,
-        hintStyle: TextStyle(fontSize: 12, color: tokens.muted, fontFamily: null),
+        hintStyle: TextStyle(
+          fontSize: 12,
+          color: tokens.muted,
+          fontFamily: null,
+        ),
         filled: true,
         fillColor: tokens.inputFill,
         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
@@ -153,7 +147,15 @@ class _TopicInput extends StatelessWidget {
 
 // Publish options bar containing QoS selector, Retain toggle, and Publish button, along with any feedback badge.
 class _OptionsBar extends StatelessWidget {
-  const _OptionsBar({required this.qos, required this.retain, required this.connected, required this.feedback, required this.onQosChanged, required this.onRetainChanged, required this.onPublish});
+  const _OptionsBar({
+    required this.qos,
+    required this.retain,
+    required this.connected,
+    required this.feedback,
+    required this.onQosChanged,
+    required this.onRetainChanged,
+    required this.onPublish,
+  });
 
   final int qos;
   final bool retain;
@@ -176,7 +178,10 @@ class _OptionsBar extends StatelessWidget {
         const SizedBox(width: 8),
 
         // Feedback badge (overlays between options and button)
-        if (feedback != null) ...[_buildFeedbackBadge(context), const SizedBox(width: 8)],
+        if (feedback != null) ...[
+          _buildFeedbackBadge(context),
+          const SizedBox(width: 8),
+        ],
 
         const Spacer(),
 
@@ -222,6 +227,7 @@ class _MiniQosSelector extends StatelessWidget {
         children: List.generate(3, (i) {
           final selected = value == i;
           return GestureDetector(
+            key: Key('publish-qos-$i'),
             onTap: () => onChanged(i),
             child: MouseRegion(
               cursor: SystemMouseCursors.click,
@@ -229,10 +235,18 @@ class _MiniQosSelector extends StatelessWidget {
                 duration: const Duration(milliseconds: 150),
                 curve: Curves.easeOut,
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(color: selected ? accent : Colors.transparent, borderRadius: BorderRadius.circular(4)),
+                decoration: BoxDecoration(
+                  color: selected ? accent : Colors.transparent,
+                  borderRadius: BorderRadius.circular(4),
+                ),
                 child: Text(
                   'Q$i',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: selected ? tokens.onPrimary : tokens.textSecondary),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                    color: selected ? tokens.onPrimary : tokens.textSecondary,
+                  ),
                 ),
               ),
             ),
@@ -255,6 +269,7 @@ class _RetainPill extends StatelessWidget {
     final tokens = context.tokens;
     final color = value ? AppColors.warning500 : tokens.muted;
     return GestureDetector(
+      key: const Key('publish-retain-toggle'),
       onTap: () => onChanged(!value),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
@@ -262,9 +277,16 @@ class _RetainPill extends StatelessWidget {
           duration: const Duration(milliseconds: 120),
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
           decoration: BoxDecoration(
-            color: value ? AppColors.warning500.withValues(alpha: 0.10) : tokens.inputFill,
+            color: value
+                ? AppColors.warning500.withValues(alpha: 0.10)
+                : tokens.inputFill,
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: value ? AppColors.warning500.withValues(alpha: 0.4) : tokens.border, width: 0.5),
+            border: Border.all(
+              color: value
+                  ? AppColors.warning500.withValues(alpha: 0.4)
+                  : tokens.border,
+              width: 0.5,
+            ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -273,7 +295,11 @@ class _RetainPill extends StatelessWidget {
               const SizedBox(width: 4),
               Text(
                 S.of(context).publishRetain,
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color),
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
               ),
             ],
           ),
@@ -301,7 +327,9 @@ class _PublishChipState extends State<_PublishChip> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final bg = widget.connected ? tokens.primary : tokens.muted.withValues(alpha: 0.3);
+    final bg = widget.connected
+        ? tokens.primary
+        : tokens.muted.withValues(alpha: 0.3);
     final fg = widget.connected ? tokens.onPrimary : tokens.textTertiary;
 
     return MouseRegion(
@@ -313,7 +341,10 @@ class _PublishChipState extends State<_PublishChip> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-          decoration: BoxDecoration(color: _hovering ? bg.withValues(alpha: 0.85) : bg, borderRadius: BorderRadius.circular(7)),
+          decoration: BoxDecoration(
+            color: _hovering ? bg.withValues(alpha: 0.85) : bg,
+            borderRadius: BorderRadius.circular(7),
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -321,7 +352,11 @@ class _PublishChipState extends State<_PublishChip> {
               const SizedBox(width: 6),
               Text(
                 'Publish',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: fg),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: fg,
+                ),
               ),
             ],
           ),
