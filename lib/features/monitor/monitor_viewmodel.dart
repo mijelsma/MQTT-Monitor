@@ -29,13 +29,7 @@ enum SearchScope { all, topic, value }
 /// Widgets read state from this ViewModel and call its methods for actions.
 class MonitorViewModel extends ChangeNotifier {
   // Constructor takes the MQTT service and app state manager, starts listening for messages.
-  MonitorViewModel({
-    required MqttService mqttService,
-    required AppStateManager state,
-    required MessageHistoryService historyService,
-  }) : _mqtt = mqttService,
-       _state = state,
-       _history = historyService {
+  MonitorViewModel({required MqttService mqttService, required AppStateManager state, required MessageHistoryService historyService}) : _mqtt = mqttService, _state = state, _history = historyService {
     _state.load(SettingsKeys.environmentVariables);
     _state.load(SettingsKeys.environmentVariableValues);
     _subscription = _mqtt.messageStream.listen(_onMessage);
@@ -80,8 +74,7 @@ class MonitorViewModel extends ChangeNotifier {
   SearchScope get scope => _scope;
 
   // Connection status and settings
-  ConnectionStatus get connectionStatus =>
-      _state.read(AppKeys.connectionStatus);
+  ConnectionStatus get connectionStatus => _state.read(AppKeys.connectionStatus);
   String? get connectionError => _state.read(AppKeys.connectionError);
   int get messageCount => _state.read(AppKeys.messageCount);
   int get messageRate => _state.read(AppKeys.messageRate);
@@ -111,12 +104,7 @@ class MonitorViewModel extends ChangeNotifier {
 
   /// Publishes a message to the given topic.
   /// Returns `true` if the message was sent.
-  bool publish(
-    String topic,
-    String payload, {
-    int qos = 0,
-    bool retain = false,
-  }) {
+  bool publish(String topic, String payload, {int qos = 0, bool retain = false}) {
     return _mqtt.publish(topic, payload, qos: qos, retain: retain);
   }
 
@@ -129,31 +117,18 @@ class MonitorViewModel extends ChangeNotifier {
   List<PublishShortcut> get availableShortcuts {
     final all = _state.read(SettingsKeys.shortcuts);
     final brokerId = activeBroker?.id;
-    return all
-        .where(
-          (s) =>
-              s.isGlobal ||
-              (brokerId != null && s.brokerIds.contains(brokerId)),
-        )
-        .toList();
+    return all.where((s) => s.isGlobal || (brokerId != null && s.brokerIds.contains(brokerId))).toList();
   }
 
   /// Environment variables visible to the currently active broker.
   List<EnvironmentVariable> get environmentVariables {
     final all = _state.read(SettingsKeys.environmentVariables);
     final brokerId = activeBroker?.id;
-    return all
-        .where(
-          (v) =>
-              v.isGlobal ||
-              (brokerId != null && v.brokerIds.contains(brokerId)),
-        )
-        .toList();
+    return all.where((v) => v.isGlobal || (brokerId != null && v.brokerIds.contains(brokerId))).toList();
   }
 
   /// Current values for each environment variable.
-  Map<String, String> get variableValues =>
-      _state.read(SettingsKeys.environmentVariableValues);
+  Map<String, String> get variableValues => _state.read(SettingsKeys.environmentVariableValues);
 
   /// Sets the value for a single environment variable.
   void setVariableValue(String name, String value) {
@@ -164,10 +139,7 @@ class MonitorViewModel extends ChangeNotifier {
   /// Resolves `\${VAR_NAME}` placeholders in a shortcut topic using current variable values.
   String resolveShortcutTopic(String topic) {
     final values = variableValues;
-    return topic.replaceAllMapped(
-      _variablePlaceholderPattern,
-      (m) => values[m.group(1)!] ?? m.group(0)!,
-    );
+    return topic.replaceAllMapped(_variablePlaceholderPattern, (m) => values[m.group(1)!] ?? m.group(0)!);
   }
 
   /// Adds a new broker and makes it the active one.
@@ -186,10 +158,7 @@ class MonitorViewModel extends ChangeNotifier {
 
   /// Deletes a broker by its ID.
   void deleteBroker(String id) {
-    _state.write(
-      SettingsKeys.brokers,
-      brokers.where((b) => b.id != id).toList(),
-    );
+    _state.write(SettingsKeys.brokers, brokers.where((b) => b.id != id).toList());
   }
 
   /// Reacts to app state changes and clears the tree when the broker switches.
@@ -225,13 +194,7 @@ class MonitorViewModel extends ChangeNotifier {
 
       if (i == segments.length - 1) {
         final prev = node.valueNotifier.value;
-        node.valueNotifier.value = TopicNodeValue(
-          payload: msg.payload,
-          seq: (prev?.seq ?? 0) + 1,
-          receivedAt: msg.receivedAt,
-          retain: msg.retain,
-          qos: msg.qos,
-        );
+        node.valueNotifier.value = TopicNodeValue(payload: msg.payload, seq: (prev?.seq ?? 0) + 1, receivedAt: msg.receivedAt, retain: msg.retain, qos: msg.qos);
       }
 
       currentLevel = node.children;
@@ -254,9 +217,7 @@ class MonitorViewModel extends ChangeNotifier {
     final pps = _state.read(SettingsKeys.pulseRatePps);
     final minInterval = Duration(milliseconds: 1000 ~/ pps.clamp(1, 100));
     final now = DateTime.now();
-    final elapsed = leaf.lastPulseAt == null
-        ? minInterval
-        : now.difference(leaf.lastPulseAt!);
+    final elapsed = leaf.lastPulseAt == null ? minInterval : now.difference(leaf.lastPulseAt!);
 
     _pendingTimers.remove(leaf.fullPath)?.cancel();
 
@@ -275,9 +236,7 @@ class MonitorViewModel extends ChangeNotifier {
   void _firePulse(List<TopicTreeNode> path, Duration minInterval) {
     final now = DateTime.now();
     for (final node in path) {
-      final nodeElapsed = node.lastPulseAt == null
-          ? minInterval
-          : now.difference(node.lastPulseAt!);
+      final nodeElapsed = node.lastPulseAt == null ? minInterval : now.difference(node.lastPulseAt!);
       if (nodeElapsed >= minInterval) {
         node.lastPulseAt = now;
         node.pulseNotifier.value++;
@@ -321,9 +280,7 @@ class MonitorViewModel extends ChangeNotifier {
   /// Toggles the expanded state of a single node.
   void toggleExpand(TopicTreeNode node) {
     node.isExpanded = !node.isExpanded;
-    anyExpanded = _allNodes(
-      _roots.values,
-    ).any((n) => n.isBranch && n.isExpanded);
+    anyExpanded = _allNodes(_roots.values).any((n) => n.isBranch && n.isExpanded);
     notifyListeners();
   }
 
@@ -349,10 +306,7 @@ class MonitorViewModel extends ChangeNotifier {
   ///
   /// Also clears history for any topics in the removed subtree.
   void deleteTopic(TopicTreeNode node) {
-    final segments = node.fullPath
-        .split('/')
-        .where((s) => s.isNotEmpty)
-        .toList();
+    final segments = node.fullPath.split('/').where((s) => s.isNotEmpty).toList();
     if (segments.isEmpty) return;
 
     // Collect all topic paths in the subtree so we can clear history.
@@ -382,8 +336,7 @@ class MonitorViewModel extends ChangeNotifier {
     _history.clearTopics(removedTopics);
 
     // Deselect if the deleted node was selected.
-    if (_selectedNode != null &&
-        _selectedNode!.fullPath.startsWith(node.fullPath)) {
+    if (_selectedNode != null && _selectedNode!.fullPath.startsWith(node.fullPath)) {
       _selectedNode = null;
     }
 
@@ -401,9 +354,7 @@ class MonitorViewModel extends ChangeNotifier {
         level = n.children;
       }
       final node = level[segments[depth]];
-      if (node != null &&
-          node.children.isEmpty &&
-          node.valueNotifier.value == null) {
+      if (node != null && node.children.isEmpty && node.valueNotifier.value == null) {
         level.remove(segments[depth]);
       } else {
         break;
@@ -437,41 +388,23 @@ class MonitorViewModel extends ChangeNotifier {
   List<FlatTreeRow> buildFlatList() {
     final filterLower = _filter.toLowerCase().trim();
     final rows = <FlatTreeRow>[];
-    final counts = deriveTopicBadgeCounts(
-      _roots.values,
-      includesTopic: (node) =>
-          filterLower.isEmpty || _nodeMatchesFilter(node, filterLower),
-    );
+    final counts = deriveTopicBadgeCounts(_roots.values, includesTopic: (node) => filterLower.isEmpty || _nodeMatchesFilter(node, filterLower));
 
     void visit(TopicTreeNode node, int depth) {
       final nodeCounts = counts[node]!;
       if (filterLower.isNotEmpty && nodeCounts.topicCount == 0) return;
 
-      rows.add(
-        FlatTreeRow(
-          node: node,
-          depth: depth,
-          topicCount: nodeCounts.topicCount,
-          messageCount: nodeCounts.messageCount,
-        ),
-      );
+      rows.add(FlatTreeRow(node: node, depth: depth, topicCount: nodeCounts.topicCount, messageCount: nodeCounts.messageCount));
 
       if (node.children.isNotEmpty && node.isExpanded) {
-        final sorted = node.children.values.toList()
-          ..sort(
-            (a, b) =>
-                a.segment.toLowerCase().compareTo(b.segment.toLowerCase()),
-          );
+        final sorted = node.children.values.toList()..sort((a, b) => a.segment.toLowerCase().compareTo(b.segment.toLowerCase()));
         for (final child in sorted) {
           visit(child, depth + 1);
         }
       }
     }
 
-    final sortedRoots = _roots.values.toList()
-      ..sort(
-        (a, b) => a.segment.toLowerCase().compareTo(b.segment.toLowerCase()),
-      );
+    final sortedRoots = _roots.values.toList()..sort((a, b) => a.segment.toLowerCase().compareTo(b.segment.toLowerCase()));
     for (final root in sortedRoots) {
       visit(root, 0);
     }
@@ -489,15 +422,10 @@ class MonitorViewModel extends ChangeNotifier {
   }
 
   bool _nodeMatchesFilter(TopicTreeNode node, String filterLower) {
-    final matchTopic =
-        _scope != SearchScope.value &&
-        node.fullPath.toLowerCase().contains(filterLower);
+    final matchTopic = _scope != SearchScope.value && node.fullPath.toLowerCase().contains(filterLower);
     if (matchTopic) return true;
     final payload = node.valueNotifier.value?.payload;
-    final matchValue =
-        _scope != SearchScope.topic &&
-        payload != null &&
-        payload.toLowerCase().contains(filterLower);
+    final matchValue = _scope != SearchScope.topic && payload != null && payload.toLowerCase().contains(filterLower);
     return matchValue;
   }
 

@@ -48,9 +48,7 @@ class PublishDraftController extends ChangeNotifier {
   }
 
   bool _updateValidation() {
-    final next = _format == PayloadFormat.json
-        ? validateJson(payloadController.text)
-        : null;
+    final next = _format == PayloadFormat.json ? validateJson(payloadController.text) : null;
     if (next == _validationError) return false;
     _validationError = next;
     return true;

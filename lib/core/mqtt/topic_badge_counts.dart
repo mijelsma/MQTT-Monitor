@@ -1,10 +1,7 @@
 import '../../models/topic_node.dart';
 
 class TopicBadgeCounts {
-  const TopicBadgeCounts({
-    required this.topicCount,
-    required this.messageCount,
-  });
+  const TopicBadgeCounts({required this.topicCount, required this.messageCount});
 
   final int topicCount;
   final int messageCount;
@@ -13,10 +10,7 @@ class TopicBadgeCounts {
 /// Derives badge counts bottom-up from topic values. The returned map is a
 /// single immutable snapshot for one rebuild, so filtered and unfiltered
 /// counters can never race or overwrite each other.
-Map<TopicTreeNode, TopicBadgeCounts> deriveTopicBadgeCounts(
-  Iterable<TopicTreeNode> roots, {
-  required bool Function(TopicTreeNode node) includesTopic,
-}) {
+Map<TopicTreeNode, TopicBadgeCounts> deriveTopicBadgeCounts(Iterable<TopicTreeNode> roots, {required bool Function(TopicTreeNode node) includesTopic}) {
   final result = <TopicTreeNode, TopicBadgeCounts>{};
 
   TopicBadgeCounts visit(TopicTreeNode node) {

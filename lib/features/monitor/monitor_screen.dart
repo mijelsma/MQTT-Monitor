@@ -23,11 +23,7 @@ class MonitorScreen extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (ctx) => MonitorViewModel(
-            mqttService: ctx.read<MqttService>(),
-            state: ctx.read<AppStateManager>(),
-            historyService: ctx.read<MessageHistoryService>(),
-          ),
+          create: (ctx) => MonitorViewModel(mqttService: ctx.read<MqttService>(), state: ctx.read<AppStateManager>(), historyService: ctx.read<MessageHistoryService>()),
         ),
         ChangeNotifierProvider(create: (_) => PublishDraftController()),
       ],
@@ -50,9 +46,7 @@ class _MonitorViewState extends State<_MonitorView> {
   @override
   void initState() {
     super.initState();
-    _splitRatio = context.read<AppStateManager>().read(
-      LayoutKeys.monitorSplitRatio,
-    );
+    _splitRatio = context.read<AppStateManager>().read(LayoutKeys.monitorSplitRatio);
     _filterController.addListener(() {
       context.read<MonitorViewModel>().setFilter(_filterController.text);
     });
@@ -78,8 +72,7 @@ class _MonitorViewState extends State<_MonitorView> {
     if (vm.brokers.isEmpty) {
       showTree = false;
       emptyState = const NoBrokersState();
-    } else if (vm.activeBroker != null &&
-        vm.activeBroker!.subscriptions.isEmpty) {
+    } else if (vm.activeBroker != null && vm.activeBroker!.subscriptions.isEmpty) {
       showTree = false;
       emptyState = NoSubscriptionsState(broker: vm.activeBroker!);
     } else {
@@ -94,10 +87,7 @@ class _MonitorViewState extends State<_MonitorView> {
         initialRatio: _splitRatio,
         minRatio: 0.25,
         maxRatio: 0.75,
-        onRatioChanged: (ratio) => context.read<AppStateManager>().write(
-          LayoutKeys.monitorSplitRatio,
-          ratio,
-        ),
+        onRatioChanged: (ratio) => context.read<AppStateManager>().write(LayoutKeys.monitorSplitRatio, ratio),
         first: TopicTree(filterController: _filterController),
         second: const DetailSidebar(),
       );
@@ -105,21 +95,11 @@ class _MonitorViewState extends State<_MonitorView> {
 
     Widget? bottomBar;
     if (vm.showStatusBar) {
-      bottomBar = StatusBar(
-        status: vm.connectionStatus,
-        brokerUrl: vm.activeBroker?.displayAddress,
-        errorDetail: vm.connectionError,
-        messageCount: vm.messageCount,
-        messageRate: vm.messageRate,
-      );
+      bottomBar = StatusBar(status: vm.connectionStatus, brokerUrl: vm.activeBroker?.displayAddress, errorDetail: vm.connectionError, messageCount: vm.messageCount, messageRate: vm.messageRate);
     }
 
     return Scaffold(
-      appBar: MonitorAppBar(
-        filterController: _filterController,
-        scope: vm.scope,
-        onScopeChanged: _onScopeChanged,
-      ),
+      appBar: MonitorAppBar(filterController: _filterController, scope: vm.scope, onScopeChanged: _onScopeChanged),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: body,
       bottomNavigationBar: bottomBar,

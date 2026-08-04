@@ -53,12 +53,8 @@ class _DetailSidebarState extends State<DetailSidebar> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final vm = context.watch<MonitorViewModel>();
-    final animationsEnabled = context.select<AppStateManager, bool>(
-      (state) => state.read(SettingsKeys.sidebarAnimationsEnabled),
-    );
-    final animationSpeed = context.select<AppStateManager, int>(
-      (state) => state.read(SettingsKeys.sidebarAnimationSpeed),
-    );
+    final animationsEnabled = context.select<AppStateManager, bool>((state) => state.read(SettingsKeys.sidebarAnimationsEnabled));
+    final animationSpeed = context.select<AppStateManager, int>((state) => state.read(SettingsKeys.sidebarAnimationSpeed));
     final selected = vm.selectedNode;
 
     // Clear history selection when topic changes.
@@ -67,23 +63,8 @@ class _DetailSidebarState extends State<DetailSidebar> {
       _selectedHistoryValue = null;
     }
 
-    final detailContent = selected != null
-        ? MessageDetailPanel(
-            key: ValueKey(selected.fullPath),
-            node: selected,
-            selectedHistory: _selectedHistoryValue,
-            onClearSelection: () =>
-                setState(() => _selectedHistoryValue = null),
-          )
-        : const _NoSelection();
-    final historyContent = selected != null
-        ? HistoryPanel(
-            key: ValueKey('history_${selected.fullPath}'),
-            node: selected,
-            selectedValue: _selectedHistoryValue,
-            onSelect: (value) => setState(() => _selectedHistoryValue = value),
-          )
-        : const _NoSelection();
+    final detailContent = selected != null ? MessageDetailPanel(key: ValueKey(selected.fullPath), node: selected, selectedHistory: _selectedHistoryValue, onClearSelection: () => setState(() => _selectedHistoryValue = null)) : const _NoSelection();
+    final historyContent = selected != null ? HistoryPanel(key: ValueKey('history_${selected.fullPath}'), node: selected, selectedValue: _selectedHistoryValue, onSelect: (value) => setState(() => _selectedHistoryValue = value)) : const _NoSelection();
 
     // Fixed-order section definitions — order never changes.
     final s = S.of(context);
@@ -130,10 +111,7 @@ class _DetailSidebarState extends State<DetailSidebar> {
         content: const ShortcutsPanel(),
         toggle: () => setState(() {
           _shortcutsCollapsed = !_shortcutsCollapsed;
-          state.write(
-            LayoutKeys.sidebarShortcutsCollapsed,
-            _shortcutsCollapsed,
-          );
+          state.write(LayoutKeys.sidebarShortcutsCollapsed, _shortcutsCollapsed);
         }),
       ),
     ];
@@ -161,13 +139,7 @@ class _DetailSidebarState extends State<DetailSidebar> {
     }
     final trailingCollapsed = pendingCollapsed;
 
-    Widget headerFor(int i, {required bool collapsed}) => _SectionHeader(
-      key: sections[i].key,
-      title: sections[i].title,
-      icon: sections[i].icon,
-      collapsed: collapsed,
-      onToggle: sections[i].toggle,
-    );
+    Widget headerFor(int i, {required bool collapsed}) => _SectionHeader(key: sections[i].key, title: sections[i].title, icon: sections[i].icon, collapsed: collapsed, onToggle: sections[i].toggle);
 
     final children = <Widget>[];
 
@@ -192,9 +164,7 @@ class _DetailSidebarState extends State<DetailSidebar> {
           child: Column(
             children: [
               headerFor(chunk.expandedIndex, collapsed: false),
-              Expanded(
-                child: ClipRect(child: sections[chunk.expandedIndex].content),
-              ),
+              Expanded(child: ClipRect(child: sections[chunk.expandedIndex].content)),
             ],
           ),
         ),
@@ -228,9 +198,7 @@ class _DetailSidebarState extends State<DetailSidebar> {
             children: [
               for (final ci in collapsedBefore) headerFor(ci, collapsed: true),
               headerFor(chunk.expandedIndex, collapsed: false),
-              Expanded(
-                child: ClipRect(child: sections[chunk.expandedIndex].content),
-              ),
+              Expanded(child: ClipRect(child: sections[chunk.expandedIndex].content)),
             ],
           ),
         );
@@ -238,14 +206,7 @@ class _DetailSidebarState extends State<DetailSidebar> {
 
       Widget body;
       if (panes.length == 2) {
-        body = ResizableSplit(
-          axis: Axis.vertical,
-          initialRatio: 0.5,
-          minRatio: 0.2,
-          maxRatio: 0.8,
-          first: panes[0],
-          second: panes[1],
-        );
+        body = ResizableSplit(axis: Axis.vertical, initialRatio: 0.5, minRatio: 0.2, maxRatio: 0.8, first: panes[0], second: panes[1]);
       } else {
         body = ResizableSplit(
           axis: Axis.vertical,
@@ -253,14 +214,7 @@ class _DetailSidebarState extends State<DetailSidebar> {
           minRatio: 0.15,
           maxRatio: 0.6,
           first: panes[0],
-          second: ResizableSplit(
-            axis: Axis.vertical,
-            initialRatio: 0.5,
-            minRatio: 0.2,
-            maxRatio: 0.8,
-            first: panes[1],
-            second: panes[2],
-          ),
+          second: ResizableSplit(axis: Axis.vertical, initialRatio: 0.5, minRatio: 0.2, maxRatio: 0.8, first: panes[1], second: panes[2]),
         );
       }
 
@@ -280,12 +234,7 @@ class _DetailSidebarState extends State<DetailSidebar> {
 
     if (!animationsEnabled) return sidebarLayout;
 
-    final layoutState = [
-      _detailCollapsed,
-      _historyCollapsed,
-      _publishCollapsed,
-      _shortcutsCollapsed,
-    ].map((collapsed) => collapsed ? '1' : '0').join();
+    final layoutState = [_detailCollapsed, _historyCollapsed, _publishCollapsed, _shortcutsCollapsed].map((collapsed) => collapsed ? '1' : '0').join();
     final duration = sidebarAnimationDurationForSpeed(animationSpeed);
 
     return AnimatedSwitcher(
@@ -295,18 +244,11 @@ class _DetailSidebarState extends State<DetailSidebar> {
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       transitionBuilder: (child, animation) {
-        final curved = CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeInCubic,
-        );
+        final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic);
         return FadeTransition(
           opacity: curved,
           child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.015),
-              end: Offset.zero,
-            ).animate(curved),
+            position: Tween<Offset>(begin: const Offset(0, 0.015), end: Offset.zero).animate(curved),
             child: child,
           ),
         );
@@ -318,13 +260,7 @@ class _DetailSidebarState extends State<DetailSidebar> {
 
 /// Collapsible section header for the sidebar.
 class _SectionHeader extends StatefulWidget {
-  const _SectionHeader({
-    super.key,
-    required this.title,
-    required this.icon,
-    required this.collapsed,
-    required this.onToggle,
-  });
+  const _SectionHeader({super.key, required this.title, required this.icon, required this.collapsed, required this.onToggle});
 
   final String title;
   final IconData icon;
@@ -341,12 +277,8 @@ class _SectionHeaderState extends State<_SectionHeader> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final animationsEnabled = context.select<AppStateManager, bool>(
-      (state) => state.read(SettingsKeys.sidebarAnimationsEnabled),
-    );
-    final animationSpeed = context.select<AppStateManager, int>(
-      (state) => state.read(SettingsKeys.sidebarAnimationSpeed),
-    );
+    final animationsEnabled = context.select<AppStateManager, bool>((state) => state.read(SettingsKeys.sidebarAnimationsEnabled));
+    final animationSpeed = context.select<AppStateManager, int>((state) => state.read(SettingsKeys.sidebarAnimationSpeed));
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovering = true),
@@ -359,9 +291,7 @@ class _SectionHeaderState extends State<_SectionHeader> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: _hovering ? tokens.elevated : tokens.surface,
-            border: Border(
-              bottom: BorderSide(color: tokens.border, width: 0.5),
-            ),
+            border: Border(bottom: BorderSide(color: tokens.border, width: 0.5)),
           ),
           child: Row(
             children: [
@@ -370,24 +300,13 @@ class _SectionHeaderState extends State<_SectionHeader> {
               Expanded(
                 child: Text(
                   widget.title,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                    color: tokens.textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5, color: tokens.textSecondary),
                 ),
               ),
               AnimatedRotation(
                 turns: widget.collapsed ? -0.25 : 0,
-                duration: animationsEnabled
-                    ? sidebarAnimationDurationForSpeed(animationSpeed)
-                    : Duration.zero,
-                child: Icon(
-                  Icons.expand_more_rounded,
-                  size: 16,
-                  color: tokens.muted,
-                ),
+                duration: animationsEnabled ? sidebarAnimationDurationForSpeed(animationSpeed) : Duration.zero,
+                child: Icon(Icons.expand_more_rounded, size: 16, color: tokens.muted),
               ),
             ],
           ),
@@ -402,10 +321,6 @@ class _NoSelection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return UiEmptyState.compact(
-      icon: Icons.touch_app_rounded,
-      title: S.of(context).sidebarNoSelectionTitle,
-      message: S.of(context).sidebarNoSelectionSubtitle,
-    );
+    return UiEmptyState.compact(icon: Icons.touch_app_rounded, title: S.of(context).sidebarNoSelectionTitle, message: S.of(context).sidebarNoSelectionSubtitle);
   }
 }

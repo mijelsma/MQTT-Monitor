@@ -13,11 +13,9 @@ import '../../models/topic_node_value.dart';
 /// so history is always being collected. Topics can be marked for
 /// "increased monitoring" to keep a larger buffer.
 class MessageHistoryService {
-  MessageHistoryService(MqttService mqtt, this._state)
-    : _messages = mqtt.messageStream;
+  MessageHistoryService(MqttService mqtt, this._state) : _messages = mqtt.messageStream;
 
-  MessageHistoryService.fromStream(Stream<MQTTMessage> messages, this._state)
-    : _messages = messages;
+  MessageHistoryService.fromStream(Stream<MQTTMessage> messages, this._state) : _messages = messages;
 
   final Stream<MQTTMessage> _messages;
   final AppStateManager _state;
@@ -66,13 +64,7 @@ class MessageHistoryService {
     final seq = (_seqCounters[msg.topic] ?? 0) + 1;
     _seqCounters[msg.topic] = seq;
 
-    final value = TopicNodeValue(
-      payload: msg.payload,
-      seq: seq,
-      receivedAt: msg.receivedAt,
-      retain: msg.retain,
-      qos: msg.qos,
-    );
+    final value = TopicNodeValue(payload: msg.payload, seq: seq, receivedAt: msg.receivedAt, retain: msg.retain, qos: msg.qos);
 
     final list = _history.putIfAbsent(msg.topic, () => []);
     list.add(value);
@@ -118,13 +110,10 @@ class MessageHistoryService {
   Set<String> get increasedTopics => Set.unmodifiable(_increasedTopics);
 
   int get defaultHistorySize => _state.read(SettingsKeys.defaultHistorySize);
-  int get increasedHistorySize =>
-      _state.read(SettingsKeys.increasedHistorySize);
+  int get increasedHistorySize => _state.read(SettingsKeys.increasedHistorySize);
 
   void _trim(String topic, List<TopicNodeValue> list) {
-    final limit = _increasedTopics.contains(topic)
-        ? increasedHistorySize
-        : defaultHistorySize;
+    final limit = _increasedTopics.contains(topic) ? increasedHistorySize : defaultHistorySize;
     if (limit > 0 && list.length > limit) {
       list.removeRange(0, list.length - limit);
     }
@@ -137,10 +126,7 @@ class MessageHistoryService {
   }
 
   void _persistIncreasedTopics() {
-    _state.write(
-      SettingsKeys.increasedMonitoringTopics,
-      _increasedTopics.toList(),
-    );
+    _state.write(SettingsKeys.increasedMonitoringTopics, _increasedTopics.toList());
   }
 
   /// Clears history for a specific set of topics.

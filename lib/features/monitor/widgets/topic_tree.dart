@@ -27,26 +27,11 @@ class TopicTree extends StatelessWidget {
     return ListView.separated(
       padding: EdgeInsets.zero,
       itemCount: rows.length,
-      separatorBuilder: (_, i) => Divider(
-        height: 0.5,
-        thickness: 0.5,
-        color: tokens.border,
-        indent: 10.0 + rows[i].depth * 18.0 + 27,
-        endIndent: 0,
-      ),
+      separatorBuilder: (_, i) => Divider(height: 0.5, thickness: 0.5, color: tokens.border, indent: 10.0 + rows[i].depth * 18.0 + 27, endIndent: 0),
       itemBuilder: (context, i) {
         final row = rows[i];
         final isSelected = vm.selectedNode?.fullPath == row.node.fullPath;
-        return TopicTreeRow(
-          key: ValueKey(row.node.fullPath),
-          node: row.node,
-          depth: row.depth,
-          topicCount: row.topicCount,
-          messageCount: row.messageCount,
-          selected: isSelected,
-          onToggle: () => vm.toggleExpand(row.node),
-          onSelect: () => vm.selectNode(row.node),
-        );
+        return TopicTreeRow(key: ValueKey(row.node.fullPath), node: row.node, depth: row.depth, topicCount: row.topicCount, messageCount: row.messageCount, selected: isSelected, onToggle: () => vm.toggleExpand(row.node), onSelect: () => vm.selectNode(row.node));
       },
     );
   }
