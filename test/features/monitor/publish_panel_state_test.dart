@@ -105,7 +105,7 @@ void main() {
   test('sidebar speed maps to a short, bounded animation duration', () {
     expect(
       sidebarAnimationDurationForSpeed(0),
-      const Duration(milliseconds: 250),
+      const Duration(milliseconds: 500),
     );
     expect(
       sidebarAnimationDurationForSpeed(60),
@@ -113,43 +113,53 @@ void main() {
     );
     expect(
       sidebarAnimationDurationForSpeed(100),
-      const Duration(milliseconds: 100),
+      const Duration(milliseconds: 40),
     );
     expect(
       sidebarAnimationDurationForSpeed(200),
-      const Duration(milliseconds: 100),
+      const Duration(milliseconds: 40),
     );
   });
 
   testWidgets('sidebar panels animate at the configured speed', (tester) async {
     await state.write(SettingsKeys.sidebarAnimationsEnabled, true);
-    await state.write(SettingsKeys.sidebarAnimationSpeed, 100);
+    // A slow speed gives a long enough window to sample mid-animation.
+    await state.write(SettingsKeys.sidebarAnimationSpeed, 30);
     await pumpSidebar(
       tester,
       expandedSibling: const Key('history-section-toggle'),
     );
 
-    final switcher = tester.widget<AnimatedSwitcher>(
-      find.byKey(const Key('detail-sidebar-animation')),
-    );
-    expect(switcher.duration, const Duration(milliseconds: 100));
+    final expectedDuration = sidebarAnimationDurationForSpeed(30);
+
+    // Chevron rotation duration follows the configured speed.
     expect(find.byType(AnimatedRotation), findsNWidgets(4));
     expect(
       tester
           .widgetList<AnimatedRotation>(find.byType(AnimatedRotation))
-          .every(
-            (rotation) =>
-                rotation.duration == const Duration(milliseconds: 100),
-          ),
+          .every((rotation) => rotation.duration == expectedDuration),
       isTrue,
     );
 
-    await tester.tap(find.byKey(const Key('history-section-toggle')));
-    await tester.pump();
-    expect(find.byKey(const Key('detail-sidebar-layout')), findsNWidgets(2));
+    final initialHeight = tester
+        .getSize(find.byKey(const Key('history-content-clip')))
+        .height;
+    expect(initialHeight, greaterThan(0));
 
+    // Tap to collapse history; mid-animation the panel height is partway
+    // between its expanded height and zero (i.e. a real collapse animation).
+    await tester.tap(find.byKey(const Key('history-section-toggle')));
+    await tester.pump(); // process the tap and start the animation ticker
+    await tester.pump(expectedDuration ~/ 2);
+    final midHeight = tester
+        .getSize(find.byKey(const Key('history-content-clip')))
+        .height;
+    expect(midHeight, greaterThan(0));
+    expect(midHeight, lessThan(initialHeight));
+
+    // After settling, the collapsed panel's content is unmounted.
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('detail-sidebar-layout')), findsOneWidget);
+    expect(find.byKey(const Key('history-content-clip')), findsNothing);
   });
 
   testWidgets('sidebar panel animation can be disabled', (tester) async {
@@ -159,7 +169,6 @@ void main() {
       expandedSibling: const Key('history-section-toggle'),
     );
 
-    expect(find.byKey(const Key('detail-sidebar-animation')), findsNothing);
     expect(find.byType(AnimatedRotation), findsNWidgets(4));
     expect(
       tester
@@ -167,9 +176,11 @@ void main() {
           .every((rotation) => rotation.duration == Duration.zero),
       isTrue,
     );
+
+    // Disabled: collapsing snaps instantly with no intermediate height.
     await tester.tap(find.byKey(const Key('history-section-toggle')));
     await tester.pump();
-    expect(find.byKey(const Key('detail-sidebar-layout')), findsOneWidget);
+    expect(find.byKey(const Key('history-content-clip')), findsNothing);
   });
 
   for (final sibling in <({Key key, String name})>[

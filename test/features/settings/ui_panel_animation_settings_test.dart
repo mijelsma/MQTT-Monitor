@@ -47,7 +47,7 @@ void main() {
 
     expect(find.text('Right panel animations'), findsOneWidget);
     expect(find.text('Panel animation speed'), findsOneWidget);
-    expect(find.text('60%'), findsOneWidget);
+    expect(find.text('50%'), findsOneWidget);
 
     await tester.ensureVisible(find.text('Right panel animations'));
     await tester.pumpAndSettle();
