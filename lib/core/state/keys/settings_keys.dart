@@ -23,7 +23,7 @@ abstract final class SettingsKeys {
   static final pulseFadeMs = StateKey.integer('settings.pulseFadeMs', defaultValue: 500);
   static final persistLayout = StateKey.boolean('settings.persistLayout', defaultValue: true);
   static final sidebarAnimationsEnabled = StateKey.boolean('settings.sidebarAnimationsEnabled', defaultValue: true);
-  static final sidebarAnimationSpeed = StateKey.integer('settings.sidebarAnimationSpeed', defaultValue: 60);
+  static final sidebarAnimationSpeed = StateKey.integer('settings.sidebarAnimationSpeed', defaultValue: 50);
 
   // Environment variables
   static final environmentVariables = StateKey.fromJson<List<EnvironmentVariable>>('settings.environmentVariables', defaultValue: const [], toJson: (list) => list.map((e) => e.toJson()).toList(), fromJson: (raw) => (raw as List).map((e) => EnvironmentVariable.fromJson(e as Map<String, dynamic>)).toList());

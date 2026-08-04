@@ -1,12 +1,14 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/state/app_state.dart';
 import '../../../core/state/keys/layout_keys.dart';
 import '../../../core/state/keys/settings_keys.dart';
+import '../../../core/state/state_key.dart';
 import '../../../generated/l10n.dart';
 import '../../../models/topic_node_value.dart';
-import '../../../shared/widgets/resizable_split.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../monitor_viewmodel.dart';
@@ -15,11 +17,19 @@ import 'message_detail_panel.dart';
 import 'publish_panel.dart';
 import 'shortcuts_panel.dart';
 
-/// Maps the user-facing 0–100% speed setting to a short 250–100 ms duration.
+/// Maps the user-facing 0–100% speed setting to an animation duration.
+///
+/// The curve is piecewise-linear and pinned at 60% → 160 ms:
+/// 0% → 500 ms (slow), 60% → 160 ms, 100% → 40 ms (fast). Values outside
+/// 0–100 are clamped.
 Duration sidebarAnimationDurationForSpeed(int speed) {
-  final clampedSpeed = speed.clamp(0, 100);
-  return Duration(milliseconds: 250 - (clampedSpeed * 1.5).round());
+  final s = speed.clamp(0, 100);
+  final ms = s <= 60 ? 500 - (340 / 60) * s : 340 - 3 * s;
+  return Duration(milliseconds: ms.round());
 }
+
+const double _kHeaderHeight = 36;
+const double _kDividerHeight = 14;
 
 /// The right-hand sidebar showing the selected message detail, history, and publish panel.
 class DetailSidebar extends StatefulWidget {
@@ -29,24 +39,107 @@ class DetailSidebar extends StatefulWidget {
   State<DetailSidebar> createState() => _DetailSidebarState();
 }
 
-class _DetailSidebarState extends State<DetailSidebar> {
-  bool _detailCollapsed = false;
-  bool _historyCollapsed = true;
-  bool _publishCollapsed = true;
-  bool _shortcutsCollapsed = true;
+class _DetailSidebarState extends State<DetailSidebar> with TickerProviderStateMixin {
+  // Target collapsed state per section: [detail, history, publish, shortcuts].
+  final List<bool> _collapsed = [false, true, true, true];
+  // Relative weights per section when expanded (draggable dividers adjust these).
+  final List<double> _ratios = [1.0, 1.0, 1.0, 1.0];
+
+  // A single transition driver: 0 → 1 lerps every section's share from
+  // [_oldShares] to [_newShares]. One controller animates the whole
+  // redistribution so freed space flows smoothly into neighbouring panels.
+  late final AnimationController _t;
+  List<double> _oldShares = const [0, 0, 0, 0];
+  List<double> _newShares = const [0, 0, 0, 0];
 
   /// The history value currently selected, or null if showing latest.
   TopicNodeValue? _selectedHistoryValue;
   String? _lastTopicPath;
 
+  static final _layoutKeys = <StateKey<bool>>[LayoutKeys.sidebarDetailCollapsed, LayoutKeys.sidebarHistoryCollapsed, LayoutKeys.sidebarPublishCollapsed, LayoutKeys.sidebarShortcutsCollapsed];
+
   @override
   void initState() {
     super.initState();
     final state = context.read<AppStateManager>();
-    _detailCollapsed = state.read(LayoutKeys.sidebarDetailCollapsed);
-    _historyCollapsed = state.read(LayoutKeys.sidebarHistoryCollapsed);
-    _publishCollapsed = state.read(LayoutKeys.sidebarPublishCollapsed);
-    _shortcutsCollapsed = state.read(LayoutKeys.sidebarShortcutsCollapsed);
+    _collapsed[0] = state.read(LayoutKeys.sidebarDetailCollapsed);
+    _collapsed[1] = state.read(LayoutKeys.sidebarHistoryCollapsed);
+    _collapsed[2] = state.read(LayoutKeys.sidebarPublishCollapsed);
+    _collapsed[3] = state.read(LayoutKeys.sidebarShortcutsCollapsed);
+    _t = AnimationController(vsync: this, value: 1.0, duration: const Duration(milliseconds: 200));
+    _oldShares = _computeShares();
+    _newShares = _oldShares;
+  }
+
+  @override
+  void dispose() {
+    _t.dispose();
+    super.dispose();
+  }
+
+  /// Fraction of the content area each section should occupy when settled.
+  List<double> _computeShares() {
+    double sum = 0;
+    for (var i = 0; i < 4; i++) {
+      if (!_collapsed[i]) sum += _ratios[i];
+    }
+    if (sum <= 0) return const [0, 0, 0, 0];
+    return [for (var i = 0; i < 4; i++) !_collapsed[i] ? _ratios[i] / sum : 0.0];
+  }
+
+  /// Current animated shares, interpolated between old and new by [_t].
+  List<double> _currentShares() {
+    final t = _t.value;
+    return [for (var i = 0; i < 4; i++) _oldShares[i] + (_newShares[i] - _oldShares[i]) * t];
+  }
+
+  void _toggle(int i) {
+    final state = context.read<AppStateManager>();
+    final animationsEnabled = state.read(SettingsKeys.sidebarAnimationsEnabled);
+    final duration = sidebarAnimationDurationForSpeed(state.read(SettingsKeys.sidebarAnimationSpeed));
+
+    // Continue from wherever the animation currently is.
+    _oldShares = _currentShares();
+
+    final newCollapsed = !_collapsed[i];
+    if (!newCollapsed) {
+      // Expanding: give the panel a fair share relative to the other open panels.
+      final others = <double>[];
+      for (var j = 0; j < 4; j++) {
+        if (j != i && !_collapsed[j]) others.add(_ratios[j]);
+      }
+      _ratios[i] = others.isEmpty ? 1.0 : (others.reduce((a, b) => a + b) / others.length);
+    }
+    _collapsed[i] = newCollapsed;
+    state.write(_layoutKeys[i], newCollapsed);
+    _newShares = _computeShares();
+
+    if (animationsEnabled) {
+      _t.value = 0;
+      _t.animateTo(1.0, duration: duration, curve: Curves.easeOutCubic);
+    } else {
+      _oldShares = List<double>.of(_newShares);
+      _t.value = 1.0;
+    }
+    setState(() {});
+  }
+
+  void _onDividerDrag(int i, int j, DragUpdateDetails details, double contentHeight) {
+    double sumRatio = 0;
+    for (var k = 0; k < 4; k++) {
+      if (!_collapsed[k]) sumRatio += _ratios[k];
+    }
+    final h = contentHeight <= 0 ? 1.0 : contentHeight;
+    final deltaRatio = details.delta.dy * sumRatio / h;
+    final sum = _ratios[i] + _ratios[j];
+    final newI = (_ratios[i] + deltaRatio).clamp(sum * 0.15, sum * 0.85);
+    setState(() {
+      _ratios[i] = newI;
+      _ratios[j] = sum - newI;
+      _oldShares = _computeShares();
+      _newShares = _oldShares;
+      _t.value = 1.0;
+    });
   }
 
   @override
@@ -55,6 +148,7 @@ class _DetailSidebarState extends State<DetailSidebar> {
     final vm = context.watch<MonitorViewModel>();
     final animationsEnabled = context.select<AppStateManager, bool>((state) => state.read(SettingsKeys.sidebarAnimationsEnabled));
     final animationSpeed = context.select<AppStateManager, int>((state) => state.read(SettingsKeys.sidebarAnimationSpeed));
+    final duration = sidebarAnimationDurationForSpeed(animationSpeed);
     final selected = vm.selectedNode;
 
     // Clear history selection when topic changes.
@@ -63,197 +157,135 @@ class _DetailSidebarState extends State<DetailSidebar> {
       _selectedHistoryValue = null;
     }
 
+    final s = S.of(context);
     final detailContent = selected != null ? MessageDetailPanel(key: ValueKey(selected.fullPath), node: selected, selectedHistory: _selectedHistoryValue, onClearSelection: () => setState(() => _selectedHistoryValue = null)) : const _NoSelection();
     final historyContent = selected != null ? HistoryPanel(key: ValueKey('history_${selected.fullPath}'), node: selected, selectedValue: _selectedHistoryValue, onSelect: (value) => setState(() => _selectedHistoryValue = value)) : const _NoSelection();
 
-    // Fixed-order section definitions — order never changes.
-    final s = S.of(context);
-    final state = context.read<AppStateManager>();
-    final sections = [
-      (
-        key: const Key('detail-section-toggle'),
-        collapsed: _detailCollapsed,
-        title: s.sidebarMessageDetail,
-        icon: Icons.info_outline_rounded,
-        content: detailContent,
-        toggle: () => setState(() {
-          _detailCollapsed = !_detailCollapsed;
-          state.write(LayoutKeys.sidebarDetailCollapsed, _detailCollapsed);
-        }),
-      ),
-      (
-        key: const Key('history-section-toggle'),
-        collapsed: _historyCollapsed,
-        title: s.sidebarHistory,
-        icon: Icons.history_rounded,
-        content: historyContent,
-        toggle: () => setState(() {
-          _historyCollapsed = !_historyCollapsed;
-          state.write(LayoutKeys.sidebarHistoryCollapsed, _historyCollapsed);
-        }),
-      ),
-      (
-        key: const Key('publish-section-toggle'),
-        collapsed: _publishCollapsed,
-        title: s.sidebarPublish,
-        icon: Icons.send_rounded,
-        content: const PublishPanel(),
-        toggle: () => setState(() {
-          _publishCollapsed = !_publishCollapsed;
-          state.write(LayoutKeys.sidebarPublishCollapsed, _publishCollapsed);
-        }),
-      ),
-      (
-        key: const Key('shortcuts-section-toggle'),
-        collapsed: _shortcutsCollapsed,
-        title: s.sidebarShortcuts,
-        icon: Icons.bolt_rounded,
-        content: const ShortcutsPanel(),
-        toggle: () => setState(() {
-          _shortcutsCollapsed = !_shortcutsCollapsed;
-          state.write(LayoutKeys.sidebarShortcutsCollapsed, _shortcutsCollapsed);
-        }),
-      ),
-    ];
+    final contents = <Widget>[detailContent, historyContent, const PublishPanel(), const ShortcutsPanel()];
+    final titles = <String>[s.sidebarMessageDetail, s.sidebarHistory, s.sidebarPublish, s.sidebarShortcuts];
+    final icons = <IconData>[Icons.info_outline_rounded, Icons.history_rounded, Icons.send_rounded, Icons.bolt_rounded];
+    final sectionKeys = <Key>[const Key('detail-section-toggle'), const Key('history-section-toggle'), const Key('publish-section-toggle'), const Key('shortcuts-section-toggle')];
+    final contentKeys = <Key>[const Key('detail-content-clip'), const Key('history-content-clip'), const Key('publish-content-clip'), const Key('shortcuts-content-clip')];
 
-    // ── Build layout keeping headers in strict visual order ──
-    //
-    // Group sections into "chunks": each chunk is zero-or-more collapsed
-    // sections followed by one expanded section. Any trailing collapsed
-    // sections form a separate tail group.
-    //
-    // Collapsed headers that appear *between* expanded sections are placed
-    // inside the ResizableSplit (grouped with the next expanded panel) so
-    // that visual ordering is always DETAIL → HISTORY → PUBLISH.
+    return Container(
+      key: const Key('detail-sidebar-layout'),
+      color: tokens.bg,
+      child: AnimatedBuilder(
+        animation: _t,
+        builder: (context, _) {
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              return _buildBody(constraints, contents, titles, icons, sectionKeys, contentKeys, duration, animationsEnabled);
+            },
+          );
+        },
+      ),
+    );
+  }
 
-    final chunks = <({List<int> collapsedBefore, int expandedIndex})>[];
-    var pendingCollapsed = <int>[];
+  Widget _buildBody(BoxConstraints constraints, List<Widget> contents, List<String> titles, List<IconData> icons, List<Key> sectionKeys, List<Key> contentKeys, Duration duration, bool animationsEnabled) {
+    final maxHeight = constraints.maxHeight;
 
-    for (var i = 0; i < sections.length; i++) {
-      if (sections[i].collapsed) {
-        pendingCollapsed.add(i);
-      } else {
-        chunks.add((collapsedBefore: pendingCollapsed, expandedIndex: i));
-        pendingCollapsed = <int>[];
-      }
+    // Count dividers based on the TARGET state so the content height stays
+    // stable during the animation (dividers snap out at toggle time).
+    int targetDividers = 0;
+    for (var i = 0; i < 3; i++) {
+      if (_newShares[i] > 0 && _newShares[i + 1] > 0) targetDividers++;
     }
-    final trailingCollapsed = pendingCollapsed;
+    final available = math.max(0.0, maxHeight - 4 * _kHeaderHeight - targetDividers * _kDividerHeight);
 
-    Widget headerFor(int i, {required bool collapsed}) => _SectionHeader(key: sections[i].key, title: sections[i].title, icon: sections[i].icon, collapsed: collapsed, onToggle: sections[i].toggle);
+    var shares = _currentShares();
+    var total = shares.fold<double>(0.0, (a, b) => a + b);
+    if (total > 1.0) {
+      shares = [for (final v in shares) v / total];
+      total = 1.0;
+    }
 
     final children = <Widget>[];
-
-    if (chunks.isEmpty) {
-      // All sections collapsed.
-      for (var i = 0; i < sections.length; i++) {
-        children.add(headerFor(i, collapsed: true));
-      }
-      children.add(const Spacer());
-    } else if (chunks.length == 1) {
-      // Exactly one expanded section.
-      final chunk = chunks[0];
-
-      // Collapsed headers before the expanded one.
-      for (final ci in chunk.collapsedBefore) {
-        children.add(headerFor(ci, collapsed: true));
-      }
-
-      // The expanded section itself.
+    for (var i = 0; i < 4; i++) {
       children.add(
-        Expanded(
-          child: Column(
-            children: [
-              headerFor(chunk.expandedIndex, collapsed: false),
-              Expanded(child: ClipRect(child: sections[chunk.expandedIndex].content)),
-            ],
-          ),
+        SizedBox(
+          height: _kHeaderHeight,
+          child: _SectionHeader(key: sectionKeys[i], title: titles[i], icon: icons[i], collapsed: _collapsed[i], onToggle: () => _toggle(i)),
         ),
       );
 
-      // Trailing collapsed headers.
-      for (final ci in trailingCollapsed) {
-        children.add(headerFor(ci, collapsed: true));
-      }
-    } else {
-      // 2+ expanded sections — use ResizableSplit.
-      //
-      // Leading collapsed headers (before the first expanded section) go
-      // *above* the split. Collapsed headers between expanded sections go
-      // *inside* the split, grouped with the following expanded panel.
-      // Trailing collapsed headers go *below* the split.
+      final windowH = shares[i] * available;
+      // The content is always laid out at its full target height so panels
+      // with fixed UI (e.g. Publish) never overflow at small intermediate
+      // sizes; the animated [windowH] just clips how much is revealed.
+      final fullH = math.max(_oldShares[i], _newShares[i]) * available;
+      final settledCollapsed = _t.value >= 1.0 && _newShares[i] <= 0;
 
-      // Leading collapsed.
-      for (final ci in chunks[0].collapsedBefore) {
-        children.add(headerFor(ci, collapsed: true));
-      }
-
-      // Build one widget per chunk for the ResizableSplit.
-      final panes = <Widget>[];
-      for (var i = 0; i < chunks.length; i++) {
-        final chunk = chunks[i];
-        // First chunk's collapsed headers are already rendered above.
-        final collapsedBefore = i == 0 ? <int>[] : chunk.collapsedBefore;
-        panes.add(
-          Column(
-            children: [
-              for (final ci in collapsedBefore) headerFor(ci, collapsed: true),
-              headerFor(chunk.expandedIndex, collapsed: false),
-              Expanded(child: ClipRect(child: sections[chunk.expandedIndex].content)),
-            ],
+      if (settledCollapsed || fullH <= 0) {
+        children.add(const SizedBox.shrink());
+      } else {
+        children.add(
+          SizedBox(
+            height: windowH,
+            child: ClipRect(
+              key: contentKeys[i],
+              child: OverflowBox(alignment: Alignment.topCenter, minHeight: fullH, maxHeight: fullH, child: contents[i]),
+            ),
           ),
         );
       }
 
-      Widget body;
-      if (panes.length == 2) {
-        body = ResizableSplit(axis: Axis.vertical, initialRatio: 0.5, minRatio: 0.2, maxRatio: 0.8, first: panes[0], second: panes[1]);
-      } else {
-        body = ResizableSplit(
-          axis: Axis.vertical,
-          initialRatio: 0.4,
-          minRatio: 0.15,
-          maxRatio: 0.6,
-          first: panes[0],
-          second: ResizableSplit(axis: Axis.vertical, initialRatio: 0.5, minRatio: 0.2, maxRatio: 0.8, first: panes[1], second: panes[2]),
+      if (i < 3 && _newShares[i] > 0 && _newShares[i + 1] > 0) {
+        children.add(
+          SizedBox(
+            height: _kDividerHeight,
+            child: _SidebarDivider(onDragUpdate: (d) => _onDividerDrag(i, i + 1, d, available)),
+          ),
         );
-      }
-
-      children.add(Expanded(child: body));
-
-      // Trailing collapsed.
-      for (final ci in trailingCollapsed) {
-        children.add(headerFor(ci, collapsed: true));
       }
     }
 
-    final sidebarLayout = Container(
-      key: const Key('detail-sidebar-layout'),
-      color: tokens.bg,
-      child: Column(children: children),
-    );
+    // Absorbs any leftover space (e.g. when fewer panels are open, or during
+    // the collapse of the last open panel) so the headers stay pinned to top.
+    children.add(const Spacer());
 
-    if (!animationsEnabled) return sidebarLayout;
+    return Column(children: children);
+  }
+}
 
-    final layoutState = [_detailCollapsed, _historyCollapsed, _publishCollapsed, _shortcutsCollapsed].map((collapsed) => collapsed ? '1' : '0').join();
-    final duration = sidebarAnimationDurationForSpeed(animationSpeed);
+/// Draggable divider between two adjacent expanded sections.
+class _SidebarDivider extends StatefulWidget {
+  const _SidebarDivider({required this.onDragUpdate});
 
-    return AnimatedSwitcher(
-      key: const Key('detail-sidebar-animation'),
-      duration: duration,
-      reverseDuration: duration,
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeInCubic,
-      transitionBuilder: (child, animation) {
-        final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic, reverseCurve: Curves.easeInCubic);
-        return FadeTransition(
-          opacity: curved,
-          child: SlideTransition(
-            position: Tween<Offset>(begin: const Offset(0, 0.015), end: Offset.zero).animate(curved),
-            child: child,
-          ),
-        );
-      },
-      child: KeyedSubtree(key: ValueKey(layoutState), child: sidebarLayout),
+  final ValueChanged<DragUpdateDetails> onDragUpdate;
+
+  @override
+  State<_SidebarDivider> createState() => _SidebarDividerState();
+}
+
+class _SidebarDividerState extends State<_SidebarDivider> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final lineColor = _hovering ? tokens.primary.withValues(alpha: 0.6) : tokens.border;
+    final gripColor = _hovering ? tokens.primary.withValues(alpha: 0.8) : tokens.border;
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeRow,
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onVerticalDragUpdate: widget.onDragUpdate,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(width: double.infinity, height: 1, color: lineColor),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(color: gripColor, borderRadius: BorderRadius.circular(2)),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -300,12 +332,15 @@ class _SectionHeaderState extends State<_SectionHeader> {
               Expanded(
                 child: Text(
                   widget.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.clip,
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5, color: tokens.textSecondary),
                 ),
               ),
               AnimatedRotation(
                 turns: widget.collapsed ? -0.25 : 0,
                 duration: animationsEnabled ? sidebarAnimationDurationForSpeed(animationSpeed) : Duration.zero,
+                curve: Curves.easeOutCubic,
                 child: Icon(Icons.expand_more_rounded, size: 16, color: tokens.muted),
               ),
             ],

@@ -89,7 +89,7 @@ class UiPanel extends StatelessWidget {
           children: [
             UiSwitchRow(label: s.uiPanelPersistLayout, subtitle: s.uiPanelPersistLayoutSubtitle, value: vm.persistLayout, onChanged: (v) => vm.setPersistLayout(v)),
             UiSwitchRow(label: s.uiPanelSidebarAnimations, subtitle: s.uiPanelSidebarAnimationsSubtitle, value: vm.sidebarAnimationsEnabled, onChanged: (v) => vm.setSidebarAnimationsEnabled(v)),
-            if (vm.sidebarAnimationsEnabled) UiSliderRow(label: s.uiPanelSidebarAnimationSpeed, subtitle: s.uiPanelSidebarAnimationSpeedSubtitle, value: vm.sidebarAnimationSpeed.toDouble(), min: 10, max: 100, divisions: 9, displayValue: '${vm.sidebarAnimationSpeed}%', accent: accent, onChanged: (v) => vm.setSidebarAnimationSpeed(v.round())),
+            if (vm.sidebarAnimationsEnabled) UiSliderRow(label: s.uiPanelSidebarAnimationSpeed, subtitle: s.uiPanelSidebarAnimationSpeedSubtitle, value: vm.sidebarAnimationSpeed.toDouble(), min: 0, max: 100, divisions: 10, displayValue: '${vm.sidebarAnimationSpeed}%', accent: accent, onChanged: (v) => vm.setSidebarAnimationSpeed(v.round())),
           ],
         ),
 
