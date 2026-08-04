@@ -4,7 +4,20 @@ import 'package:flutter/widgets.dart';
 
 import '../generated/l10n.dart';
 
-const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const _months = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 
 /// Validates a JSON string and returns a human-readable error, or `null` if
 /// the string is valid (or empty).
@@ -23,6 +36,16 @@ String? validateJson(String text) {
       return 'Ln $line, Col $col — ${e.message}';
     }
     return e.message;
+  }
+}
+
+/// Pretty-prints valid JSON payloads for the clipboard. Non-JSON content is
+/// returned byte-for-byte unchanged.
+String formatPayloadForClipboard(String payload) {
+  try {
+    return const JsonEncoder.withIndent('  ').convert(jsonDecode(payload));
+  } on FormatException {
+    return payload;
   }
 }
 
@@ -45,7 +68,9 @@ String formatTimestamp(DateTime dt, {bool verbose = true}) {
   }
 
   final yesterday = now.subtract(const Duration(days: 1));
-  if (dt.year == yesterday.year && dt.month == yesterday.month && dt.day == yesterday.day) {
+  if (dt.year == yesterday.year &&
+      dt.month == yesterday.month &&
+      dt.day == yesterday.day) {
     return 'Yesterday$sep$time';
   }
 
