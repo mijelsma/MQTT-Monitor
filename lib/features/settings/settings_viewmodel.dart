@@ -210,6 +210,12 @@ class SettingsViewModel extends ChangeNotifier {
   bool get persistLayout => _state.read(SettingsKeys.persistLayout);
   void setPersistLayout(bool v) => _state.write(SettingsKeys.persistLayout, v);
 
+  bool get sidebarAnimationsEnabled => _state.read(SettingsKeys.sidebarAnimationsEnabled);
+  void setSidebarAnimationsEnabled(bool v) => _state.write(SettingsKeys.sidebarAnimationsEnabled, v);
+
+  int get sidebarAnimationSpeed => _state.read(SettingsKeys.sidebarAnimationSpeed).clamp(10, 100).toInt();
+  void setSidebarAnimationSpeed(int v) => _state.write(SettingsKeys.sidebarAnimationSpeed, v.clamp(10, 100).toInt());
+
   int get rateIntervalMs => _state.read(SettingsKeys.rateIntervalMs);
   void setRateIntervalMs(int v) => _state.write(SettingsKeys.rateIntervalMs, v);
 

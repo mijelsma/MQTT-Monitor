@@ -5,6 +5,7 @@ import 'package:mqtt_monitor/core/history/message_history_service.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_service.dart';
 import 'package:mqtt_monitor/core/state/app_state.dart';
 import 'package:mqtt_monitor/core/state/keys/layout_keys.dart';
+import 'package:mqtt_monitor/core/state/keys/settings_keys.dart';
 import 'package:mqtt_monitor/features/monitor/monitor_viewmodel.dart';
 import 'package:mqtt_monitor/features/monitor/publish_draft_controller.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/detail_sidebar.dart';
@@ -100,6 +101,76 @@ void main() {
     expect(draft.qos, 2);
     expect(draft.retain, isTrue);
   }
+
+  test('sidebar speed maps to a short, bounded animation duration', () {
+    expect(
+      sidebarAnimationDurationForSpeed(0),
+      const Duration(milliseconds: 250),
+    );
+    expect(
+      sidebarAnimationDurationForSpeed(60),
+      const Duration(milliseconds: 160),
+    );
+    expect(
+      sidebarAnimationDurationForSpeed(100),
+      const Duration(milliseconds: 100),
+    );
+    expect(
+      sidebarAnimationDurationForSpeed(200),
+      const Duration(milliseconds: 100),
+    );
+  });
+
+  testWidgets('sidebar panels animate at the configured speed', (tester) async {
+    await state.write(SettingsKeys.sidebarAnimationsEnabled, true);
+    await state.write(SettingsKeys.sidebarAnimationSpeed, 100);
+    await pumpSidebar(
+      tester,
+      expandedSibling: const Key('history-section-toggle'),
+    );
+
+    final switcher = tester.widget<AnimatedSwitcher>(
+      find.byKey(const Key('detail-sidebar-animation')),
+    );
+    expect(switcher.duration, const Duration(milliseconds: 100));
+    expect(find.byType(AnimatedRotation), findsNWidgets(4));
+    expect(
+      tester
+          .widgetList<AnimatedRotation>(find.byType(AnimatedRotation))
+          .every(
+            (rotation) =>
+                rotation.duration == const Duration(milliseconds: 100),
+          ),
+      isTrue,
+    );
+
+    await tester.tap(find.byKey(const Key('history-section-toggle')));
+    await tester.pump();
+    expect(find.byKey(const Key('detail-sidebar-layout')), findsNWidgets(2));
+
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('detail-sidebar-layout')), findsOneWidget);
+  });
+
+  testWidgets('sidebar panel animation can be disabled', (tester) async {
+    await state.write(SettingsKeys.sidebarAnimationsEnabled, false);
+    await pumpSidebar(
+      tester,
+      expandedSibling: const Key('history-section-toggle'),
+    );
+
+    expect(find.byKey(const Key('detail-sidebar-animation')), findsNothing);
+    expect(find.byType(AnimatedRotation), findsNWidgets(4));
+    expect(
+      tester
+          .widgetList<AnimatedRotation>(find.byType(AnimatedRotation))
+          .every((rotation) => rotation.duration == Duration.zero),
+      isTrue,
+    );
+    await tester.tap(find.byKey(const Key('history-section-toggle')));
+    await tester.pump();
+    expect(find.byKey(const Key('detail-sidebar-layout')), findsOneWidget);
+  });
 
   for (final sibling in <({Key key, String name})>[
     (key: const Key('detail-section-toggle'), name: 'message detail'),

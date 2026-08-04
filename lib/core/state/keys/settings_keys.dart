@@ -22,6 +22,8 @@ abstract final class SettingsKeys {
   static final pulseRatePps = StateKey.integer('settings.pulseRatePps', defaultValue: 15);
   static final pulseFadeMs = StateKey.integer('settings.pulseFadeMs', defaultValue: 500);
   static final persistLayout = StateKey.boolean('settings.persistLayout', defaultValue: true);
+  static final sidebarAnimationsEnabled = StateKey.boolean('settings.sidebarAnimationsEnabled', defaultValue: true);
+  static final sidebarAnimationSpeed = StateKey.integer('settings.sidebarAnimationSpeed', defaultValue: 60);
 
   // Environment variables
   static final environmentVariables = StateKey.fromJson<List<EnvironmentVariable>>('settings.environmentVariables', defaultValue: const [], toJson: (list) => list.map((e) => e.toJson()).toList(), fromJson: (raw) => (raw as List).map((e) => EnvironmentVariable.fromJson(e as Map<String, dynamic>)).toList());
@@ -56,6 +58,8 @@ abstract final class SettingsKeys {
     pulseRatePps,
     pulseFadeMs,
     persistLayout,
+    sidebarAnimationsEnabled,
+    sidebarAnimationSpeed,
     rateIntervalMs,
     startupConnection,
     defaultDotSize,

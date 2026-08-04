@@ -454,6 +454,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "uiPanelShowStatusBarSubtitle": MessageLookupByLibrary.simpleMessage(
       "Shows the bottom status bar",
     ),
+    "uiPanelSidebarAnimationSpeed": MessageLookupByLibrary.simpleMessage(
+      "Panel animation speed",
+    ),
+    "uiPanelSidebarAnimationSpeedSubtitle":
+        MessageLookupByLibrary.simpleMessage(
+          "How quickly right sidebar panels move",
+        ),
+    "uiPanelSidebarAnimations": MessageLookupByLibrary.simpleMessage(
+      "Right panel animations",
+    ),
+    "uiPanelSidebarAnimationsSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Animate panels when they expand or collapse",
+    ),
     "uiPanelStartupBehavior": MessageLookupByLibrary.simpleMessage(
       "Startup Behavior",
     ),

@@ -1119,6 +1119,46 @@ class S {
     );
   }
 
+  /// `Right panel animations`
+  String get uiPanelSidebarAnimations {
+    return Intl.message(
+      'Right panel animations',
+      name: 'uiPanelSidebarAnimations',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Animate panels when they expand or collapse`
+  String get uiPanelSidebarAnimationsSubtitle {
+    return Intl.message(
+      'Animate panels when they expand or collapse',
+      name: 'uiPanelSidebarAnimationsSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Panel animation speed`
+  String get uiPanelSidebarAnimationSpeed {
+    return Intl.message(
+      'Panel animation speed',
+      name: 'uiPanelSidebarAnimationSpeed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `How quickly right sidebar panels move`
+  String get uiPanelSidebarAnimationSpeedSubtitle {
+    return Intl.message(
+      'How quickly right sidebar panels move',
+      name: 'uiPanelSidebarAnimationSpeedSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Connection`
   String get uiPanelSectionConnection {
     return Intl.message(

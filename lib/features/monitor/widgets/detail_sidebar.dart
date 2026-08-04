@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/state/app_state.dart';
 import '../../../core/state/keys/layout_keys.dart';
+import '../../../core/state/keys/settings_keys.dart';
 import '../../../generated/l10n.dart';
 import '../../../models/topic_node_value.dart';
 import '../../../shared/widgets/resizable_split.dart';
@@ -13,6 +14,12 @@ import 'history_panel.dart';
 import 'message_detail_panel.dart';
 import 'publish_panel.dart';
 import 'shortcuts_panel.dart';
+
+/// Maps the user-facing 0–100% speed setting to a short 250–100 ms duration.
+Duration sidebarAnimationDurationForSpeed(int speed) {
+  final clampedSpeed = speed.clamp(0, 100);
+  return Duration(milliseconds: 250 - (clampedSpeed * 1.5).round());
+}
 
 /// The right-hand sidebar showing the selected message detail, history, and publish panel.
 class DetailSidebar extends StatefulWidget {
@@ -46,6 +53,12 @@ class _DetailSidebarState extends State<DetailSidebar> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final vm = context.watch<MonitorViewModel>();
+    final animationsEnabled = context.select<AppStateManager, bool>(
+      (state) => state.read(SettingsKeys.sidebarAnimationsEnabled),
+    );
+    final animationSpeed = context.select<AppStateManager, int>(
+      (state) => state.read(SettingsKeys.sidebarAnimationSpeed),
+    );
     final selected = vm.selectedNode;
 
     // Clear history selection when topic changes.
@@ -259,9 +272,46 @@ class _DetailSidebarState extends State<DetailSidebar> {
       }
     }
 
-    return Container(
+    final sidebarLayout = Container(
+      key: const Key('detail-sidebar-layout'),
       color: tokens.bg,
       child: Column(children: children),
+    );
+
+    if (!animationsEnabled) return sidebarLayout;
+
+    final layoutState = [
+      _detailCollapsed,
+      _historyCollapsed,
+      _publishCollapsed,
+      _shortcutsCollapsed,
+    ].map((collapsed) => collapsed ? '1' : '0').join();
+    final duration = sidebarAnimationDurationForSpeed(animationSpeed);
+
+    return AnimatedSwitcher(
+      key: const Key('detail-sidebar-animation'),
+      duration: duration,
+      reverseDuration: duration,
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.easeInCubic,
+        );
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.015),
+              end: Offset.zero,
+            ).animate(curved),
+            child: child,
+          ),
+        );
+      },
+      child: KeyedSubtree(key: ValueKey(layoutState), child: sidebarLayout),
     );
   }
 }
@@ -291,6 +341,12 @@ class _SectionHeaderState extends State<_SectionHeader> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final animationsEnabled = context.select<AppStateManager, bool>(
+      (state) => state.read(SettingsKeys.sidebarAnimationsEnabled),
+    );
+    final animationSpeed = context.select<AppStateManager, int>(
+      (state) => state.read(SettingsKeys.sidebarAnimationSpeed),
+    );
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovering = true),
@@ -324,7 +380,9 @@ class _SectionHeaderState extends State<_SectionHeader> {
               ),
               AnimatedRotation(
                 turns: widget.collapsed ? -0.25 : 0,
-                duration: const Duration(milliseconds: 200),
+                duration: animationsEnabled
+                    ? sidebarAnimationDurationForSpeed(animationSpeed)
+                    : Duration.zero,
                 child: Icon(
                   Icons.expand_more_rounded,
                   size: 16,
