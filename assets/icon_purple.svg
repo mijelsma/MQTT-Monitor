@@ -1,0 +1,95 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background: deep, near-black gradient -->
+    <linearGradient id="bgGradient" x1="15%" y1="0%" x2="85%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0d"/>
+      <stop offset="40%" stop-color="#141116"/>
+      <stop offset="75%" stop-color="#1c1522"/>
+      <stop offset="100%" stop-color="#060507"/>
+    </linearGradient>
+
+    <!-- Soft top-down sheen across whole tile -->
+    <linearGradient id="tileSheen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.16"/>
+      <stop offset="12%" stop-color="#ffffff" stop-opacity="0.04"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0.14"/>
+    </linearGradient>
+
+    <!-- Letter gradient: cool indigo to deep violet, glass-like -->
+    <linearGradient id="fGradient" x1="10%" y1="0%" x2="90%" y2="100%">
+      <stop offset="0%" stop-color="#a5b4fc"/>
+      <stop offset="30%" stop-color="#7c6cf0"/>
+      <stop offset="65%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#3b0f7a"/>
+    </linearGradient>
+
+    <!-- Bright specular highlight streak across the letter -->
+    <linearGradient id="fSpecular" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.65"/>
+      <stop offset="30%" stop-color="#ffffff" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Drop shadow to lift the letter off the background -->
+    <filter id="fShadow" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#000000" flood-opacity="0.55"/>
+      <feDropShadow dx="0" dy="1" stdDeviation="1" flood-color="#ffffff" flood-opacity="0.3"/>
+    </filter>
+
+    <clipPath id="tileClip">
+      <rect x="0" y="0" width="512" height="512" rx="112" ry="112"/>
+    </clipPath>
+
+    <clipPath id="fClip">
+      <path d="
+        M 172 122
+        H 362
+        V 180
+        H 234
+        V 236
+        H 340
+        V 294
+        H 234
+        V 390
+        H 172
+        Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- App icon background with rounded corners -->
+  <g clip-path="url(#tileClip)">
+    <rect x="0" y="0" width="512" height="512" fill="url(#bgGradient)"/>
+
+    <!-- subtle inner rim shadow for a pressed-glass edge -->
+    <rect x="0" y="0" width="512" height="512" fill="none" stroke="#000000" stroke-opacity="0.25" stroke-width="6"/>
+
+    <!-- Upside-down letter F, glass material, lifted above the background -->
+    <g filter="url(#fShadow)" transform="translate(0,512) scale(1,-1)">
+      <path d="
+        M 172 122
+        H 362
+        V 180
+        H 234
+        V 236
+        H 340
+        V 294
+        H 234
+        V 390
+        H 172
+        Z"
+        fill="url(#fGradient)"
+        stroke="#ffffff"
+        stroke-opacity="0.35"
+        stroke-width="2"
+      />
+      <!-- specular highlight streak clipped to the letter shape -->
+      <g clip-path="url(#fClip)">
+        <ellipse cx="200" cy="360" rx="140" ry="60" fill="url(#fSpecular)" transform="rotate(-20 200 360)"/>
+      </g>
+    </g>
+
+    <!-- overall glass sheen across the tile, on top of everything -->
+    <rect x="0" y="0" width="512" height="512" fill="url(#tileSheen)"/>
+  </g>
+</svg>
