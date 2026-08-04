@@ -54,14 +54,30 @@ class _DetailSidebarState extends State<DetailSidebar> {
       _selectedHistoryValue = null;
     }
 
-    final detailContent = selected != null ? MessageDetailPanel(key: ValueKey(selected.fullPath), node: selected, selectedHistory: _selectedHistoryValue, onClearSelection: () => setState(() => _selectedHistoryValue = null)) : const _NoSelection();
-    final historyContent = selected != null ? HistoryPanel(key: ValueKey('history_${selected.fullPath}'), node: selected, selectedValue: _selectedHistoryValue, onSelect: (value) => setState(() => _selectedHistoryValue = value)) : const _NoSelection();
+    final detailContent = selected != null
+        ? MessageDetailPanel(
+            key: ValueKey(selected.fullPath),
+            node: selected,
+            selectedHistory: _selectedHistoryValue,
+            onClearSelection: () =>
+                setState(() => _selectedHistoryValue = null),
+          )
+        : const _NoSelection();
+    final historyContent = selected != null
+        ? HistoryPanel(
+            key: ValueKey('history_${selected.fullPath}'),
+            node: selected,
+            selectedValue: _selectedHistoryValue,
+            onSelect: (value) => setState(() => _selectedHistoryValue = value),
+          )
+        : const _NoSelection();
 
     // Fixed-order section definitions — order never changes.
     final s = S.of(context);
     final state = context.read<AppStateManager>();
     final sections = [
       (
+        key: const Key('detail-section-toggle'),
         collapsed: _detailCollapsed,
         title: s.sidebarMessageDetail,
         icon: Icons.info_outline_rounded,
@@ -72,6 +88,7 @@ class _DetailSidebarState extends State<DetailSidebar> {
         }),
       ),
       (
+        key: const Key('history-section-toggle'),
         collapsed: _historyCollapsed,
         title: s.sidebarHistory,
         icon: Icons.history_rounded,
@@ -82,6 +99,7 @@ class _DetailSidebarState extends State<DetailSidebar> {
         }),
       ),
       (
+        key: const Key('publish-section-toggle'),
         collapsed: _publishCollapsed,
         title: s.sidebarPublish,
         icon: Icons.send_rounded,
@@ -92,13 +110,17 @@ class _DetailSidebarState extends State<DetailSidebar> {
         }),
       ),
       (
+        key: const Key('shortcuts-section-toggle'),
         collapsed: _shortcutsCollapsed,
         title: s.sidebarShortcuts,
         icon: Icons.bolt_rounded,
         content: const ShortcutsPanel(),
         toggle: () => setState(() {
           _shortcutsCollapsed = !_shortcutsCollapsed;
-          state.write(LayoutKeys.sidebarShortcutsCollapsed, _shortcutsCollapsed);
+          state.write(
+            LayoutKeys.sidebarShortcutsCollapsed,
+            _shortcutsCollapsed,
+          );
         }),
       ),
     ];
@@ -126,7 +148,13 @@ class _DetailSidebarState extends State<DetailSidebar> {
     }
     final trailingCollapsed = pendingCollapsed;
 
-    Widget headerFor(int i, {required bool collapsed}) => _SectionHeader(title: sections[i].title, icon: sections[i].icon, collapsed: collapsed, onToggle: sections[i].toggle);
+    Widget headerFor(int i, {required bool collapsed}) => _SectionHeader(
+      key: sections[i].key,
+      title: sections[i].title,
+      icon: sections[i].icon,
+      collapsed: collapsed,
+      onToggle: sections[i].toggle,
+    );
 
     final children = <Widget>[];
 
@@ -151,7 +179,9 @@ class _DetailSidebarState extends State<DetailSidebar> {
           child: Column(
             children: [
               headerFor(chunk.expandedIndex, collapsed: false),
-              Expanded(child: ClipRect(child: sections[chunk.expandedIndex].content)),
+              Expanded(
+                child: ClipRect(child: sections[chunk.expandedIndex].content),
+              ),
             ],
           ),
         ),
@@ -185,7 +215,9 @@ class _DetailSidebarState extends State<DetailSidebar> {
             children: [
               for (final ci in collapsedBefore) headerFor(ci, collapsed: true),
               headerFor(chunk.expandedIndex, collapsed: false),
-              Expanded(child: ClipRect(child: sections[chunk.expandedIndex].content)),
+              Expanded(
+                child: ClipRect(child: sections[chunk.expandedIndex].content),
+              ),
             ],
           ),
         );
@@ -193,7 +225,14 @@ class _DetailSidebarState extends State<DetailSidebar> {
 
       Widget body;
       if (panes.length == 2) {
-        body = ResizableSplit(axis: Axis.vertical, initialRatio: 0.5, minRatio: 0.2, maxRatio: 0.8, first: panes[0], second: panes[1]);
+        body = ResizableSplit(
+          axis: Axis.vertical,
+          initialRatio: 0.5,
+          minRatio: 0.2,
+          maxRatio: 0.8,
+          first: panes[0],
+          second: panes[1],
+        );
       } else {
         body = ResizableSplit(
           axis: Axis.vertical,
@@ -201,7 +240,14 @@ class _DetailSidebarState extends State<DetailSidebar> {
           minRatio: 0.15,
           maxRatio: 0.6,
           first: panes[0],
-          second: ResizableSplit(axis: Axis.vertical, initialRatio: 0.5, minRatio: 0.2, maxRatio: 0.8, first: panes[1], second: panes[2]),
+          second: ResizableSplit(
+            axis: Axis.vertical,
+            initialRatio: 0.5,
+            minRatio: 0.2,
+            maxRatio: 0.8,
+            first: panes[1],
+            second: panes[2],
+          ),
         );
       }
 
@@ -222,7 +268,13 @@ class _DetailSidebarState extends State<DetailSidebar> {
 
 /// Collapsible section header for the sidebar.
 class _SectionHeader extends StatefulWidget {
-  const _SectionHeader({required this.title, required this.icon, required this.collapsed, required this.onToggle});
+  const _SectionHeader({
+    super.key,
+    required this.title,
+    required this.icon,
+    required this.collapsed,
+    required this.onToggle,
+  });
 
   final String title;
   final IconData icon;
@@ -251,7 +303,9 @@ class _SectionHeaderState extends State<_SectionHeader> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: _hovering ? tokens.elevated : tokens.surface,
-            border: Border(bottom: BorderSide(color: tokens.border, width: 0.5)),
+            border: Border(
+              bottom: BorderSide(color: tokens.border, width: 0.5),
+            ),
           ),
           child: Row(
             children: [
@@ -260,13 +314,22 @@ class _SectionHeaderState extends State<_SectionHeader> {
               Expanded(
                 child: Text(
                   widget.title,
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5, color: tokens.textSecondary),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                    color: tokens.textSecondary,
+                  ),
                 ),
               ),
               AnimatedRotation(
                 turns: widget.collapsed ? -0.25 : 0,
                 duration: const Duration(milliseconds: 200),
-                child: Icon(Icons.expand_more_rounded, size: 16, color: tokens.muted),
+                child: Icon(
+                  Icons.expand_more_rounded,
+                  size: 16,
+                  color: tokens.muted,
+                ),
               ),
             ],
           ),
@@ -281,6 +344,10 @@ class _NoSelection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return UiEmptyState.compact(icon: Icons.touch_app_rounded, title: S.of(context).sidebarNoSelectionTitle, message: S.of(context).sidebarNoSelectionSubtitle);
+    return UiEmptyState.compact(
+      icon: Icons.touch_app_rounded,
+      title: S.of(context).sidebarNoSelectionTitle,
+      message: S.of(context).sidebarNoSelectionSubtitle,
+    );
   }
 }
