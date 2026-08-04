@@ -38,35 +38,15 @@ class BrokerEntry {
   final List<SubscriptionEntry> subscriptions;
 
   String get effectiveClientId {
-    final base = (clientId != null && clientId!.isNotEmpty)
-        ? clientId!
-        : 'mqtt_monitor';
+    final base = (clientId != null && clientId!.isNotEmpty) ? clientId! : 'mqtt_monitor';
     if (!randomClientIdSuffix) return base;
-    final hex = Random()
-        .nextInt(0xFFFFFF)
-        .toRadixString(16)
-        .toUpperCase()
-        .padLeft(6, '0');
+    final hex = Random().nextInt(0xFFFFFF).toRadixString(16).toUpperCase().padLeft(6, '0');
     return '${base}_$hex';
   }
 
   String get displayAddress => '${useSSL ? 'mqtts' : 'mqtt'}://$host:$port';
 
-  BrokerEntry copyWith({
-    String? name,
-    String? host,
-    int? port,
-    MqttProtocolVersion? protocolVersion,
-    ClientCertificateConfig? clientCertificates,
-    bool? useSSL,
-    bool? validateCertificates,
-    String? username,
-    String? password,
-    String? clientId,
-    bool? randomClientIdSuffix,
-    int? colorIndex,
-    List<SubscriptionEntry>? subscriptions,
-  }) {
+  BrokerEntry copyWith({String? name, String? host, int? port, MqttProtocolVersion? protocolVersion, ClientCertificateConfig? clientCertificates, bool? useSSL, bool? validateCertificates, String? username, String? password, String? clientId, bool? randomClientIdSuffix, int? colorIndex, List<SubscriptionEntry>? subscriptions}) {
     return BrokerEntry(
       id: id,
       name: name ?? this.name,
@@ -90,15 +70,8 @@ class BrokerEntry {
     name: json['name'] as String? ?? '',
     host: json['host'] as String? ?? '',
     port: json['port'] as int? ?? 1883,
-    protocolVersion: MqttProtocolVersion.values.firstWhere(
-      (value) => value.name == json['protocolVersion'],
-      orElse: () => MqttProtocolVersion.v311,
-    ),
-    clientCertificates: json['clientCertificates'] is Map<String, dynamic>
-        ? ClientCertificateConfig.fromJson(
-            json['clientCertificates'] as Map<String, dynamic>,
-          )
-        : const ClientCertificateConfig(),
+    protocolVersion: MqttProtocolVersion.values.firstWhere((value) => value.name == json['protocolVersion'], orElse: () => MqttProtocolVersion.v311),
+    clientCertificates: json['clientCertificates'] is Map<String, dynamic> ? ClientCertificateConfig.fromJson(json['clientCertificates'] as Map<String, dynamic>) : const ClientCertificateConfig(),
     useSSL: json['useSSL'] as bool? ?? false,
     validateCertificates: json['validateCertificates'] as bool? ?? true,
     username: json['username'] as String?,
@@ -106,9 +79,7 @@ class BrokerEntry {
     clientId: json['clientId'] as String?,
     randomClientIdSuffix: json['randomClientIdSuffix'] as bool? ?? true,
     colorIndex: json['colorIndex'] as int? ?? 0,
-    subscriptions: (json['subscriptions'] as List<dynamic>? ?? [])
-        .map((e) => SubscriptionEntry.fromJson(e as Map<String, dynamic>))
-        .toList(),
+    subscriptions: (json['subscriptions'] as List<dynamic>? ?? []).map((e) => SubscriptionEntry.fromJson(e as Map<String, dynamic>)).toList(),
   );
 
   Map<String, dynamic> toJson() => {
@@ -117,8 +88,7 @@ class BrokerEntry {
     'host': host,
     'port': port,
     'protocolVersion': protocolVersion.name,
-    if (!clientCertificates.isEmpty)
-      'clientCertificates': clientCertificates.toJson(),
+    if (!clientCertificates.isEmpty) 'clientCertificates': clientCertificates.toJson(),
     'useSSL': useSSL,
     'validateCertificates': validateCertificates,
     if (username != null) 'username': username,

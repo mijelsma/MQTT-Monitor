@@ -8,11 +8,9 @@ import '../../theme/app_tokens/app_tokens.dart';
 /// A small icon button that copies [text] to the clipboard and briefly
 /// shows a checkmark to confirm the action.
 class CopyButton extends StatefulWidget {
-  const CopyButton({super.key, required this.text, this.size = 16})
-    : _isPayload = false;
+  const CopyButton({super.key, required this.text, this.size = 16}) : _isPayload = false;
 
-  const CopyButton.payload({super.key, required this.text, this.size = 16})
-    : _isPayload = true;
+  const CopyButton.payload({super.key, required this.text, this.size = 16}) : _isPayload = true;
 
   final String text;
   final double size;
@@ -27,9 +25,7 @@ class _CopyButtonState extends State<CopyButton> {
   bool _hovering = false;
 
   void _copy() async {
-    final text = widget._isPayload
-        ? formatPayloadForClipboard(widget.text)
-        : widget.text;
+    final text = widget._isPayload ? formatPayloadForClipboard(widget.text) : widget.text;
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
     setState(() => _copied = true);
@@ -58,12 +54,7 @@ class _CopyButtonState extends State<CopyButton> {
           padding: const EdgeInsets.all(4),
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 150),
-            child: Icon(
-              _copied ? Icons.check_rounded : Icons.copy_rounded,
-              key: ValueKey(_copied),
-              size: widget.size,
-              color: color,
-            ),
+            child: Icon(_copied ? Icons.check_rounded : Icons.copy_rounded, key: ValueKey(_copied), size: widget.size, color: color),
           ),
         ),
       ),

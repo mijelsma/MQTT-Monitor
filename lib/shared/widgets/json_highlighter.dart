@@ -22,13 +22,7 @@ typedef JsonPinCallback = void Function(String keyPath, String label);
 /// JSON text and is reused by the publish-panel's editable controller so
 /// there is exactly *one* tokeniser for the entire app.
 class JsonHighlighter extends StatelessWidget {
-  const JsonHighlighter({
-    super.key,
-    required this.source,
-    this.prettyPrint = true,
-    this.onPin,
-    this.selectable = true,
-  });
+  const JsonHighlighter({super.key, required this.source, this.prettyPrint = true, this.onPin, this.selectable = true});
 
   final String source;
 
@@ -63,15 +57,8 @@ class JsonHighlighter extends StatelessWidget {
     if (prettyPrint) {
       parsed = _tryParse(source);
       if (parsed == null) {
-        final style = TextStyle(
-          fontFamily: 'SF Mono, Menlo, monospace',
-          fontSize: 12.5,
-          height: 1.5,
-          color: tokens.textPrimary,
-        );
-        return selectable
-            ? SelectableText(source, style: style)
-            : Text(source, style: style);
+        final style = TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 12.5, height: 1.5, color: tokens.textPrimary);
+        return selectable ? SelectableText(source, style: style) : Text(source, style: style);
       }
       displayText = const JsonEncoder.withIndent('    ').convert(parsed);
     }
@@ -81,26 +68,15 @@ class JsonHighlighter extends StatelessWidget {
     // No pin callback → simple selectable text (original behaviour).
     if (onPin == null || parsed == null) {
       final span = TextSpan(children: spans);
-      final style = TextStyle(
-        fontFamily: 'SF Mono, Menlo, monospace',
-        fontSize: 12.5,
-        height: 1.5,
-        color: tokens.textPrimary,
-      );
-      return selectable
-          ? SelectableText.rich(span, style: style)
-          : Text.rich(span, style: style);
+      final style = TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 12.5, height: 1.5, color: tokens.textPrimary);
+      return selectable ? SelectableText.rich(span, style: style) : Text.rich(span, style: style);
     }
 
     // Build a line-indexed map of pinnable key paths, then render per-line
     // rows so we can prepend a small icon without disturbing the formatting.
     final pinnableLines = _buildPinnableLineMap(parsed, displayText);
     final lineSpans = _splitSpansByLine(spans);
-    const baseStyle = TextStyle(
-      fontFamily: 'SF Mono, Menlo, monospace',
-      fontSize: 12.5,
-      height: 1.5,
-    );
+    const baseStyle = TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 12.5, height: 1.5);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,15 +133,10 @@ class JsonHighlighter extends StatelessWidget {
   }
 
   /// Maps line numbers (0-based) to key-path info for lines holding a numeric value.
-  static Map<int, _PinnableInfo> _buildPinnableLineMap(
-    Object parsed,
-    String prettyJson,
-  ) {
+  static Map<int, _PinnableInfo> _buildPinnableLineMap(Object parsed, String prettyJson) {
     final result = <int, _PinnableInfo>{};
     final lines = prettyJson.split('\n');
-    final numPattern = RegExp(
-      r'^\s*"([^"]+)"\s*:\s*(-?\d+\.?\d*([eE][+-]?\d+)?)\s*,?\s*$',
-    );
+    final numPattern = RegExp(r'^\s*"([^"]+)"\s*:\s*(-?\d+\.?\d*([eE][+-]?\d+)?)\s*,?\s*$');
     final pathStack = <String>[];
     // Track the current array index at each nesting level that is an array.
     // When we push an array marker, we store the running index here.
@@ -261,9 +232,7 @@ class JsonHighlighter extends StatelessWidget {
             }
           }
           final parentKey = pathStack.isNotEmpty ? pathStack.last : '';
-          final label = parentKey.isNotEmpty
-              ? '$parentKey[$currentIndex]'
-              : '[$currentIndex]';
+          final label = parentKey.isNotEmpty ? '$parentKey[$currentIndex]' : '[$currentIndex]';
           result[i] = _PinnableInfo(keyPath: segments.join('.'), label: label);
         }
       }
@@ -367,12 +336,7 @@ class JsonHighlighter extends StatelessWidget {
         continue;
       }
 
-      if (c == '{' ||
-          c == '}' ||
-          c == '[' ||
-          c == ']' ||
-          c == ':' ||
-          c == ',') {
+      if (c == '{' || c == '}' || c == '[' || c == ']' || c == ':' || c == ',') {
         flushBuffer();
         spans.add(
           TextSpan(

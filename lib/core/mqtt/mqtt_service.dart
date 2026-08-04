@@ -19,34 +19,16 @@ import 'connection_status.dart';
 import 'mqtt_message.dart';
 import 'mqtt_reason.dart';
 
-typedef Mqtt3ClientFactory =
-    mqtt3_server.MqttServerClient Function(BrokerEntry broker);
-typedef Mqtt5ClientFactory =
-    mqtt5_server.MqttServerClient Function(BrokerEntry broker);
+typedef Mqtt3ClientFactory = mqtt3_server.MqttServerClient Function(BrokerEntry broker);
+typedef Mqtt5ClientFactory = mqtt5_server.MqttServerClient Function(BrokerEntry broker);
 
 /// Service responsible for managing the MQTT connection and message flow.
 class MqttService {
   // Constructor takes the app state manager to read settings and update connection status.
-  MqttService(
-    this._state, {
-    ClientCertificateService? certificateService,
-    Mqtt3ClientFactory? mqtt3ClientFactory,
-    Mqtt5ClientFactory? mqtt5ClientFactory,
-  }) : _certificateService = certificateService ?? ClientCertificateService(),
-       _mqtt3ClientFactory =
-           mqtt3ClientFactory ??
-           ((broker) => mqtt3_server.MqttServerClient.withPort(
-             broker.host,
-             broker.effectiveClientId,
-             broker.port,
-           )),
-       _mqtt5ClientFactory =
-           mqtt5ClientFactory ??
-           ((broker) => mqtt5_server.MqttServerClient.withPort(
-             broker.host,
-             broker.effectiveClientId,
-             broker.port,
-           ));
+  MqttService(this._state, {ClientCertificateService? certificateService, Mqtt3ClientFactory? mqtt3ClientFactory, Mqtt5ClientFactory? mqtt5ClientFactory})
+    : _certificateService = certificateService ?? ClientCertificateService(),
+      _mqtt3ClientFactory = mqtt3ClientFactory ?? ((broker) => mqtt3_server.MqttServerClient.withPort(broker.host, broker.effectiveClientId, broker.port)),
+      _mqtt5ClientFactory = mqtt5ClientFactory ?? ((broker) => mqtt5_server.MqttServerClient.withPort(broker.host, broker.effectiveClientId, broker.port));
 
   // Reference to the app state manager for reading settings and updating connection status.
   final AppStateManager _state;
@@ -83,58 +65,37 @@ class MqttService {
 
   /// Publishes a message to the given topic.
   /// Returns `true` if the message was sent, `false` if the client is not connected.
-  bool publish(
-    String topic,
-    String payload, {
-    int qos = 0,
-    bool retain = false,
-  }) {
+  bool publish(String topic, String payload, {int qos = 0, bool retain = false}) {
     if (_activeProtocol == MqttProtocolVersion.v5) {
       final client = _client5;
-      if (client == null ||
-          client.connectionStatus?.state !=
-              mqtt5.MqttConnectionState.connected) {
+      if (client == null || client.connectionStatus?.state != mqtt5.MqttConnectionState.connected) {
         return false;
       }
       final builder = mqtt5.MqttPayloadBuilder()..addString(payload);
-      client.publishMessage(
-        topic,
-        _mqtt5Qos(qos),
-        builder.payload!,
-        retain: retain,
-      );
+      client.publishMessage(topic, _mqtt5Qos(qos), builder.payload!, retain: retain);
       return true;
     }
 
     final client = _client3;
-    if (client == null ||
-        client.connectionStatus?.state != mqtt3.MqttConnectionState.connected) {
+    if (client == null || client.connectionStatus?.state != mqtt3.MqttConnectionState.connected) {
       return false;
     }
     final builder = mqtt3.MqttClientPayloadBuilder()..addString(payload);
-    client.publishMessage(
-      topic,
-      _mqtt3Qos(qos),
-      builder.payload!,
-      retain: retain,
-    );
+    client.publishMessage(topic, _mqtt3Qos(qos), builder.payload!, retain: retain);
     return true;
   }
 
   bool subscribe(String topic, {int qos = 0}) {
     if (_activeProtocol == MqttProtocolVersion.v5) {
       final client = _client5;
-      if (client == null ||
-          client.connectionStatus?.state !=
-              mqtt5.MqttConnectionState.connected) {
+      if (client == null || client.connectionStatus?.state != mqtt5.MqttConnectionState.connected) {
         return false;
       }
       client.subscribe(topic, _mqtt5Qos(qos));
       return true;
     }
     final client = _client3;
-    if (client == null ||
-        client.connectionStatus?.state != mqtt3.MqttConnectionState.connected) {
+    if (client == null || client.connectionStatus?.state != mqtt3.MqttConnectionState.connected) {
       return false;
     }
     client.subscribe(topic, _mqtt3Qos(qos));
@@ -144,17 +105,14 @@ class MqttService {
   bool unsubscribe(String topic) {
     if (_activeProtocol == MqttProtocolVersion.v5) {
       final client = _client5;
-      if (client == null ||
-          client.connectionStatus?.state !=
-              mqtt5.MqttConnectionState.connected) {
+      if (client == null || client.connectionStatus?.state != mqtt5.MqttConnectionState.connected) {
         return false;
       }
       client.unsubscribeStringTopic(topic);
       return true;
     }
     final client = _client3;
-    if (client == null ||
-        client.connectionStatus?.state != mqtt3.MqttConnectionState.connected) {
+    if (client == null || client.connectionStatus?.state != mqtt3.MqttConnectionState.connected) {
       return false;
     }
     client.unsubscribe(topic);
@@ -188,16 +146,10 @@ class MqttService {
     final brokers = _state.read(SettingsKeys.brokers);
     final activeBrokerId = _state.read(AppKeys.activeBrokerId);
 
-    final broker = brokers.isEmpty
-        ? null
-        : brokers.firstWhere(
-            (b) => b.id == activeBrokerId,
-            orElse: () => brokers.first,
-          );
+    final broker = brokers.isEmpty ? null : brokers.firstWhere((b) => b.id == activeBrokerId, orElse: () => brokers.first);
 
     final brokerSignature = broker == null ? null : jsonEncode(broker.toJson());
-    if (broker?.id == _currentBrokerId &&
-        brokerSignature == _currentBrokerSignature) {
+    if (broker?.id == _currentBrokerId && brokerSignature == _currentBrokerSignature) {
       return;
     }
     _currentBrokerId = broker?.id;
@@ -280,10 +232,7 @@ class MqttService {
       await client.connect(broker.username, broker.password);
     } on HandshakeException {
       if (session != _sessionId) return;
-      _state.write(
-        AppKeys.connectionStatus,
-        ConnectionStatus.errorTlsHandshake,
-      );
+      _state.write(AppKeys.connectionStatus, ConnectionStatus.errorTlsHandshake);
       _state.write(AppKeys.connectionError, null);
       return;
     } on SocketException catch (e) {
@@ -309,10 +258,7 @@ class MqttService {
 
     if (client.connectionStatus?.state != mqtt3.MqttConnectionState.connected) {
       _state.write(AppKeys.connectionStatus, ConnectionStatus.error);
-      _state.write(
-        AppKeys.connectionError,
-        client.connectionStatus?.toString(),
-      );
+      _state.write(AppKeys.connectionError, client.connectionStatus?.toString());
       return;
     }
 
@@ -324,22 +270,14 @@ class MqttService {
       if (session != _sessionId) return;
       for (final msg in messages) {
         if (msg.payload is! mqtt3.MqttPublishMessage) {
-          _state.write(
-            AppKeys.connectionError,
-            'Malformed MQTT packet received: expected PUBLISH payload.',
-          );
+          _state.write(AppKeys.connectionError, 'Malformed MQTT packet received: expected PUBLISH payload.');
           continue;
         }
         final publish = msg.payload as mqtt3.MqttPublishMessage;
         final bytes = publish.payload.message;
         final retain = publish.header?.retain ?? false;
         final qos = publish.header?.qos.index ?? 0;
-        _onMessage(
-          msg.topic,
-          Uint8List.fromList(bytes),
-          retain: retain,
-          qos: qos,
-        );
+        _onMessage(msg.topic, Uint8List.fromList(bytes), retain: retain, qos: qos);
       }
     });
   }
@@ -378,10 +316,7 @@ class MqttService {
       await client.connect(broker.username, broker.password);
     } on HandshakeException {
       if (session != _sessionId) return;
-      _state.write(
-        AppKeys.connectionStatus,
-        ConnectionStatus.errorTlsHandshake,
-      );
+      _state.write(AppKeys.connectionStatus, ConnectionStatus.errorTlsHandshake);
       _state.write(AppKeys.connectionError, null);
       return;
     } on SocketException catch (e) {
@@ -409,17 +344,12 @@ class MqttService {
     if (connectionStatus?.state != mqtt5.MqttConnectionState.connected) {
       final notice = _connectNotice(connectionStatus);
       _state.write(AppKeys.connectionStatus, ConnectionStatus.error);
-      _state.write(
-        AppKeys.connectionError,
-        notice?.message ?? connectionStatus?.toString(),
-      );
+      _state.write(AppKeys.connectionError, notice?.message ?? connectionStatus?.toString());
       return;
     }
 
     final connackNotice = _connectNotice(connectionStatus);
-    if (connackNotice != null &&
-        (connackNotice.reasonCodes.any((code) => code != 0) ||
-            _hasReasonString(connackNotice))) {
+    if (connackNotice != null && (connackNotice.reasonCodes.any((code) => code != 0) || _hasReasonString(connackNotice))) {
       _surfaceReason(connackNotice);
     }
 
@@ -427,17 +357,13 @@ class MqttService {
     // bus is created during connect, so register immediately after CONNACK for
     // subsequent PUBACK/PUBREC/SUBACK/UNSUBACK/DISCONNECT packets.
     // ignore: invalid_use_of_protected_member
-    _protocolSubscription = client.clientEventBus
-        ?.on<mqtt5.MqttMessageAvailable>()
-        .listen((event) {
-          if (session != _sessionId || event.message == null) return;
-          final notice = MqttReasonNotice.fromMqtt5Message(event.message!);
-          if (notice != null &&
-              (notice.reasonCodes.any((code) => code != 0) ||
-                  _hasReasonString(notice))) {
-            _surfaceReason(notice);
-          }
-        });
+    _protocolSubscription = client.clientEventBus?.on<mqtt5.MqttMessageAvailable>().listen((event) {
+      if (session != _sessionId || event.message == null) return;
+      final notice = MqttReasonNotice.fromMqtt5Message(event.message!);
+      if (notice != null && (notice.reasonCodes.any((code) => code != 0) || _hasReasonString(notice))) {
+        _surfaceReason(notice);
+      }
+    });
 
     for (final sub in broker.subscriptions) {
       client.subscribe(sub.topic, _mqtt5Qos(sub.qos));
@@ -447,29 +373,18 @@ class MqttService {
       if (session != _sessionId) return;
       for (final msg in messages) {
         if (msg.payload is! mqtt5.MqttPublishMessage) {
-          _state.write(
-            AppKeys.connectionError,
-            'Malformed MQTT 5 packet received: expected PUBLISH payload.',
-          );
+          _state.write(AppKeys.connectionError, 'Malformed MQTT 5 packet received: expected PUBLISH payload.');
           continue;
         }
         final publish = msg.payload as mqtt5.MqttPublishMessage;
         final bytes = publish.payload.message;
         if (msg.topic == null || msg.topic!.isEmpty || bytes == null) {
-          _state.write(
-            AppKeys.connectionError,
-            'Malformed MQTT 5 PUBLISH packet received.',
-          );
+          _state.write(AppKeys.connectionError, 'Malformed MQTT 5 PUBLISH packet received.');
           continue;
         }
         final retain = publish.header?.retain ?? false;
         final qos = publish.header?.qos.index ?? 0;
-        _onMessage(
-          msg.topic!,
-          Uint8List.fromList(bytes),
-          retain: retain,
-          qos: qos,
-        );
+        _onMessage(msg.topic!, Uint8List.fromList(bytes), retain: retain, qos: qos);
       }
     });
   }
@@ -515,16 +430,11 @@ class MqttService {
     _state.write(AppKeys.connectionStatus, ConnectionStatus.disconnected);
     MqttReasonNotice? notice;
     try {
-      notice = MqttReasonNotice.fromMqtt5Message(
-        client.connectionStatus!.disconnectMessage,
-      );
+      notice = MqttReasonNotice.fromMqtt5Message(client.connectionStatus!.disconnectMessage);
     } catch (_) {
       // A raw network loss has no MQTT DISCONNECT packet.
     }
-    _state.write(
-      AppKeys.connectionError,
-      notice?.message ?? brokerDisconnectMessage(MqttProtocolVersion.v5),
-    );
+    _state.write(AppKeys.connectionError, notice?.message ?? brokerDisconnectMessage(MqttProtocolVersion.v5));
   }
 
   MqttReasonNotice? _connectNotice(mqtt5.MqttConnectionStatus? status) {
@@ -536,53 +446,30 @@ class MqttService {
     }
   }
 
-  bool _hasReasonString(MqttReasonNotice notice) =>
-      notice.reasonString?.trim().isNotEmpty ?? false;
+  bool _hasReasonString(MqttReasonNotice notice) => notice.reasonString?.trim().isNotEmpty ?? false;
 
   void _surfaceReason(MqttReasonNotice notice) {
     _state.write(AppKeys.connectionError, notice.message);
   }
 
-  Future<bool> _configureTlsContext(
-    dynamic client,
-    BrokerEntry broker,
-    int session,
-  ) async {
+  Future<bool> _configureTlsContext(dynamic client, BrokerEntry broker, int session) async {
     final certificates = broker.clientCertificates;
     if (certificates.isEmpty) return true;
     try {
-      client.securityContext = await _certificateService.buildSecurityContext(
-        certificates,
-      );
+      client.securityContext = await _certificateService.buildSecurityContext(certificates);
       return true;
     } catch (error) {
       if (session != _sessionId) return false;
-      _state.write(
-        AppKeys.connectionStatus,
-        ConnectionStatus.errorTlsHandshake,
-      );
+      _state.write(AppKeys.connectionStatus, ConnectionStatus.errorTlsHandshake);
       _state.write(AppKeys.connectionError, error.toString());
       return false;
     }
   }
 
   /// Handles an incoming message on the given topic.
-  void _onMessage(
-    String topic,
-    Uint8List payload, {
-    bool retain = false,
-    int qos = 0,
-  }) {
+  void _onMessage(String topic, Uint8List payload, {bool retain = false, int qos = 0}) {
     final data = utf8.decode(payload, allowMalformed: true);
-    _messages.add(
-      MQTTMessage(
-        topic: topic,
-        payload: data,
-        receivedAt: DateTime.now(),
-        retain: retain,
-        qos: qos,
-      ),
-    );
+    _messages.add(MQTTMessage(topic: topic, payload: data, receivedAt: DateTime.now(), retain: retain, qos: qos));
     _rateCounter++;
     _messageCount++;
   }
@@ -595,10 +482,7 @@ class MqttService {
     _rateCounter = 0;
 
     _rateTimer = Timer.periodic(Duration(milliseconds: intervalMs), (_) {
-      _state.write(
-        AppKeys.messageRate,
-        (_rateCounter * 1000 / intervalMs).round(),
-      );
+      _state.write(AppKeys.messageRate, (_rateCounter * 1000 / intervalMs).round());
       _state.write(AppKeys.messageCount, _messageCount);
       _rateCounter = 0;
     });

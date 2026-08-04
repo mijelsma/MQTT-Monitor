@@ -11,11 +11,7 @@ enum MqttPacketKind { puback, pubrec, suback, unsuback, disconnect, connack }
 /// A protocol-level broker notice that can be shown without exposing package
 /// packet types to the UI.
 class MqttReasonNotice {
-  const MqttReasonNotice({
-    required this.packet,
-    required this.reasonCodes,
-    this.reasonString,
-  });
+  const MqttReasonNotice({required this.packet, required this.reasonCodes, this.reasonString});
 
   final MqttPacketKind packet;
   final List<int> reasonCodes;
@@ -25,9 +21,7 @@ class MqttReasonNotice {
 
   String get message {
     final supplied = reasonString?.trim();
-    final details = supplied != null && supplied.isNotEmpty
-        ? supplied
-        : reasonCodes.map(mqttReasonCodeLabel).join(', ');
+    final details = supplied != null && supplied.isNotEmpty ? supplied : reasonCodes.map(mqttReasonCodeLabel).join(', ');
     return '${packet.name.toUpperCase()}: $details';
   }
 
@@ -35,76 +29,39 @@ class MqttReasonNotice {
   /// Returns null for packet types that carry no user-facing reason metadata.
   static MqttReasonNotice? fromMqtt5Message(mqtt5.MqttMessage message) {
     if (message is mqtt5.MqttPublishAckMessage) {
-      return MqttReasonNotice(
-        packet: MqttPacketKind.puback,
-        reasonCodes: [_publishCode(message.reasonCode)],
-        reasonString: message.reasonString,
-      );
+      return MqttReasonNotice(packet: MqttPacketKind.puback, reasonCodes: [_publishCode(message.reasonCode)], reasonString: message.reasonString);
     }
     if (message is mqtt5.MqttPublishReceivedMessage) {
-      return MqttReasonNotice(
-        packet: MqttPacketKind.pubrec,
-        reasonCodes: [_publishCode(message.reasonCode)],
-        reasonString: message.reasonString,
-      );
+      return MqttReasonNotice(packet: MqttPacketKind.pubrec, reasonCodes: [_publishCode(message.reasonCode)], reasonString: message.reasonString);
     }
     if (message is mqtt5.MqttSubscribeAckMessage) {
-      return MqttReasonNotice(
-        packet: MqttPacketKind.suback,
-        reasonCodes: message.reasonCodes.map(_subscribeCode).toList(),
-        reasonString: message.reasonString,
-      );
+      return MqttReasonNotice(packet: MqttPacketKind.suback, reasonCodes: message.reasonCodes.map(_subscribeCode).toList(), reasonString: message.reasonString);
     }
     if (message is mqtt5.MqttUnsubscribeAckMessage) {
-      return MqttReasonNotice(
-        packet: MqttPacketKind.unsuback,
-        reasonCodes: message.reasonCodes.map(_subscribeCode).toList(),
-        reasonString: message.reasonString,
-      );
+      return MqttReasonNotice(packet: MqttPacketKind.unsuback, reasonCodes: message.reasonCodes.map(_subscribeCode).toList(), reasonString: message.reasonString);
     }
     if (message is mqtt5.MqttDisconnectMessage) {
-      return MqttReasonNotice(
-        packet: MqttPacketKind.disconnect,
-        reasonCodes: [_disconnectCode(message.reasonCode)],
-        reasonString: message.reasonString,
-      );
+      return MqttReasonNotice(packet: MqttPacketKind.disconnect, reasonCodes: [_disconnectCode(message.reasonCode)], reasonString: message.reasonString);
     }
     if (message is mqtt5.MqttConnectAckMessage) {
-      return MqttReasonNotice(
-        packet: MqttPacketKind.connack,
-        reasonCodes: [_connectCode(message.variableHeader?.reasonCode)],
-        reasonString: message.reasonString,
-      );
+      return MqttReasonNotice(packet: MqttPacketKind.connack, reasonCodes: [_connectCode(message.variableHeader?.reasonCode)], reasonString: message.reasonString);
     }
     return null;
   }
 
-  static int _publishCode(mqtt5.MqttPublishReasonCode? code) =>
-      mqtt5.MqttPublishReasonCodeSupport.mqttPublishReasonCode.asInt(code) ??
-      0xff;
+  static int _publishCode(mqtt5.MqttPublishReasonCode? code) => mqtt5.MqttPublishReasonCodeSupport.mqttPublishReasonCode.asInt(code) ?? 0xff;
 
-  static int _subscribeCode(mqtt5.MqttSubscribeReasonCode? code) =>
-      mqtt5.MqttSubscribeReasonCodeSupport.mqttSubscribeReasonCode.asInt(
-        code,
-      ) ??
-      0xff;
+  static int _subscribeCode(mqtt5.MqttSubscribeReasonCode? code) => mqtt5.MqttSubscribeReasonCodeSupport.mqttSubscribeReasonCode.asInt(code) ?? 0xff;
 
-  static int _disconnectCode(mqtt5.MqttDisconnectReasonCode? code) =>
-      mqtt5.MqttDisconnectReasonCodeSupport.mqttDisconnectReasonCode.asInt(
-        code,
-      ) ??
-      0xff;
+  static int _disconnectCode(mqtt5.MqttDisconnectReasonCode? code) => mqtt5.MqttDisconnectReasonCodeSupport.mqttDisconnectReasonCode.asInt(code) ?? 0xff;
 
-  static int _connectCode(mqtt5.MqttConnectReasonCode? code) =>
-      mqtt5.MqttConnectReasonCodeSupport.mqttConnectReasonCode.asInt(code) ??
-      0xff;
+  static int _connectCode(mqtt5.MqttConnectReasonCode? code) => mqtt5.MqttConnectReasonCodeSupport.mqttConnectReasonCode.asInt(code) ?? 0xff;
 }
 
-String brokerDisconnectMessage(MqttProtocolVersion version) =>
-    switch (version) {
-      MqttProtocolVersion.v311 => mqtt311BrokerDisconnectMessage,
-      MqttProtocolVersion.v5 => 'Disconnected from broker.',
-    };
+String brokerDisconnectMessage(MqttProtocolVersion version) => switch (version) {
+  MqttProtocolVersion.v311 => mqtt311BrokerDisconnectMessage,
+  MqttProtocolVersion.v5 => 'Disconnected from broker.',
+};
 
 /// Human-readable MQTT 5 reason-code labels shared across packet families.
 String mqttReasonCodeLabel(int code) => switch (code) {
@@ -151,6 +108,5 @@ String mqttReasonCodeLabel(int code) => switch (code) {
   0xa0 => 'Maximum connect time',
   0xa1 => 'Subscription identifiers not supported',
   0xa2 => 'Wildcard subscriptions not supported',
-  _ =>
-    'Unknown reason code $code (0x${code.toRadixString(16).padLeft(2, '0').toUpperCase()})',
+  _ => 'Unknown reason code $code (0x${code.toRadixString(16).padLeft(2, '0').toUpperCase()})',
 };

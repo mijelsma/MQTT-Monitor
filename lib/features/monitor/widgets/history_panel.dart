@@ -16,12 +16,7 @@ import '../../../theme/app_tokens/app_tokens.dart';
 /// Displays a reverse-chronological list of received messages.
 /// Selection is communicated to the parent via [onSelect].
 class HistoryPanel extends StatefulWidget {
-  const HistoryPanel({
-    super.key,
-    required this.node,
-    this.selectedValue,
-    this.onSelect,
-  });
+  const HistoryPanel({super.key, required this.node, this.selectedValue, this.onSelect});
 
   final TopicTreeNode node;
 
@@ -66,15 +61,9 @@ class _HistoryPanelState extends State<HistoryPanel> {
     if (!_scrollController.hasClients || !_trackNewest) return;
     if (_scrollController.offset <= 0) return;
     _isAnimating = true;
-    _scrollController
-        .animateTo(
-          0,
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.easeOut,
-        )
-        .then((_) {
-          _isAnimating = false;
-        });
+    _scrollController.animateTo(0, duration: const Duration(milliseconds: 150), curve: Curves.easeOut).then((_) {
+      _isAnimating = false;
+    });
   }
 
   @override
@@ -93,9 +82,7 @@ class _HistoryPanelState extends State<HistoryPanel> {
         }
 
         // Keep newest on top when user hasn't scrolled away.
-        WidgetsBinding.instance.addPostFrameCallback(
-          (_) => _scrollToTopIfNeeded(),
-        );
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToTopIfNeeded());
 
         return Column(
           children: [
@@ -120,13 +107,7 @@ class _HistoryPanelState extends State<HistoryPanel> {
                 controller: _scrollController,
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 itemCount: history.length,
-                separatorBuilder: (_, _) => Divider(
-                  height: 0.5,
-                  thickness: 0.5,
-                  color: tokens.border,
-                  indent: 12,
-                  endIndent: 12,
-                ),
+                separatorBuilder: (_, _) => Divider(height: 0.5, thickness: 0.5, color: tokens.border, indent: 12, endIndent: 12),
                 itemBuilder: (context, index) {
                   // Reverse: index 0 = newest.
                   final reverseIndex = history.length - 1 - index;
@@ -160,24 +141,14 @@ class _EmptyHistory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const UiEmptyState.compact(
-      icon: Icons.history_rounded,
-      title: 'No history yet',
-      message: 'Messages will appear here\nas they arrive',
-    );
+    return const UiEmptyState.compact(icon: Icons.history_rounded, title: 'No history yet', message: 'Messages will appear here\nas they arrive');
   }
 }
 
 // ── Monitoring status bar ───────────────────────────────────────────────
 
 class _MonitoringBar extends StatefulWidget {
-  const _MonitoringBar({
-    required this.topic,
-    required this.isExtended,
-    required this.historyCount,
-    required this.onToggle,
-    required this.onClear,
-  });
+  const _MonitoringBar({required this.topic, required this.isExtended, required this.historyCount, required this.onToggle, required this.onClear});
 
   final String topic;
   final bool isExtended;
@@ -195,16 +166,12 @@ class _MonitoringBarState extends State<_MonitoringBar> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final color = widget.isExtended
-        ? AppColors.success500
-        : tokens.textTertiary;
+    final color = widget.isExtended ? AppColors.success500 : tokens.textTertiary;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: widget.isExtended
-            ? AppColors.success500.withValues(alpha: 0.06)
-            : tokens.surface,
+        color: widget.isExtended ? AppColors.success500.withValues(alpha: 0.06) : tokens.surface,
         border: Border(bottom: BorderSide(color: tokens.border, width: 0.5)),
       ),
       child: Row(
@@ -213,18 +180,10 @@ class _MonitoringBarState extends State<_MonitoringBar> {
           const SizedBox(width: 6),
           Text(
             '${widget.historyCount}',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: tokens.textSecondary,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: tokens.textSecondary, fontFeatures: const [FontFeature.tabularFigures()]),
           ),
           const SizedBox(width: 4),
-          Text(
-            'stored',
-            style: TextStyle(fontSize: 11, color: tokens.textTertiary),
-          ),
+          Text('stored', style: TextStyle(fontSize: 11, color: tokens.textTertiary)),
           const SizedBox(width: 8),
           _ClearButton(onTap: widget.onClear),
           const Spacer(),
@@ -238,38 +197,18 @@ class _MonitoringBarState extends State<_MonitoringBar> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: widget.isExtended
-                      ? AppColors.success500.withValues(
-                          alpha: _hovering ? 0.18 : 0.1,
-                        )
-                      : (_hovering ? tokens.elevated : Colors.transparent),
+                  color: widget.isExtended ? AppColors.success500.withValues(alpha: _hovering ? 0.18 : 0.1) : (_hovering ? tokens.elevated : Colors.transparent),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: widget.isExtended
-                        ? AppColors.success500.withValues(alpha: 0.3)
-                        : tokens.border,
-                    width: 0.5,
-                  ),
+                  border: Border.all(color: widget.isExtended ? AppColors.success500.withValues(alpha: 0.3) : tokens.border, width: 0.5),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      widget.isExtended
-                          ? Icons.trending_up_rounded
-                          : Icons.trending_flat_rounded,
-                      size: 12,
-                      color: color,
-                    ),
+                    Icon(widget.isExtended ? Icons.trending_up_rounded : Icons.trending_flat_rounded, size: 12, color: color),
                     const SizedBox(width: 4),
                     Text(
                       widget.isExtended ? 'Increased' : 'Standard',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: color,
-                        letterSpacing: 0.3,
-                      ),
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color, letterSpacing: 0.3),
                     ),
                   ],
                 ),
@@ -309,34 +248,18 @@ class _ClearButtonState extends State<_ClearButton> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
           decoration: BoxDecoration(
-            color: _hovering
-                ? AppColors.error500.withValues(alpha: 0.1)
-                : Colors.transparent,
+            color: _hovering ? AppColors.error500.withValues(alpha: 0.1) : Colors.transparent,
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: _hovering
-                  ? AppColors.error500.withValues(alpha: 0.3)
-                  : tokens.border,
-              width: 0.5,
-            ),
+            border: Border.all(color: _hovering ? AppColors.error500.withValues(alpha: 0.3) : tokens.border, width: 0.5),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.delete_sweep_rounded,
-                size: 12,
-                color: _hovering ? AppColors.error500 : tokens.textTertiary,
-              ),
+              Icon(Icons.delete_sweep_rounded, size: 12, color: _hovering ? AppColors.error500 : tokens.textTertiary),
               const SizedBox(width: 4),
               Text(
                 'Clear',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: _hovering ? AppColors.error500 : tokens.textTertiary,
-                  letterSpacing: 0.3,
-                ),
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _hovering ? AppColors.error500 : tokens.textTertiary, letterSpacing: 0.3),
               ),
             ],
           ),
@@ -349,13 +272,7 @@ class _ClearButtonState extends State<_ClearButton> {
 // ── History row ─────────────────────────────────────────────────────────
 
 class _HistoryRow extends StatelessWidget {
-  const _HistoryRow({
-    required this.value,
-    required this.isSelected,
-    required this.isLatest,
-    required this.tokens,
-    required this.onTap,
-  });
+  const _HistoryRow({required this.value, required this.isSelected, required this.isLatest, required this.tokens, required this.onTap});
 
   final TopicNodeValue value;
   final bool isSelected;
@@ -368,9 +285,7 @@ class _HistoryRow extends StatelessWidget {
     final timeStr = formatTimestamp(value.receivedAt, verbose: true);
     final payloadPreview = truncate(value.payload, 60);
 
-    final bg = isSelected
-        ? tokens.primary.withValues(alpha: 0.08)
-        : Colors.transparent;
+    final bg = isSelected ? tokens.primary.withValues(alpha: 0.08) : Colors.transparent;
 
     return GestureDetector(
       onTap: onTap,
@@ -379,9 +294,7 @@ class _HistoryRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: bg,
-          border: isSelected
-              ? Border(left: BorderSide(color: tokens.primary, width: 2))
-              : null,
+          border: isSelected ? Border(left: BorderSide(color: tokens.primary, width: 2)) : null,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -391,12 +304,7 @@ class _HistoryRow extends StatelessWidget {
               width: 32,
               child: Text(
                 '#${value.seq}',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: isLatest ? tokens.primary : tokens.textTertiary,
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: isLatest ? tokens.primary : tokens.textTertiary, fontFeatures: const [FontFeature.tabularFigures()]),
               ),
             ),
             // Payload preview + meta
@@ -408,42 +316,19 @@ class _HistoryRow extends StatelessWidget {
                     children: [
                       Text(
                         timeStr,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: tokens.textSecondary,
-                          fontFeatures: const [FontFeature.tabularFigures()],
-                        ),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: tokens.textSecondary, fontFeatures: const [FontFeature.tabularFigures()]),
                       ),
                       const SizedBox(width: 8),
                       QosChip(qos: value.qos),
-                      if (value.retain) ...[
-                        const SizedBox(width: 6),
-                        Icon(
-                          Icons.push_pin_rounded,
-                          size: 9,
-                          color: AppColors.warning500,
-                        ),
-                      ],
+                      if (value.retain) ...[const SizedBox(width: 6), Icon(Icons.push_pin_rounded, size: 9, color: AppColors.warning500)],
                       if (isLatest) ...[
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 1,
-                          ),
-                          decoration: BoxDecoration(
-                            color: tokens.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(color: tokens.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(3)),
                           child: Text(
                             'LATEST',
-                            style: TextStyle(
-                              fontSize: 8,
-                              fontWeight: FontWeight.w700,
-                              color: tokens.primary,
-                              letterSpacing: 0.5,
-                            ),
+                            style: TextStyle(fontSize: 8, fontWeight: FontWeight.w700, color: tokens.primary, letterSpacing: 0.5),
                           ),
                         ),
                       ],
@@ -454,22 +339,13 @@ class _HistoryRow extends StatelessWidget {
                     payloadPreview,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontFamily: 'SF Mono, Menlo, monospace',
-                      color: tokens.textPrimary,
-                    ),
+                    style: TextStyle(fontSize: 11.5, fontFamily: 'SF Mono, Menlo, monospace', color: tokens.textPrimary),
                   ),
                 ],
               ),
             ),
             CopyButton.payload(text: value.payload, size: 13),
-            if (isSelected)
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 16,
-                color: tokens.primary,
-              ),
+            if (isSelected) Icon(Icons.chevron_right_rounded, size: 16, color: tokens.primary),
           ],
         ),
       ),

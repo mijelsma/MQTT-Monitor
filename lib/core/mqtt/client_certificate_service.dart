@@ -42,33 +42,17 @@ typedef CertificateNameTokenProvider = String Function();
 /// Copies credentials into app-private storage. Only these paths are persisted
 /// in SharedPreferences; private-key bytes are never stored there.
 class AppPrivateCertificateStorage {
-  AppPrivateCertificateStorage({
-    required CertificateFileAccess files,
-    required CertificateDirectoryProvider directoryProvider,
-    CertificateNameTokenProvider? nameTokenProvider,
-  }) : _files = files,
-       _directoryProvider = directoryProvider,
-       _nameTokenProvider =
-           nameTokenProvider ??
-           (() => DateTime.now().microsecondsSinceEpoch.toString());
+  AppPrivateCertificateStorage({required CertificateFileAccess files, required CertificateDirectoryProvider directoryProvider, CertificateNameTokenProvider? nameTokenProvider}) : _files = files, _directoryProvider = directoryProvider, _nameTokenProvider = nameTokenProvider ?? (() => DateTime.now().microsecondsSinceEpoch.toString());
 
   factory AppPrivateCertificateStorage.standard() {
-    return AppPrivateCertificateStorage(
-      files: const IoCertificateFileAccess(),
-      directoryProvider: () async =>
-          (await getApplicationSupportDirectory()).path,
-    );
+    return AppPrivateCertificateStorage(files: const IoCertificateFileAccess(), directoryProvider: () async => (await getApplicationSupportDirectory()).path);
   }
 
   final CertificateFileAccess _files;
   final CertificateDirectoryProvider _directoryProvider;
   final CertificateNameTokenProvider _nameTokenProvider;
 
-  Future<String> store(
-    String brokerId,
-    ClientCertificateKind kind,
-    Uint8List bytes,
-  ) async {
+  Future<String> store(String brokerId, ClientCertificateKind kind, Uint8List bytes) async {
     final root = await _directoryProvider();
     final stem = switch (kind) {
       ClientCertificateKind.rootCa => 'root_ca',
@@ -76,12 +60,7 @@ class AppPrivateCertificateStorage {
       ClientCertificateKind.clientCertificate => 'client_certificate',
     };
     final fileName = '${stem}_${_nameTokenProvider()}.pem';
-    final destination = path.join(
-      root,
-      'mqtt_certificates',
-      brokerId,
-      fileName,
-    );
+    final destination = path.join(root, 'mqtt_certificates', brokerId, fileName);
     await _files.write(destination, bytes);
     return destination;
   }
@@ -92,8 +71,7 @@ class AppPrivateCertificateStorage {
 /// scope; callers receive a clear validation failure instead of a late connect
 /// error.
 class ClientCertificateService {
-  ClientCertificateService({CertificateFileAccess? files})
-    : _files = files ?? const IoCertificateFileAccess();
+  ClientCertificateService({CertificateFileAccess? files}) : _files = files ?? const IoCertificateFileAccess();
 
   final CertificateFileAccess _files;
 
@@ -103,9 +81,7 @@ class ClientCertificateService {
     }
     final text = String.fromCharCodes(bytes);
     if (!text.contains('-----BEGIN ')) {
-      throw const CertificateValidationException(
-        'Unsupported certificate format. Select a PEM encoded file; DER and PFX are not supported.',
-      );
+      throw const CertificateValidationException('Unsupported certificate format. Select a PEM encoded file; DER and PFX are not supported.');
     }
 
     try {
@@ -124,29 +100,21 @@ class ClientCertificateService {
         ClientCertificateKind.privateKey => 'client private key',
         ClientCertificateKind.clientCertificate => 'client certificate',
       };
-      throw CertificateValidationException(
-        'The $label is malformed or unreadable: $error',
-      );
+      throw CertificateValidationException('The $label is malformed or unreadable: $error');
     }
   }
 
   Future<void> validateConfiguration(ClientCertificateConfig config) async {
     if (config.isEmpty) return;
     if (!config.isComplete) {
-      throw const CertificateValidationException(
-        'Root CA, client private key, and client certificate are all required for mTLS.',
-      );
+      throw const CertificateValidationException('Root CA, client private key, and client certificate are all required for mTLS.');
     }
     await buildSecurityContext(config);
   }
 
-  Future<SecurityContext> buildSecurityContext(
-    ClientCertificateConfig config,
-  ) async {
+  Future<SecurityContext> buildSecurityContext(ClientCertificateConfig config) async {
     if (!config.isComplete) {
-      throw const CertificateValidationException(
-        'Cannot create an mTLS context without all three certificate files.',
-      );
+      throw const CertificateValidationException('Cannot create an mTLS context without all three certificate files.');
     }
 
     try {
@@ -166,9 +134,7 @@ class ClientCertificateService {
     } on CertificateValidationException {
       rethrow;
     } catch (error) {
-      throw CertificateValidationException(
-        'A configured certificate file is missing or unreadable: $error',
-      );
+      throw CertificateValidationException('A configured certificate file is missing or unreadable: $error');
     }
   }
 }

@@ -28,20 +28,11 @@ Widget _sectionLabel(BuildContext context, String label) => Padding(
   padding: const EdgeInsets.only(left: 4, bottom: 2),
   child: Text(
     label.toUpperCase(),
-    style: TextStyle(
-      fontSize: 11,
-      fontWeight: FontWeight.w600,
-      letterSpacing: 0.5,
-      color: context.tokens.textSecondary,
-    ),
+    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5, color: context.tokens.textSecondary),
   ),
 );
 
-Future<BrokerEntry?> showBrokerDialog(
-  BuildContext context, {
-  BrokerEntry? broker,
-  VoidCallback? onDelete,
-}) {
+Future<BrokerEntry?> showBrokerDialog(BuildContext context, {BrokerEntry? broker, VoidCallback? onDelete}) {
   return showDialog<BrokerEntry>(
     context: context,
     barrierColor: Colors.black54,
@@ -95,8 +86,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
     _clientId = TextEditingController(text: b?.clientId ?? '');
     _useSSL = b?.useSSL ?? false;
     _protocolVersion = b?.protocolVersion ?? MqttProtocolVersion.v311;
-    _clientCertificates =
-        b?.clientCertificates ?? const ClientCertificateConfig();
+    _clientCertificates = b?.clientCertificates ?? const ClientCertificateConfig();
     _validateCertificates = b?.validateCertificates ?? true;
     _randomClientIdSuffix = b?.randomClientIdSuffix ?? true;
     _color = AppColors.brokerColorOptions[b?.colorIndex ?? 0];
@@ -117,9 +107,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_clientCertificates.isEmpty && !_useSSL) {
-      setState(
-        () => _certificateError = 'mTLS requires an SSL/TLS connection.',
-      );
+      setState(() => _certificateError = 'mTLS requires an SSL/TLS connection.');
       return;
     }
     try {
@@ -153,11 +141,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
 
   Future<void> _pickCertificate(ClientCertificateKind kind) async {
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: const ['pem', 'crt', 'cer', 'key'],
-        withData: true,
-      );
+      final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: const ['pem', 'crt', 'cer', 'key'], withData: true);
       if (result == null || result.files.isEmpty) return;
 
       final selected = result.files.single;
@@ -167,46 +151,29 @@ class _BrokerDialogState extends State<BrokerDialog> {
       } else if (selected.path != null) {
         bytes = await File(selected.path!).readAsBytes();
       } else {
-        throw const CertificateValidationException(
-          'The selected file could not be read.',
-        );
+        throw const CertificateValidationException('The selected file could not be read.');
       }
       _certificateService.validateBytes(kind, bytes);
-      final storedPath = await _certificateStorage.store(
-        _brokerId,
-        kind,
-        bytes,
-      );
+      final storedPath = await _certificateStorage.store(_brokerId, kind, bytes);
       if (!mounted) return;
       setState(() {
         _useSSL = true;
         _certificateError = null;
         _clientCertificates = switch (kind) {
-          ClientCertificateKind.rootCa => _clientCertificates.copyWith(
-            rootCaPath: storedPath,
-          ),
-          ClientCertificateKind.privateKey => _clientCertificates.copyWith(
-            clientPrivateKeyPath: storedPath,
-          ),
-          ClientCertificateKind.clientCertificate =>
-            _clientCertificates.copyWith(clientCertificatePath: storedPath),
+          ClientCertificateKind.rootCa => _clientCertificates.copyWith(rootCaPath: storedPath),
+          ClientCertificateKind.privateKey => _clientCertificates.copyWith(clientPrivateKeyPath: storedPath),
+          ClientCertificateKind.clientCertificate => _clientCertificates.copyWith(clientCertificatePath: storedPath),
         };
       });
     } on PlatformException catch (error) {
       if (mounted) {
-        setState(
-          () => _certificateError =
-              'Could not open the file picker: ${error.message ?? error.code}',
-        );
+        setState(() => _certificateError = 'Could not open the file picker: ${error.message ?? error.code}');
       }
     } on CertificateValidationException catch (error) {
       if (mounted) setState(() => _certificateError = error.message);
     } catch (error) {
       if (mounted) {
-        setState(
-          () =>
-              _certificateError = 'Could not import the selected file: $error',
-        );
+        setState(() => _certificateError = 'Could not import the selected file: $error');
       }
     }
   }
@@ -215,15 +182,9 @@ class _BrokerDialogState extends State<BrokerDialog> {
     setState(() {
       _certificateError = null;
       _clientCertificates = switch (kind) {
-        ClientCertificateKind.rootCa => _clientCertificates.copyWith(
-          clearRootCa: true,
-        ),
-        ClientCertificateKind.privateKey => _clientCertificates.copyWith(
-          clearClientPrivateKey: true,
-        ),
-        ClientCertificateKind.clientCertificate => _clientCertificates.copyWith(
-          clearClientCertificate: true,
-        ),
+        ClientCertificateKind.rootCa => _clientCertificates.copyWith(clearRootCa: true),
+        ClientCertificateKind.privateKey => _clientCertificates.copyWith(clearClientPrivateKey: true),
+        ClientCertificateKind.clientCertificate => _clientCertificates.copyWith(clearClientCertificate: true),
       };
     });
   }
@@ -235,16 +196,12 @@ class _BrokerDialogState extends State<BrokerDialog> {
   }
 
   Future<void> _editSubscription(int index) async {
-    final sub = await showSubscriptionDialog(
-      context,
-      entry: _subscriptions[index],
-    );
+    final sub = await showSubscriptionDialog(context, entry: _subscriptions[index]);
     if (sub == null) return;
     setState(() => _subscriptions[index] = sub);
   }
 
-  void _removeSubscription(int index) =>
-      setState(() => _subscriptions.removeAt(index));
+  void _removeSubscription(int index) => setState(() => _subscriptions.removeAt(index));
 
   void _reorderSubscriptions(int oldIndex, int newIndex) {
     setState(() {
@@ -261,36 +218,15 @@ class _BrokerDialogState extends State<BrokerDialog> {
       children: [
         _sectionLabel(context, s.brokerDialogSectionConnection),
         const VSpacer(10),
-        UiField(
-          label: s.brokerDialogFieldName,
-          controller: _name,
-          hint: 'e.g. Home Server',
-          textInputAction: TextInputAction.next,
-          validator: (v) => (v == null || v.trim().isEmpty)
-              ? s.brokerDialogValidateName
-              : null,
-        ),
-        ColorPickerField(
-          margin: const EdgeInsets.only(top: 14),
-          label: s.brokerDialogFieldColor,
-          value: _color,
-          onChanged: (c) => setState(() => _color = c),
-        ),
+        UiField(label: s.brokerDialogFieldName, controller: _name, hint: 'e.g. Home Server', textInputAction: TextInputAction.next, validator: (v) => (v == null || v.trim().isEmpty) ? s.brokerDialogValidateName : null),
+        ColorPickerField(margin: const EdgeInsets.only(top: 14), label: s.brokerDialogFieldColor, value: _color, onChanged: (c) => setState(() => _color = c)),
         const VSpacer(14),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               flex: 3,
-              child: UiField(
-                label: s.brokerDialogFieldHost,
-                controller: _host,
-                hint: 'e.g. broker.example.com',
-                textInputAction: TextInputAction.next,
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? s.brokerDialogValidateHost
-                    : null,
-              ),
+              child: UiField(label: s.brokerDialogFieldHost, controller: _host, hint: 'e.g. broker.example.com', textInputAction: TextInputAction.next, validator: (v) => (v == null || v.trim().isEmpty) ? s.brokerDialogValidateHost : null),
             ),
             const HSpacer(10),
             Expanded(
@@ -311,53 +247,17 @@ class _BrokerDialogState extends State<BrokerDialog> {
             ),
           ],
         ),
-        UiSwitchRow(
-          margin: const EdgeInsets.only(top: 12),
-          label: s.brokerDialogUseSSL,
-          subtitle: s.brokerDialogUseSSLSubtitle,
-          value: _useSSL,
-          accent: accent,
-          bordered: true,
-          onChanged: (v) => setState(() => _useSSL = v),
-        ),
+        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogUseSSL, subtitle: s.brokerDialogUseSSLSubtitle, value: _useSSL, accent: accent, bordered: true, onChanged: (v) => setState(() => _useSSL = v)),
         UiSegmentRow<MqttProtocolVersion>(
           label: 'Protocol version',
-          options: MqttProtocolVersion.values
-              .map(
-                (version) =>
-                    UiSegmentOption(value: version, label: version.displayName),
-              )
-              .toList(),
+          options: MqttProtocolVersion.values.map((version) => UiSegmentOption(value: version, label: version.displayName)).toList(),
           value: _protocolVersion,
           onChanged: (value) => setState(() => _protocolVersion = value),
           accent: accent,
         ),
-        UiSwitchRow(
-          margin: const EdgeInsets.only(top: 12),
-          label: s.brokerDialogValidateCertificates,
-          subtitle: s.brokerDialogValidateCertificatesSubtitle,
-          value: _validateCertificates,
-          accent: accent,
-          bordered: true,
-          onChanged: (v) => setState(() => _validateCertificates = v),
-        ),
-        UiField(
-          margin: const EdgeInsets.only(top: 14),
-          label: s.brokerDialogFieldClientId,
-          optional: true,
-          controller: _clientId,
-          hint: 'mqtt_monitor',
-          textInputAction: TextInputAction.next,
-        ),
-        UiSwitchRow(
-          margin: const EdgeInsets.only(top: 12),
-          label: s.brokerDialogRandomSuffix,
-          subtitle: s.brokerDialogRandomSuffixSubtitle,
-          value: _randomClientIdSuffix,
-          accent: accent,
-          bordered: true,
-          onChanged: (v) => setState(() => _randomClientIdSuffix = v),
-        ),
+        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogValidateCertificates, subtitle: s.brokerDialogValidateCertificatesSubtitle, value: _validateCertificates, accent: accent, bordered: true, onChanged: (v) => setState(() => _validateCertificates = v)),
+        UiField(margin: const EdgeInsets.only(top: 14), label: s.brokerDialogFieldClientId, optional: true, controller: _clientId, hint: 'mqtt_monitor', textInputAction: TextInputAction.next),
+        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogRandomSuffix, subtitle: s.brokerDialogRandomSuffixSubtitle, value: _randomClientIdSuffix, accent: accent, bordered: true, onChanged: (v) => setState(() => _randomClientIdSuffix = v)),
       ],
     );
   }
@@ -369,13 +269,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
       children: [
         _sectionLabel(context, s.brokerDialogSectionAuthentication),
         const VSpacer(10),
-        UiField(
-          label: s.brokerDialogFieldUsername,
-          optional: true,
-          controller: _username,
-          hint: s.optional,
-          textInputAction: TextInputAction.next,
-        ),
+        UiField(label: s.brokerDialogFieldUsername, optional: true, controller: _username, hint: s.optional, textInputAction: TextInputAction.next),
         UiField(
           margin: const EdgeInsets.only(top: 14),
           label: s.brokerDialogFieldPassword,
@@ -385,61 +279,24 @@ class _BrokerDialogState extends State<BrokerDialog> {
           obscureText: _obscurePassword,
           textInputAction: TextInputAction.done,
           suffixIcon: IconButton(
-            icon: Icon(
-              _obscurePassword
-                  ? Icons.visibility_off_outlined
-                  : Icons.visibility_outlined,
-              size: 18,
-              color: context.tokens.textSecondary,
-            ),
-            onPressed: () =>
-                setState(() => _obscurePassword = !_obscurePassword),
+            icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 18, color: context.tokens.textSecondary),
+            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
           ),
         ),
         const VSpacer(18),
-        _CertificatePickerRow(
-          label: 'Root CA certificate',
-          fileName: _fileName(_clientCertificates.rootCaPath),
-          onSelect: () => _pickCertificate(ClientCertificateKind.rootCa),
-          onClear: _clientCertificates.rootCaPath == null
-              ? null
-              : () => _clearCertificate(ClientCertificateKind.rootCa),
-        ),
-        _CertificatePickerRow(
-          label: 'Client private key',
-          fileName: _fileName(_clientCertificates.clientPrivateKeyPath),
-          onSelect: () => _pickCertificate(ClientCertificateKind.privateKey),
-          onClear: _clientCertificates.clientPrivateKeyPath == null
-              ? null
-              : () => _clearCertificate(ClientCertificateKind.privateKey),
-        ),
-        _CertificatePickerRow(
-          label: 'Client certificate',
-          fileName: _fileName(_clientCertificates.clientCertificatePath),
-          onSelect: () =>
-              _pickCertificate(ClientCertificateKind.clientCertificate),
-          onClear: _clientCertificates.clientCertificatePath == null
-              ? null
-              : () =>
-                    _clearCertificate(ClientCertificateKind.clientCertificate),
-        ),
+        _CertificatePickerRow(label: 'Root CA certificate', fileName: _fileName(_clientCertificates.rootCaPath), onSelect: () => _pickCertificate(ClientCertificateKind.rootCa), onClear: _clientCertificates.rootCaPath == null ? null : () => _clearCertificate(ClientCertificateKind.rootCa)),
+        _CertificatePickerRow(label: 'Client private key', fileName: _fileName(_clientCertificates.clientPrivateKeyPath), onSelect: () => _pickCertificate(ClientCertificateKind.privateKey), onClear: _clientCertificates.clientPrivateKeyPath == null ? null : () => _clearCertificate(ClientCertificateKind.privateKey)),
+        _CertificatePickerRow(label: 'Client certificate', fileName: _fileName(_clientCertificates.clientCertificatePath), onSelect: () => _pickCertificate(ClientCertificateKind.clientCertificate), onClear: _clientCertificates.clientCertificatePath == null ? null : () => _clearCertificate(ClientCertificateKind.clientCertificate)),
         if (_certificateError != null)
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              _certificateError!,
-              style: TextStyle(
-                fontSize: 12,
-                color: Theme.of(context).colorScheme.error,
-              ),
-            ),
+            child: Text(_certificateError!, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.error)),
           ),
       ],
     );
   }
 
-  String _fileName(String? filePath) =>
-      filePath == null ? 'Not configured' : path.basename(filePath);
+  String _fileName(String? filePath) => filePath == null ? 'Not configured' : path.basename(filePath);
 
   Widget _buildSubscriptionsSection(Color accent) {
     final s = S.of(context);
@@ -474,11 +331,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
             onPressed: _addSubscription,
             icon: const Icon(Icons.add_rounded, size: 16),
             label: Text(s.brokerDialogAddSubscription),
-            style: TextButton.styleFrom(
-              foregroundColor: accent,
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-              visualDensity: VisualDensity.compact,
-            ),
+            style: TextButton.styleFrom(foregroundColor: accent, padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6), visualDensity: VisualDensity.compact),
           ),
         ),
       ],
@@ -504,29 +357,14 @@ class _BrokerDialogState extends State<BrokerDialog> {
       submitLabel: _isEditing ? s.save : s.add,
       body: Form(
         key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildConnectionSection(accent),
-            const VSpacer(20),
-            _buildAuthSection(),
-            const VSpacer(20),
-            _buildSubscriptionsSection(accent),
-            const VSpacer(8),
-          ],
-        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [_buildConnectionSection(accent), const VSpacer(20), _buildAuthSection(), const VSpacer(20), _buildSubscriptionsSection(accent), const VSpacer(8)]),
       ),
     );
   }
 }
 
 class _CertificatePickerRow extends StatelessWidget {
-  const _CertificatePickerRow({
-    required this.label,
-    required this.fileName,
-    required this.onSelect,
-    this.onClear,
-  });
+  const _CertificatePickerRow({required this.label, required this.fileName, required this.onSelect, this.onClear});
 
   final String label;
   final String fileName;
@@ -552,13 +390,7 @@ class _CertificatePickerRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
                 Text(
                   fileName,
@@ -568,17 +400,8 @@ class _CertificatePickerRow extends StatelessWidget {
               ],
             ),
           ),
-          TextButton(
-            onPressed: onSelect,
-            child: Text(onClear == null ? 'Choose' : 'Replace'),
-          ),
-          if (onClear != null)
-            IconButton(
-              onPressed: onClear,
-              tooltip: 'Clear',
-              visualDensity: VisualDensity.compact,
-              icon: const Icon(Icons.clear_rounded, size: 16),
-            ),
+          TextButton(onPressed: onSelect, child: Text(onClear == null ? 'Choose' : 'Replace')),
+          if (onClear != null) IconButton(onPressed: onClear, tooltip: 'Clear', visualDensity: VisualDensity.compact, icon: const Icon(Icons.clear_rounded, size: 16)),
         ],
       ),
     );
