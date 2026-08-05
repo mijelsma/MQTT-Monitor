@@ -1399,6 +1399,16 @@ class S {
     );
   }
 
+  /// `Version`
+  String get aboutPanelVersionDetail {
+    return Intl.message(
+      'Version',
+      name: 'aboutPanelVersionDetail',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `License`
   String get aboutPanelLicense {
     return Intl.message(

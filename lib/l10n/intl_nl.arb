@@ -156,6 +156,7 @@
     "aboutPanelTitle": "Over",
     "aboutPanelSectionDetails": "Details",
     "aboutPanelCommitHash": "Commit Hash",
+    "aboutPanelVersionDetail": "Versie",
     "aboutPanelLicense": "Licentie",
     "aboutPanelAuthor": "Auteur",
     "aboutPanelSectionResources": "Bronnen",

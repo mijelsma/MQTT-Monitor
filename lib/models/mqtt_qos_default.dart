@@ -66,17 +66,18 @@ class QosLevelIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = DefaultTextStyle.of(context).style.color ?? Theme.of(context).colorScheme.onSurface;
     return Container(
       width: 22,
       height: 22,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(width: 1.5),
+        border: Border.all(width: 1.5, color: color),
       ),
       child: Text(
         '$level',
-        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, height: 1),
+        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, height: 1, color: color),
       ),
     );
   }
