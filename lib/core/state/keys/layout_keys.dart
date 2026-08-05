@@ -15,7 +15,7 @@ abstract final class LayoutKeys {
   // Sidebar panel collapsed states.
   static final sidebarDetailCollapsed = StateKey.boolean('layout.sidebarDetailCollapsed', defaultValue: false, persist: _gate);
   static final sidebarHistoryCollapsed = StateKey.boolean('layout.sidebarHistoryCollapsed', defaultValue: true, persist: _gate);
-  static final sidebarPublishCollapsed = StateKey.boolean('layout.sidebarPublishCollapsed', defaultValue: true, persist: _gate);
+  static final sidebarPublishCollapsed = StateKey.boolean('layout.sidebarPublishCollapsed', defaultValue: false, persist: _gate);
   static final sidebarShortcutsCollapsed = StateKey.boolean('layout.sidebarShortcutsCollapsed', defaultValue: true, persist: _gate);
 
   static final List<StateKey> all = [monitorSplitRatio, sidebarDetailCollapsed, sidebarHistoryCollapsed, sidebarPublishCollapsed, sidebarShortcutsCollapsed];

@@ -10,6 +10,7 @@ import '../../models/dashboard_layout.dart';
 import '../../models/interpolation_mode.dart';
 import '../../models/language.dart';
 import '../../models/mqtt_qos_default.dart';
+import '../../models/sidebar_panel_default.dart';
 import '../../models/startup_connection.dart';
 import 'settings_section.dart';
 import '../../models/environment_variable.dart';
@@ -242,6 +243,20 @@ class SettingsViewModel extends ChangeNotifier {
 
   int get sidebarAnimationSpeed => _state.read(SettingsKeys.sidebarAnimationSpeed).clamp(0, 100).toInt();
   void setSidebarAnimationSpeed(int v) => _state.write(SettingsKeys.sidebarAnimationSpeed, v.clamp(0, 100).toInt());
+
+  // ── Sidebar panel default states ──────────────────────────────────────
+
+  SidebarPanelDefault get defaultSidebarDetail => _state.read(SettingsKeys.defaultSidebarDetail);
+  void setDefaultSidebarDetail(SidebarPanelDefault v) => _state.write(SettingsKeys.defaultSidebarDetail, v);
+
+  SidebarPanelDefault get defaultSidebarHistory => _state.read(SettingsKeys.defaultSidebarHistory);
+  void setDefaultSidebarHistory(SidebarPanelDefault v) => _state.write(SettingsKeys.defaultSidebarHistory, v);
+
+  SidebarPanelDefault get defaultSidebarPublish => _state.read(SettingsKeys.defaultSidebarPublish);
+  void setDefaultSidebarPublish(SidebarPanelDefault v) => _state.write(SettingsKeys.defaultSidebarPublish, v);
+
+  SidebarPanelDefault get defaultSidebarShortcuts => _state.read(SettingsKeys.defaultSidebarShortcuts);
+  void setDefaultSidebarShortcuts(SidebarPanelDefault v) => _state.write(SettingsKeys.defaultSidebarShortcuts, v);
 
   int get rateIntervalMs => _state.read(SettingsKeys.rateIntervalMs);
   void setRateIntervalMs(int v) => _state.write(SettingsKeys.rateIntervalMs, v);

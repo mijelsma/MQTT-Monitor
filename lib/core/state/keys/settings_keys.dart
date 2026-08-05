@@ -5,6 +5,7 @@ import '../../../models/chart_type.dart';
 import '../../../models/interpolation_mode.dart';
 import '../../../models/language.dart';
 import '../../../models/mqtt_qos_default.dart';
+import '../../../models/sidebar_panel_default.dart';
 import '../../../models/startup_connection.dart';
 import '../state_key.dart';
 import '../../../models/environment_variable.dart';
@@ -26,6 +27,12 @@ abstract final class SettingsKeys {
   static final persistLayout = StateKey.boolean('settings.persistLayout', defaultValue: true);
   static final sidebarAnimationsEnabled = StateKey.boolean('settings.sidebarAnimationsEnabled', defaultValue: true);
   static final sidebarAnimationSpeed = StateKey.integer('settings.sidebarAnimationSpeed', defaultValue: 50);
+
+  // Default sidebar panel states on startup (collapsed / expanded / lastStatus).
+  static final defaultSidebarDetail = StateKey.forEnum('settings.defaultSidebarDetail', SidebarPanelDefault.values, defaultValue: SidebarPanelDefault.expanded);
+  static final defaultSidebarHistory = StateKey.forEnum('settings.defaultSidebarHistory', SidebarPanelDefault.values, defaultValue: SidebarPanelDefault.collapsed);
+  static final defaultSidebarPublish = StateKey.forEnum('settings.defaultSidebarPublish', SidebarPanelDefault.values, defaultValue: SidebarPanelDefault.expanded);
+  static final defaultSidebarShortcuts = StateKey.forEnum('settings.defaultSidebarShortcuts', SidebarPanelDefault.values, defaultValue: SidebarPanelDefault.collapsed);
 
   // Environment variables
   static final environmentVariables = StateKey.fromJson<List<EnvironmentVariable>>('settings.environmentVariables', defaultValue: const [], toJson: (list) => list.map((e) => e.toJson()).toList(), fromJson: (raw) => (raw as List).map((e) => EnvironmentVariable.fromJson(e as Map<String, dynamic>)).toList());
@@ -73,6 +80,10 @@ abstract final class SettingsKeys {
     persistLayout,
     sidebarAnimationsEnabled,
     sidebarAnimationSpeed,
+    defaultSidebarDetail,
+    defaultSidebarHistory,
+    defaultSidebarPublish,
+    defaultSidebarShortcuts,
     rateIntervalMs,
     startupConnection,
     defaultDotSize,

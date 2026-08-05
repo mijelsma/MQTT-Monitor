@@ -10,6 +10,7 @@ import 'package:mqtt_monitor/features/monitor/monitor_viewmodel.dart';
 import 'package:mqtt_monitor/features/monitor/publish_draft_controller.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/detail_sidebar.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
+import 'package:mqtt_monitor/models/sidebar_panel_default.dart';
 import 'package:mqtt_monitor/shared/widgets/payload_editor.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
@@ -28,6 +29,13 @@ void main() {
     WidgetTester tester, {
     required Key expandedSibling,
   }) async {
+    // Use "last status" for every panel so the LayoutKeys written below
+    // are honored (otherwise the per-panel default setting would win).
+    await state.write(SettingsKeys.defaultSidebarDetail, SidebarPanelDefault.lastStatus);
+    await state.write(SettingsKeys.defaultSidebarHistory, SidebarPanelDefault.lastStatus);
+    await state.write(SettingsKeys.defaultSidebarPublish, SidebarPanelDefault.lastStatus);
+    await state.write(SettingsKeys.defaultSidebarShortcuts, SidebarPanelDefault.lastStatus);
+
     await state.write(
       LayoutKeys.sidebarDetailCollapsed,
       expandedSibling != const Key('detail-section-toggle'),
