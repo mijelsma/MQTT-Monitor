@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Generate ``lib/generated/git_info.dart`` and update ``pubspec.yaml``'s
-``version`` field from git tags.
+"""Generate ``lib/generated/git_info.dart`` from git state.
 
 Run before building:
 
@@ -23,11 +22,11 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 GIT_INFO_PATH = PROJECT_ROOT / "lib" / "generated" / "git_info.dart"
-PUBSPEC_PATH = PROJECT_ROOT / "pubspec.yaml"
 
-TAG_VERSION_RE = re.compile(r"^v?(\d+\.\d+\.\d+)")
-COMMITS_SINCE_TAG_RE = re.compile(r"^\D*\d+\.\d+\.\d+-(\d+)-g")
-PUBSPEC_VERSION_RE = re.compile(r"version:\s*\S+")
+# Tags may be 2- or 3-component (e.g. ``0.1`` or ``0.1.0``). We capture the
+# numeric prefix and normalize to a full ``X.Y.Z`` for the generated file.
+TAG_VERSION_RE = re.compile(r"^v?(\d+\.\d+(?:\.\d+)?)")
+COMMITS_SINCE_TAG_RE = re.compile(r"^\D*\d+\.\d+(?:\.\d+)?-(\d+)-g")
 
 
 class GenerationError(RuntimeError):
@@ -59,7 +58,13 @@ def run(command: list[str]) -> str:
 
 def parse_tag_version(describe: str) -> str:
     match = TAG_VERSION_RE.match(describe)
-    return match.group(1) if match else "0.0.0"
+    if not match:
+        return "0.0.0"
+    parts = match.group(1).split(".")
+    # Pad to three components so ``0.1`` becomes ``0.1.0``.
+    while len(parts) < 3:
+        parts.append("0")
+    return ".".join(parts)
 
 
 def parse_commits_since_tag(describe: str) -> int:
@@ -106,16 +111,6 @@ def write_git_info(
     )
 
 
-def update_pubspec_version(tag_version: str, build_number: int) -> None:
-    content = PUBSPEC_PATH.read_text(encoding="utf-8")
-    updated = PUBSPEC_VERSION_RE.sub(
-        f"version: {tag_version}+{build_number}",
-        content,
-        count=1,
-    )
-    PUBSPEC_PATH.write_text(updated, encoding="utf-8")
-
-
 def main() -> int:
     try:
         describe = run(["git", "describe", "--tags", "--dirty"])
@@ -129,10 +124,9 @@ def main() -> int:
         write_git_info(
             describe, tag_version, build_number, commit_hash, full_hash, is_dirty
         )
-        update_pubspec_version(tag_version, build_number)
 
         print(f"Generated git_info.dart  (describe: {describe})")
-        print(f"Updated pubspec.yaml     (version: {tag_version}+{build_number})")
+        print(f"version: {tag_version}+{build_number}  (pubspec.yaml left untouched)")
         return 0
     except GenerationError as error:
         print(f"error: {error}", file=sys.stderr)
