@@ -1,16 +1,22 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:event_bus/event_bus.dart' as events;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_client/mqtt_client.dart' as mqtt3;
 import 'package:mqtt_client/mqtt_server_client.dart' as mqtt3_server;
+import 'package:mqtt5_client/mqtt5_client.dart' as mqtt5;
+import 'package:mqtt5_client/mqtt5_server_client.dart' as mqtt5_server;
 import 'package:mqtt_monitor/core/mqtt/connection_status.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_reason.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_service.dart';
+import 'package:typed_data/typed_buffers.dart' show Uint8Buffer;
+import 'package:mqtt_monitor/core/mqtt/publish_result.dart';
 import 'package:mqtt_monitor/core/state/app_state.dart';
 import 'package:mqtt_monitor/core/state/keys/app_keys.dart';
 import 'package:mqtt_monitor/core/state/keys/settings_keys.dart';
 import 'package:mqtt_monitor/models/broker_entry.dart';
+import 'package:mqtt_monitor/models/mqtt_protocol_version.dart';
 import 'package:mqtt_monitor/models/subscription_entry.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,10 +28,23 @@ class _FakeMqtt3Client extends mqtt3_server.MqttServerClient {
       StreamController<
         List<mqtt3.MqttReceivedMessage<mqtt3.MqttMessage>>
       >.broadcast();
+  final publishedController =
+      StreamController<mqtt3.MqttPublishMessage>.broadcast();
   final subscriptions = <({String topic, mqtt3.MqttQos qos})>[];
   final unsubscriptions = <String>[];
   final publications =
       <({String topic, mqtt3.MqttQos qos, String payload, bool retain})>[];
+  /// When non-null, the next QoS 1/2 publish's `published` event is
+  /// delayed by this duration, so tests can simulate an in-flight state.
+  Duration? ackDelay;
+  /// When true, never emit `published` for QoS 1/2 publishes so the
+  /// publish times out from the caller's perspective.
+  bool suppressAcks = false;
+  /// When true (default), every published message is also delivered back
+  /// through the `updates` stream — mirroring the way a real broker
+  /// echoes messages to a subscriber on the same topic. Tests that
+  /// simulate ACL filtering set this to false.
+  bool echoesToSubscriber = true;
   int connectCalls = 0;
   int disconnectCalls = 0;
   String? connectedUsername;
@@ -37,6 +56,9 @@ class _FakeMqtt3Client extends mqtt3_server.MqttServerClient {
   @override
   Stream<List<mqtt3.MqttReceivedMessage<mqtt3.MqttMessage>>> get updates =>
       updatesController.stream;
+
+  @override
+  Stream<mqtt3.MqttPublishMessage>? get published => publishedController.stream;
 
   @override
   Future<mqtt3.MqttClientConnectionStatus?> connect([
@@ -69,13 +91,36 @@ class _FakeMqtt3Client extends mqtt3_server.MqttServerClient {
     dynamic data, {
     bool retain = false,
   }) {
+    final bytes = Uint8Buffer()..addAll(List<int>.from(data));
+    final packetId = publications.length + 1;
     publications.add((
       topic: topic,
       qos: qualityOfService,
-      payload: utf8.decode(List<int>.from(data)),
+      payload: utf8.decode(bytes),
       retain: retain,
     ));
-    return publications.length;
+    if (!suppressAcks &&
+        (qualityOfService == mqtt3.MqttQos.atLeastOnce ||
+            qualityOfService == mqtt3.MqttQos.exactlyOnce)) {
+      final ackMessage = mqtt3.MqttPublishMessage()
+          .toTopic(topic)
+          .withQos(qualityOfService)
+          .withMessageIdentifier(packetId)
+          .publishData(bytes);
+      if (ackDelay == null) {
+        publishedController.add(ackMessage);
+      } else {
+        Timer(ackDelay!, () => publishedController.add(ackMessage));
+      }
+    }
+    // Simulate a real broker: deliver the published message back to the
+    // Echo the published message back through the updates stream so any
+    // subscriber on the same topic (including the publisher) sees it,
+    // mirroring a real broker.
+    if (echoesToSubscriber) {
+      addPublish(topic, bytes, qos: qualityOfService.index, retain: retain);
+    }
+    return packetId;
   }
 
   @override
@@ -122,7 +167,143 @@ class _FakeMqtt3Client extends mqtt3_server.MqttServerClient {
     ]);
   }
 
-  Future<void> close() => updatesController.close();
+  Future<void> close() async {
+    await updatesController.close();
+    await publishedController.close();
+  }
+}
+
+/// A re-export of the event_bus package's [EventBus] so the fake MQTT 5
+/// client can construct one without depending on the package directly.
+typedef _EventBus = events.EventBus;
+
+/// A minimal MQTT 5 fake that supports the event-bus packet flow the
+/// service uses to match PUBACK/PUBREC back to pending publishes.
+class _FakeMqtt5Client extends mqtt5_server.MqttServerClient {
+  _FakeMqtt5Client() : super('unused', 'test-client');
+
+  final status = mqtt5.MqttConnectionStatus();
+  final updatesController = StreamController<List<mqtt5.MqttReceivedMessage<mqtt5.MqttMessage>>>.broadcast();
+  // ignore: invalid_use_of_protected_member
+  final eventBus = mqtt5.MqttEventBus.fromEventBus(_EventBus());
+  final subscriptions = <({String topic, mqtt5.MqttQos qos})>[];
+  final publications = <({String topic, mqtt5.MqttQos qos, String payload, bool retain})>[];
+  mqtt5.MqttConnectReasonCode? nextConnackReason = mqtt5.MqttConnectReasonCode.success;
+  /// When a publish arrives, the reason code we will respond with in the
+  /// PUBACK. `null` means no PUBACK is sent (timed out from caller's view).
+  mqtt5.MqttPublishReasonCode? nextPubackReason = mqtt5.MqttPublishReasonCode.success;
+  /// When true, `connect()` returns without ever setting
+  /// [MqttConnectionState.connected] or filling in a CONNACK — mirrors
+  /// the way a 3.1.1-only Mosquitto just drops the socket on a MQTT 5
+  /// CONNECT packet. Used to test the timeout-driven auto-fallback.
+  bool neverConnacks = false;
+  int connectCalls = 0;
+  int disconnectCalls = 0;
+  String? connectedUsername;
+  String? connectedPassword;
+
+  @override
+  mqtt5.MqttConnectionStatus get connectionStatus => status;
+
+  @override
+  // ignore: invalid_use_of_protected_member
+  Stream<List<mqtt5.MqttReceivedMessage<mqtt5.MqttMessage>>>? get updates => updatesController.stream;
+
+  @override
+  // ignore: invalid_use_of_protected_member
+  mqtt5.MqttEventBus get clientEventBus => eventBus;
+
+  @override
+  Future<mqtt5.MqttConnectionStatus?> connect([String? username, String? password]) async {
+    connectCalls++;
+    connectedUsername = username;
+    connectedPassword = password;
+    if (neverConnacks) {
+      // Simulate a broker that just dropped the socket without ever
+      // sending a CONNACK. The state stays in "disconnected" and no
+      // connectAckMessage is set.
+      status.state = mqtt5.MqttConnectionState.disconnected;
+      return status;
+    }
+    // `withReasonCode` returns the reason code, not the message; build the
+    // message separately and set the variable header's reason code.
+    final msg = mqtt5.MqttConnectAckMessage()
+      ..variableHeader?.reasonCode = nextConnackReason ?? mqtt5.MqttConnectReasonCode.success;
+    status.connectAckMessage = msg;
+    // Real mqtt5 client never transitions to "connected" when CONNACK
+    // returns a non-success reason code. Mirror that here.
+    if (nextConnackReason == null || nextConnackReason == mqtt5.MqttConnectReasonCode.success) {
+      status.state = mqtt5.MqttConnectionState.connected;
+      onConnected?.call();
+    } else {
+      status.state = mqtt5.MqttConnectionState.disconnected;
+    }
+    return status;
+  }
+
+  @override
+  mqtt5.MqttSubscription? subscribe(String topic, mqtt5.MqttQos qosLevel) {
+    subscriptions.add((topic: topic, qos: qosLevel));
+    return null;
+  }
+
+  @override
+  void unsubscribeStringTopic(String topic) {}
+
+  @override
+  int publishMessage(
+    String topic,
+    mqtt5.MqttQos qualityOfService,
+    dynamic data, {
+    bool retain = false,
+    List<mqtt5.MqttUserProperty>? userProperties,
+  }) {
+    final packetId = publications.length + 1;
+    publications.add((
+      topic: topic,
+      qos: qualityOfService,
+      payload: utf8.decode(List<int>.from(data)),
+      retain: retain,
+    ));
+    final reason = nextPubackReason;
+    if (reason != null &&
+        (qualityOfService == mqtt5.MqttQos.atLeastOnce || qualityOfService == mqtt5.MqttQos.exactlyOnce)) {
+      final ack = mqtt5.MqttPublishAckMessage()
+          .withMessageIdentifier(packetId)
+          .withReasonCode(reason);
+      // ignore: invalid_use_of_protected_member
+      eventBus.fire(mqtt5.MqttMessageAvailable(ack));
+    }
+    return packetId;
+  }
+
+  @override
+  void disconnect() {
+    disconnectCalls++;
+    status.state = mqtt5.MqttConnectionState.disconnected;
+  }
+
+  void addPublish(String topic, List<int> bytes, {int qos = 0, bool retain = false}) {
+    final builder = mqtt5.MqttPayloadBuilder();
+    for (final byte in bytes) {
+      builder.addByte(byte);
+    }
+    final message = mqtt5.MqttPublishMessage()
+        .toTopic(topic)
+        .withQos(switch (qos) {
+          1 => mqtt5.MqttQos.atLeastOnce,
+          2 => mqtt5.MqttQos.exactlyOnce,
+          _ => mqtt5.MqttQos.atMostOnce,
+        })
+        .withMessageIdentifier(publications.length + 1000)
+        .publishData(builder.payload!);
+    message.setRetain(state: retain);
+    updatesController.add([mqtt5.MqttReceivedMessage<mqtt5.MqttMessage>(topic, message)]);
+  }
+
+  Future<void> close() async {
+    await updatesController.close();
+  }
 }
 
 void main() {
@@ -173,9 +354,23 @@ void main() {
       ]);
       expect(state.read(AppKeys.connectionStatus), ConnectionStatus.connected);
 
-      expect(service.publish('out/0', 'zero', qos: 0), isTrue);
-      expect(service.publish('out/1', 'one', qos: 1, retain: true), isTrue);
-      expect(service.publish('out/2', 'two', qos: 2), isTrue);
+      // Each publish returns a Future<PublishResult>?; null means the
+      // local client rejected the call. Under MQTT 3.1.1 any successful
+      // publish resolves to `noConfirmation` because the protocol cannot
+      // distinguish success from a silently ACL-dropped message.
+      final futures = [
+        service.publish('out/0', 'zero', qos: 0),
+        service.publish('out/1', 'one', qos: 1, retain: true),
+        service.publish('out/2', 'two', qos: 2),
+      ];
+      for (final future in futures) {
+        expect(future, isNotNull);
+      }
+      final results = await Future.wait(futures.cast<Future>());
+      for (final result in results) {
+        expect(result.kind, PublishResultKind.noConfirmation,
+            reason: 'MQTT 3.1.1 can never report a real delivery, even at QoS 1/2');
+      }
       expect(fake.publications.map((value) => value.qos), [
         mqtt3.MqttQos.atMostOnce,
         mqtt3.MqttQos.atLeastOnce,
@@ -225,7 +420,7 @@ void main() {
 
     expect(clients.single.disconnectCalls, 1);
     expect(state.read(AppKeys.connectionStatus), ConnectionStatus.disconnected);
-    expect(service.publish('offline', 'ignored'), isFalse);
+    expect(service.publish('offline', 'ignored'), isNull);
 
     service.reconnect();
     await settle();
@@ -335,4 +530,207 @@ void main() {
       expect(message.retain, isTrue);
     },
   );
-}
+
+  group('honest publish feedback', () {
+    test(
+      'MQTT 5 QoS 1 PUBACK with reason 0 resolves to delivered (green path)',
+      () async {
+        const broker = BrokerEntry(
+          id: 'broker-1',
+          name: 'Test',
+          host: 'broker.invalid',
+          protocolVersion: MqttProtocolVersion.v5,
+        );
+        final fake = _FakeMqtt5Client();
+        await state.write(SettingsKeys.brokers, [broker]);
+        await state.write(AppKeys.activeBrokerId, broker.id);
+        await state.write(AppKeys.disconnected, false);
+        final service = MqttService(
+          state,
+          mqtt5ClientFactory: (_) => fake,
+        );
+        addTearDown(service.dispose);
+        addTearDown(fake.close);
+
+        service.initialize();
+        await settle();
+        expect(service.activeProtocol, MqttProtocolVersion.v5);
+
+        fake.nextPubackReason = mqtt5.MqttPublishReasonCode.success;
+        final result = await service.publish('test/hello', 'hi', qos: 1)!;
+        expect(result, isA<PublishResult>());
+        expect(result.kind, PublishResultKind.delivered,
+            reason: 'MQTT 5 PUBACK with reason 0 means a real success.');
+        expect(result.reasonCode, 0);
+      },
+    );
+
+    test(
+      'MQTT 5 QoS 1 PUBACK with reason 0x87 (Not authorized) resolves to failed with parsed reason',
+      () async {
+        const broker = BrokerEntry(
+          id: 'broker-1',
+          name: 'Test',
+          host: 'broker.invalid',
+          protocolVersion: MqttProtocolVersion.v5,
+        );
+        final fake = _FakeMqtt5Client();
+        await state.write(SettingsKeys.brokers, [broker]);
+        await state.write(AppKeys.activeBrokerId, broker.id);
+        await state.write(AppKeys.disconnected, false);
+        final service = MqttService(
+          state,
+          mqtt5ClientFactory: (_) => fake,
+        );
+        addTearDown(service.dispose);
+        addTearDown(fake.close);
+
+        service.initialize();
+        await settle();
+
+        fake.nextPubackReason = mqtt5.MqttPublishReasonCode.notAuthorized;
+        final result = await service.publish('forbidden/topic', 'oops', qos: 1)!;
+        expect(result.kind, PublishResultKind.failed);
+        expect(result.reasonCode, 0x87);
+        expect(result.reason, contains('Not authorized'));
+        expect(result.reason, contains('135'),
+            reason: 'Reason code is shown alongside the label so the user '
+                'can map it back to a broker log.');
+      },
+    );
+
+    test(
+      'MQTT 5 QoS 2 PUBREC with Quota Exceeded resolves to failed with parsed reason',
+      () async {
+        const broker = BrokerEntry(
+          id: 'broker-1',
+          name: 'Test',
+          host: 'broker.invalid',
+          protocolVersion: MqttProtocolVersion.v5,
+        );
+        final fake = _FakeMqtt5Client();
+        await state.write(SettingsKeys.brokers, [broker]);
+        await state.write(AppKeys.activeBrokerId, broker.id);
+        await state.write(AppKeys.disconnected, false);
+        final service = MqttService(
+          state,
+          mqtt5ClientFactory: (_) => fake,
+        );
+        addTearDown(service.dispose);
+        addTearDown(fake.close);
+
+        service.initialize();
+        await settle();
+
+        fake.nextPubackReason = mqtt5.MqttPublishReasonCode.quotaExceeded;
+        final result = await service.publish('limited/topic', 'oops', qos: 2)!;
+        expect(result.kind, PublishResultKind.failed);
+        expect(result.reasonCode, 0x97);
+        expect(result.reason, contains('Quota exceeded'));
+      },
+    );
+
+    test(
+      'MQTT 5 QoS 0 resolves immediately to noConfirmation (no ack possible)',
+      () async {
+        const broker = BrokerEntry(
+          id: 'broker-1',
+          name: 'Test',
+          host: 'broker.invalid',
+          protocolVersion: MqttProtocolVersion.v5,
+        );
+        final fake = _FakeMqtt5Client();
+        await state.write(SettingsKeys.brokers, [broker]);
+        await state.write(AppKeys.activeBrokerId, broker.id);
+        await state.write(AppKeys.disconnected, false);
+        final service = MqttService(
+          state,
+          mqtt5ClientFactory: (_) => fake,
+        );
+        addTearDown(service.dispose);
+        addTearDown(fake.close);
+
+        service.initialize();
+        await settle();
+
+        final result = await service.publish('test/zero', 'hi', qos: 0)!;
+        expect(result, isA<PublishResult>());
+        expect(result.kind, PublishResultKind.noConfirmation,
+            reason: 'QoS 0 is fire-and-forget, so the UI must never show '
+                'a confident green check.');
+      },
+    );
+
+    test(
+      'MQTT 3.1.1 QoS 1 with successful PUBACK still resolves to noConfirmation (3.1.1 cannot tell)',
+      () async {
+        const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid');
+        final fake = _FakeMqtt3Client();
+        await state.write(SettingsKeys.brokers, [broker]);
+        await state.write(AppKeys.activeBrokerId, broker.id);
+        await state.write(AppKeys.disconnected, false);
+        final service = MqttService(state, mqtt3ClientFactory: (_) => fake);
+        addTearDown(service.dispose);
+        addTearDown(fake.close);
+
+        service.initialize();
+        await settle();
+
+        final result = await service.publish('forbidden/topic', 'oops', qos: 1)!;
+        expect(result.kind, PublishResultKind.noConfirmation,
+            reason: 'MQTT 3.1.1 PUBACK carries no failure reason; even on '
+                'success we must not claim a confident delivery.');
+        expect(result.reason, contains('MQTT 3.1.1'));
+      },
+    );
+
+    test(
+      'publish times out when no PUBACK arrives and resolves to timedOut',
+      () async {
+        const broker = BrokerEntry(
+          id: 'broker-1',
+          name: 'Test',
+          host: 'broker.invalid',
+          protocolVersion: MqttProtocolVersion.v5,
+        );
+        final fake = _FakeMqtt5Client();
+        await state.write(SettingsKeys.brokers, [broker]);
+        await state.write(AppKeys.activeBrokerId, broker.id);
+        await state.write(AppKeys.disconnected, false);
+        final service = MqttService(
+          state,
+          mqtt5ClientFactory: (_) => fake,
+        );
+        addTearDown(service.dispose);
+        addTearDown(fake.close);
+
+        service.initialize();
+        await settle();
+
+        // Suppress PUBACK so the future times out. A 5s timeout is
+        // baked into the service, so we use a short test wrapper:
+        fake.nextPubackReason = null;
+        final result = await service.publish('test/timeout', 'hi', qos: 1)!.timeout(
+          const Duration(seconds: 8),
+          onTimeout: () => PublishResult.timedOut(MqttProtocolVersion.v5, 1),
+        );
+        expect(result.kind, PublishResultKind.timedOut);
+      },
+    );
+
+    test('publish returns null when the local client is not connected', () async {
+      await state.write(SettingsKeys.brokers, [
+        const BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid'),
+      ]);
+      await state.write(AppKeys.activeBrokerId, 'broker-1');
+      await state.write(AppKeys.disconnected, true);
+      final service = MqttService(state, mqtt3ClientFactory: (_) => _FakeMqtt3Client());
+      addTearDown(service.dispose);
+      service.initialize();
+      await settle();
+
+      expect(service.publish('offline', 'ignored'), isNull);
+    });
+  });
+
+  }

@@ -58,7 +58,7 @@ class AboutPanel extends StatelessWidget {
             UiLinkRow(label: s.aboutPanelSourceCode, icon: Icons.code_rounded, accent: accent, onTap: () => _openUrl('https://github.com/mijelsma/mqtt-monitor')),
             UiLinkRow(label: s.aboutPanelChangelog, icon: Icons.history_rounded, accent: accent, onTap: () => _openUrl('https://github.com/mijelsma/mqtt-monitor/releases')),
             UiLinkRow(label: s.aboutPanelReportIssue, icon: Icons.bug_report_outlined, accent: AppColors.error500, onTap: () => _openUrl('https://github.com/mijelsma/mqtt-monitor/issues')),
-            UiLinkRow(label: s.aboutPanelSupportProject, icon: Icons.favorite_border_rounded, accent: accent, onTap: () {}),
+            UiLinkRow(label: s.aboutPanelSupportProject, icon: Icons.favorite_border_rounded, accent: accent, onTap: () => _openUrl('https://ko-fi.com/micheljelsma')),
           ],
         ),
       ],

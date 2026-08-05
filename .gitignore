@@ -29,7 +29,7 @@ migrate_working_dir/
 # is commented out by default.
 #.vscode/
 
-# Generated git info (re-generate with: dart run scripts/generate_git_info.dart)
+# Generated git info (re-generate with: python3 scripts/generate_git_info.py)
 lib/generated/git_info.dart
 
 # Flutter/Dart/Pub related

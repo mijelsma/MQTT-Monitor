@@ -14,6 +14,7 @@ import '../../../shared/widgets/copy_button.dart';
 import '../../../shared/widgets/json_highlighter.dart';
 import '../../../shared/widgets/qos_tag.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
+import '../../../shared/widgets/ui_inline_notice.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../monitor_viewmodel.dart';
@@ -655,47 +656,12 @@ class _HistoricalBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.warning500.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.warning500.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.history_rounded, size: 14, color: AppColors.warning500),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              S.of(context).detailViewingMessage(seq),
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.warning500),
-            ),
-          ),
-          if (onShowLatest != null)
-            MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                onTap: onShowLatest,
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: tokens.surface,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: tokens.border, width: 0.5),
-                  ),
-                  child: Text(
-                    S.of(context).detailShowLatest,
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: tokens.textSecondary),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
+    return UiInlineNotice(
+      kind: UiNoticeKind.warning,
+      title: S.of(context).detailViewingMessage(seq),
+      actionLabel: onShowLatest == null ? null : S.of(context).detailShowLatest,
+      onAction: onShowLatest,
+      radius: 10,
     );
   }
 }

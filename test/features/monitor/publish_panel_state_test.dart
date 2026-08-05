@@ -206,4 +206,36 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
+
+  group('PublishDraftController', () {
+    test('setQos clamps out-of-range values to a valid MQTT QoS', () {
+      final draft = PublishDraftController();
+      addTearDown(draft.dispose);
+
+      draft.setQos(-1);
+      expect(draft.qos, 0);
+      draft.setQos(99);
+      expect(draft.qos, 2);
+    });
+
+    test('setQos fires onQosChanged exactly when the QoS actually changes', () {
+      final picks = <int>[];
+      final draft = PublishDraftController(onQosChanged: picks.add);
+      addTearDown(draft.dispose);
+
+      draft.setQos(2);
+      draft.setQos(2);
+      draft.setQos(0);
+      expect(picks, [2, 0], reason: 'Identical picks should not re-fire the callback.');
+    });
+
+    test('initial QoS is honored, and onQosChanged is not fired during construction', () {
+      final picks = <int>[];
+      final draft = PublishDraftController(initialQos: 2, onQosChanged: picks.add);
+      addTearDown(draft.dispose);
+
+      expect(draft.qos, 2);
+      expect(picks, isEmpty);
+    });
+  });
 }

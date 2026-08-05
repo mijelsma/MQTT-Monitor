@@ -37,12 +37,11 @@ class IoCertificateFileAccess implements CertificateFileAccess {
 }
 
 typedef CertificateDirectoryProvider = Future<String> Function();
-typedef CertificateNameTokenProvider = String Function();
 
 /// Copies credentials into app-private storage. Only these paths are persisted
 /// in SharedPreferences; private-key bytes are never stored there.
 class AppPrivateCertificateStorage {
-  AppPrivateCertificateStorage({required CertificateFileAccess files, required CertificateDirectoryProvider directoryProvider, CertificateNameTokenProvider? nameTokenProvider}) : _files = files, _directoryProvider = directoryProvider, _nameTokenProvider = nameTokenProvider ?? (() => DateTime.now().microsecondsSinceEpoch.toString());
+  AppPrivateCertificateStorage({required CertificateFileAccess files, required CertificateDirectoryProvider directoryProvider}) : _files = files, _directoryProvider = directoryProvider;
 
   factory AppPrivateCertificateStorage.standard() {
     return AppPrivateCertificateStorage(files: const IoCertificateFileAccess(), directoryProvider: () async => (await getApplicationSupportDirectory()).path);
@@ -50,19 +49,47 @@ class AppPrivateCertificateStorage {
 
   final CertificateFileAccess _files;
   final CertificateDirectoryProvider _directoryProvider;
-  final CertificateNameTokenProvider _nameTokenProvider;
 
-  Future<String> store(String brokerId, ClientCertificateKind kind, Uint8List bytes) async {
+  Future<String> store(String brokerId, ClientCertificateKind kind, Uint8List bytes, {String? originalFileName}) async {
     final root = await _directoryProvider();
-    final stem = switch (kind) {
+    final baseName = _resolveFileName(kind, originalFileName);
+    // Each mTLS slot lives in its own subfolder so original filenames can be
+    // preserved without fear of one slot silently overwriting another (e.g.
+    // a root CA and a client cert both named "ca.crt"). Re-importing a file
+    // always overwrites the previous one in that slot.
+    final kindFolder = switch (kind) {
+      ClientCertificateKind.rootCa => 'root_ca',
+      ClientCertificateKind.privateKey => 'private_key',
+      ClientCertificateKind.clientCertificate => 'client_certificate',
+    };
+    final destination = path.join(root, 'mqtt_certificates', brokerId, kindFolder, baseName);
+    await _files.write(destination, bytes);
+    return destination;
+  }
+
+  String _resolveFileName(ClientCertificateKind kind, String? originalFileName) {
+    final fallbackStem = switch (kind) {
       ClientCertificateKind.rootCa => 'root_ca',
       ClientCertificateKind.privateKey => 'client_private_key',
       ClientCertificateKind.clientCertificate => 'client_certificate',
     };
-    final fileName = '${stem}_${_nameTokenProvider()}.pem';
-    final destination = path.join(root, 'mqtt_certificates', brokerId, fileName);
-    await _files.write(destination, bytes);
-    return destination;
+
+    if (originalFileName == null || originalFileName.trim().isEmpty) {
+      return '$fallbackStem.pem';
+    }
+
+    final base = path.basename(originalFileName.trim());
+    if (base.isEmpty) {
+      return '$fallbackStem.pem';
+    }
+
+    final sanitized = base.replaceAll(RegExp(r'[^\w.\-]'), '_');
+    final cleaned = sanitized.isEmpty || sanitized == '.' || sanitized == '..' ? '$fallbackStem.pem' : sanitized;
+
+    if (!cleaned.contains('.')) {
+      return '$cleaned.pem';
+    }
+    return cleaned;
   }
 }
 
@@ -107,27 +134,31 @@ class ClientCertificateService {
   Future<void> validateConfiguration(ClientCertificateConfig config) async {
     if (config.isEmpty) return;
     if (!config.isComplete) {
-      throw const CertificateValidationException('Root CA, client private key, and client certificate are all required for mTLS.');
+      throw const CertificateValidationException('Client private key and client certificate are both required for mTLS. The Root CA is optional — leave it empty to validate against the system trusted roots (e.g. Let\'s Encrypt).');
     }
     await buildSecurityContext(config);
   }
 
   Future<SecurityContext> buildSecurityContext(ClientCertificateConfig config) async {
     if (!config.isComplete) {
-      throw const CertificateValidationException('Cannot create an mTLS context without all three certificate files.');
+      throw const CertificateValidationException('Cannot create an mTLS context without a client private key and client certificate.');
     }
 
     try {
-      final rootCa = await _files.read(config.rootCaPath!);
       final privateKey = await _files.read(config.clientPrivateKeyPath!);
       final certificate = await _files.read(config.clientCertificatePath!);
 
-      validateBytes(ClientCertificateKind.rootCa, rootCa);
       validateBytes(ClientCertificateKind.privateKey, privateKey);
       validateBytes(ClientCertificateKind.clientCertificate, certificate);
 
+      // withTrustedRoots: true loads the OS root store (Let's Encrypt, etc.).
+      // A custom Root CA, when provided, is layered on top of those roots.
       final context = SecurityContext(withTrustedRoots: true);
-      context.setTrustedCertificatesBytes(rootCa);
+      if (config.rootCaPath != null) {
+        final rootCa = await _files.read(config.rootCaPath!);
+        validateBytes(ClientCertificateKind.rootCa, rootCa);
+        context.setTrustedCertificatesBytes(rootCa);
+      }
       context.useCertificateChainBytes(certificate);
       context.usePrivateKeyBytes(privateKey);
       return context;

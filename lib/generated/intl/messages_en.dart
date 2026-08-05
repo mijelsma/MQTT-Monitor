@@ -277,7 +277,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Waiting for messages",
     ),
     "optional": MessageLookupByLibrary.simpleMessage("Optional"),
+    "publishAcknowledged": MessageLookupByLibrary.simpleMessage("Sent"),
     "publishBadJson": MessageLookupByLibrary.simpleMessage("Bad JSON"),
+    "publishDelivered": MessageLookupByLibrary.simpleMessage("Delivered"),
     "publishFailed": MessageLookupByLibrary.simpleMessage("Failed"),
     "publishNoTopic": MessageLookupByLibrary.simpleMessage("No topic"),
     "publishOffline": MessageLookupByLibrary.simpleMessage("Offline"),
@@ -285,7 +287,9 @@ class MessageLookup extends MessageLookupByLibrary {
       "Prettify JSON",
     ),
     "publishRetain": MessageLookupByLibrary.simpleMessage("Retain"),
+    "publishSending": MessageLookupByLibrary.simpleMessage("Sending…"),
     "publishSent": MessageLookupByLibrary.simpleMessage("Sent"),
+    "publishTimedOut": MessageLookupByLibrary.simpleMessage("Timed out"),
     "publishTopicHint": MessageLookupByLibrary.simpleMessage(
       "Topic  e.g. home/temp",
     ),
@@ -409,6 +413,25 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "subscriptionDialogValidateTopicFilter":
         MessageLookupByLibrary.simpleMessage("Enter a topic filter"),
+    "uiPanelAccentColor": MessageLookupByLibrary.simpleMessage("Accent color"),
+    "uiPanelDefaultPublishQos": MessageLookupByLibrary.simpleMessage(
+      "Default publish QoS",
+    ),
+    "uiPanelDefaultPublishQosSubtitle": MessageLookupByLibrary.simpleMessage(
+      "QoS used for new publish messages",
+    ),
+    "uiPanelDefaultShortcutQos": MessageLookupByLibrary.simpleMessage(
+      "Default shortcut QoS",
+    ),
+    "uiPanelDefaultShortcutQosSubtitle": MessageLookupByLibrary.simpleMessage(
+      "QoS used for new publish shortcuts",
+    ),
+    "uiPanelDefaultSubscribeQos": MessageLookupByLibrary.simpleMessage(
+      "Default subscribe QoS",
+    ),
+    "uiPanelDefaultSubscribeQosSubtitle": MessageLookupByLibrary.simpleMessage(
+      "QoS used for new subscriptions",
+    ),
     "uiPanelDescription": MessageLookupByLibrary.simpleMessage(
       "Appearance and layout preferences.",
     ),
@@ -426,6 +449,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "uiPanelPulseRateSubtitle": MessageLookupByLibrary.simpleMessage(
       "Maximum activity pulses per second",
     ),
+    "uiPanelQosOptionLastUsed": MessageLookupByLibrary.simpleMessage(
+      "Last used",
+    ),
+    "uiPanelQosOptionLastUsedSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Reuse the QoS you most recently picked",
+    ),
     "uiPanelRateInterval": MessageLookupByLibrary.simpleMessage(
       "Rate update interval",
     ),
@@ -441,6 +470,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "uiPanelSectionDataDisplay": MessageLookupByLibrary.simpleMessage(
       "Data Display",
     ),
+    "uiPanelSectionDefaults": MessageLookupByLibrary.simpleMessage("Defaults"),
     "uiPanelSectionLayout": MessageLookupByLibrary.simpleMessage("Layout"),
     "uiPanelShowActivity": MessageLookupByLibrary.simpleMessage(
       "Show activity",
@@ -478,7 +508,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Last Status",
     ),
     "uiPanelThemeDark": MessageLookupByLibrary.simpleMessage("Dark"),
-    "uiPanelAccentColor": MessageLookupByLibrary.simpleMessage("Accent color"),
     "uiPanelThemeLight": MessageLookupByLibrary.simpleMessage("Light"),
     "uiPanelThemeMode": MessageLookupByLibrary.simpleMessage("Theme Mode"),
     "uiPanelThemeSystem": MessageLookupByLibrary.simpleMessage("System"),

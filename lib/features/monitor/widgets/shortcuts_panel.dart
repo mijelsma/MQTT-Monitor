@@ -67,7 +67,7 @@ class _ShortcutCard extends StatefulWidget {
 class _ShortcutCardState extends State<_ShortcutCard> with FeedbackMixin<_ShortcutCard> {
   bool _hovering = false;
 
-  void _execute() {
+  Future<void> _execute() async {
     final vm = context.read<MonitorViewModel>();
 
     if (!vm.isConnected) {
@@ -76,20 +76,40 @@ class _ShortcutCardState extends State<_ShortcutCard> with FeedbackMixin<_Shortc
     }
 
     final resolvedTopic = vm.resolveShortcutTopic(widget.shortcut.topic);
-    final sent = vm.publish(resolvedTopic, widget.shortcut.payload, qos: widget.shortcut.qos, retain: widget.shortcut.retain);
+    final shortcut = widget.shortcut;
 
-    showFeedback(sent ? PublishFeedbackKind.success : PublishFeedbackKind.failed);
+    // Optimistic "sending" state — never a checkmark before the broker
+    // has had a chance to confirm.
+    showFeedback(PublishFeedbackKind.sending, autoDismiss: const Duration(minutes: 1));
+
+    final future = vm.publish(resolvedTopic, shortcut.payload, qos: shortcut.qos, retain: shortcut.retain);
+    if (future == null) {
+      showFeedback(PublishFeedbackKind.failed, detail: 'Client not connected.');
+      return;
+    }
+    final result = await future;
+    if (!mounted) return;
+    final info = feedbackForResult(context, result);
+    showFeedback(
+      info.kind,
+      detail: info.detail,
+      autoDismiss: result.isUnconfirmed ? const Duration(minutes: 1) : const Duration(seconds: 4),
+    );
   }
 
   Widget _feedbackLabel(BuildContext context) {
     final s = S.of(context);
     final label = switch (feedback!) {
-      PublishFeedbackKind.success => s.publishSent,
+      PublishFeedbackKind.sending => s.publishSending,
+      PublishFeedbackKind.delivered => s.publishDelivered,
+      PublishFeedbackKind.acknowledged => s.publishAcknowledged,
       PublishFeedbackKind.failed => s.publishFailed,
+      PublishFeedbackKind.timedOut => s.publishTimedOut,
       PublishFeedbackKind.offline => s.publishOffline,
-      _ => '',
+      PublishFeedbackKind.emptyTopic => s.publishNoTopic,
+      PublishFeedbackKind.invalidJson => s.publishBadJson,
     };
-    return FeedbackBadge(kind: feedback!, label: label);
+    return FeedbackBadge(kind: feedback!, label: label, detail: feedbackDetail);
   }
 
   @override

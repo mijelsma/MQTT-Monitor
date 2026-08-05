@@ -6,6 +6,7 @@ import '../../core/history/message_history_service.dart';
 import '../../core/mqtt/connection_status.dart';
 import '../../core/mqtt/mqtt_message.dart';
 import '../../core/mqtt/mqtt_service.dart';
+import '../../core/mqtt/publish_result.dart';
 import '../../core/mqtt/topic_badge_counts.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
@@ -13,6 +14,7 @@ import '../../core/state/keys/settings_keys.dart';
 import '../../models/broker_entry.dart';
 import '../../models/environment_variable.dart';
 import '../../models/flat_tree_row.dart';
+import '../../models/mqtt_protocol_version.dart';
 import '../../models/publish_shortcut.dart';
 import '../../models/topic_node.dart';
 import '../../models/topic_node_value.dart';
@@ -82,6 +84,10 @@ class MonitorViewModel extends ChangeNotifier {
   // Brokers
   List<BrokerEntry> get brokers => _state.read(SettingsKeys.brokers);
 
+  /// The protocol negotiated with the broker, or `null` if not
+  /// connected. Mirrors the broker profile's selected protocol version.
+  MqttProtocolVersion? get activeProtocol => _mqtt.activeProtocol;
+
   // The currently active broker, or null if no brokers are configured.
   BrokerEntry? get activeBroker {
     final list = brokers;
@@ -102,9 +108,15 @@ class MonitorViewModel extends ChangeNotifier {
   /// Reconnects to the active broker.
   void reconnect() => _mqtt.reconnect();
 
-  /// Publishes a message to the given topic.
-  /// Returns `true` if the message was sent.
-  bool publish(String topic, String payload, {int qos = 0, bool retain = false}) {
+  /// Publishes a message to the given topic. Returns a future that resolves
+  /// with the broker's real answer once the protocol has had a chance to
+  /// confirm (or fail) the publish, or `null` if the local client is not
+  /// connected.
+  ///
+  /// The UI must use the future to decide which feedback state to show.
+  /// On QoS 0 and MQTT 3.1.1 the future resolves to [PublishResult.noConfirmation]
+  /// (grey check, never a confident green) — see the build spec.
+  Future<PublishResult>? publish(String topic, String payload, {int qos = 0, bool retain = false}) {
     return _mqtt.publish(topic, payload, qos: qos, retain: retain);
   }
 
@@ -364,7 +376,7 @@ class MonitorViewModel extends ChangeNotifier {
 
   /// Publishes an empty retained message to clear the retained value on the broker.
   bool clearRetainedMessage(String topic) {
-    return _mqtt.publish(topic, '', qos: 0, retain: true);
+    return _mqtt.publish(topic, '', qos: 0, retain: true) != null;
   }
 
   /// Clears all topics from the tree and history.

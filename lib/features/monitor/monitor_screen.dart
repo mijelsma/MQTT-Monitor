@@ -5,9 +5,12 @@ import '../../core/history/message_history_service.dart';
 import '../../core/mqtt/mqtt_service.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/keys/layout_keys.dart';
+import '../../core/state/keys/settings_keys.dart';
+import '../../models/mqtt_qos_default.dart';
 import '../../shared/widgets/resizable_split.dart';
 import 'monitor_viewmodel.dart';
 import 'publish_draft_controller.dart';
+import 'widgets/connection_notice.dart';
 import 'widgets/detail_sidebar.dart';
 import 'widgets/monitor_app_bar.dart';
 import 'widgets/no_brokers_state.dart';
@@ -20,12 +23,25 @@ class MonitorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final state = context.read<AppStateManager>();
+    state.load(SettingsKeys.defaultPublishQos);
+    state.load(SettingsKeys.lastUsedQos);
+    final initialPublishQos = state.read<MqttQosDefault>(SettingsKeys.defaultPublishQos).resolve(state.read(SettingsKeys.lastUsedQos));
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
           create: (ctx) => MonitorViewModel(mqttService: ctx.read<MqttService>(), state: ctx.read<AppStateManager>(), historyService: ctx.read<MessageHistoryService>()),
         ),
-        ChangeNotifierProvider(create: (_) => PublishDraftController()),
+        ChangeNotifierProvider(
+          create: (_) => PublishDraftController(
+            initialQos: initialPublishQos,
+            onQosChanged: (qos) {
+              // Record the pick so any "last used" default strategy
+              // resolves to it next time.
+              state.write(SettingsKeys.lastUsedQos, qos);
+            },
+          ),
+        ),
       ],
       child: const _MonitorView(),
     );
@@ -79,14 +95,15 @@ class _MonitorViewState extends State<_MonitorView> {
       showTree = true;
     }
 
-    Widget body;
+    Widget mainContent;
     if (!showTree) {
-      body = emptyState!;
+      mainContent = emptyState!;
     } else {
-      body = ResizableSplit(
+      mainContent = ResizableSplit(
         initialRatio: _splitRatio,
         minRatio: 0.25,
         maxRatio: 0.75,
+        onRatioUpdate: (ratio) => setState(() => _splitRatio = ratio),
         onRatioChanged: (ratio) => context.read<AppStateManager>().write(LayoutKeys.monitorSplitRatio, ratio),
         first: TopicTree(filterController: _filterController),
         second: const DetailSidebar(),
@@ -95,13 +112,31 @@ class _MonitorViewState extends State<_MonitorView> {
 
     Widget? bottomBar;
     if (vm.showStatusBar) {
-      bottomBar = StatusBar(status: vm.connectionStatus, brokerUrl: vm.activeBroker?.displayAddress, errorDetail: vm.connectionError, messageCount: vm.messageCount, messageRate: vm.messageRate);
+      bottomBar = StatusBar(
+        status: vm.connectionStatus,
+        brokerUrl: vm.activeBroker?.displayAddress,
+        messageCount: vm.messageCount,
+        messageRate: vm.messageRate,
+        activeProtocol: vm.activeProtocol,
+      );
     }
 
     return Scaffold(
       appBar: MonitorAppBar(filterController: _filterController, scope: vm.scope, onScopeChanged: _onScopeChanged),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: body,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Match the left panel width: (total - divider hit area) * ratio.
+          const dividerHitArea = 14.0;
+          final noticeWidth = showTree ? (constraints.maxWidth - dividerHitArea) * _splitRatio : constraints.maxWidth;
+          return Stack(
+            children: [
+              Positioned.fill(child: mainContent),
+              Positioned(top: 0, left: 0, width: noticeWidth.clamp(0, constraints.maxWidth), child: const ConnectionNotice()),
+            ],
+          );
+        },
+      ),
       bottomNavigationBar: bottomBar,
     );
   }
