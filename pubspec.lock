@@ -225,6 +225,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.14"
+  dmg:
+    dependency: "direct dev"
+    description:
+      name: dmg
+      sha256: fa35595c18d735fe12248d06acac6d07db17b6630a778ea875f8df10b7df89b7
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.10"
   equatable:
     dependency: transitive
     description:
