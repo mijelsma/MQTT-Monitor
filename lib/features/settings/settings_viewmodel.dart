@@ -229,6 +229,9 @@ class SettingsViewModel extends ChangeNotifier {
   bool get showActivity => _state.read(SettingsKeys.showActivity);
   void setShowActivity(bool v) => _state.write(SettingsKeys.showActivity, v);
 
+  bool get disableSelectionHighlight => _state.read(SettingsKeys.disableSelectionHighlight);
+  void setDisableSelectionHighlight(bool v) => _state.write(SettingsKeys.disableSelectionHighlight, v);
+
   int get pulseRatePps => _state.read(SettingsKeys.pulseRatePps);
   void setPulseRatePps(int v) => _state.write(SettingsKeys.pulseRatePps, v);
 

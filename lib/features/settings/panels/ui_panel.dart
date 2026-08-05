@@ -71,6 +71,7 @@ class UiPanel extends StatelessWidget {
           label: s.uiPanelSectionDataDisplay,
           children: [
             UiSwitchRow(label: s.uiPanelShowActivity, subtitle: s.uiPanelShowActivitySubtitle, value: vm.showActivity, onChanged: (v) => vm.setShowActivity(v)),
+            UiSwitchRow(label: s.uiPanelDisableSelectionHighlight, subtitle: s.uiPanelDisableSelectionHighlightSubtitle, value: vm.disableSelectionHighlight, onChanged: (v) => vm.setDisableSelectionHighlight(v)),
             if (vm.showActivity) ...[
               UiSliderRow(label: s.uiPanelPulseRate, subtitle: s.uiPanelPulseRateSubtitle, value: vm.pulseRatePps.toDouble(), min: 1, max: 30, divisions: 29, displayValue: '${vm.pulseRatePps} pps', accent: accent, onChanged: (v) => vm.setPulseRatePps(v.round())),
               UiSliderRow(
