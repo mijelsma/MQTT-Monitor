@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../../core/state/app_state.dart';
+import '../../../core/state/keys/settings_keys.dart';
 import '../../../generated/l10n.dart';
 import '../../../models/subscription_entry.dart';
 import '../../../shared/widgets/spacers.dart';
@@ -7,18 +10,22 @@ import '../../../shared/widgets/ui_field.dart';
 import '../../../shared/widgets/ui_modal_scaffold.dart';
 import '../../../shared/widgets/ui_segment_row.dart';
 
-Future<SubscriptionEntry?> showSubscriptionDialog(BuildContext context, {SubscriptionEntry? entry}) {
+Future<SubscriptionEntry?> showSubscriptionDialog(BuildContext context, {SubscriptionEntry? entry, int defaultQos = 1}) {
   return showDialog<SubscriptionEntry>(
     context: context,
     barrierColor: Colors.black54,
-    builder: (_) => SubscriptionDialog(entry: entry),
+    builder: (_) => SubscriptionDialog(entry: entry, defaultQos: defaultQos),
   );
 }
 
 class SubscriptionDialog extends StatefulWidget {
-  const SubscriptionDialog({super.key, this.entry});
+  const SubscriptionDialog({super.key, this.entry, this.defaultQos = 1});
 
   final SubscriptionEntry? entry;
+
+  /// QoS used when [entry] is null (i.e. creating a new subscription).
+  /// Honored from the user-configurable default-subscribe-QoS setting.
+  final int defaultQos;
 
   @override
   State<SubscriptionDialog> createState() => _SubscriptionDialogState();
@@ -37,7 +44,7 @@ class _SubscriptionDialogState extends State<SubscriptionDialog> {
     super.initState();
     _topic = TextEditingController(text: widget.entry?.topic ?? '');
     _name = TextEditingController(text: widget.entry?.name ?? '');
-    _qos = widget.entry?.qos ?? 0;
+    _qos = widget.entry?.qos ?? widget.defaultQos;
   }
 
   @override
@@ -76,7 +83,12 @@ class _SubscriptionDialogState extends State<SubscriptionDialog> {
                 UiSegmentOption(value: 2, label: s.subscriptionDialogQoS2Label, description: s.subscriptionDialogQoS2Description),
               ],
               value: _qos,
-              onChanged: (v) => setState(() => _qos = v),
+              onChanged: (v) {
+                setState(() => _qos = v);
+                // Record the pick so the "last used" default strategy
+                // picks it up the next time a subscription is added.
+                context.read<AppStateManager>().write(SettingsKeys.lastUsedQos, v);
+              },
             ),
           ],
         ),

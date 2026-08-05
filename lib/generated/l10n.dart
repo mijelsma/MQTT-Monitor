@@ -1219,6 +1219,96 @@ class S {
     );
   }
 
+  /// `Defaults`
+  String get uiPanelSectionDefaults {
+    return Intl.message(
+      'Defaults',
+      name: 'uiPanelSectionDefaults',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Default publish QoS`
+  String get uiPanelDefaultPublishQos {
+    return Intl.message(
+      'Default publish QoS',
+      name: 'uiPanelDefaultPublishQos',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `QoS used for new publish messages`
+  String get uiPanelDefaultPublishQosSubtitle {
+    return Intl.message(
+      'QoS used for new publish messages',
+      name: 'uiPanelDefaultPublishQosSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Default shortcut QoS`
+  String get uiPanelDefaultShortcutQos {
+    return Intl.message(
+      'Default shortcut QoS',
+      name: 'uiPanelDefaultShortcutQos',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `QoS used for new publish shortcuts`
+  String get uiPanelDefaultShortcutQosSubtitle {
+    return Intl.message(
+      'QoS used for new publish shortcuts',
+      name: 'uiPanelDefaultShortcutQosSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Default subscribe QoS`
+  String get uiPanelDefaultSubscribeQos {
+    return Intl.message(
+      'Default subscribe QoS',
+      name: 'uiPanelDefaultSubscribeQos',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `QoS used for new subscriptions`
+  String get uiPanelDefaultSubscribeQosSubtitle {
+    return Intl.message(
+      'QoS used for new subscriptions',
+      name: 'uiPanelDefaultSubscribeQosSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Last used`
+  String get uiPanelQosOptionLastUsed {
+    return Intl.message(
+      'Last used',
+      name: 'uiPanelQosOptionLastUsed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reuse the QoS you most recently picked`
+  String get uiPanelQosOptionLastUsedSubtitle {
+    return Intl.message(
+      'Reuse the QoS you most recently picked',
+      name: 'uiPanelQosOptionLastUsedSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Language`
   String get languagePanelTitle {
     return Intl.message(
@@ -1969,14 +2059,49 @@ class S {
     return Intl.message('Retain', name: 'publishRetain', desc: '', args: []);
   }
 
+  /// `Sending…`
+  String get publishSending {
+    return Intl.message('Sending…', name: 'publishSending', desc: '', args: []);
+  }
+
+  /// `Delivered`
+  String get publishDelivered {
+    return Intl.message(
+      'Delivered',
+      name: 'publishDelivered',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Sent`
   String get publishSent {
     return Intl.message('Sent', name: 'publishSent', desc: '', args: []);
   }
 
+  /// `Sent`
+  String get publishAcknowledged {
+    return Intl.message(
+      'Sent',
+      name: 'publishAcknowledged',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Failed`
   String get publishFailed {
     return Intl.message('Failed', name: 'publishFailed', desc: '', args: []);
+  }
+
+  /// `Timed out`
+  String get publishTimedOut {
+    return Intl.message(
+      'Timed out',
+      name: 'publishTimedOut',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Offline`

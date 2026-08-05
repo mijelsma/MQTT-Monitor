@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../../core/state/app_state.dart';
+import '../../../core/state/keys/settings_keys.dart';
 import '../../../generated/l10n.dart';
 import '../../../models/broker_entry.dart';
+import '../../../models/mqtt_qos_default.dart';
 import '../../../models/publish_shortcut.dart';
 import '../../../shared/format_helpers.dart';
 import '../../../shared/widgets/color_picker_field.dart';
@@ -17,20 +21,25 @@ import '../../../theme/app_colors.dart';
 /// Shows a dialog for creating or editing a publish shortcut.
 ///
 /// Returns the resulting [PublishShortcut] on save, or null if dismissed.
-Future<PublishShortcut?> showShortcutDialog(BuildContext context, {PublishShortcut? shortcut, List<BrokerEntry> brokers = const [], VoidCallback? onDelete}) {
+Future<PublishShortcut?> showShortcutDialog(BuildContext context, {PublishShortcut? shortcut, List<BrokerEntry> brokers = const [], VoidCallback? onDelete, int? defaultQos}) {
   return showDialog<PublishShortcut>(
     context: context,
     barrierColor: Colors.black54,
-    builder: (_) => _ShortcutDialog(shortcut: shortcut, brokers: brokers, onDelete: onDelete),
+    builder: (_) => _ShortcutDialog(shortcut: shortcut, brokers: brokers, onDelete: onDelete, defaultQos: defaultQos),
   );
 }
 
 class _ShortcutDialog extends StatefulWidget {
-  const _ShortcutDialog({this.shortcut, required this.brokers, this.onDelete});
+  const _ShortcutDialog({this.shortcut, required this.brokers, this.onDelete, this.defaultQos});
 
   final PublishShortcut? shortcut;
   final List<BrokerEntry> brokers;
   final VoidCallback? onDelete;
+
+  /// QoS used when [shortcut] is null (i.e. creating a new shortcut).
+  /// Honored from the user-configurable default-shortcut-QoS setting
+  /// when not null.
+  final int? defaultQos;
 
   @override
   State<_ShortcutDialog> createState() => _ShortcutDialogState();
@@ -57,7 +66,20 @@ class _ShortcutDialogState extends State<_ShortcutDialog> {
     _nameController = TextEditingController(text: widget.shortcut?.name ?? '');
     _topicController = TextEditingController(text: widget.shortcut?.topic ?? '');
     _payloadController = HighlightingController(text: widget.shortcut?.payload ?? '');
-    _qos = widget.shortcut?.qos ?? 0;
+    if (widget.shortcut != null) {
+      _qos = widget.shortcut!.qos;
+    } else if (widget.defaultQos != null) {
+      // Caller passed a resolved (clamped 0..2) QoS.
+      _qos = widget.defaultQos!.clamp(0, 2);
+    } else {
+      // Fall back to the user's default-shortcut-QoS setting, honoring
+      // the "last used" strategy if selected.
+      final state = context.read<AppStateManager>();
+      state.load(SettingsKeys.defaultShortcutQos);
+      state.load(SettingsKeys.lastUsedQos);
+      final strategy = state.read<MqttQosDefault>(SettingsKeys.defaultShortcutQos);
+      _qos = strategy.resolve(state.read(SettingsKeys.lastUsedQos));
+    }
     _retain = widget.shortcut?.retain ?? false;
     _color = widget.shortcut?.displayColor ?? AppColors.brokerColorOptions.first;
     _isGlobal = widget.shortcut?.isGlobal ?? true;
@@ -138,7 +160,12 @@ class _ShortcutDialogState extends State<_ShortcutDialog> {
                 UiSegmentOption(value: 2, label: s.subscriptionDialogQoS2Label, description: s.subscriptionDialogQoS2Description),
               ],
               value: _qos,
-              onChanged: (v) => setState(() => _qos = v),
+              onChanged: (v) {
+                setState(() => _qos = v);
+                // Record the pick so the "last used" default strategy
+                // picks it up the next time a shortcut is added.
+                context.read<AppStateManager>().write(SettingsKeys.lastUsedQos, v);
+              },
             ),
             const VSpacer(8),
             UiSwitchRow(label: s.shortcutDialogRetain, subtitle: s.shortcutDialogRetainSubtitle, value: _retain, onChanged: (v) => setState(() => _retain = v)),

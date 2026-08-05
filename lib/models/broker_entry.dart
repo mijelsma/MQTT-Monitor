@@ -38,7 +38,7 @@ class BrokerEntry {
   final List<SubscriptionEntry> subscriptions;
 
   String get effectiveClientId {
-    final base = (clientId != null && clientId!.isNotEmpty) ? clientId! : 'mqtt_monitor';
+    final base = (clientId != null && clientId!.isNotEmpty) ? clientId! : 'mqtt-monitor';
     if (!randomClientIdSuffix) return base;
     final hex = Random().nextInt(0xFFFFFF).toRadixString(16).toUpperCase().padLeft(6, '0');
     return '${base}_$hex';

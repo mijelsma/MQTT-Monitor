@@ -5,7 +5,7 @@ import '../../theme/app_tokens/app_tokens.dart';
 ///
 /// Uses flex-based layout so it never overflows.
 class ResizableSplit extends StatefulWidget {
-  const ResizableSplit({super.key, required this.first, required this.second, this.initialRatio = 0.5, this.minRatio = 0.2, this.maxRatio = 0.8, this.axis = Axis.horizontal, this.onRatioChanged});
+  const ResizableSplit({super.key, required this.first, required this.second, this.initialRatio = 0.5, this.minRatio = 0.2, this.maxRatio = 0.8, this.axis = Axis.horizontal, this.onRatioChanged, this.onRatioUpdate});
 
   final Widget first;
   final Widget second;
@@ -16,6 +16,11 @@ class ResizableSplit extends StatefulWidget {
 
   /// Called once when the user finishes dragging the divider.
   final ValueChanged<double>? onRatioChanged;
+
+  /// Called continuously while the user drags the divider (before
+  /// [onRatioChanged]). Use this to update UI that must track the split
+  /// position live, such as an overlay constrained to the left panel width.
+  final ValueChanged<double>? onRatioUpdate;
 
   @override
   State<ResizableSplit> createState() => _ResizableSplitState();
@@ -36,6 +41,7 @@ class _ResizableSplitState extends State<ResizableSplit> {
     setState(() {
       _ratio = (_ratio + delta / totalSize).clamp(widget.minRatio, widget.maxRatio);
     });
+    widget.onRatioUpdate?.call(_ratio);
   }
 
   void _onDragEnd(DragEndDetails _) {

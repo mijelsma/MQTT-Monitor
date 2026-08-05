@@ -9,6 +9,7 @@ import '../../models/chart_type.dart';
 import '../../models/dashboard_layout.dart';
 import '../../models/interpolation_mode.dart';
 import '../../models/language.dart';
+import '../../models/mqtt_qos_default.dart';
 import '../../models/startup_connection.dart';
 import 'settings_section.dart';
 import '../../models/environment_variable.dart';
@@ -93,6 +94,29 @@ class SettingsViewModel extends ChangeNotifier {
 
   int get messageRateSampleSize => _state.read(SettingsKeys.messageRateSampleSize);
   void setMessageRateSampleSize(int value) => _state.write(SettingsKeys.messageRateSampleSize, value);
+
+  // ── Default QoS levels ───────────────────────────────────────────────
+
+  MqttQosDefault get defaultPublishQos => _state.read(SettingsKeys.defaultPublishQos);
+  void setDefaultPublishQos(MqttQosDefault value) => _state.write(SettingsKeys.defaultPublishQos, value);
+
+  MqttQosDefault get defaultShortcutQos => _state.read(SettingsKeys.defaultShortcutQos);
+  void setDefaultShortcutQos(MqttQosDefault value) => _state.write(SettingsKeys.defaultShortcutQos, value);
+
+  MqttQosDefault get defaultSubscribeQos => _state.read(SettingsKeys.defaultSubscribeQos);
+  void setDefaultSubscribeQos(MqttQosDefault value) => _state.write(SettingsKeys.defaultSubscribeQos, value);
+
+  /// The shared most-recently-picked QoS. The "last used" option on the
+  /// default-QoS pickers resolves to this value.
+  int get lastUsedQos => _state.read(SettingsKeys.lastUsedQos);
+
+  /// Records a new QoS value the user just picked, so the next
+  /// `defaultXxxQos.lastUsed` resolution picks it up. Clamped to 0–2.
+  void recordQos(int value) => _state.write(SettingsKeys.lastUsedQos, value.clamp(0, 2));
+
+  /// Resolves a [MqttQosDefault] to an actual MQTT QoS value (0, 1, or 2),
+  /// honoring the "last used" strategy when applicable.
+  int resolveDefaultQos(MqttQosDefault strategy) => strategy.resolve(lastUsedQos);
 
   List<DashboardLayout> get layouts => _state.read(DashboardKeys.layouts);
 

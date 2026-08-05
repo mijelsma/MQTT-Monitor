@@ -4,17 +4,22 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
+import 'package:provider/provider.dart';
 
 import '../../../core/mqtt/client_certificate_service.dart';
+import '../../../core/state/app_state.dart';
+import '../../../core/state/keys/settings_keys.dart';
 import '../../../generated/l10n.dart';
 import '../../../models/broker_entry.dart';
 import '../../../models/client_certificate_config.dart';
 import '../../../models/mqtt_protocol_version.dart';
+import '../../../models/mqtt_qos_default.dart';
 import '../../../models/subscription_entry.dart';
 import '../../../shared/widgets/qos_tag.dart';
 import '../../../shared/widgets/spacers.dart';
 import '../../../shared/widgets/color_picker_field.dart';
 import '../../../shared/widgets/ui_field.dart';
+import '../../../shared/widgets/ui_inline_notice.dart';
 import '../../../shared/widgets/ui_modal_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
 import '../../../shared/widgets/ui_segment_row.dart';
@@ -154,7 +159,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
         throw const CertificateValidationException('The selected file could not be read.');
       }
       _certificateService.validateBytes(kind, bytes);
-      final storedPath = await _certificateStorage.store(_brokerId, kind, bytes);
+      final storedPath = await _certificateStorage.store(_brokerId, kind, bytes, originalFileName: selected.name);
       if (!mounted) return;
       setState(() {
         _useSSL = true;
@@ -190,7 +195,12 @@ class _BrokerDialogState extends State<BrokerDialog> {
   }
 
   Future<void> _addSubscription() async {
-    final sub = await showSubscriptionDialog(context);
+    final state = context.read<AppStateManager>();
+    state.load(SettingsKeys.defaultSubscribeQos);
+    state.load(SettingsKeys.lastUsedQos);
+    final strategy = state.read<MqttQosDefault>(SettingsKeys.defaultSubscribeQos);
+    final defaultQos = strategy.resolve(state.read(SettingsKeys.lastUsedQos));
+    final sub = await showSubscriptionDialog(context, defaultQos: defaultQos);
     if (sub == null) return;
     setState(() => _subscriptions.add(sub));
   }
@@ -247,7 +257,6 @@ class _BrokerDialogState extends State<BrokerDialog> {
             ),
           ],
         ),
-        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogUseSSL, subtitle: s.brokerDialogUseSSLSubtitle, value: _useSSL, accent: accent, bordered: true, onChanged: (v) => setState(() => _useSSL = v)),
         UiSegmentRow<MqttProtocolVersion>(
           label: 'Protocol version',
           options: MqttProtocolVersion.values.map((version) => UiSegmentOption(value: version, label: version.displayName)).toList(),
@@ -255,8 +264,9 @@ class _BrokerDialogState extends State<BrokerDialog> {
           onChanged: (value) => setState(() => _protocolVersion = value),
           accent: accent,
         ),
+        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogUseSSL, subtitle: s.brokerDialogUseSSLSubtitle, value: _useSSL, accent: accent, bordered: true, onChanged: (v) => setState(() => _useSSL = v)),
         UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogValidateCertificates, subtitle: s.brokerDialogValidateCertificatesSubtitle, value: _validateCertificates, accent: accent, bordered: true, onChanged: (v) => setState(() => _validateCertificates = v)),
-        UiField(margin: const EdgeInsets.only(top: 14), label: s.brokerDialogFieldClientId, optional: true, controller: _clientId, hint: 'mqtt_monitor', textInputAction: TextInputAction.next),
+        UiField(margin: const EdgeInsets.only(top: 14), label: s.brokerDialogFieldClientId, optional: true, controller: _clientId, hint: 'mqtt-monitor', textInputAction: TextInputAction.next),
         UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogRandomSuffix, subtitle: s.brokerDialogRandomSuffixSubtitle, value: _randomClientIdSuffix, accent: accent, bordered: true, onChanged: (v) => setState(() => _randomClientIdSuffix = v)),
       ],
     );
@@ -289,8 +299,14 @@ class _BrokerDialogState extends State<BrokerDialog> {
         _CertificatePickerRow(label: 'Client certificate', fileName: _fileName(_clientCertificates.clientCertificatePath), onSelect: () => _pickCertificate(ClientCertificateKind.clientCertificate), onClear: _clientCertificates.clientCertificatePath == null ? null : () => _clearCertificate(ClientCertificateKind.clientCertificate)),
         if (_certificateError != null)
           Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(_certificateError!, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.error)),
+            padding: const EdgeInsets.only(top: 10),
+            child: UiInlineNotice(
+              kind: UiNoticeKind.error,
+              message: _certificateError,
+              selectable: true,
+              onDismiss: () => setState(() => _certificateError = null),
+              radius: 10,
+            ),
           ),
       ],
     );

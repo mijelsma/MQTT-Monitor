@@ -20,7 +20,8 @@ class ShortcutsPanel extends StatelessWidget {
 
   void _addShortcut(BuildContext context) async {
     final vm = context.read<SettingsViewModel>();
-    final result = await showShortcutDialog(context, brokers: vm.brokers);
+    final resolvedQos = vm.resolveDefaultQos(vm.defaultShortcutQos);
+    final result = await showShortcutDialog(context, brokers: vm.brokers, defaultQos: resolvedQos);
     if (result == null) return;
     vm.addShortcut(result);
   }

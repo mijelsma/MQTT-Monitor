@@ -297,13 +297,17 @@ class MessageLookup extends MessageLookupByLibrary {
       "Wachten op berichten",
     ),
     "optional": MessageLookupByLibrary.simpleMessage("Optioneel"),
+    "publishAcknowledged": MessageLookupByLibrary.simpleMessage("Verzonden"),
     "publishBadJson": MessageLookupByLibrary.simpleMessage("Ongeldige JSON"),
+    "publishDelivered": MessageLookupByLibrary.simpleMessage("Bezorgd"),
     "publishFailed": MessageLookupByLibrary.simpleMessage("Mislukt"),
     "publishNoTopic": MessageLookupByLibrary.simpleMessage("Geen topic"),
     "publishOffline": MessageLookupByLibrary.simpleMessage("Offline"),
     "publishPrettifyJson": MessageLookupByLibrary.simpleMessage("JSON opmaken"),
     "publishRetain": MessageLookupByLibrary.simpleMessage("Retain"),
+    "publishSending": MessageLookupByLibrary.simpleMessage("Verzenden…"),
     "publishSent": MessageLookupByLibrary.simpleMessage("Verzonden"),
+    "publishTimedOut": MessageLookupByLibrary.simpleMessage("Time-out"),
     "publishTopicHint": MessageLookupByLibrary.simpleMessage(
       "Topic  bijv. home/temp",
     ),
@@ -429,6 +433,25 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "subscriptionDialogValidateTopicFilter":
         MessageLookupByLibrary.simpleMessage("Voer een onderwerpfilter in"),
+    "uiPanelAccentColor": MessageLookupByLibrary.simpleMessage("Accentkleur"),
+    "uiPanelDefaultPublishQos": MessageLookupByLibrary.simpleMessage(
+      "Standaard QoS publiceren",
+    ),
+    "uiPanelDefaultPublishQosSubtitle": MessageLookupByLibrary.simpleMessage(
+      "QoS voor nieuwe te publiceren berichten",
+    ),
+    "uiPanelDefaultShortcutQos": MessageLookupByLibrary.simpleMessage(
+      "Standaard QoS snelkoppelingen",
+    ),
+    "uiPanelDefaultShortcutQosSubtitle": MessageLookupByLibrary.simpleMessage(
+      "QoS voor nieuwe publicatiesnelkoppelingen",
+    ),
+    "uiPanelDefaultSubscribeQos": MessageLookupByLibrary.simpleMessage(
+      "Standaard QoS abonneren",
+    ),
+    "uiPanelDefaultSubscribeQosSubtitle": MessageLookupByLibrary.simpleMessage(
+      "QoS voor nieuwe abonnementen",
+    ),
     "uiPanelDescription": MessageLookupByLibrary.simpleMessage(
       "Uiterlijk en lay-outvoorkeuren.",
     ),
@@ -446,6 +469,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "uiPanelPulseRateSubtitle": MessageLookupByLibrary.simpleMessage(
       "Maximum activiteitspulsen per seconde",
     ),
+    "uiPanelQosOptionLastUsed": MessageLookupByLibrary.simpleMessage(
+      "Laatst gebruikt",
+    ),
+    "uiPanelQosOptionLastUsedSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Hergebruik de QoS die je het laatst hebt gekozen",
+    ),
     "uiPanelRateInterval": MessageLookupByLibrary.simpleMessage(
       "Update-interval",
     ),
@@ -460,6 +489,9 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "uiPanelSectionDataDisplay": MessageLookupByLibrary.simpleMessage(
       "Data weergave",
+    ),
+    "uiPanelSectionDefaults": MessageLookupByLibrary.simpleMessage(
+      "Standaardwaarden",
     ),
     "uiPanelSectionLayout": MessageLookupByLibrary.simpleMessage("Lay-out"),
     "uiPanelShowActivity": MessageLookupByLibrary.simpleMessage(
@@ -498,7 +530,6 @@ class MessageLookup extends MessageLookupByLibrary {
       "Laatste status",
     ),
     "uiPanelThemeDark": MessageLookupByLibrary.simpleMessage("Donker"),
-    "uiPanelAccentColor": MessageLookupByLibrary.simpleMessage("Accentkleur"),
     "uiPanelThemeLight": MessageLookupByLibrary.simpleMessage("Licht"),
     "uiPanelThemeMode": MessageLookupByLibrary.simpleMessage("Thema"),
     "uiPanelThemeSystem": MessageLookupByLibrary.simpleMessage("Systeem"),

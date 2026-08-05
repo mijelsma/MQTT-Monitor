@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/mqtt/publish_result.dart';
 import '../../../generated/l10n.dart';
 import '../../../shared/widgets/feedback_badge.dart';
 import '../../../shared/widgets/payload_editor.dart';
@@ -19,7 +20,7 @@ class PublishPanel extends StatefulWidget {
 
 class _PublishPanelState extends State<PublishPanel> with FeedbackMixin<PublishPanel> {
   // Handles the Publish button tap: validates input and attempts to publish via the ViewModel.
-  void _publish() {
+  Future<void> _publish() async {
     final draft = context.read<PublishDraftController>();
     final topic = draft.topicController.text.trim();
     if (topic.isEmpty) {
@@ -38,8 +39,27 @@ class _PublishPanelState extends State<PublishPanel> with FeedbackMixin<PublishP
       return;
     }
 
-    final sent = vm.publish(topic, draft.payloadController.text, qos: draft.qos, retain: draft.retain);
-    showFeedback(sent ? PublishFeedbackKind.success : PublishFeedbackKind.failed);
+    // Optimistically flip to "sending" so the user never sees a confident
+    // checkmark before the broker has had a chance to respond.
+    showFeedback(PublishFeedbackKind.sending, autoDismiss: const Duration(minutes: 1));
+
+    final future = vm.publish(topic, draft.payloadController.text, qos: draft.qos, retain: draft.retain);
+    if (future == null) {
+      showFeedback(PublishFeedbackKind.failed, detail: 'Client not connected.');
+      return;
+    }
+    final result = await future;
+    if (!mounted) return;
+    _applyResult(result);
+  }
+
+  void _applyResult(PublishResult result) {
+    final info = feedbackForResult(context, result);
+    showFeedback(
+      info.kind,
+      detail: info.detail,
+      autoDismiss: result.isUnconfirmed ? const Duration(minutes: 1) : const Duration(seconds: 4),
+    );
   }
 
   @override
@@ -66,7 +86,16 @@ class _PublishPanelState extends State<PublishPanel> with FeedbackMixin<PublishP
           const SizedBox(height: 8),
 
           // ── Options bar: QoS · Retain · Publish ─────────────────────
-          _OptionsBar(qos: draft.qos, retain: draft.retain, connected: connected, feedback: feedback, onQosChanged: draft.setQos, onRetainChanged: draft.setRetain, onPublish: _publish),
+          _OptionsBar(
+            qos: draft.qos,
+            retain: draft.retain,
+            connected: connected,
+            feedback: feedback,
+            feedbackDetail: feedbackDetail,
+            onQosChanged: draft.setQos,
+            onRetainChanged: draft.setRetain,
+            onPublish: _publish,
+          ),
         ],
       ),
     );
@@ -117,15 +146,16 @@ class _TopicInput extends StatelessWidget {
 
 // Publish options bar containing QoS selector, Retain toggle, and Publish button, along with any feedback badge.
 class _OptionsBar extends StatelessWidget {
-  const _OptionsBar({required this.qos, required this.retain, required this.connected, required this.feedback, required this.onQosChanged, required this.onRetainChanged, required this.onPublish});
+  const _OptionsBar({required this.qos, required this.retain, required this.connected, required this.feedback, required this.feedbackDetail, required this.onQosChanged, required this.onRetainChanged, required this.onPublish});
 
   final int qos;
   final bool retain;
   final bool connected;
   final PublishFeedbackKind? feedback;
+  final String? feedbackDetail;
   final ValueChanged<int> onQosChanged;
   final ValueChanged<bool> onRetainChanged;
-  final VoidCallback onPublish;
+  final Future<void> Function() onPublish;
 
   @override
   Widget build(BuildContext context) {
@@ -140,7 +170,10 @@ class _OptionsBar extends StatelessWidget {
         const SizedBox(width: 8),
 
         // Feedback badge (overlays between options and button)
-        if (feedback != null) ...[_buildFeedbackBadge(context), const SizedBox(width: 8)],
+        if (feedback != null) ...[
+          Flexible(child: _buildFeedbackBadge(context)),
+          const SizedBox(width: 8),
+        ],
 
         const Spacer(),
 
@@ -153,13 +186,19 @@ class _OptionsBar extends StatelessWidget {
   Widget _buildFeedbackBadge(BuildContext context) {
     final s = S.of(context);
     final label = switch (feedback!) {
-      PublishFeedbackKind.success => s.publishSent,
+      PublishFeedbackKind.sending => s.publishSending,
+      PublishFeedbackKind.delivered => s.publishDelivered,
+      PublishFeedbackKind.acknowledged => s.publishAcknowledged,
       PublishFeedbackKind.failed => s.publishFailed,
+      PublishFeedbackKind.timedOut => s.publishTimedOut,
       PublishFeedbackKind.offline => s.publishOffline,
       PublishFeedbackKind.emptyTopic => s.publishNoTopic,
       PublishFeedbackKind.invalidJson => s.publishBadJson,
     };
-    return FeedbackBadge(kind: feedback!, label: label);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: FeedbackBadge(kind: feedback!, label: label, detail: feedbackDetail),
+    );
   }
 }
 
@@ -254,7 +293,7 @@ class _PublishChip extends StatefulWidget {
   const _PublishChip({required this.connected, required this.onPressed});
 
   final bool connected;
-  final VoidCallback onPressed;
+  final Future<void> Function() onPressed;
 
   @override
   State<_PublishChip> createState() => _PublishChipState();
@@ -263,27 +302,46 @@ class _PublishChip extends StatefulWidget {
 // A compact Publish button with an icon. Highlights when hovered and disabled when not connected.
 class _PublishChipState extends State<_PublishChip> {
   bool _hovering = false;
+  bool _busy = false;
+
+  Future<void> _handleTap() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await widget.onPressed();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final bg = widget.connected ? tokens.primary : tokens.muted.withValues(alpha: 0.3);
-    final fg = widget.connected ? tokens.onPrimary : tokens.textTertiary;
+    final enabled = widget.connected && !_busy;
+    final bg = enabled ? tokens.primary : tokens.muted.withValues(alpha: 0.3);
+    final fg = enabled ? tokens.onPrimary : tokens.textTertiary;
 
     return MouseRegion(
-      cursor: SystemMouseCursors.click,
+      cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
       child: GestureDetector(
-        onTap: widget.onPressed,
+        onTap: _handleTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-          decoration: BoxDecoration(color: _hovering ? bg.withValues(alpha: 0.85) : bg, borderRadius: BorderRadius.circular(7)),
+          decoration: BoxDecoration(color: enabled && _hovering ? bg.withValues(alpha: 0.85) : bg, borderRadius: BorderRadius.circular(7)),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.send_rounded, size: 13, color: fg),
+              if (_busy)
+                SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(strokeWidth: 1.6, valueColor: AlwaysStoppedAnimation<Color>(fg)),
+                )
+              else
+                Icon(Icons.send_rounded, size: 13, color: fg),
               const SizedBox(width: 6),
               Text(
                 'Publish',

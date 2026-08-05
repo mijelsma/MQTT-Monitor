@@ -4,7 +4,7 @@
         {
             "label": "Generate git info",
             "type": "shell",
-            "command": "dart run scripts/generate_git_info.dart",
+            "command": "python3 scripts/generate_git_info.py",
             "group": "build",
             "presentation": {
                 "reveal": "always",

@@ -4,6 +4,7 @@ import '../../../models/broker_entry.dart';
 import '../../../models/chart_type.dart';
 import '../../../models/interpolation_mode.dart';
 import '../../../models/language.dart';
+import '../../../models/mqtt_qos_default.dart';
 import '../../../models/startup_connection.dart';
 import '../state_key.dart';
 import '../../../models/environment_variable.dart';
@@ -52,6 +53,16 @@ abstract final class SettingsKeys {
   static final increasedMonitoringTopics = StateKey.fromJson<List<String>>('settings.increasedMonitoringTopics', defaultValue: const [], toJson: (list) => list, fromJson: (raw) => (raw as List).cast<String>());
   static final messageRateSampleSize = StateKey.integer('settings.messageRateSampleSize', defaultValue: 10);
 
+  // Default QoS levels for new entries. The `default*Qos` settings pick
+  // the strategy (a fixed level or the shared "last used" value);
+  // `lastUsedQos` is the actual QoS that "last used" resolves to. The
+  // initial strategy is fixed QoS 1 so fresh installs always publish
+  // /subscribe with an acknowledged message, per the build spec.
+  static final defaultPublishQos = StateKey.forEnum('settings.defaultPublishQos', MqttQosDefault.values, defaultValue: MqttQosDefault.qos1);
+  static final defaultShortcutQos = StateKey.forEnum('settings.defaultShortcutQos', MqttQosDefault.values, defaultValue: MqttQosDefault.qos1);
+  static final defaultSubscribeQos = StateKey.forEnum('settings.defaultSubscribeQos', MqttQosDefault.values, defaultValue: MqttQosDefault.qos1);
+  static final lastUsedQos = StateKey.integer('settings.lastUsedQos', defaultValue: 1);
+
   static final List<StateKey> all = [
     themeMode,
     accentColor,
@@ -78,5 +89,9 @@ abstract final class SettingsKeys {
     increasedMonitoringTopics,
     messageRateSampleSize,
     shortcuts,
+    defaultPublishQos,
+    defaultShortcutQos,
+    defaultSubscribeQos,
+    lastUsedQos,
   ];
 }

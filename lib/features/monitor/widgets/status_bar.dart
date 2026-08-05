@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/mqtt/connection_status.dart';
+import '../../../models/mqtt_protocol_version.dart';
 import '../../../theme/app_colors.dart';
 
 class StatusBar extends StatelessWidget {
-  const StatusBar({super.key, this.status = ConnectionStatus.disconnected, this.brokerUrl, this.errorDetail, this.messageCount = 0, this.messageRate = 0});
+  const StatusBar({super.key, this.status = ConnectionStatus.disconnected, this.brokerUrl, this.messageCount = 0, this.messageRate = 0, this.activeProtocol});
 
   final ConnectionStatus status;
   final String? brokerUrl;
-  final String? errorDetail;
   final int messageCount;
   final int messageRate;
+
+  /// The protocol actually negotiated with the broker. Only shown when
+  /// connected (or connecting) — disconnected status hides the chip.
+  final MqttProtocolVersion? activeProtocol;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +32,11 @@ class StatusBar extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
-              _StatusPill(status: status, errorDetail: errorDetail),
+              _StatusPill(status: status),
+              if (activeProtocol != null) ...[
+                const SizedBox(width: 6),
+                _ProtocolChip(protocol: activeProtocol!),
+              ],
               const SizedBox(width: 8),
               if (brokerUrl != null)
                 Expanded(
@@ -36,20 +44,6 @@ class StatusBar extends StatelessWidget {
                 )
               else
                 const Spacer(),
-              if (errorDetail != null && errorDetail!.isNotEmpty) ...[
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Tooltip(
-                    message: errorDetail!,
-                    child: Text(
-                      errorDetail!,
-                      style: labelStyle.copyWith(color: AppColors.error500),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
               Text('$messageCount msgs · $messageRate/s', style: labelStyle),
             ],
           ),
@@ -60,10 +54,9 @@ class StatusBar extends StatelessWidget {
 }
 
 class _StatusPill extends StatelessWidget {
-  const _StatusPill({required this.status, this.errorDetail});
+  const _StatusPill({required this.status});
 
   final ConnectionStatus status;
-  final String? errorDetail;
 
   @override
   Widget build(BuildContext context) {
@@ -77,11 +70,6 @@ class _StatusPill extends StatelessWidget {
       ConnectionStatus.errorTlsHandshake => (AppColors.error500, 'TLS failed'),
       ConnectionStatus.error => (AppColors.error500, 'Error'),
     };
-
-    if (status == ConnectionStatus.error && errorDetail != null) {
-      final trimmed = errorDetail!.length > 28 ? '${errorDetail!.substring(0, 28)}…' : errorDetail!;
-      label = 'Error · $trimmed';
-    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
@@ -100,6 +88,42 @@ class _StatusPill extends StatelessWidget {
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color, letterSpacing: -0.1),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Small "MQTT 5" / "MQTT 3" chip in the status bar. The build
+/// spec requires the UI to clearly show which protocol is in use on the
+/// current connection.
+class _ProtocolChip extends StatelessWidget {
+  const _ProtocolChip({required this.protocol});
+
+  final MqttProtocolVersion protocol;
+
+  @override
+  Widget build(BuildContext context) {
+    final isFallback = protocol == MqttProtocolVersion.v311;
+    final color = isFallback ? AppColors.warning500 : AppColors.info500;
+    return Tooltip(
+      message: switch (protocol) {
+        MqttProtocolVersion.v5 => 'MQTT 5.0 — reason codes and properties available',
+        MqttProtocolVersion.v311 => 'MQTT 3.1.1 — broker does not return delivery reasons',
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.swap_vert_rounded, size: 9, color: color),
+            const SizedBox(width: 3),
+            Text(
+              protocol.shortLabel,
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color, letterSpacing: -0.1),
+            ),
+          ],
+        ),
       ),
     );
   }
