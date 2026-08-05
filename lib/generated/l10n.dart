@@ -1059,6 +1059,26 @@ class S {
     );
   }
 
+  /// `Disable selection highlight`
+  String get uiPanelDisableSelectionHighlight {
+    return Intl.message(
+      'Disable selection highlight',
+      name: 'uiPanelDisableSelectionHighlight',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hide the selected-topic highlight so activity pulses stay visible on the active topic`
+  String get uiPanelDisableSelectionHighlightSubtitle {
+    return Intl.message(
+      'Hide the selected-topic highlight so activity pulses stay visible on the active topic',
+      name: 'uiPanelDisableSelectionHighlightSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Pulse rate`
   String get uiPanelPulseRate {
     return Intl.message(
@@ -2084,10 +2104,10 @@ class S {
     return Intl.message('Reconnect', name: 'reconnect', desc: '', args: []);
   }
 
-  /// `Topic  e.g. home/temp`
+  /// `example/topic`
   String get publishTopicHint {
     return Intl.message(
-      'Topic  e.g. home/temp',
+      'example/topic',
       name: 'publishTopicHint',
       desc: '',
       args: [],

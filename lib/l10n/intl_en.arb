@@ -116,6 +116,8 @@
     "uiPanelSectionDataDisplay": "Data Display",
     "uiPanelShowActivity": "Show activity",
     "uiPanelShowActivitySubtitle": "Pulse topic when activity occurs",
+    "uiPanelDisableSelectionHighlight": "Disable selection highlight",
+    "uiPanelDisableSelectionHighlightSubtitle": "Hide the selected-topic highlight so activity pulses stay visible on the active topic",
     "uiPanelPulseRate": "Pulse rate",
     "uiPanelPulseRateSubtitle": "Maximum activity pulses per second",
     "uiPanelPulseFade": "Pulse fade",

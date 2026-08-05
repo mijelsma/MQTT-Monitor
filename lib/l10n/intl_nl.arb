@@ -116,6 +116,8 @@
     "uiPanelSectionDataDisplay": "Data weergave",
     "uiPanelShowActivity": "Activiteit tonen",
     "uiPanelShowActivitySubtitle": "Pluseer topic bij activiteit",
+    "uiPanelDisableSelectionHighlight": "Selectie-markering uitschakelen",
+    "uiPanelDisableSelectionHighlightSubtitle": "Verberg de selectie-markering zodat activiteitspulsen zichtbaar blijven op het actieve topic",
     "uiPanelPulseRate": "Pulsnelheid",
     "uiPanelPulseRateSubtitle": "Maximum activiteitspulsen per seconde",
     "uiPanelPulseFade": "Pulsvervaging",

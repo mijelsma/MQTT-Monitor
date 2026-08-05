@@ -84,19 +84,22 @@ class _TopicTreeRowState extends State<TopicTreeRow> with SingleTickerProviderSt
 
     final pulseAlpha = (1.0 - _pulseAnim.value) * _kPeakAlpha;
 
+    final hideHighlight = AppStateManager.instance.read(SettingsKeys.disableSelectionHighlight);
+    final effectiveSelected = widget.selected && !hideHighlight;
+
     return InkWell(
       onTap: () {
         if (node.isBranch) widget.onToggle();
         widget.onSelect?.call();
       },
       splashColor: tokens.primary.withValues(alpha: 0.07),
-      highlightColor: tokens.selectedBg,
+      highlightColor: effectiveSelected ? tokens.selectedBg : Colors.transparent,
       child: Container(
         decoration: BoxDecoration(
-          color: widget.selected ? tokens.selectedBg : tokens.primary.withValues(alpha: pulseAlpha),
-          border: widget.selected ? Border(left: BorderSide(color: tokens.primary, width: 2.5)) : null,
+          color: effectiveSelected ? tokens.selectedBg : tokens.primary.withValues(alpha: pulseAlpha),
+          border: effectiveSelected ? Border(left: BorderSide(color: tokens.primary, width: 2.5)) : null,
         ),
-        padding: EdgeInsets.fromLTRB(widget.selected ? 7.5 + widget.depth * 18.0 : 10.0 + widget.depth * 18.0, 9, 14, 9),
+        padding: EdgeInsets.fromLTRB(effectiveSelected ? 7.5 + widget.depth * 18.0 : 10.0 + widget.depth * 18.0, 9, 14, 9),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [

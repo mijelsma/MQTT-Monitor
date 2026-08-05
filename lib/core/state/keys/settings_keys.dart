@@ -22,6 +22,7 @@ abstract final class SettingsKeys {
   static final showStatusBar = StateKey.boolean('settings.showStatusBar', defaultValue: true);
   static final rateIntervalMs = StateKey.integer('settings.rateIntervalMs', defaultValue: 1000);
   static final showActivity = StateKey.boolean('settings.showActivity', defaultValue: true);
+  static final disableSelectionHighlight = StateKey.boolean('settings.disableSelectionHighlight', defaultValue: false);
   static final pulseRatePps = StateKey.integer('settings.pulseRatePps', defaultValue: 15);
   static final pulseFadeMs = StateKey.integer('settings.pulseFadeMs', defaultValue: 500);
   static final persistLayout = StateKey.boolean('settings.persistLayout', defaultValue: true);
@@ -75,6 +76,7 @@ abstract final class SettingsKeys {
     accentColor,
     showStatusBar,
     showActivity,
+    disableSelectionHighlight,
     pulseRatePps,
     pulseFadeMs,
     persistLayout,
