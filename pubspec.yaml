@@ -35,6 +35,7 @@ dev_dependencies:
   # Transitive deps of mqtt5_client used by the MQTT 5 fake in mqtt_service_test.
   event_bus: ^2.0.1
   typed_data: ^1.4.0
+  dmg: ^0.1.10
 
 flutter:
   generate: true
