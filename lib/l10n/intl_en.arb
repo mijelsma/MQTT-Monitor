@@ -156,6 +156,7 @@
     "aboutPanelTitle": "About",
     "aboutPanelSectionDetails": "Details",
     "aboutPanelCommitHash": "Commit Hash",
+    "aboutPanelVersionDetail": "Version",
     "aboutPanelLicense": "License",
     "aboutPanelAuthor": "Author",
     "aboutPanelSectionResources": "Resources",

@@ -56,6 +56,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "aboutPanelVersion": MessageLookupByLibrary.simpleMessage(
       "Versie 1.0.0  ·  Build 1",
     ),
+    "aboutPanelVersionDetail": MessageLookupByLibrary.simpleMessage("Versie"),
     "add": MessageLookupByLibrary.simpleMessage("Toevoegen"),
     "back": MessageLookupByLibrary.simpleMessage("Terug"),
     "brokerDialogAddSubscription": MessageLookupByLibrary.simpleMessage(
