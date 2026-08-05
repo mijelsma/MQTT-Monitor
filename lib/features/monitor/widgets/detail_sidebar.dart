@@ -8,6 +8,7 @@ import '../../../core/state/keys/layout_keys.dart';
 import '../../../core/state/keys/settings_keys.dart';
 import '../../../core/state/state_key.dart';
 import '../../../generated/l10n.dart';
+import '../../../models/sidebar_panel_default.dart';
 import '../../../models/topic_node_value.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
@@ -58,17 +59,33 @@ class _DetailSidebarState extends State<DetailSidebar> with TickerProviderStateM
 
   static final _layoutKeys = <StateKey<bool>>[LayoutKeys.sidebarDetailCollapsed, LayoutKeys.sidebarHistoryCollapsed, LayoutKeys.sidebarPublishCollapsed, LayoutKeys.sidebarShortcutsCollapsed];
 
+  static final _defaultKeys = <StateKey<SidebarPanelDefault>>[SettingsKeys.defaultSidebarDetail, SettingsKeys.defaultSidebarHistory, SettingsKeys.defaultSidebarPublish, SettingsKeys.defaultSidebarShortcuts];
+
   @override
   void initState() {
     super.initState();
     final state = context.read<AppStateManager>();
-    _collapsed[0] = state.read(LayoutKeys.sidebarDetailCollapsed);
-    _collapsed[1] = state.read(LayoutKeys.sidebarHistoryCollapsed);
-    _collapsed[2] = state.read(LayoutKeys.sidebarPublishCollapsed);
-    _collapsed[3] = state.read(LayoutKeys.sidebarShortcutsCollapsed);
+    _collapsed[0] = _resolveInitialCollapsed(state, 0);
+    _collapsed[1] = _resolveInitialCollapsed(state, 1);
+    _collapsed[2] = _resolveInitialCollapsed(state, 2);
+    _collapsed[3] = _resolveInitialCollapsed(state, 3);
     _t = AnimationController(vsync: this, value: 1.0, duration: const Duration(milliseconds: 200));
     _oldShares = _computeShares();
     _newShares = _oldShares;
+  }
+
+  /// Resolves the initial collapsed state for a panel using its
+  /// per-panel default setting (collapsed / expanded / lastStatus).
+  bool _resolveInitialCollapsed(AppStateManager state, int i) {
+    final setting = state.read(_defaultKeys[i]);
+    switch (setting) {
+      case SidebarPanelDefault.collapsed:
+        return true;
+      case SidebarPanelDefault.expanded:
+        return false;
+      case SidebarPanelDefault.lastStatus:
+        return state.read(_layoutKeys[i]);
+    }
   }
 
   @override
@@ -211,21 +228,45 @@ class _DetailSidebarState extends State<DetailSidebar> with TickerProviderStateM
       );
 
       final windowH = shares[i] * available;
-      // The content is always laid out at its full target height so panels
-      // with fixed UI (e.g. Publish) never overflow at small intermediate
-      // sizes; the animated [windowH] just clips how much is revealed.
-      final fullH = math.max(_oldShares[i], _newShares[i]) * available;
-      final settledCollapsed = _t.value >= 1.0 && _newShares[i] <= 0;
+      // A panel is shown when either its previous or target share is
+      // non-zero. When the panel is *settled* (not transitioning between
+      // visible and hidden) we render the content at its actual visible
+      // height ([windowH]) so the panel's internal layout — e.g. Publish's
+      // Expanded payload editor + pinned action bar — always matches what
+      // the user sees. No "thinks it's bigger than it is" drift, and no
+      // need to nudge the divider to snap it back to the right size.
+      //
+      // While a panel is *appearing* or *disappearing* (one share is zero
+      // and the other is not) [windowH] passes through tiny values that
+      // would overflow a column with fixed-height children. In that brief
+      // transition we fall back to an OverflowBox laid out at the larger of
+      // the old/new shares so the column has room to lay out normally; the
+      // ClipRect just reveals more/less of it as [windowH] animates.
+      final wasVisible = _oldShares[i] > 0;
+      final willBeVisible = _newShares[i] > 0;
+      final transitioningVisibility = wasVisible != willBeVisible;
+      final settledCollapsed = _t.value >= 1.0 && !willBeVisible;
 
-      if (settledCollapsed || fullH <= 0) {
+      if (settledCollapsed || (!wasVisible && !willBeVisible)) {
         children.add(const SizedBox.shrink());
-      } else {
+      } else if (transitioningVisibility) {
+        final fullH = math.max(_oldShares[i], _newShares[i]) * available;
         children.add(
           SizedBox(
             height: windowH,
             child: ClipRect(
               key: contentKeys[i],
               child: OverflowBox(alignment: Alignment.topCenter, minHeight: fullH, maxHeight: fullH, child: contents[i]),
+            ),
+          ),
+        );
+      } else {
+        children.add(
+          SizedBox(
+            height: windowH,
+            child: ClipRect(
+              key: contentKeys[i],
+              child: contents[i],
             ),
           ),
         );

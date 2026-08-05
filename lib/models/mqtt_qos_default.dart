@@ -31,9 +31,9 @@ enum MqttQosDefault {
 
   /// Compact text label rendered alongside the icon.
   String get shortLabel => switch (this) {
-    MqttQosDefault.qos0 => 'Q0',
-    MqttQosDefault.qos1 => 'Q1',
-    MqttQosDefault.qos2 => 'Q2',
+    MqttQosDefault.qos0 => 'QoS 0',
+    MqttQosDefault.qos1 => 'QoS 1',
+    MqttQosDefault.qos2 => 'QoS 2',
     MqttQosDefault.lastUsed => 'Last used',
   };
 

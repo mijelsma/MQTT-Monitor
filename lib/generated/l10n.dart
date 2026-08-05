@@ -1169,6 +1169,46 @@ class S {
     );
   }
 
+  /// `Sidebar Panels`
+  String get uiPanelSectionSidebarPanels {
+    return Intl.message(
+      'Sidebar Panels',
+      name: 'uiPanelSectionSidebarPanels',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Collapsed`
+  String get uiPanelDefaultStateCollapsed {
+    return Intl.message(
+      'Collapsed',
+      name: 'uiPanelDefaultStateCollapsed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Expanded`
+  String get uiPanelDefaultStateExpanded {
+    return Intl.message(
+      'Expanded',
+      name: 'uiPanelDefaultStateExpanded',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Last Status`
+  String get uiPanelDefaultStateLastStatus {
+    return Intl.message(
+      'Last Status',
+      name: 'uiPanelDefaultStateLastStatus',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Connection`
   String get uiPanelSectionConnection {
     return Intl.message(
