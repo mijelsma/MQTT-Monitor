@@ -1,0 +1,162 @@
+name: Build Desktop Apps
+
+# Trigger: adjust to taste. This runs on every push to main and on tags,
+# and can also be triggered manually from the Actions tab.
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch: {}
+
+env:
+  FLUTTER_CHANNEL: "stable"
+  # Pin a Flutter version for reproducible builds. Remove this line
+  # (and the flutter-version arg below) if you'd rather always track latest stable.
+  FLUTTER_VERSION: "3.35.5"
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  # ---------------------------------------------------------------------
+  # Windows x64
+  # ---------------------------------------------------------------------
+  build-windows-x64:
+    name: Windows x64
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history, in case generate_git_info.py reads tags/commit log
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Generate git info
+        run: python scripts/generate_git_info.py
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows x64
+        run: flutter build windows --release
+
+      - name: Zip build output
+        run: |
+          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath app-windows-x64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-windows-x64
+          path: app-windows-x64.zip
+
+  # ---------------------------------------------------------------------
+  # Windows ARM64
+  # ---------------------------------------------------------------------
+  build-windows-arm64:
+    name: Windows ARM64
+    # GitHub's hosted ARM64 Windows runner. If this label isn't available on
+    # your plan yet, see the "ARM64 fallback" note below the workflow.
+    runs-on: windows-11-arm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Generate git info
+        run: python scripts/generate_git_info.py
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows ARM64
+        run: flutter build windows --release
+
+      - name: Zip build output
+        run: |
+          Compress-Archive -Path build\windows\arm64\runner\Release\* -DestinationPath app-windows-arm64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-windows-arm64
+          path: app-windows-arm64.zip
+
+  # ---------------------------------------------------------------------
+  # Linux x64
+  # ---------------------------------------------------------------------
+  build-linux-x64:
+    name: Linux x64
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Generate git info
+        run: python3 scripts/generate_git_info.py
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Linux x64
+        run: flutter build linux --release
+
+      - name: Tar build output
+        run: |
+          tar -czf app-linux-x64.tar.gz -C build/linux/x64/release/bundle .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-linux-x64
+          path: app-linux-x64.tar.gz
