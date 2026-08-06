@@ -1,23 +1,19 @@
 name: Build Desktop Apps
 
-# Trigger: adjust to taste. This runs on every push to main and on tags,
-# and can also be triggered manually from the Actions tab.
+# Run on tags or manually.
 on:
   push:
-    branches: [main]
-    tags: ["v*"]
+    tags: ["*"]
   workflow_dispatch: {}
 
 env:
   FLUTTER_CHANNEL: "stable"
-  # Pin a Flutter version for reproducible builds. Remove this line
-  # (and the flutter-version arg below) if you'd rather always track latest stable.
   FLUTTER_VERSION: "3.35.5"
   PYTHON_VERSION: "3.12"
 
 jobs:
   # ---------------------------------------------------------------------
-  # Windows x64
+  # Windows x64 Build
   # ---------------------------------------------------------------------
   build-windows-x64:
     name: Windows x64
@@ -26,7 +22,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # full history, in case generate_git_info.py reads tags/commit log
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -63,12 +59,10 @@ jobs:
           path: app-windows-x64.zip
 
   # ---------------------------------------------------------------------
-  # Windows ARM64
+  # Windows ARM64 Build
   # ---------------------------------------------------------------------
   build-windows-arm64:
     name: Windows ARM64
-    # GitHub's hosted ARM64 Windows runner. If this label isn't available on
-    # your plan yet, see the "ARM64 fallback" note below the workflow.
     runs-on: windows-11-arm
     steps:
       - name: Checkout
@@ -109,54 +103,3 @@ jobs:
         with:
           name: app-windows-arm64
           path: app-windows-arm64.zip
-
-  # ---------------------------------------------------------------------
-  # Linux x64
-  # ---------------------------------------------------------------------
-  build-linux-x64:
-    name: Linux x64
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Generate git info
-        run: python3 scripts/generate_git_info.py
-
-      - name: Install Linux build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: ${{ env.FLUTTER_CHANNEL }}
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
-
-      - name: Enable Linux desktop
-        run: flutter config --enable-linux-desktop
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Build Linux x64
-        run: flutter build linux --release
-
-      - name: Tar build output
-        run: |
-          tar -czf app-linux-x64.tar.gz -C build/linux/x64/release/bundle .
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-linux-x64
-          path: app-linux-x64.tar.gz
