@@ -8,7 +8,7 @@ on:
 
 env:
   FLUTTER_CHANNEL: "stable"
-  FLUTTER_VERSION: "3.35.5"
+  FLUTTER_VERSION: "3.41.4"
   PYTHON_VERSION: "3.12"
 
 jobs:
