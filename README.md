@@ -88,17 +88,9 @@ When something looks off, pull up two historical messages on the same topic and 
 MQTT-Monitor follows your system's **light or dark theme** automatically, or you can select your own preferred mode. It goes further with a genuinely customizable UI: pick your own **accent color**, set default startup behavior, and enable **auto-connect** so your usual broker is live and streaming the moment the app opens.
 
 
-<table align="center">
-  <tr>
-    <td><img src="docs/images/ui-dark-blue.png" alt="Dark theme, blue accent" width="100%"></td>
-    <td><img src="docs/images/ui-dark-green.png" alt="Dark theme, green accent" width="100%"></td>
-  </tr>
-  <tr>
-    <td><img src="docs/images/ui-dark-purple.png" alt="Dark theme, purple accent" width="100%"></td>
-    <td><img src="docs/images/ui-dark-red.png" alt="Dark theme, red accent" width="100%"></td>
-    <td></td>
-  </tr>
-</table>
+<p align="center">
+  <img src="docs/images/theme-grid.png" alt="Dark theme with blue, green, purple, and red accent colors" width="100%">
+</p>
 
 ---
 
