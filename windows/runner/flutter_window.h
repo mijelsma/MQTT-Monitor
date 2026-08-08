@@ -23,6 +23,9 @@ class FlutterWindow : public Win32Window {
                          LPARAM const lparam) noexcept override;
 
  private:
+  // Toggles the immersive dark title bar via DWM.
+  void SetTitleBarDarkMode(bool dark);
+
   // The project to run.
   flutter::DartProject project_;
 
