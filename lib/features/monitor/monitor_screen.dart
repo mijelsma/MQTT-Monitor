@@ -103,6 +103,7 @@ class _MonitorViewState extends State<_MonitorView> {
         initialRatio: _splitRatio,
         minRatio: 0.25,
         maxRatio: 0.75,
+        minSecondSize: 350,
         onRatioUpdate: (ratio) => setState(() => _splitRatio = ratio),
         onRatioChanged: (ratio) => context.read<AppStateManager>().write(LayoutKeys.monitorSplitRatio, ratio),
         first: TopicTree(filterController: _filterController),
@@ -112,13 +113,7 @@ class _MonitorViewState extends State<_MonitorView> {
 
     Widget? bottomBar;
     if (vm.showStatusBar) {
-      bottomBar = StatusBar(
-        status: vm.connectionStatus,
-        brokerUrl: vm.activeBroker?.displayAddress,
-        messageCount: vm.messageCount,
-        messageRate: vm.messageRate,
-        activeProtocol: vm.activeProtocol,
-      );
+      bottomBar = StatusBar(status: vm.connectionStatus, brokerUrl: vm.activeBroker?.displayAddress, messageCount: vm.messageCount, messageRate: vm.messageRate, activeProtocol: vm.activeProtocol);
     }
 
     return Scaffold(
