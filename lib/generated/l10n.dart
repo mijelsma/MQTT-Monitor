@@ -829,31 +829,11 @@ class S {
     );
   }
 
-  /// `History buffer`
-  String get monitoringPanelHistoryBuffer {
+  /// `Rate sampling`
+  String get monitoringPanelRateSampling {
     return Intl.message(
-      'History buffer',
-      name: 'monitoringPanelHistoryBuffer',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Standard buffer size`
-  String get monitoringPanelStandardBufferSize {
-    return Intl.message(
-      'Standard buffer size',
-      name: 'monitoringPanelStandardBufferSize',
-      desc: '',
-      args: [],
-    );
-  }
-
-  /// `Messages stored per topic`
-  String get monitoringPanelStandardBufferHint {
-    return Intl.message(
-      'Messages stored per topic',
-      name: 'monitoringPanelStandardBufferHint',
+      'Rate sampling',
+      name: 'monitoringPanelRateSampling',
       desc: '',
       args: [],
     );
@@ -914,6 +894,66 @@ class S {
     return Intl.message(
       'Messages used to calculate rate',
       name: 'monitoringPanelRateSampleHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Advanced`
+  String get sectionAdvanced {
+    return Intl.message(
+      'Advanced',
+      name: 'sectionAdvanced',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Advanced`
+  String get advancedPanelTitle {
+    return Intl.message(
+      'Advanced',
+      name: 'advancedPanelTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Adjusting these settings may significantly affect performance. Change them with care.`
+  String get advancedPanelDescription {
+    return Intl.message(
+      'Adjusting these settings may significantly affect performance. Change them with care.',
+      name: 'advancedPanelDescription',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `History buffer`
+  String get advancedPanelHistoryBuffer {
+    return Intl.message(
+      'History buffer',
+      name: 'advancedPanelHistoryBuffer',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Messages stored per topic`
+  String get advancedPanelMessagesPerTopic {
+    return Intl.message(
+      'Messages stored per topic',
+      name: 'advancedPanelMessagesPerTopic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Maximum messages kept in history per topic; older messages are pruned. Lower values use less memory.`
+  String get advancedPanelMessagesPerTopicHint {
+    return Intl.message(
+      'Maximum messages kept in history per topic; older messages are pruned. Lower values use less memory.',
+      name: 'advancedPanelMessagesPerTopicHint',
       desc: '',
       args: [],
     );

@@ -56,7 +56,7 @@ abstract final class SettingsKeys {
   static final language = StateKey.forEnum('settings.language', AppLanguage.values, defaultValue: AppLanguage.en);
 
   // History & monitoring
-  static final defaultHistorySize = StateKey.integer('settings.defaultHistorySize', defaultValue: 50);
+  static final defaultHistorySize = StateKey.integer('settings.defaultHistorySize', defaultValue: 10);
   static final increasedHistorySize = StateKey.integer('settings.increasedHistorySize', defaultValue: 500);
   static final increasedMonitoringTopics = StateKey.fromJson<List<String>>('settings.increasedMonitoringTopics', defaultValue: const [], toJson: (list) => list, fromJson: (raw) => (raw as List).cast<String>());
   static final messageRateSampleSize = StateKey.integer('settings.messageRateSampleSize', defaultValue: 10);

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'spacers.dart';
 
 class UiPanelScaffold extends StatelessWidget {
-  const UiPanelScaffold({super.key, required this.title, this.description, required this.children});
+  const UiPanelScaffold({super.key, required this.title, this.description, this.descriptionStyle, required this.children});
 
   final String title;
   final String? description;
+  final TextStyle? descriptionStyle;
   final List<Widget> children;
 
   @override
@@ -14,7 +15,7 @@ class UiPanelScaffold extends StatelessWidget {
 
     final body = <Widget>[
       Text(title, style: theme.textTheme.headlineSmall),
-      if (description != null) ...[const VSpacer(6), Text(description!, style: theme.textTheme.bodySmall)],
+      if (description != null) ...[const VSpacer(6), Text(description!, style: descriptionStyle ?? theme.textTheme.bodySmall)],
     ];
 
     for (final child in children) {
