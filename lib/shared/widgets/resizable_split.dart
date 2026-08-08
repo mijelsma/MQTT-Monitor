@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 
@@ -5,13 +6,18 @@ import '../../theme/app_tokens/app_tokens.dart';
 ///
 /// Uses flex-based layout so it never overflows.
 class ResizableSplit extends StatefulWidget {
-  const ResizableSplit({super.key, required this.first, required this.second, this.initialRatio = 0.5, this.minRatio = 0.2, this.maxRatio = 0.8, this.axis = Axis.horizontal, this.onRatioChanged, this.onRatioUpdate});
+  const ResizableSplit({super.key, required this.first, required this.second, this.initialRatio = 0.5, this.minRatio = 0.2, this.maxRatio = 0.8, this.minSecondSize = 0, this.axis = Axis.horizontal, this.onRatioChanged, this.onRatioUpdate});
 
   final Widget first;
   final Widget second;
   final double initialRatio;
   final double minRatio;
   final double maxRatio;
+
+  /// Minimum width (or height for a vertical axis) of the [second] pane in
+  /// pixels. Overrides [maxRatio] when the split is small enough for the
+  /// ratio-based limit to leave the second pane narrower than this.
+  final double minSecondSize;
   final Axis axis;
 
   /// Called once when the user finishes dragging the divider.
@@ -36,10 +42,19 @@ class _ResizableSplitState extends State<ResizableSplit> {
     _ratio = widget.initialRatio;
   }
 
+  double _clampRatio(double ratio, double totalSize) {
+    var maxAllowed = widget.maxRatio;
+    if (widget.minSecondSize > 0 && totalSize > 0) {
+      maxAllowed = math.min(widget.maxRatio, 1 - widget.minSecondSize / totalSize);
+    }
+    if (maxAllowed < widget.minRatio) maxAllowed = widget.minRatio;
+    return ratio.clamp(widget.minRatio, maxAllowed);
+  }
+
   void _onDragUpdate(DragUpdateDetails details, double totalSize) {
     final delta = widget.axis == Axis.horizontal ? details.delta.dx : details.delta.dy;
     setState(() {
-      _ratio = (_ratio + delta / totalSize).clamp(widget.minRatio, widget.maxRatio);
+      _ratio = _clampRatio(_ratio + delta / totalSize, totalSize);
     });
     widget.onRatioUpdate?.call(_ratio);
   }
@@ -52,13 +67,14 @@ class _ResizableSplitState extends State<ResizableSplit> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final isHorizontal = widget.axis == Axis.horizontal;
-    // Convert ratio to integer flex weights (x1000 for precision).
-    final firstFlex = (_ratio * 1000).round();
-    final secondFlex = 1000 - firstFlex;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final totalSize = isHorizontal ? constraints.maxWidth : constraints.maxHeight;
+        final ratio = _clampRatio(_ratio, totalSize);
+        // Convert ratio to integer flex weights (x1000 for precision).
+        final firstFlex = (ratio * 1000).round();
+        final secondFlex = 1000 - firstFlex;
 
         final children = <Widget>[
           Expanded(flex: firstFlex, child: widget.first),
