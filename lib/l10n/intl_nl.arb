@@ -192,6 +192,7 @@
     "brokerDialogFieldPassword": "Wachtwoord",
     "brokerDialogSectionTopics": "Onderwerpen",
     "brokerDialogAddSubscription": "Abonnement toevoegen",
+    "brokerDialogDefaultSubscriptionName": "Elk onderwerp",
 
     "subscriptionDialogEditTitle": "Abonnement bewerken",
     "subscriptionDialogAddTitle": "Abonnement toevoegen",
