@@ -125,56 +125,40 @@ class _TopicTreeRowState extends State<TopicTreeRow> with SingleTickerProviderSt
             ),
             const SizedBox(width: 4),
 
-            // Segment label
-            Text(
-              node.segment,
-              style: TextStyle(fontSize: 13, fontWeight: node.isBranch ? FontWeight.w600 : FontWeight.w400, color: node.isBranch ? tokens.textPrimary : tokens.textSecondary, height: 1.3),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  text: node.segment,
+                  style: TextStyle(fontSize: 13, fontWeight: node.isBranch ? FontWeight.w600 : FontWeight.w400, color: node.isBranch ? tokens.textPrimary : tokens.textSecondary, height: 1.3),
+                  children: _currentValue != null
+                      ? [
+                          TextSpan(
+                            text: ' = ',
+                            style: TextStyle(fontSize: 12, color: tokens.textTertiary, fontWeight: FontWeight.w300, height: 1.3),
+                          ),
+                          TextSpan(
+                            text: _currentValue!.payload,
+                            style: TextStyle(fontSize: 13, color: tokens.primary, fontWeight: FontWeight.w500, height: 1.3),
+                          ),
+                        ]
+                      : null,
+                ),
+                maxLines: 1,
+                softWrap: false,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
 
             // Badges (branches) or value (leaves)
             if (node.isBranch) ...[
-              if (_currentValue != null) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 7),
-                  child: Text(
-                    '=',
-                    style: TextStyle(fontSize: 12, color: tokens.textTertiary, fontWeight: FontWeight.w300, height: 1.3),
-                  ),
-                ),
-                Flexible(
-                  child: Text(
-                    _currentValue!.payload,
-                    style: TextStyle(fontSize: 13, color: tokens.primary, fontWeight: FontWeight.w500, height: 1.3),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                ),
-                const SizedBox(width: 6),
-              ] else
-                const Spacer(),
+              if (_currentValue != null) const SizedBox(width: 6),
               CountPill(count: widget.topicCount, label: 'topics', color: tokens.textSecondary),
               const SizedBox(width: 4),
               CountPill(count: widget.messageCount, label: 'msgs', color: tokens.primary),
             ] else if (_currentValue != null) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 7),
-                child: Text(
-                  '=',
-                  style: TextStyle(fontSize: 12, color: tokens.textTertiary, fontWeight: FontWeight.w300, height: 1.3),
-                ),
-              ),
-              Expanded(
-                child: Text(
-                  _currentValue!.payload,
-                  style: TextStyle(fontSize: 13, color: tokens.primary, fontWeight: FontWeight.w500, height: 1.3),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-              ),
               const SizedBox(width: 6),
               CountPill(count: widget.messageCount, label: 'msgs', color: tokens.primary),
-            ] else
-              const Expanded(child: SizedBox()),
+            ],
           ],
         ),
       ),
