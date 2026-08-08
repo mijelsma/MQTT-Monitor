@@ -58,6 +58,19 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "aboutPanelVersionDetail": MessageLookupByLibrary.simpleMessage("Version"),
     "add": MessageLookupByLibrary.simpleMessage("Add"),
+    "advancedPanelDescription": MessageLookupByLibrary.simpleMessage(
+      "Adjusting these settings may significantly affect performance. Change them with care.",
+    ),
+    "advancedPanelHistoryBuffer": MessageLookupByLibrary.simpleMessage(
+      "History buffer",
+    ),
+    "advancedPanelMessagesPerTopic": MessageLookupByLibrary.simpleMessage(
+      "Messages stored per topic",
+    ),
+    "advancedPanelMessagesPerTopicHint": MessageLookupByLibrary.simpleMessage(
+      "Maximum messages kept in history per topic; older messages are pruned. Lower values use less memory.",
+    ),
+    "advancedPanelTitle": MessageLookupByLibrary.simpleMessage("Advanced"),
     "back": MessageLookupByLibrary.simpleMessage("Back"),
     "brokerDialogAddSubscription": MessageLookupByLibrary.simpleMessage(
       "Add Subscription",
@@ -248,9 +261,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "monitoringPanelDescription": MessageLookupByLibrary.simpleMessage(
       "Configure message history retention for topics.",
     ),
-    "monitoringPanelHistoryBuffer": MessageLookupByLibrary.simpleMessage(
-      "History buffer",
-    ),
     "monitoringPanelIncreasedBufferHint": MessageLookupByLibrary.simpleMessage(
       "Messages for monitored topics",
     ),
@@ -266,11 +276,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "monitoringPanelRateSampleSize": MessageLookupByLibrary.simpleMessage(
       "Rate sample size",
     ),
-    "monitoringPanelStandardBufferHint": MessageLookupByLibrary.simpleMessage(
-      "Messages stored per topic",
-    ),
-    "monitoringPanelStandardBufferSize": MessageLookupByLibrary.simpleMessage(
-      "Standard buffer size",
+    "monitoringPanelRateSampling": MessageLookupByLibrary.simpleMessage(
+      "Rate sampling",
     ),
     "monitoringPanelTitle": MessageLookupByLibrary.simpleMessage("Monitoring"),
     "noBroker": MessageLookupByLibrary.simpleMessage("No Broker"),
@@ -310,6 +317,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "searchScopeTopic": MessageLookupByLibrary.simpleMessage("Topic"),
     "searchScopeValue": MessageLookupByLibrary.simpleMessage("Value"),
     "sectionAbout": MessageLookupByLibrary.simpleMessage("About"),
+    "sectionAdvanced": MessageLookupByLibrary.simpleMessage("Advanced"),
     "sectionBrokers": MessageLookupByLibrary.simpleMessage("Brokers"),
     "sectionDashboard": MessageLookupByLibrary.simpleMessage("Dashboard"),
     "sectionLanguage": MessageLookupByLibrary.simpleMessage("Language"),

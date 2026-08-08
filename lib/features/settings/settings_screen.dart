@@ -5,6 +5,7 @@ import '../../core/state/app_state.dart';
 import '../../generated/l10n.dart';
 import '../../theme/app_colors.dart';
 import 'panels/about_panel.dart';
+import 'panels/advanced_panel.dart';
 import 'panels/brokers_panel.dart';
 import 'panels/language_panel.dart';
 import 'panels/monitoring_panel.dart';
@@ -31,6 +32,7 @@ class SettingsScreen extends StatelessWidget {
       (section: SettingsSection.monitoring, label: s.sectionMonitoring, icon: Icons.monitor_heart_rounded, gradient: AppColors.monitoringGradient),
       (section: SettingsSection.ui, label: s.sectionUI, icon: Icons.palette_outlined, gradient: AppColors.uiGradient),
       (section: SettingsSection.language, label: s.sectionLanguage, icon: Icons.language_rounded, gradient: AppColors.languageGradient),
+      (section: SettingsSection.advanced, label: s.sectionAdvanced, icon: Icons.tune_rounded, gradient: AppColors.advancedGradient),
       (section: SettingsSection.about, label: s.sectionAbout, icon: Icons.info_outline_rounded, gradient: AppColors.aboutGradient),
     ];
   }
@@ -55,6 +57,7 @@ class SettingsScreen extends StatelessWidget {
             SettingsSection.monitoring => const MonitoringPanel(),
             SettingsSection.ui => const UiPanel(),
             SettingsSection.language => const LanguagePanel(),
+            SettingsSection.advanced => const AdvancedPanel(),
             SettingsSection.about => const AboutPanel(),
           };
 
