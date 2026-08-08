@@ -8,6 +8,9 @@ import '../../../shared/widgets/ui_slider_row.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../settings_viewmodel.dart';
 
+/// Snaps a slider position to the allowed history sizes: 1, then multiples of 5 (5, 10, 15, ...) up to the maximum.
+int snapPerTopicHistory(double value) => value <= 3 ? 1 : (value / 5).round() * 5;
+
 class AdvancedPanel extends StatelessWidget {
   const AdvancedPanel({super.key});
 
@@ -24,7 +27,7 @@ class AdvancedPanel extends StatelessWidget {
         UiSection(
           label: s.advancedPanelHistoryBuffer,
           children: [
-            UiSliderRow(label: s.advancedPanelMessagesPerTopic, subtitle: s.advancedPanelMessagesPerTopicHint, value: vm.defaultHistorySize.toDouble(), min: 10, max: 500, divisions: 99, displayValue: '${vm.defaultHistorySize}', onChanged: (v) => vm.setDefaultHistorySize(v.round())),
+            UiSliderRow(label: s.advancedPanelMessagesPerTopic, subtitle: s.advancedPanelMessagesPerTopicHint, value: vm.defaultHistorySize.toDouble(), min: 1, max: 500, divisions: 100, displayValue: '${vm.defaultHistorySize}', onChanged: (v) => vm.setDefaultHistorySize(snapPerTopicHistory(v))),
             UiSliderRow(label: s.monitoringPanelIncreasedBufferSize, subtitle: s.monitoringPanelIncreasedBufferHint, value: vm.increasedHistorySize.toDouble(), min: 100, max: 5000, divisions: 99, displayValue: '${vm.increasedHistorySize}', onChanged: (v) => vm.setIncreasedHistorySize(v.round())),
           ],
         ),

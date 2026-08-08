@@ -51,7 +51,7 @@ void main() {
     expect(sliders, hasLength(2), reason: 'per-topic and increased monitoring buffers');
 
     final perTopic = sliders.first;
-    expect(perTopic.min, 10);
+    expect(perTopic.min, 1);
     expect(perTopic.max, 500);
     expect(perTopic.value, 10);
 
@@ -66,5 +66,25 @@ void main() {
     final warning = tester.widget<Text>(find.textContaining('affect performance'));
     expect(warning.style?.fontWeight, FontWeight.w600, reason: 'the warning is emphasised in bold');
     expect(warning.style?.color, isNotNull);
+  });
+
+  group('snapPerTopicHistory', () {
+    test('returns 1 for any position below 5', () {
+      expect(snapPerTopicHistory(0), 1);
+      expect(snapPerTopicHistory(1), 1);
+      expect(snapPerTopicHistory(3), 1);
+    });
+
+    test('snaps to multiples of 5 from 5 upward', () {
+      expect(snapPerTopicHistory(4), 5);
+      expect(snapPerTopicHistory(5), 5);
+      expect(snapPerTopicHistory(6), 5);
+      expect(snapPerTopicHistory(8), 10);
+      expect(snapPerTopicHistory(10), 10);
+      expect(snapPerTopicHistory(12), 10);
+      expect(snapPerTopicHistory(497), 495);
+      expect(snapPerTopicHistory(498), 500);
+      expect(snapPerTopicHistory(500), 500);
+    });
   });
 }
