@@ -28,7 +28,7 @@ class AdvancedPanel extends StatelessWidget {
           label: s.advancedPanelHistoryBuffer,
           children: [
             UiSliderRow(label: s.advancedPanelMessagesPerTopic, subtitle: s.advancedPanelMessagesPerTopicHint, value: vm.defaultHistorySize.toDouble(), min: 1, max: 500, divisions: 100, displayValue: '${vm.defaultHistorySize}', onChanged: (v) => vm.setDefaultHistorySize(snapPerTopicHistory(v))),
-            UiSliderRow(label: s.monitoringPanelIncreasedBufferSize, subtitle: s.monitoringPanelIncreasedBufferHint, value: vm.increasedHistorySize.toDouble(), min: 100, max: 5000, divisions: 99, displayValue: '${vm.increasedHistorySize}', onChanged: (v) => vm.setIncreasedHistorySize(v.round())),
+            UiSliderRow(label: s.monitoringPanelIncreasedBufferSize, subtitle: s.monitoringPanelIncreasedBufferHint, value: vm.increasedHistorySize.toDouble(), min: 50, max: 5000, divisions: 99, displayValue: '${vm.increasedHistorySize}', onChanged: (v) => vm.setIncreasedHistorySize(v.round())),
           ],
         ),
       ],
