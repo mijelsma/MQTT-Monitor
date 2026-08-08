@@ -192,6 +192,7 @@
     "brokerDialogFieldPassword": "Password",
     "brokerDialogSectionTopics": "Topics",
     "brokerDialogAddSubscription": "Add Subscription",
+    "brokerDialogDefaultSubscriptionName": "Every topic",
 
     "subscriptionDialogEditTitle": "Edit Subscription",
     "subscriptionDialogAddTitle": "Add Subscription",

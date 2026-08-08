@@ -65,6 +65,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "brokerDialogAddTitle": MessageLookupByLibrary.simpleMessage(
       "Broker toevoegen",
     ),
+    "brokerDialogDefaultSubscriptionName": MessageLookupByLibrary.simpleMessage(
+      "Elk onderwerp",
+    ),
     "brokerDialogEditTitle": MessageLookupByLibrary.simpleMessage(
       "Broker bewerken",
     ),

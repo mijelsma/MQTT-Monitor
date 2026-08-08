@@ -1744,6 +1744,16 @@ class S {
     );
   }
 
+  /// `Every topic`
+  String get brokerDialogDefaultSubscriptionName {
+    return Intl.message(
+      'Every topic',
+      name: 'brokerDialogDefaultSubscriptionName',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Edit Subscription`
   String get subscriptionDialogEditTitle {
     return Intl.message(
