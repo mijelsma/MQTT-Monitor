@@ -127,7 +127,7 @@ class UiInlineNotice extends StatelessWidget {
     return Container(
       margin: margin,
       decoration: BoxDecoration(
-        color: Color.lerp(color.withValues(alpha: 0.10), tokens.surface, 0.55),
+        color: Color.alphaBlend(color.withValues(alpha: 0.10), tokens.surface),
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: color.withValues(alpha: 0.45), width: 1),
       ),
