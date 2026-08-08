@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:event_bus/event_bus.dart' as events;
 import 'package:flutter_test/flutter_test.dart';
@@ -731,6 +732,113 @@ void main() {
 
       expect(service.publish('offline', 'ignored'), isNull);
     });
+  });
+
+  group('real TCP broker integration', () {
+    /// Starts a minimal broker that answers every MQTT 5 CONNECT with a
+    /// CONNACK reason code 0x86 (badUsernameOrPassword) and counts the
+    /// CONNECT packets it receives. Returns the broker to connect to and
+    /// the running count of accepted connect attempts.
+    Future<(BrokerEntry, List<bool>)> startRejectingBroker() async {
+      final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      final sockets = <Socket>[];
+      final connectPackets = <bool>[];
+      addTearDown(() async {
+        for (final socket in sockets) {
+          socket.destroy();
+        }
+        await server.close();
+      });
+      unawaited(() async {
+        await for (final socket in server) {
+          sockets.add(socket);
+          connectPackets.add(true);
+          // Give the client a moment to send the full CONNECT packet,
+          // then reject it.
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+          socket.add([0x20, 0x03, 0x00, 0x86, 0x00]);
+        }
+      }());
+      return (
+        BrokerEntry(
+          id: 'broker-1',
+          name: 'Rejector',
+          host: '127.0.0.1',
+          port: server.port,
+          protocolVersion: MqttProtocolVersion.v5,
+          username: 'user',
+          password: 'wrong-password',
+        ),
+        connectPackets,
+      );
+    }
+
+    /// Waits until the connection status is reported as an error, or the
+    /// [timeout] elapses. Returns the status reached.
+    Future<ConnectionStatus> waitForError(Duration timeout) async {
+      final deadline = DateTime.now().add(timeout);
+      while (DateTime.now().isBefore(deadline)) {
+        final status = state.read(AppKeys.connectionStatus);
+        if (status == ConnectionStatus.error) return status;
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
+      return state.read(AppKeys.connectionStatus);
+    }
+
+    test(
+      'MQTT 5 rejected CONNACK surfaces the error immediately with a single attempt',
+      () async {
+        final (broker, connectPackets) = await startRejectingBroker();
+        await state.write(SettingsKeys.brokers, [broker]);
+        await state.write(AppKeys.activeBrokerId, broker.id);
+        await state.write(AppKeys.disconnected, false);
+
+        // Real (non-faked) MQTT 5 client against a real TCP socket.
+        final service = MqttService(state);
+
+        final stopwatch = Stopwatch()..start();
+        service.initialize();
+        addTearDown(service.dispose);
+
+        final status = await waitForError(const Duration(seconds: 8));
+        final elapsedMs = stopwatch.elapsedMilliseconds;
+
+        expect(status, ConnectionStatus.error,
+            reason: 'the failure must be surfaced');
+        expect(state.read(AppKeys.connectionError), contains('badUsernameOrPassword'),
+            reason: 'the broker reason code is reported');
+        expect(connectPackets, hasLength(1),
+            reason: 'a rejected CONNACK must not trigger blind retries');
+        expect(elapsedMs, lessThan(5000),
+            reason: 'the error is reported promptly, not after ~10s of retries');
+      },
+    );
+
+    test(
+      'MQTT 5 rejected CONNACK does eventually surface the error (slow retries)',
+      () async {
+        final (broker, _) = await startRejectingBroker();
+        await state.write(SettingsKeys.brokers, [broker]);
+        await state.write(AppKeys.activeBrokerId, broker.id);
+        await state.write(AppKeys.disconnected, false);
+
+        final service = MqttService(state);
+        service.initialize();
+        addTearDown(service.dispose);
+
+        // Generous window: the client's default 3-attempt retry loop spends
+        // 5s on every attempt that cannot observe its CONNACK, so a
+        // rejection can take ~10s to surface. This test only checks that an
+        // error code is eventually produced at all.
+        final status = await waitForError(const Duration(seconds: 20));
+
+        expect(status, ConnectionStatus.error,
+            reason: 'the rejection must eventually be reported');
+        expect(state.read(AppKeys.connectionError), contains('badUsernameOrPassword'),
+            reason: 'the broker reason code is reported');
+      },
+      timeout: const Timeout(Duration(seconds: 30)),
+    );
   });
 
   }
