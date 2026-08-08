@@ -26,6 +26,7 @@ typedef Mqtt5ClientFactory = mqtt5_server.MqttServerClient Function(BrokerEntry 
 /// How long to wait for a PUBACK/PUBREC before treating a publish as
 /// timed out. Generous because the broker may be slow under load.
 const _publishAckTimeout = Duration(seconds: 5);
+const _socketTimeoutMs = 5000;
 
 /// Service responsible for managing the MQTT connection and message flow.
 class MqttService {
@@ -33,7 +34,7 @@ class MqttService {
   MqttService(this._state, {ClientCertificateService? certificateService, Mqtt3ClientFactory? mqtt3ClientFactory, Mqtt5ClientFactory? mqtt5ClientFactory})
     : _certificateService = certificateService ?? ClientCertificateService(),
       _mqtt3ClientFactory = mqtt3ClientFactory ?? ((broker) => mqtt3_server.MqttServerClient.withPort(broker.host, broker.effectiveClientId, broker.port)),
-      _mqtt5ClientFactory = mqtt5ClientFactory ?? ((broker) => mqtt5_server.MqttServerClient.withPort(broker.host, broker.effectiveClientId, broker.port));
+      _mqtt5ClientFactory = mqtt5ClientFactory ?? ((broker) => mqtt5_server.MqttServerClient.withPort(broker.host, broker.effectiveClientId, broker.port, maxConnectionAttempts: 1));
 
   // Reference to the app state manager for reading settings and updating connection status.
   final AppStateManager _state;
@@ -111,9 +112,12 @@ class MqttService {
     final completer = Completer<PublishResult>();
     _pendingV5Publishes[packetId] = completer;
     completer.future.whenComplete(() => _pendingV5Publishes.remove(packetId));
-      return completer.future.timeout(_publishAckTimeout, onTimeout: () {
+    return completer.future.timeout(
+      _publishAckTimeout,
+      onTimeout: () {
         return PublishResult.timedOut(MqttProtocolVersion.v5, qos);
-      });
+      },
+    );
   }
 
   Future<PublishResult>? _publishV311(String topic, String payload, {required int qos, required bool retain}) {
@@ -136,9 +140,12 @@ class MqttService {
     final completer = Completer<PublishResult>();
     _pendingV3Publishes[packetId] = completer;
     completer.future.whenComplete(() => _pendingV3Publishes.remove(packetId));
-    return completer.future.timeout(_publishAckTimeout, onTimeout: () {
-      return PublishResult.timedOut(MqttProtocolVersion.v311, qos);
-    });
+    return completer.future.timeout(
+      _publishAckTimeout,
+      onTimeout: () {
+        return PublishResult.timedOut(MqttProtocolVersion.v311, qos);
+      },
+    );
   }
 
   bool subscribe(String topic, {int qos = 0}) {
@@ -268,6 +275,7 @@ class MqttService {
     client.secure = broker.useSSL || !broker.clientCertificates.isEmpty;
     client.keepAlivePeriod = 30;
     client.autoReconnect = true;
+    client.socketTimeout = _socketTimeoutMs;
     client.logging(on: false);
 
     if (!await _configureTlsContext(client, broker, session)) return;
@@ -355,6 +363,7 @@ class MqttService {
     client.secure = broker.useSSL || !broker.clientCertificates.isEmpty;
     client.keepAlivePeriod = 30;
     client.autoReconnect = true;
+    client.socketTimeout = _socketTimeoutMs;
     client.logging(on: false);
 
     if (!await _configureTlsContext(client, broker, session)) return;
@@ -424,24 +433,16 @@ class MqttService {
       // PUBACK/PUBREC carry the real reason code; settle any pending
       // publish futures before surfacing the reason in the UI.
       if (message is mqtt5.MqttPublishAckMessage || message is mqtt5.MqttPublishReceivedMessage) {
-        final packetId = message is mqtt5.MqttPublishAckMessage
-            ? message.variableHeader?.messageIdentifier
-            : (message as mqtt5.MqttPublishReceivedMessage).variableHeader.messageIdentifier;
+        final packetId = message is mqtt5.MqttPublishAckMessage ? message.variableHeader?.messageIdentifier : (message as mqtt5.MqttPublishReceivedMessage).variableHeader.messageIdentifier;
         if (packetId != null) {
           final completer = _pendingV5Publishes.remove(packetId);
           if (completer != null && !completer.isCompleted) {
             final notice = MqttReasonNotice.fromMqtt5Message(message);
             final reasonCode = notice?.reasonCodes.isNotEmpty == true ? notice!.reasonCodes.first : 0;
             if (reasonCode >= 0x80) {
-              completer.complete(PublishResult.failed(
-                reasonCode: reasonCode,
-                reasonString: notice?.reasonString,
-              ));
+              completer.complete(PublishResult.failed(reasonCode: reasonCode, reasonString: notice?.reasonString));
             } else {
-              completer.complete(PublishResult.delivered(
-                reasonCode: reasonCode,
-                reasonString: notice?.reasonString,
-              ));
+              completer.complete(PublishResult.delivered(reasonCode: reasonCode, reasonString: notice?.reasonString));
             }
           }
         }
@@ -627,22 +628,10 @@ class MqttService {
     final suffix = raw.isEmpty ? '' : ' ($raw)';
 
     final (base, suggestion) = switch (status) {
-      ConnectionStatus.errorHostNotFound => (
-        "Could not resolve host '${broker.host}' ($where)$suffix.",
-        'Check the hostname for typos and verify your DNS or network settings.',
-      ),
-      ConnectionStatus.errorNotPermitted => (
-        'The operating system blocked the connection to $where$suffix.',
-        'Check your firewall rules, VPN, or network permissions.',
-      ),
-      ConnectionStatus.errorRefused => (
-        'The broker at $where refused the connection$suffix.',
-        'Verify the broker is running and listening on port ${broker.port}.',
-      ),
-      _ => (
-        'Network error reaching $where$suffix.',
-        'Check your network connection and the broker address.',
-      ),
+      ConnectionStatus.errorHostNotFound => ("Could not resolve host '${broker.host}' ($where)$suffix.", 'Check the hostname for typos and verify your DNS or network settings.'),
+      ConnectionStatus.errorNotPermitted => ('The operating system blocked the connection to $where$suffix.', 'Check your firewall rules, VPN, or network permissions.'),
+      ConnectionStatus.errorRefused => ('The broker at $where refused the connection$suffix.', 'Verify the broker is running and listening on port ${broker.port}.'),
+      _ => ('Network error reaching $where$suffix.', 'Check your network connection and the broker address.'),
     };
 
     return '$base\n$suggestion';
@@ -656,8 +645,8 @@ class MqttService {
     final hasRootCa = broker.clientCertificates.rootCaPath != null;
     final suggestion = broker.validateCertificates
         ? (hasRootCa
-            ? 'The broker certificate chain was checked against your Root CA, and expired certificates are rejected, but hostname mismatches (e.g. connecting via an IP address) are tolerated. If the handshake still fails, verify the Root CA actually signed the broker certificate, and that the client certificate and private key match.'
-            : 'Provide a Root CA certificate in the broker settings to validate a self-signed broker, or disable "Validate Certificates".')
+              ? 'The broker certificate chain was checked against your Root CA, and expired certificates are rejected, but hostname mismatches (e.g. connecting via an IP address) are tolerated. If the handshake still fails, verify the Root CA actually signed the broker certificate, and that the client certificate and private key match.'
+              : 'Provide a Root CA certificate in the broker settings to validate a self-signed broker, or disable "Validate Certificates".')
         : '';
 
     return suggestion.isEmpty ? base : '$base\n$suggestion';
@@ -673,9 +662,7 @@ class MqttService {
   String _brokerRejectedMessage(BrokerEntry broker, String? detail) {
     final where = broker.displayAddress;
     final trimmed = detail?.trim();
-    final base = (trimmed == null || trimmed.isEmpty)
-        ? 'Connection to $where failed.'
-        : 'Connection to $where failed: $trimmed';
+    final base = (trimmed == null || trimmed.isEmpty) ? 'Connection to $where failed.' : 'Connection to $where failed: $trimmed';
     return '$base\nCheck your username, password, Client ID, and TLS settings.';
   }
 
