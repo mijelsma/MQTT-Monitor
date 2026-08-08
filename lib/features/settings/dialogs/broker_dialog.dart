@@ -77,6 +77,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
   late List<SubscriptionEntry> _subscriptions;
 
   bool get _isEditing => widget.broker != null;
+  bool _defaultSubscriptionApplied = false;
 
   @override
   void initState() {
@@ -96,6 +97,20 @@ class _BrokerDialogState extends State<BrokerDialog> {
     _randomClientIdSuffix = b?.randomClientIdSuffix ?? true;
     _color = AppColors.brokerColorOptions[b?.colorIndex ?? 0];
     _subscriptions = List.from(b?.subscriptions ?? []);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.broker == null && !_defaultSubscriptionApplied) {
+      _defaultSubscriptionApplied = true;
+      final state = context.read<AppStateManager>();
+      state.load(SettingsKeys.defaultSubscribeQos);
+      state.load(SettingsKeys.lastUsedQos);
+      final strategy = state.read<MqttQosDefault>(SettingsKeys.defaultSubscribeQos);
+      final defaultQos = strategy.resolve(state.read(SettingsKeys.lastUsedQos));
+      _subscriptions.add(SubscriptionEntry(topic: '#', qos: defaultQos, name: S.of(context).brokerDialogDefaultSubscriptionName));
+    }
   }
 
   @override
@@ -300,13 +315,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
         if (_certificateError != null)
           Padding(
             padding: const EdgeInsets.only(top: 10),
-            child: UiInlineNotice(
-              kind: UiNoticeKind.error,
-              message: _certificateError,
-              selectable: true,
-              onDismiss: () => setState(() => _certificateError = null),
-              radius: 10,
-            ),
+            child: UiInlineNotice(kind: UiNoticeKind.error, message: _certificateError, selectable: true, onDismiss: () => setState(() => _certificateError = null), radius: 10),
           ),
       ],
     );
