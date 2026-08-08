@@ -91,15 +91,20 @@
 
     "monitoringPanelTitle": "Monitoring",
     "monitoringPanelDescription": "Configureer berichtgeschiedenis per topic.",
-    "monitoringPanelHistoryBuffer": "Geschiedenisbuffer",
-    "monitoringPanelStandardBufferSize": "Standaard buffergrootte",
-    "monitoringPanelStandardBufferHint": "Berichten opgeslagen per topic",
+    "monitoringPanelRateSampling": "Frequentiebemonstering",
     "monitoringPanelIncreasedBufferSize": "Verhoogde buffergrootte",
     "monitoringPanelIncreasedBufferHint": "Berichten voor gemonitorde topics",
     "monitoringPanelIncreasedMonitoring": "Verhoogde monitoring",
     "monitoringPanelClearAll": "Alles wissen",
     "monitoringPanelRateSampleSize": "Frequentie berekengrootte",
     "monitoringPanelRateSampleHint": "Berichten voor frequentieberekening",
+
+    "sectionAdvanced": "Geavanceerd",
+    "advancedPanelTitle": "Geavanceerd",
+    "advancedPanelDescription": "Het aanpassen van deze instellingen kan de prestaties aanzienlijk beïnvloeden. Wijzig ze voorzichtig.",
+    "advancedPanelHistoryBuffer": "Geschiedenisbuffer",
+    "advancedPanelMessagesPerTopic": "Berichten per onderwerp opslaan",
+    "advancedPanelMessagesPerTopicHint": "Maximum aantal berichten dat per onderwerp in de geschiedenis wordt bewaard; oudere berichten worden verwijderd. Lagere waarden gebruiken minder geheugen.",
 
     "uiPanelTitle": "Gebruikersinterface",
     "uiPanelDescription": "Uiterlijk en lay-outvoorkeuren.",

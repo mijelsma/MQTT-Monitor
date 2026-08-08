@@ -91,15 +91,20 @@
 
     "monitoringPanelTitle": "Monitoring",
     "monitoringPanelDescription": "Configure message history retention for topics.",
-    "monitoringPanelHistoryBuffer": "History buffer",
-    "monitoringPanelStandardBufferSize": "Standard buffer size",
-    "monitoringPanelStandardBufferHint": "Messages stored per topic",
+    "monitoringPanelRateSampling": "Rate sampling",
     "monitoringPanelIncreasedBufferSize": "Increased buffer size",
     "monitoringPanelIncreasedBufferHint": "Messages for monitored topics",
     "monitoringPanelIncreasedMonitoring": "Increased monitoring",
     "monitoringPanelClearAll": "Clear all",
     "monitoringPanelRateSampleSize": "Rate sample size",
     "monitoringPanelRateSampleHint": "Messages used to calculate rate",
+
+    "sectionAdvanced": "Advanced",
+    "advancedPanelTitle": "Advanced",
+    "advancedPanelDescription": "Adjusting these settings may significantly affect performance. Change them with care.",
+    "advancedPanelHistoryBuffer": "History buffer",
+    "advancedPanelMessagesPerTopic": "Messages stored per topic",
+    "advancedPanelMessagesPerTopicHint": "Maximum messages kept in history per topic; older messages are pruned. Lower values use less memory.",
 
     "uiPanelTitle": "User Interface",
     "uiPanelDescription": "Appearance and layout preferences.",
