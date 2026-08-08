@@ -56,8 +56,9 @@ void main() {
     expect(perTopic.value, 10);
 
     final increased = sliders.last;
-    expect(increased.min, 100);
+    expect(increased.min, 50);
     expect(increased.max, 5000);
+    expect(increased.divisions, 99, reason: 'increased buffer steps by exactly 50');
   });
 
   testWidgets('advanced panel warns in the themed error color', (tester) async {
