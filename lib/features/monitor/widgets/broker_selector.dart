@@ -88,13 +88,12 @@ class _BrokerSelectorState extends State<BrokerSelector> {
       child: Row(
         children: [
           Container(
-            width: 28,
+            width: 3.5,
             height: 28,
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: AppColors.brokerGradientFor(broker.colorIndex), begin: Alignment.topLeft, end: Alignment.bottomRight),
-              borderRadius: BorderRadius.circular(7),
+              gradient: LinearGradient(colors: AppColors.brokerGradientFor(broker.colorIndex), begin: Alignment.topCenter, end: Alignment.bottomCenter),
+              borderRadius: BorderRadius.circular(2),
             ),
-            child: const Icon(Icons.dns_rounded, size: 14, color: Colors.white),
           ),
           const SizedBox(width: 10),
           Expanded(
