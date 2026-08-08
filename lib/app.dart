@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'core/history/message_history_service.dart';
 import 'core/mqtt/mqtt_service.dart';
+import 'core/platform/window_chrome.dart';
 import 'core/state/app_state.dart';
 import 'core/state/keys/settings_keys.dart';
 import 'features/monitor/monitor_screen.dart';
@@ -31,8 +32,46 @@ class App extends StatelessWidget {
   }
 }
 
-class _AppView extends StatelessWidget {
+class _AppView extends StatefulWidget {
   const _AppView();
+
+  @override
+  State<_AppView> createState() => _AppViewState();
+}
+
+class _AppViewState extends State<_AppView> {
+  late final AppStateManager _state;
+  Brightness? _lastAppearance;
+
+  Brightness get _effectiveBrightness {
+    final platform = WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    return switch (_state.read(SettingsKeys.themeMode)) {
+      ThemeMode.light => Brightness.light,
+      ThemeMode.dark => Brightness.dark,
+      ThemeMode.system => platform,
+    };
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _state = AppStateManager.instance;
+    WidgetsBinding.instance.platformDispatcher.onPlatformBrightnessChanged = _syncAppearance;
+    _syncAppearance();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.platformDispatcher.onPlatformBrightnessChanged = null;
+    super.dispose();
+  }
+
+  void _syncAppearance() {
+    final brightness = _effectiveBrightness;
+    if (brightness == _lastAppearance) return;
+    _lastAppearance = brightness;
+    WindowChrome.setAppearance(brightness);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +79,8 @@ class _AppView extends StatelessWidget {
     final language = context.select<AppStateManager, AppLanguage>((s) => s.read(SettingsKeys.language));
     final accentValue = context.select<AppStateManager, int>((s) => s.read(SettingsKeys.accentColor));
     final accent = Color(accentValue);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncAppearance());
 
     return MaterialApp(
       title: 'MQTT Monitor',
