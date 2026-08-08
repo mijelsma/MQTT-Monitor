@@ -20,12 +20,8 @@ class MonitoringPanel extends StatelessWidget {
       description: s.monitoringPanelDescription,
       children: [
         UiSection(
-          label: s.monitoringPanelHistoryBuffer,
-          children: [
-            UiSliderRow(label: s.monitoringPanelStandardBufferSize, subtitle: s.monitoringPanelStandardBufferHint, value: vm.defaultHistorySize.toDouble(), min: 10, max: 1000, divisions: 99, displayValue: '${vm.defaultHistorySize}', onChanged: (v) => vm.setDefaultHistorySize(v.round())),
-            UiSliderRow(label: s.monitoringPanelIncreasedBufferSize, subtitle: s.monitoringPanelIncreasedBufferHint, value: vm.increasedHistorySize.toDouble(), min: 100, max: 10000, divisions: 99, displayValue: '${vm.increasedHistorySize}', onChanged: (v) => vm.setIncreasedHistorySize(v.round())),
-            UiSliderRow(label: s.monitoringPanelRateSampleSize, subtitle: s.monitoringPanelRateSampleHint, value: vm.messageRateSampleSize.toDouble(), min: 2, max: 50, divisions: 48, displayValue: '${vm.messageRateSampleSize}', onChanged: (v) => vm.setMessageRateSampleSize(v.round())),
-          ],
+          label: s.monitoringPanelRateSampling,
+          children: [UiSliderRow(label: s.monitoringPanelRateSampleSize, subtitle: s.monitoringPanelRateSampleHint, value: vm.messageRateSampleSize.toDouble(), min: 2, max: 50, divisions: 48, displayValue: '${vm.messageRateSampleSize}', onChanged: (v) => vm.setMessageRateSampleSize(v.round()))],
         ),
         if (vm.increasedMonitoringTopics.isNotEmpty)
           UiSection(

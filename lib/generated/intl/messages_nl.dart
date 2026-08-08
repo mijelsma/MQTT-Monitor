@@ -58,6 +58,19 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "aboutPanelVersionDetail": MessageLookupByLibrary.simpleMessage("Versie"),
     "add": MessageLookupByLibrary.simpleMessage("Toevoegen"),
+    "advancedPanelDescription": MessageLookupByLibrary.simpleMessage(
+      "Het aanpassen van deze instellingen kan de prestaties aanzienlijk beïnvloeden. Wijzig ze voorzichtig.",
+    ),
+    "advancedPanelHistoryBuffer": MessageLookupByLibrary.simpleMessage(
+      "Geschiedenisbuffer",
+    ),
+    "advancedPanelMessagesPerTopic": MessageLookupByLibrary.simpleMessage(
+      "Berichten per onderwerp opslaan",
+    ),
+    "advancedPanelMessagesPerTopicHint": MessageLookupByLibrary.simpleMessage(
+      "Maximum aantal berichten dat per onderwerp in de geschiedenis wordt bewaard; oudere berichten worden verwijderd. Lagere waarden gebruiken minder geheugen.",
+    ),
+    "advancedPanelTitle": MessageLookupByLibrary.simpleMessage("Geavanceerd"),
     "back": MessageLookupByLibrary.simpleMessage("Terug"),
     "brokerDialogAddSubscription": MessageLookupByLibrary.simpleMessage(
       "Abonnement toevoegen",
@@ -268,9 +281,6 @@ class MessageLookup extends MessageLookupByLibrary {
     "monitoringPanelDescription": MessageLookupByLibrary.simpleMessage(
       "Configureer berichtgeschiedenis per topic.",
     ),
-    "monitoringPanelHistoryBuffer": MessageLookupByLibrary.simpleMessage(
-      "Geschiedenisbuffer",
-    ),
     "monitoringPanelIncreasedBufferHint": MessageLookupByLibrary.simpleMessage(
       "Berichten voor gemonitorde topics",
     ),
@@ -286,11 +296,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "monitoringPanelRateSampleSize": MessageLookupByLibrary.simpleMessage(
       "Frequentie berekengrootte",
     ),
-    "monitoringPanelStandardBufferHint": MessageLookupByLibrary.simpleMessage(
-      "Berichten opgeslagen per topic",
-    ),
-    "monitoringPanelStandardBufferSize": MessageLookupByLibrary.simpleMessage(
-      "Standaard buffergrootte",
+    "monitoringPanelRateSampling": MessageLookupByLibrary.simpleMessage(
+      "Frequentiebemonstering",
     ),
     "monitoringPanelTitle": MessageLookupByLibrary.simpleMessage("Monitoring"),
     "noBroker": MessageLookupByLibrary.simpleMessage("Geen broker"),
@@ -328,6 +335,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "searchScopeTopic": MessageLookupByLibrary.simpleMessage("Topic"),
     "searchScopeValue": MessageLookupByLibrary.simpleMessage("Waarde"),
     "sectionAbout": MessageLookupByLibrary.simpleMessage("Over"),
+    "sectionAdvanced": MessageLookupByLibrary.simpleMessage("Geavanceerd"),
     "sectionBrokers": MessageLookupByLibrary.simpleMessage("Brokers"),
     "sectionDashboard": MessageLookupByLibrary.simpleMessage("Dashboard"),
     "sectionLanguage": MessageLookupByLibrary.simpleMessage("Taal"),
