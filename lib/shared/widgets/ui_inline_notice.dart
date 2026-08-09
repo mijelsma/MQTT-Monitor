@@ -18,30 +18,8 @@ const _styles = <UiNoticeKind, _NoticeStyle>{
   UiNoticeKind.info: _NoticeStyle(AppColors.info500, Icons.info_outline_rounded),
 };
 
-/// A reusable themed banner for inline notifications: invalid certificate,
-/// connection failure, historical view, etc.
-///
-/// Variants ([UiNoticeKind]) drive the icon and colour palette so all
-/// inline notices across the app share the same look.
-///
-/// Use the optional [title] for a short headline, [message] for the body,
-/// [selectable] to make the body copyable, [onDismiss] to show an X,
-/// and [actionLabel] / [onAction] for an inline action button.
 class UiInlineNotice extends StatelessWidget {
-  const UiInlineNotice({
-    super.key,
-    required this.kind,
-    this.title,
-    this.message,
-    this.subtitle,
-    this.selectable = false,
-    this.onDismiss,
-    this.actionLabel,
-    this.onAction,
-    this.margin,
-    this.padding = const EdgeInsets.fromLTRB(12, 10, 8, 10),
-    this.radius = 12,
-  });
+  const UiInlineNotice({super.key, required this.kind, this.title, this.message, this.subtitle, this.selectable = false, this.detail, this.onDismiss, this.actionLabel, this.onAction, this.margin, this.padding = const EdgeInsets.fromLTRB(12, 10, 8, 10), this.radius = 12});
 
   final UiNoticeKind kind;
   final String? title;
@@ -53,6 +31,9 @@ class UiInlineNotice extends StatelessWidget {
 
   /// Make [message] selectable (for copying long error details).
   final bool selectable;
+
+  /// Optional raw technical detail shown behind a collapsible "Show details" expander. Always selectable for copying.
+  final String? detail;
 
   /// Show a dismiss (X) button. Null = no dismiss affordance.
   final VoidCallback? onDismiss;
@@ -75,22 +56,29 @@ class UiInlineNotice extends StatelessWidget {
     final body = <Widget>[];
     if (title != null) {
       body.add(
-        Text(title!, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: tokens.textPrimary)),
+        Text(
+          title!,
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: tokens.textPrimary),
+        ),
       );
     }
     if (subtitle != null) {
       body.add(const SizedBox(height: 1));
       body.add(
-        Text(subtitle!, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: tokens.textSecondary), overflow: TextOverflow.ellipsis),
+        Text(
+          subtitle!,
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: tokens.textSecondary),
+          overflow: TextOverflow.ellipsis,
+        ),
       );
     }
     if (message != null) {
       if (title != null || subtitle != null) body.add(const SizedBox(height: 4));
-      body.add(
-        selectable
-            ? SelectableText(message!, style: TextStyle(fontSize: 12, height: 1.35, color: tokens.textPrimary.withValues(alpha: 0.85)))
-            : Text(message!, style: TextStyle(fontSize: 12, height: 1.35, color: tokens.textPrimary.withValues(alpha: 0.85))),
-      );
+      body.add(selectable ? SelectableText(message!, style: TextStyle(fontSize: 12, height: 1.35, color: tokens.textPrimary.withValues(alpha: 0.85))) : Text(message!, style: TextStyle(fontSize: 12, height: 1.35, color: tokens.textPrimary.withValues(alpha: 0.85))));
+    }
+    if (detail != null && detail!.trim().isNotEmpty) {
+      body.add(const SizedBox(height: 8));
+      body.add(_ExpandableDetail(detail: detail!));
     }
 
     final children = <Widget>[
@@ -101,7 +89,9 @@ class UiInlineNotice extends StatelessWidget {
         child: Icon(icon, size: 16, color: color),
       ),
       const SizedBox(width: 10),
-      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: body)),
+      Expanded(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: body),
+      ),
     ];
 
     if (actionLabel != null && onAction != null) {
@@ -137,6 +127,68 @@ class UiInlineNotice extends StatelessWidget {
   }
 }
 
+/// A collapsed-by-default "Show details" expander for raw diagnostic text.
+class _ExpandableDetail extends StatefulWidget {
+  const _ExpandableDetail({required this.detail});
+
+  final String detail;
+
+  @override
+  State<_ExpandableDetail> createState() => _ExpandableDetailState();
+}
+
+class _ExpandableDetailState extends State<_ExpandableDetail> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InkWell(
+          onTap: () => setState(() => _expanded = !_expanded),
+          borderRadius: BorderRadius.circular(6),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(_expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded, size: 14, color: tokens.textSecondary),
+                const SizedBox(width: 4),
+                Text(
+                  _expanded ? 'Hide details' : 'Show details',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: tokens.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ),
+        AnimatedCrossFade(
+          firstChild: const SizedBox(width: double.infinity),
+          secondChild: Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(top: 2),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: tokens.surface.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: tokens.border, width: 0.5),
+            ),
+            child: SelectableText(
+              widget.detail,
+              style: TextStyle(fontSize: 11, height: 1.45, fontFamily: 'SF Mono, Menlo, monospace', color: tokens.textSecondary),
+            ),
+          ),
+          crossFadeState: _expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 180),
+          sizeCurve: Curves.easeOutCubic,
+        ),
+      ],
+    );
+  }
+}
+
 class _ActionButton extends StatelessWidget {
   const _ActionButton({required this.label, required this.onTap});
 
@@ -158,7 +210,10 @@ class _ActionButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             border: Border.all(color: tokens.border, width: 0.5),
           ),
-          child: Text(label, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: tokens.textSecondary)),
+          child: Text(
+            label,
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: tokens.textSecondary),
+          ),
         ),
       ),
     );
