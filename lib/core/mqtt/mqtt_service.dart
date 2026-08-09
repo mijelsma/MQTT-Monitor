@@ -23,20 +23,15 @@ import 'publish_result.dart';
 typedef Mqtt3ClientFactory = mqtt3_server.MqttServerClient Function(BrokerEntry broker);
 typedef Mqtt5ClientFactory = mqtt5_server.MqttServerClient Function(BrokerEntry broker);
 
-/// How long to wait for a PUBACK/PUBREC before treating a publish as
-/// timed out. Generous because the broker may be slow under load.
 const _publishAckTimeout = Duration(seconds: 5);
 const _socketTimeoutMs = 5000;
 
-/// Service responsible for managing the MQTT connection and message flow.
 class MqttService {
-  // Constructor takes the app state manager to read settings and update connection status.
   MqttService(this._state, {ClientCertificateService? certificateService, Mqtt3ClientFactory? mqtt3ClientFactory, Mqtt5ClientFactory? mqtt5ClientFactory})
     : _certificateService = certificateService ?? ClientCertificateService(),
-      _mqtt3ClientFactory = mqtt3ClientFactory ?? ((broker) => mqtt3_server.MqttServerClient.withPort(broker.host, broker.effectiveClientId, broker.port)),
+      _mqtt3ClientFactory = mqtt3ClientFactory ?? ((broker) => mqtt3_server.MqttServerClient.withPort(broker.host, broker.effectiveClientId, broker.port, maxConnectionAttempts: 1)),
       _mqtt5ClientFactory = mqtt5ClientFactory ?? ((broker) => mqtt5_server.MqttServerClient.withPort(broker.host, broker.effectiveClientId, broker.port, maxConnectionAttempts: 1));
 
-  // Reference to the app state manager for reading settings and updating connection status.
   final AppStateManager _state;
   final ClientCertificateService _certificateService;
   final Mqtt3ClientFactory _mqtt3ClientFactory;
@@ -53,40 +48,23 @@ class MqttService {
   int _sessionId = 0;
   bool _isFirstSync = true;
 
-  // Pending publish completers keyed by packet id. The local publish call
-  // assigns a packet id; the matching PUBACK/PUBREC (or `published` stream
-  // event for 3.1.1) completes the future with the broker's actual answer.
   final Map<int, Completer<PublishResult>> _pendingV5Publishes = {};
   final Map<int, Completer<PublishResult>> _pendingV3Publishes = {};
 
-  // Stream controller for incoming MQTT messages.
   final _messages = StreamController<MQTTMessage>.broadcast();
   Stream<MQTTMessage> get messageStream => _messages.stream;
 
-  // Timer and counters for calculating message rate.
   Timer? _rateTimer;
   int _rateCounter = 0;
   int _messageCount = 0;
   int _rateIntervalMs = 0;
 
-  /// Sets up listeners and connects to the active broker.
   void initialize() {
     _state.addListener(_onStateChanged);
     _startRateTimer();
     _sync();
   }
 
-  /// Publishes a message to the given topic.
-  ///
-  /// Returns a future that resolves with the broker's real answer once
-  /// the protocol has had a chance to confirm (or fail) the publish.
-  /// Returns `null` if the local client is not connected.
-  ///
-  /// The future resolves to:
-  /// - [PublishResult.delivered] only on MQTT 5 QoS 1/2 with reason code 0
-  /// - [PublishResult.failed] only on MQTT 5 QoS 1/2 with reason code >= 0x80
-  /// - [PublishResult.noConfirmation] for QoS 0 (any protocol) and all 3.1.1
-  /// - [PublishResult.timedOut] if no ack arrives within the timeout
   Future<PublishResult>? publish(String topic, String payload, {int qos = 0, bool retain = false}) {
     if (_activeProtocol == MqttProtocolVersion.v5) {
       return _publishV5(topic, payload, qos: qos, retain: retain);
@@ -135,8 +113,6 @@ class MqttService {
     if (qos == 0) {
       return Future.value(PublishResult.unconfirmed(MqttProtocolVersion.v311, 0));
     }
-    // 3.1.1 PUBACK carries no failure reason — even a "success" ack is
-    // best-effort because the broker may have silently dropped the message.
     final completer = Completer<PublishResult>();
     _pendingV3Publishes[packetId] = completer;
     completer.future.whenComplete(() => _pendingV3Publishes.remove(packetId));
@@ -182,13 +158,11 @@ class MqttService {
     return true;
   }
 
-  /// Disconnect from the current broker (user-initiated).
   void disconnect() {
     _state.write(AppKeys.disconnected, true);
     _teardown();
   }
 
-  /// Reconnect to the active broker (user-initiated).
   void reconnect() {
     _state.write(AppKeys.disconnected, false);
     _currentBrokerId = null;
@@ -196,11 +170,8 @@ class MqttService {
     _sync();
   }
 
-  /// The protocol actually in use on the live connection, or `null` if
-  /// disconnected. Mirrors the broker profile's selected protocol version.
   MqttProtocolVersion? get activeProtocol => _activeProtocol;
 
-  /// Reacts to app state changes (broker switched, settings changed, etc).
   void _onStateChanged() {
     _sync();
 
@@ -208,7 +179,6 @@ class MqttService {
     if (intervalMs != _rateIntervalMs) _startRateTimer();
   }
 
-  /// Ensures the MQTT connection matches the current app state.
   void _sync() {
     final brokers = _state.read(SettingsKeys.brokers);
     final activeBrokerId = _state.read(AppKeys.activeBrokerId);
@@ -227,7 +197,6 @@ class MqttService {
       return;
     }
 
-    // On the very first sync (app startup), apply the startup connection preference.
     if (_isFirstSync) {
       _isFirstSync = false;
       final mode = _state.read(SettingsKeys.startupConnection);
@@ -243,14 +212,13 @@ class MqttService {
 
     if (_state.read(AppKeys.disconnected)) {
       _state.write(AppKeys.connectionStatus, ConnectionStatus.disconnected);
-      _state.write(AppKeys.connectionError, null);
+      _clearError();
       return;
     }
 
     _connect(broker);
   }
 
-  /// Connects to the given broker and subscribes to its topics.
   Future<void> _connect(BrokerEntry broker) async {
     final session = ++_sessionId;
     _cleanup();
@@ -258,7 +226,7 @@ class MqttService {
     _resetCounters();
 
     _state.write(AppKeys.connectionStatus, ConnectionStatus.connecting);
-    _state.write(AppKeys.connectionError, null);
+    _clearError();
 
     switch (broker.protocolVersion) {
       case MqttProtocolVersion.v5:
@@ -299,20 +267,26 @@ class MqttService {
       await client.connect(broker.username, broker.password);
     } on HandshakeException catch (e) {
       if (session != _sessionId) return;
-      _state.write(AppKeys.connectionStatus, ConnectionStatus.errorTlsHandshake);
-      _state.write(AppKeys.connectionError, _tlsHandshakeMessage(broker, e));
+      _reportError(ConnectionStatus.errorTlsHandshake, _tlsHandshakeMessage(broker), detail: e.toString());
       return;
     } on SocketException catch (e) {
       if (session != _sessionId) return;
       final status = _socketStatus(e);
-      _state.write(AppKeys.connectionStatus, status);
-      _state.write(AppKeys.connectionError, _socketMessage(status, broker, e));
+      _reportError(status, _socketMessage(status, broker), detail: e.toString());
       return;
     } catch (e) {
       if (session != _sessionId) return;
-      final returnCodeMessage = _mqtt3ReturnCodeMessage(broker, client.connectionStatus?.returnCode);
-      _state.write(AppKeys.connectionStatus, ConnectionStatus.error);
-      _state.write(AppKeys.connectionError, returnCodeMessage ?? _genericConnectMessage(broker, e));
+      var returnCode = client.connectionStatus?.returnCode;
+      if (returnCode == null || returnCode == mqtt3.MqttConnectReturnCode.noneSpecified) {
+        returnCode = _mqtt3ReturnCodeFromText(e);
+      }
+      var recoveredLate = false;
+      if (returnCode == null || returnCode == mqtt3.MqttConnectReturnCode.noneSpecified) {
+        returnCode = await _lateMqtt3ReturnCode(client.connectionStatus, session);
+        recoveredLate = returnCode != null;
+      }
+      final returnCodeMessage = _mqtt3ReturnCodeMessage(broker, returnCode);
+      _reportError(ConnectionStatus.error, returnCodeMessage ?? _genericConnectMessage(broker), detail: _detailWithCode(e, returnCode, recoveredLate));
       return;
     }
 
@@ -321,8 +295,7 @@ class MqttService {
     if (client.connectionStatus?.state != mqtt3.MqttConnectionState.connected) {
       if (session != _sessionId) return;
       final returnCodeMessage = _mqtt3ReturnCodeMessage(broker, client.connectionStatus?.returnCode);
-      _state.write(AppKeys.connectionStatus, ConnectionStatus.error);
-      _state.write(AppKeys.connectionError, returnCodeMessage ?? _brokerRejectedMessage(broker, null));
+      _reportError(ConnectionStatus.error, returnCodeMessage ?? _brokerRejectedMessage(broker));
       return;
     }
 
@@ -335,6 +308,7 @@ class MqttService {
       for (final msg in messages) {
         if (msg.payload is! mqtt3.MqttPublishMessage) {
           _state.write(AppKeys.connectionError, 'Malformed MQTT packet received: expected PUBLISH payload.');
+          _state.write(AppKeys.connectionErrorDetail, null);
           continue;
         }
         final publish = msg.payload as mqtt3.MqttPublishMessage;
@@ -345,10 +319,6 @@ class MqttService {
       }
     });
 
-    // 3.1.1: match each QoS 1/2 publish's PUBACK/PUBCOMP back to the
-    // pending future. The mqtt_client library hides the protocol-level
-    // handshake and only emits a "published" event once the broker has
-    // acked, which is exactly what we need to settle the future.
     _publishedSubscription3 = client.published?.listen((mqtt3.MqttPublishMessage published) {
       final packetId = published.variableHeader?.messageIdentifier;
       if (packetId == null) return;
@@ -389,20 +359,23 @@ class MqttService {
       await client.connect(broker.username, broker.password);
     } on HandshakeException catch (e) {
       if (session != _sessionId) return;
-      _state.write(AppKeys.connectionStatus, ConnectionStatus.errorTlsHandshake);
-      _state.write(AppKeys.connectionError, _tlsHandshakeMessage(broker, e));
+      _reportError(ConnectionStatus.errorTlsHandshake, _tlsHandshakeMessage(broker), detail: e.toString());
       return;
     } on SocketException catch (e) {
       if (session != _sessionId) return;
       final status = _socketStatus(e);
-      _state.write(AppKeys.connectionStatus, status);
-      _state.write(AppKeys.connectionError, _socketMessage(status, broker, e));
+      _reportError(status, _socketMessage(status, broker), detail: e.toString());
       return;
     } catch (e) {
       if (session != _sessionId) return;
-      final reasonMessage = _mqtt5ConnectReasonMessage(broker, _mqtt5ConnectReasonCode(client.connectionStatus));
-      _state.write(AppKeys.connectionStatus, ConnectionStatus.error);
-      _state.write(AppKeys.connectionError, reasonMessage ?? _genericConnectMessage(broker, e));
+      var reasonCode = _mqtt5ConnectReasonCode(client.connectionStatus) ?? _mqtt5ReasonCodeFromText(e);
+      var recoveredLate = false;
+      if (reasonCode == null) {
+        reasonCode = await _lateMqtt5ReasonCode(client.connectionStatus, session);
+        recoveredLate = reasonCode != null;
+      }
+      final reasonMessage = _mqtt5ConnectReasonMessage(broker, reasonCode);
+      _reportError(ConnectionStatus.error, reasonMessage ?? _genericConnectMessage(broker), detail: _detailWithCode(e, reasonCode, recoveredLate));
       return;
     }
 
@@ -412,8 +385,7 @@ class MqttService {
     if (connectionStatus?.state != mqtt5.MqttConnectionState.connected) {
       final reasonCode = _mqtt5ConnectReasonCode(connectionStatus);
       final reasonMessage = _mqtt5ConnectReasonMessage(broker, reasonCode);
-      _state.write(AppKeys.connectionStatus, ConnectionStatus.error);
-      _state.write(AppKeys.connectionError, reasonMessage ?? _brokerRejectedMessage(broker, null));
+      _reportError(ConnectionStatus.error, reasonMessage ?? _brokerRejectedMessage(broker));
       return;
     }
 
@@ -422,16 +394,10 @@ class MqttService {
       _surfaceReason(connackNotice);
     }
 
-    // mqtt5_client exposes decoded protocol events through its event bus. The
-    // bus is created during connect, so register immediately after CONNACK for
-    // subsequent PUBACK/PUBREC/SUBACK/UNSUBACK/DISCONNECT packets.
-    // ignore: invalid_use_of_protected_member
     _protocolSubscription = client.clientEventBus?.on<mqtt5.MqttMessageAvailable>().listen((event) {
       if (session != _sessionId || event.message == null) return;
       final message = event.message!;
 
-      // PUBACK/PUBREC carry the real reason code; settle any pending
-      // publish futures before surfacing the reason in the UI.
       if (message is mqtt5.MqttPublishAckMessage || message is mqtt5.MqttPublishReceivedMessage) {
         final packetId = message is mqtt5.MqttPublishAckMessage ? message.variableHeader?.messageIdentifier : (message as mqtt5.MqttPublishReceivedMessage).variableHeader.messageIdentifier;
         if (packetId != null) {
@@ -463,12 +429,14 @@ class MqttService {
       for (final msg in messages) {
         if (msg.payload is! mqtt5.MqttPublishMessage) {
           _state.write(AppKeys.connectionError, 'Malformed MQTT 5 packet received: expected PUBLISH payload.');
+          _state.write(AppKeys.connectionErrorDetail, null);
           continue;
         }
         final publish = msg.payload as mqtt5.MqttPublishMessage;
         final bytes = publish.payload.message;
         if (msg.topic == null || msg.topic!.isEmpty || bytes == null) {
           _state.write(AppKeys.connectionError, 'Malformed MQTT 5 PUBLISH packet received.');
+          _state.write(AppKeys.connectionErrorDetail, null);
           continue;
         }
         final retain = publish.header?.retain ?? false;
@@ -478,16 +446,14 @@ class MqttService {
     });
   }
 
-  /// Disconnect and reset everything.
   void _teardown() {
     ++_sessionId;
     _cleanup();
     _resetCounters();
     _state.write(AppKeys.connectionStatus, ConnectionStatus.disconnected);
-    _state.write(AppKeys.connectionError, null);
+    _clearError();
   }
 
-  /// Cancel subscriptions and dispose the client.
   void _cleanup() {
     _updatesSubscription?.cancel();
     _updatesSubscription = null;
@@ -505,8 +471,6 @@ class MqttService {
     _client5 = null;
   }
 
-  /// Fail every pending publish future so a UI waiting for an ack never
-  /// hangs when the connection is replaced.
   void _failPendingPublishes() {
     final version = _activeProtocol;
     for (final completer in _pendingV5Publishes.values) {
@@ -526,12 +490,13 @@ class MqttService {
   /// Callback called when the client successfully connects.
   void _onConnected() {
     _state.write(AppKeys.connectionStatus, ConnectionStatus.connected);
-    _state.write(AppKeys.connectionError, null);
+    _clearError();
   }
 
   /// Callback called when the client disconnects.
   void _onDisconnected311() {
     _state.write(AppKeys.connectionStatus, ConnectionStatus.disconnected);
+    _state.write(AppKeys.connectionErrorDetail, null);
     _state.write(AppKeys.connectionError, mqtt311BrokerDisconnectMessage);
   }
 
@@ -540,9 +505,8 @@ class MqttService {
     MqttReasonNotice? notice;
     try {
       notice = MqttReasonNotice.fromMqtt5Message(client.connectionStatus!.disconnectMessage);
-    } catch (_) {
-      // A raw network loss has no MQTT DISCONNECT packet.
-    }
+    } catch (_) {}
+    _state.write(AppKeys.connectionErrorDetail, notice?.reasonString);
     _state.write(AppKeys.connectionError, notice?.message ?? brokerDisconnectMessage(MqttProtocolVersion.v5));
   }
 
@@ -558,6 +522,7 @@ class MqttService {
   bool _hasReasonString(MqttReasonNotice notice) => notice.reasonString?.trim().isNotEmpty ?? false;
 
   void _surfaceReason(MqttReasonNotice notice) {
+    _state.write(AppKeys.connectionErrorDetail, notice.reasonString);
     _state.write(AppKeys.connectionError, notice.message);
   }
 
@@ -571,26 +536,11 @@ class MqttService {
       return true;
     } catch (error) {
       if (session != _sessionId) return false;
-      _state.write(AppKeys.connectionStatus, ConnectionStatus.errorTlsHandshake);
-      _state.write(AppKeys.connectionError, 'Could not load the mTLS credentials for ${broker.displayAddress}: $error\nVerify the Root CA, client certificate, and private key are valid PEM files.');
+      _reportError(ConnectionStatus.errorTlsHandshake, 'Could not load the mTLS credentials.\nVerify the Root CA, client certificate, and private key are valid PEM files.', detail: error.toString());
       return false;
     }
   }
 
-  /// Decides how lenient to be when the TLS stack flags the broker's
-  /// certificate.
-  ///
-  /// Three cases:
-  /// 1. `validateCertificates` off — accept anything (the user opted out of
-  ///    validation).
-  /// 2. `validateCertificates` on **and** a custom Root CA was provided —
-  ///    the chain is validated by the [SecurityContext] we just installed,
-  ///    so the only remaining reason for this callback to fire is a hostname
-  ///    mismatch (e.g. connecting via `10.0.0.100` while the certificate's
-  ///    SAN lists a domain). We tolerate that for private/LAN access but
-  ///    still reject expired or not-yet-valid certificates.
-  /// 3. `validateCertificates` on **without** a custom Root CA — leave the
-  ///    callback unset so the OS does full system-root + hostname validation.
   void _configureCertificateValidation(dynamic client, BrokerEntry broker) {
     if (!broker.validateCertificates) {
       client.onBadCertificate = (dynamic _) => true;
@@ -604,8 +554,6 @@ class MqttService {
         if (now.isBefore(certificate.startValidity) || now.isAfter(certificate.endValidity)) {
           return false;
         }
-        // Chain already validated by the SecurityContext; accept hostname
-        // mismatch for LAN / private-network access.
         return true;
       };
     }
@@ -621,26 +569,19 @@ class MqttService {
     };
   }
 
-  String _socketMessage(ConnectionStatus status, BrokerEntry broker, SocketException e) {
-    final where = broker.displayAddress;
-    final osErr = e.osError?.message.trim();
-    final raw = (osErr != null && osErr.isNotEmpty) ? osErr : e.message.trim();
-    final suffix = raw.isEmpty ? '' : ' ($raw)';
-
+  String _socketMessage(ConnectionStatus status, BrokerEntry broker) {
     final (base, suggestion) = switch (status) {
-      ConnectionStatus.errorHostNotFound => ("Could not resolve host '${broker.host}' ($where)$suffix.", 'Check the hostname for typos and verify your DNS or network settings.'),
-      ConnectionStatus.errorNotPermitted => ('The operating system blocked the connection to $where$suffix.', 'Check your firewall rules, VPN, or network permissions.'),
-      ConnectionStatus.errorRefused => ('The broker at $where refused the connection$suffix.', 'Verify the broker is running and listening on port ${broker.port}.'),
-      _ => ('Network error reaching $where$suffix.', 'Check your network connection and the broker address.'),
+      ConnectionStatus.errorHostNotFound => ("Could not resolve host '${broker.host}'.", 'Check the hostname for typos and verify your DNS or network settings.'),
+      ConnectionStatus.errorNotPermitted => ('The operating system blocked the connection.', 'Check your firewall rules, VPN, or network permissions.'),
+      ConnectionStatus.errorRefused => ('The broker refused the connection.', 'Verify the broker is running and listening on port ${broker.port}.'),
+      _ => ('Network error reaching the broker.', 'Check your network connection and the broker address.'),
     };
 
     return '$base\n$suggestion';
   }
 
-  String _tlsHandshakeMessage(BrokerEntry broker, HandshakeException e) {
-    final where = broker.displayAddress;
-    final detail = e.message.trim();
-    final base = detail.isEmpty ? 'TLS handshake with $where failed.' : 'TLS handshake with $where failed: $detail';
+  String _tlsHandshakeMessage(BrokerEntry broker) {
+    final base = 'The TLS handshake could not be completed.';
 
     final hasRootCa = broker.clientCertificates.rootCaPath != null;
     final suggestion = broker.validateCertificates
@@ -652,18 +593,27 @@ class MqttService {
     return suggestion.isEmpty ? base : '$base\n$suggestion';
   }
 
-  String _genericConnectMessage(BrokerEntry broker, Object e) {
-    final where = broker.displayAddress;
-    final detail = e.toString().trim();
-    final base = detail.isEmpty ? 'Connection to $where failed.' : 'Connection to $where failed: $detail';
-    return '$base\nCheck the broker address, port, credentials, and TLS settings.';
+  String _genericConnectMessage(BrokerEntry broker) {
+    return 'The broker did not answer the connection request.\nCheck the broker address, port, credentials, and TLS settings.';
   }
 
-  String _brokerRejectedMessage(BrokerEntry broker, String? detail) {
-    final where = broker.displayAddress;
-    final trimmed = detail?.trim();
-    final base = (trimmed == null || trimmed.isEmpty) ? 'Connection to $where failed.' : 'Connection to $where failed: $trimmed';
-    return '$base\nCheck your username, password, Client ID, and TLS settings.';
+  String _brokerRejectedMessage(BrokerEntry broker) {
+    return 'The broker rejected the connection.\nCheck your username, password, Client ID, and TLS settings.';
+  }
+
+  /// Atomically surfaces a connection failure: a friendly message for the
+  /// notice body and an optional raw technical detail (exception text, OS
+  /// error, broker-provided reason string) for the collapsible section.
+  void _reportError(ConnectionStatus status, String message, {String? detail}) {
+    _state.write(AppKeys.connectionStatus, status);
+    _state.write(AppKeys.connectionError, message);
+    _state.write(AppKeys.connectionErrorDetail, detail);
+  }
+
+  /// Clears the friendly message and its raw detail together.
+  void _clearError() {
+    _state.write(AppKeys.connectionError, null);
+    _state.write(AppKeys.connectionErrorDetail, null);
   }
 
   /// Maps an MQTT 3.1.1 [MqttConnectReturnCode] to a clean, user-facing
@@ -680,30 +630,70 @@ class MqttService {
     };
 
     if (reason == null) return null;
-    return 'Connection to ${broker.displayAddress} failed: $reason\n$suggestion';
+    // The notice shows the broker name/address up top, so the message only
+    // carries the reason and what to do about it.
+    return '$reason.\n$suggestion';
   }
 
   /// Safely extracts the MQTT 5 connect reason code from a connection status,
   /// returning `null` if any link in the chain is missing.
   ///
-  /// The MQTT 5 library models [MqttConnectionStatus.connectAckMessage] as a
-  /// `late` field. Accessing it before a CONNACK has been received throws
-  /// `LateInitializationError`; we treat that as "no reason code" so
-  /// callers can fall back without crashing.
+  /// The library copies the CONNACK reason code onto a plain
+  /// [MqttConnectionStatus.reasonCode] field before failing the connect, so
+  /// that field is preferred. `connectAckMessage` is a `late` field that is
+  /// only initialized on a *successful* CONNACK; accessing it otherwise
+  /// throws `LateInitializationError`, which we treat as "no reason code".
   mqtt5.MqttConnectReasonCode? _mqtt5ConnectReasonCode(mqtt5.MqttConnectionStatus? status) {
     if (status == null) return null;
+    final code = status.reasonCode;
+    if (code != null && code != mqtt5.MqttConnectReasonCode.notSet) return code;
     try {
-      // `connectAckMessage` is a `late` field; accessing it before
-      // a CONNACK has been received throws `LateInitializationError`.
-      // We treat that as "no reason code".
       return status.connectAckMessage.variableHeader?.reasonCode;
     } catch (_) {
       return null;
     }
   }
 
-  /// Maps an MQTT 5 [MqttConnectReasonCode] to a clean, user-facing message.
-  /// Returns `null` for success/not-set codes so the caller can fall back.
+  String _detailWithCode(Object? error, Enum? code, bool recoveredLate) {
+    final raw = error?.toString().trim() ?? '';
+    if (!recoveredLate || code == null || raw.isEmpty) return raw;
+    if (raw.contains(code.name)) return raw;
+    return '$raw\nBroker CONNACK code: $code';
+  }
+
+  Future<mqtt3.MqttConnectReturnCode?> _lateMqtt3ReturnCode(mqtt3.MqttClientConnectionStatus? status, int session) async {
+    for (var i = 0; i < 20; i++) {
+      if (status == null || session != _sessionId) return null;
+      final code = status.returnCode;
+      if (code != null && code != mqtt3.MqttConnectReturnCode.noneSpecified) return code;
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    }
+    return null;
+  }
+
+  Future<mqtt5.MqttConnectReasonCode?> _lateMqtt5ReasonCode(mqtt5.MqttConnectionStatus? status, int session) async {
+    for (var i = 0; i < 20; i++) {
+      if (status == null || session != _sessionId) return null;
+      final code = status.reasonCode;
+      if (code != null && code != mqtt5.MqttConnectReasonCode.notSet) return code;
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    }
+    return null;
+  }
+
+  mqtt5.MqttConnectReasonCode? _mqtt5ReasonCodeFromText(Object error) => _enumByLastSegment(mqtt5.MqttConnectReasonCode.values, RegExp(r'reason code is ([\w.]+)', caseSensitive: false).firstMatch(error.toString())?.group(1));
+
+  mqtt3.MqttConnectReturnCode? _mqtt3ReturnCodeFromText(Object error) => _enumByLastSegment(mqtt3.MqttConnectReturnCode.values, RegExp(r'return code is ([\w.]+)', caseSensitive: false).firstMatch(error.toString())?.group(1));
+
+  T? _enumByLastSegment<T extends Enum>(List<T> values, String? match) {
+    final name = match?.split('.').last;
+    if (name == null) return null;
+    for (final value in values) {
+      if (value.name == name) return value;
+    }
+    return null;
+  }
+
   String? _mqtt5ConnectReasonMessage(BrokerEntry broker, mqtt5.MqttConnectReasonCode? code) {
     final (reason, suggestion) = switch (code) {
       mqtt5.MqttConnectReasonCode.unspecifiedError => ('Unspecified error', 'The broker did not specify a reason for the rejection.'),
@@ -731,7 +721,7 @@ class MqttService {
     };
 
     if (reason == null) return null;
-    return 'Connection to ${broker.displayAddress} failed: $reason\n$suggestion';
+    return '$reason.\n$suggestion';
   }
 
   /// Handles an incoming message on the given topic.

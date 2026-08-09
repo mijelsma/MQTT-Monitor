@@ -1,6 +1,13 @@
 #include "flutter_window.h"
 
+#include <dwmapi.h>
+#include <windows.h>
+
 #include <optional>
+#include <variant>
+
+#include <flutter/method_channel.h>
+#include <flutter/standard_method_codec.h>
 
 #include "flutter/generated_plugin_registrant.h"
 
@@ -36,6 +43,25 @@ bool FlutterWindow::OnCreate() {
   // window is shown. It is a no-op if the first frame hasn't completed yet.
   flutter_controller_->ForceRedraw();
 
+  // Sync the native title bar with the Flutter-side theme.
+  flutter::MethodChannel<> channel(
+      flutter_controller_->engine()->messenger(),
+      "mqtt_monitor/window_chrome",
+      &flutter::StandardMethodCodec::GetInstance());
+  channel.SetMethodCallHandler(
+      [this](const flutter::MethodCall<>& call,
+             std::unique_ptr<flutter::MethodResult<>> result) {
+        if (call.method_name() == "setAppearance") {
+          const auto* value = std::get_if<std::string>(call.arguments());
+          if (value != nullptr) {
+            SetTitleBarDarkMode(*value == "dark");
+          }
+          result->Success();
+          return;
+        }
+        result->NotImplemented();
+      });
+
   return true;
 }
 
@@ -45,6 +71,19 @@ void FlutterWindow::OnDestroy() {
   }
 
   Win32Window::OnDestroy();
+}
+
+void FlutterWindow::SetTitleBarDarkMode(bool dark) {
+  HWND hwnd = GetRootWindow();
+  if (hwnd == nullptr) {
+    return;
+  }
+  BOOL enabled = dark ? TRUE : FALSE;
+  // The attribute value differs between Windows 10 (1809+) and Windows 11;
+  // fall back to the older value on systems that don't recognize the new one.
+  if (FAILED(DwmSetWindowAttribute(hwnd, 20, &enabled, sizeof(enabled)))) {
+    DwmSetWindowAttribute(hwnd, 19, &enabled, sizeof(enabled));
+  }
 }
 
 LRESULT
