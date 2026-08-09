@@ -5,13 +5,6 @@ import '../../../core/mqtt/connection_status.dart';
 import '../../../shared/widgets/ui_inline_notice.dart';
 import '../monitor_viewmodel.dart';
 
-/// A themed, dismissable banner that surfaces connection failures with a
-/// descriptive *what / where / why* message.
-///
-/// It appears whenever the active broker is in an error state (TLS handshake,
-/// DNS, refused, generic) and auto-hides the moment the connection succeeds
-/// again. Pressing the close button dismisses the current notice; a *new*
-/// failure (different status or message) re-shows it automatically.
 class ConnectionNotice extends StatefulWidget {
   const ConnectionNotice({super.key});
 
@@ -45,17 +38,16 @@ class _ConnectionNoticeState extends State<ConnectionNotice> with SingleTickerPr
     final vm = context.watch<MonitorViewModel>();
     final status = vm.connectionStatus;
     final error = vm.connectionError;
+    final detail = vm.connectionErrorDetail;
     final broker = vm.activeBroker;
 
-    final signature = _signature(status, error);
+    final signature = _signature(status, error, detail);
     final visible = _shouldShow(status, error) && _dismissedSignature != signature;
 
     if (visible) {
       if (!_controller.isCompleted) _controller.forward();
     } else {
       if (!_controller.isDismissed) _controller.reverse();
-      // Forget the dismissed signature once we are back in a non-error state,
-      // so a future failure shows up fresh.
       if (!_shouldShow(status, error)) {
         _dismissedSignature = null;
       }
@@ -73,15 +65,7 @@ class _ConnectionNoticeState extends State<ConnectionNotice> with SingleTickerPr
       opacity: _fade,
       child: SlideTransition(
         position: _slide,
-        child: UiInlineNotice(
-          kind: UiNoticeKind.error,
-          title: title,
-          subtitle: where,
-          message: why,
-          selectable: true,
-          onDismiss: () => setState(() => _dismissedSignature = signature),
-          margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-        ),
+        child: UiInlineNotice(kind: UiNoticeKind.error, title: title, subtitle: where, message: why, selectable: true, detail: detail, onDismiss: () => setState(() => _dismissedSignature = signature), margin: const EdgeInsets.fromLTRB(12, 10, 12, 0)),
       ),
     );
   }
@@ -95,14 +79,13 @@ class _ConnectionNoticeState extends State<ConnectionNotice> with SingleTickerPr
       case ConnectionStatus.errorRefused:
         return true;
       case ConnectionStatus.disconnected:
-        // A broker-initiated disconnect carries a reason string — surface it.
         return error != null && error.trim().isNotEmpty;
       default:
         return false;
     }
   }
 
-  String _signature(ConnectionStatus status, String? error) => '${status.name}::${error ?? ''}';
+  String _signature(ConnectionStatus status, String? error, String? detail) => '${status.name}::${error ?? ''}::${detail ?? ''}';
 
   String _title(ConnectionStatus status) => switch (status) {
     ConnectionStatus.errorTlsHandshake => 'TLS handshake failed',

@@ -13,6 +13,7 @@ abstract final class AppKeys {
   static final activeSettingsSection = StateKey.forEnum('app.activeSettingsSection', SettingsSection.values, defaultValue: SettingsSection.brokers, persist: Persist.never);
   static final connectionStatus = StateKey.forEnum('app.connectionStatus', ConnectionStatus.values, defaultValue: ConnectionStatus.disconnected, persist: Persist.never);
   static final connectionError = StateKey.nullableString('app.connectionError', persist: Persist.never);
+  static final connectionErrorDetail = StateKey.nullableString('app.connectionErrorDetail', persist: Persist.never);
   static final messageCount = StateKey.integer('app.messageCount', defaultValue: 0, persist: Persist.never);
   static final messageRate = StateKey.integer('app.messageRate', defaultValue: 0, persist: Persist.never);
 

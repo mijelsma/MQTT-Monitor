@@ -78,6 +78,7 @@ class MonitorViewModel extends ChangeNotifier {
   // Connection status and settings
   ConnectionStatus get connectionStatus => _state.read(AppKeys.connectionStatus);
   String? get connectionError => _state.read(AppKeys.connectionError);
+  String? get connectionErrorDetail => _state.read(AppKeys.connectionErrorDetail);
   int get messageCount => _state.read(AppKeys.messageCount);
   int get messageRate => _state.read(AppKeys.messageRate);
   bool get showStatusBar => _state.read(SettingsKeys.showStatusBar);

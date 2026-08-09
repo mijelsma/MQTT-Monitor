@@ -617,6 +617,24 @@ void main() {
       return (BrokerEntry(id: 'broker-1', name: 'Rejector', host: '127.0.0.1', port: server.port, protocolVersion: MqttProtocolVersion.v5, username: 'user', password: 'wrong-password'), connectPackets);
     }
 
+    /// Like [startRejectingBroker] but speaking MQTT 3.1.1: every CONNECT
+    /// is answered with CONNACK return code 0x04 (badUsernameOrPassword).
+    Future<(BrokerEntry, List<bool>)> startRejectingBroker311() async {
+      final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+      final connectPackets = <bool>[];
+      addTearDown(() async {
+        await server.close();
+      });
+      unawaited(() async {
+        await for (final socket in server) {
+          connectPackets.add(true);
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+          socket.add([0x20, 0x02, 0x00, 0x04]);
+        }
+      }());
+      return (BrokerEntry(id: 'broker-1', name: 'Rejector', host: '127.0.0.1', port: server.port, protocolVersion: MqttProtocolVersion.v311, username: 'user', password: 'wrong-password'), connectPackets);
+    }
+
     /// Waits until the connection status is reported as an error, or the
     /// [timeout] elapses. Returns the status reached.
     Future<ConnectionStatus> waitForError(Duration timeout) async {
@@ -646,7 +664,8 @@ void main() {
       final elapsedMs = stopwatch.elapsedMilliseconds;
 
       expect(status, ConnectionStatus.error, reason: 'the failure must be surfaced');
-      expect(state.read(AppKeys.connectionError), contains('badUsernameOrPassword'), reason: 'the broker reason code is reported');
+      expect(state.read(AppKeys.connectionError), contains('Bad username or password'), reason: 'the broker reason code is reported as a friendly message');
+      expect(state.read(AppKeys.connectionErrorDetail), contains('badUsernameOrPassword'), reason: 'the raw broker detail is preserved behind the friendly message');
       expect(connectPackets, hasLength(1), reason: 'a rejected CONNACK must not trigger blind retries');
       expect(elapsedMs, lessThan(5000), reason: 'the error is reported promptly, not after ~10s of retries');
 
@@ -671,11 +690,37 @@ void main() {
       final status = await waitForError(const Duration(seconds: 20));
 
       expect(status, ConnectionStatus.error, reason: 'the rejection must eventually be reported');
-      expect(state.read(AppKeys.connectionError), contains('badUsernameOrPassword'), reason: 'the broker reason code is reported');
+      expect(state.read(AppKeys.connectionError), contains('Bad username or password'), reason: 'the broker reason code is reported as a friendly message');
+      expect(state.read(AppKeys.connectionErrorDetail), contains('badUsernameOrPassword'), reason: 'the raw broker detail is preserved behind the friendly message');
 
       // Dispose while the server is still up (see the fast test).
       service.dispose();
       await Future<void>.delayed(const Duration(milliseconds: 100));
     }, timeout: const Timeout(Duration(seconds: 30)));
+
+    test('MQTT 3.1.1 rejected CONNACK surfaces a friendly message with the raw return code behind it', () async {
+      final (broker, connectPackets) = await startRejectingBroker311();
+      await state.write(SettingsKeys.brokers, [broker]);
+      await state.write(AppKeys.activeBrokerId, broker.id);
+      await state.write(AppKeys.disconnected, false);
+
+      final service = MqttService(state);
+
+      final stopwatch = Stopwatch()..start();
+      service.initialize();
+      addTearDown(service.dispose);
+
+      final status = await waitForError(const Duration(seconds: 8));
+      final elapsedMs = stopwatch.elapsedMilliseconds;
+
+      expect(status, ConnectionStatus.error, reason: 'the failure must be surfaced');
+      expect(state.read(AppKeys.connectionError), contains('Bad username or password'), reason: 'the 3.1.1 return code is reported as a friendly message');
+      expect(state.read(AppKeys.connectionErrorDetail), contains('MqttConnectReturnCode.badUsernameOrPassword'), reason: 'the broker return code recovered from the late CONNACK is preserved in the details');
+      expect(connectPackets, hasLength(1), reason: 'a rejected CONNACK must not trigger blind retries');
+      expect(elapsedMs, lessThan(5000), reason: 'the error is reported promptly, not after ~10s of retries');
+
+      service.dispose();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    });
   });
 }
