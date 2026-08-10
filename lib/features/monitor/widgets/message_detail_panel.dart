@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -466,7 +468,9 @@ class _PayloadCardState extends State<_PayloadCard> {
     final tokens = context.tokens;
     final isJson = JsonHighlighter.isJson(widget.payload);
     final showPin = !widget.isHistorical;
-    final numericParts = (!isJson && showPin) ? parseNumericPayload(widget.payload) : null;
+    // Try this before classifying the payload as JSON: a bare number (or a
+    // JSON string containing one) is valid JSON too and should be pinnable.
+    final numericParts = showPin ? parseNumericPayload(widget.payload) : null;
     final isNumeric = numericParts != null;
     final formatLabel = isJson ? 'JSON' : 'TEXT';
     final formatColor = isJson ? AppColors.success500 : tokens.textTertiary;
@@ -599,6 +603,16 @@ class _PinnableValueState extends State<_PinnableValue> {
   // Fast path: pure number.
   final plain = double.tryParse(trimmed);
   if (plain != null) return (plain, null);
+
+  // A standalone JSON string such as `"13.58"` is also a numeric payload.
+  try {
+    final decoded = jsonDecode(trimmed);
+    if (decoded is String && decoded != trimmed) {
+      return parseNumericPayload(decoded);
+    }
+  } catch (_) {
+    // Not JSON; continue with the regular text-with-unit handling below.
+  }
 
   // Match a leading number (with optional sign/decimal) followed by a unit (space optional).
   final match = RegExp(r'^([+-]?\d+\.?\d*)\s*([a-zA-Z°/%].*)$').firstMatch(trimmed);
