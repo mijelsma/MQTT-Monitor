@@ -42,6 +42,10 @@ lib/generated/git_info.dart
 /build/
 /coverage/
 
+# Per-machine update-host configuration. CI generates its own temporary file.
+desktop_updater.local.yaml
+.desktop_updater.ci.yaml
+
 # Symbolication related
 app.*.symbols
 
