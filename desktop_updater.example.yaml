@@ -1,0 +1,11 @@
+# Copy this to desktop_updater.local.yaml only when publishing manually.
+# GitHub Actions generates this configuration from repository secrets instead.
+updates:
+  baseUrl: https://your-bucket.fsn1.your-objectstorage.com/mqtt-monitor/
+  channel: stable
+
+s3:
+  bucket: your-bucket
+  prefix: mqtt-monitor
+  region: fsn1
+  endpoint: https://fsn1.your-objectstorage.com

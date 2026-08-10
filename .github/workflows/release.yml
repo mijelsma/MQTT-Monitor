@@ -1,0 +1,175 @@
+name: Release desktop apps
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+# A release updates one shared app-archive.json. Never let two tags update it
+# at the same time.
+concurrency:
+  group: desktop-release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_CHANNEL: stable
+  FLUTTER_VERSION: 3.41.4
+  AWS_EC2_METADATA_DISABLED: 'true'
+
+jobs:
+  release-context:
+    runs-on: ubuntu-latest
+    outputs:
+      channel: ${{ steps.channel.outputs.value }}
+    steps:
+      - id: channel
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == *-* ]]; then
+            echo 'value=beta' >> "$GITHUB_OUTPUT"
+          else
+            echo 'value=stable' >> "$GITHUB_OUTPUT"
+          fi
+
+  windows:
+    needs: release-context
+    runs-on: windows-latest
+    env:
+      UPDATE_BASE_URL: ${{ secrets.UPDATE_BASE_URL }}
+      HETZNER_S3_ACCESS_KEY: ${{ secrets.HETZNER_S3_ACCESS_KEY }}
+      HETZNER_S3_SECRET_KEY: ${{ secrets.HETZNER_S3_SECRET_KEY }}
+      HETZNER_S3_BUCKET: ${{ secrets.HETZNER_S3_BUCKET }}
+      HETZNER_S3_PREFIX: ${{ secrets.HETZNER_S3_PREFIX }}
+      HETZNER_S3_REGION: ${{ secrets.HETZNER_S3_REGION }}
+      HETZNER_S3_ENDPOINT: ${{ secrets.HETZNER_S3_ENDPOINT }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.HETZNER_S3_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.HETZNER_S3_SECRET_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.HETZNER_S3_REGION }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install AWS CLI
+        run: python -m pip install --upgrade awscli
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - name: Publish Windows update
+        shell: bash
+        run: bash scripts/publish_desktop_update.sh windows '${{ needs.release-context.outputs.channel }}'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mqtt-monitor-windows
+          path: dist/desktop_updater/releases
+
+  macos:
+    needs: [release-context, windows]
+    runs-on: macos-latest
+    env:
+      UPDATE_BASE_URL: ${{ secrets.UPDATE_BASE_URL }}
+      HETZNER_S3_ACCESS_KEY: ${{ secrets.HETZNER_S3_ACCESS_KEY }}
+      HETZNER_S3_SECRET_KEY: ${{ secrets.HETZNER_S3_SECRET_KEY }}
+      HETZNER_S3_BUCKET: ${{ secrets.HETZNER_S3_BUCKET }}
+      HETZNER_S3_PREFIX: ${{ secrets.HETZNER_S3_PREFIX }}
+      HETZNER_S3_REGION: ${{ secrets.HETZNER_S3_REGION }}
+      HETZNER_S3_ENDPOINT: ${{ secrets.HETZNER_S3_ENDPOINT }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.HETZNER_S3_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.HETZNER_S3_SECRET_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.HETZNER_S3_REGION }}
+      REQUIRE_EXISTING_ARCHIVE: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install AWS CLI
+        run: python3 -m pip install --upgrade awscli
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - name: Publish macOS update
+        run: bash scripts/publish_desktop_update.sh macos '${{ needs.release-context.outputs.channel }}'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mqtt-monitor-macos
+          path: dist/desktop_updater/releases
+
+  linux:
+    needs: [release-context, macos]
+    runs-on: ubuntu-latest
+    env:
+      UPDATE_BASE_URL: ${{ secrets.UPDATE_BASE_URL }}
+      HETZNER_S3_ACCESS_KEY: ${{ secrets.HETZNER_S3_ACCESS_KEY }}
+      HETZNER_S3_SECRET_KEY: ${{ secrets.HETZNER_S3_SECRET_KEY }}
+      HETZNER_S3_BUCKET: ${{ secrets.HETZNER_S3_BUCKET }}
+      HETZNER_S3_PREFIX: ${{ secrets.HETZNER_S3_PREFIX }}
+      HETZNER_S3_REGION: ${{ secrets.HETZNER_S3_REGION }}
+      HETZNER_S3_ENDPOINT: ${{ secrets.HETZNER_S3_ENDPOINT }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.HETZNER_S3_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.HETZNER_S3_SECRET_KEY }}
+      AWS_DEFAULT_REGION: ${{ secrets.HETZNER_S3_REGION }}
+      REQUIRE_EXISTING_ARCHIVE: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install AWS CLI
+        run: python3 -m pip install --upgrade awscli
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - name: Install Linux build dependencies
+        run: sudo apt-get update && sudo apt-get install --yes libgtk-3-dev ninja-build
+      - name: Publish Linux update
+        run: bash scripts/publish_desktop_update.sh linux '${{ needs.release-context.outputs.channel }}'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mqtt-monitor-linux
+          path: dist/desktop_updater/releases
+
+  github-release:
+    needs: [windows, macos, linux]
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: mqtt-monitor-*
+          path: release-assets
+          merge-multiple: true
+      - name: Create or update GitHub Release
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -d '' files < <(find release-assets -type f \( -name '*.zip' -o -name '*.dmg' -o -name '*.pkg' -o -name '*.exe' \) -print0)
+          if (( ${#files[@]} == 0 )); then
+            echo 'No release artifacts were produced.' >&2
+            exit 1
+          fi
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" "${files[@]}" --clobber
+          else
+            flags=(--generate-notes)
+            if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+              flags+=(--prerelease)
+            fi
+            gh release create "$GITHUB_REF_NAME" "${files[@]}" "${flags[@]}"
+          fi

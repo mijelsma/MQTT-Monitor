@@ -34,6 +34,7 @@ It's built with Flutter and runs as a real native app on macOS, Windows, and Lin
 
 - [Features](#features)
 - [Getting Started in VS Code](#getting-started-in-vs-code)
+- [Desktop Updates](docs/updates.md)
 - [Reporting Issues](#reporting-issues)
 - [Credits](#credits)
 
