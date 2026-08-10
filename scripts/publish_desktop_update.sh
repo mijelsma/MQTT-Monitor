@@ -40,7 +40,9 @@ if [[ -z "${UPDATE_BASE_URL:-}" ]]; then
   UPDATE_BASE_URL="https://${HETZNER_S3_BUCKET}.${endpoint_host}/${HETZNER_S3_PREFIX%/}"
 fi
 
-python scripts/generate_git_info.py
+# Capture clean Git metadata first. The release helper then writes the numeric
+# native version from the release tag, after GitInfo has been generated.
+python scripts/generate_git_info.py --prepare-release-version
 flutter pub get
 
 output_directory="dist/desktop_updater"

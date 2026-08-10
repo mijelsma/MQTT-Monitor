@@ -5,6 +5,11 @@ Run before building:
 
     python3 scripts/generate_git_info.py
 
+For a tagged desktop release, also derive and inject the native app version
+after Git metadata has been captured:
+
+    python3 scripts/generate_git_info.py --prepare-release-version
+
 The derived values come from git:
 
 * ``git describe --tags --dirty``  → describe string, version, build number, dirty flag
@@ -17,16 +22,20 @@ from __future__ import annotations
 import re
 import subprocess
 import sys
+from argparse import ArgumentParser
 from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 GIT_INFO_PATH = PROJECT_ROOT / "lib" / "generated" / "git_info.dart"
+PUBSPEC_PATH = PROJECT_ROOT / "pubspec.yaml"
 
 # Tags may be 2- or 3-component (e.g. ``0.1`` or ``0.1.0``). We capture the
 # numeric prefix and normalize to a full ``X.Y.Z`` for the generated file.
 TAG_VERSION_RE = re.compile(r"^v?(\d+\.\d+(?:\.\d+)?)")
 COMMITS_SINCE_TAG_RE = re.compile(r"^\D*\d+\.\d+(?:\.\d+)?-(\d+)-g")
+RELEASE_TAG_RE = re.compile(r"^v?(\d+\.\d+\.\d+)(?:-[0-9A-Za-z][0-9A-Za-z.-]*)?$")
+PUBSPEC_VERSION_RE = re.compile(r"^version:\s*.*$", re.MULTILINE)
 
 
 class GenerationError(RuntimeError):
@@ -111,8 +120,47 @@ def write_git_info(
     )
 
 
+def prepare_release_version() -> tuple[str, int]:
+    """Writes a valid native version from the exact release tag.
+
+    macOS requires a numeric three-component CFBundleShortVersionString. The
+    beta/stable channel belongs in the Git tag, not in pubspec's native build
+    name. The commit count is automatic and monotonically increases for normal
+    release history, so developers never need to maintain ``+<build>``.
+    """
+
+    tag = run(["git", "describe", "--tags", "--exact-match", "HEAD"])
+    match = RELEASE_TAG_RE.match(tag)
+    if not match:
+        raise GenerationError(
+            "Release tags must look like vX.Y.Z or vX.Y.Z-beta.N; "
+            f"got {tag!r}."
+        )
+
+    version = match.group(1)
+    build_number = max(1, int(run(["git", "rev-list", "--count", "HEAD"])))
+    content = PUBSPEC_PATH.read_text(encoding="utf-8")
+    updated, replacements = PUBSPEC_VERSION_RE.subn(
+        f"version: {version}+{build_number}", content, count=1
+    )
+    if replacements != 1:
+        raise GenerationError("Could not find one version: line in pubspec.yaml.")
+    PUBSPEC_PATH.write_text(updated, encoding="utf-8")
+    return version, build_number
+
+
 def main() -> int:
+    parser = ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--prepare-release-version",
+        action="store_true",
+        help="derive the numeric pubspec version from the exact Git release tag",
+    )
+    args = parser.parse_args()
+
     try:
+        # Read every Git value before writing generated files. This preserves
+        # clean Git metadata even though the release version is injected next.
         describe = run(["git", "describe", "--tags", "--dirty"])
         commit_hash = run(["git", "rev-parse", "--short", "HEAD"])
         full_hash = run(["git", "rev-parse", "HEAD"])
@@ -126,7 +174,14 @@ def main() -> int:
         )
 
         print(f"Generated git_info.dart  (describe: {describe})")
-        print(f"version: {tag_version}+{build_number}  (pubspec.yaml left untouched)")
+        if args.prepare_release_version:
+            release_version, release_build_number = prepare_release_version()
+            print(
+                "Prepared pubspec.yaml for release: "
+                f"{release_version}+{release_build_number}"
+            )
+        else:
+            print(f"version: {tag_version}+{build_number}  (pubspec.yaml left untouched)")
         return 0
     except GenerationError as error:
         print(f"error: {error}", file=sys.stderr)

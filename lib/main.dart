@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:desktop_updater/desktop_updater.dart';
 
@@ -5,10 +7,12 @@ import 'app.dart';
 import 'core/history/message_history_service.dart';
 import 'core/mqtt/mqtt_service.dart';
 import 'core/state/app_state.dart';
+import 'core/storage/app_data_directory.dart';
 import 'core/update/app_update_configuration.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AppDataDirectory.configure();
 
   // Initialize app state and load persisted values.
   await AppStateManager.instance.initialize();
@@ -24,8 +28,8 @@ void main() async {
   );
   historyService.initialize();
 
-  // Checks are initiated only from Settings › About. Keeping the controller
-  // global preserves its download/install state if the settings route closes.
+  // The controller is global so its background check and later download/install
+  // state survive navigation to Settings › About.
   final updater = DesktopUpdaterController(
     appArchiveUrl: AppUpdateConfiguration.appArchiveUrl,
     channel: AppUpdateConfiguration.channel,
@@ -41,4 +45,8 @@ void main() async {
       updater: updater,
     ),
   );
+
+  if (AppUpdateConfiguration.appArchiveUrl != null) {
+    unawaited(updater.checkForUpdates());
+  }
 }
