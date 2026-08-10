@@ -314,7 +314,19 @@ class DashboardViewModel extends ChangeNotifier {
   static double? _extractNumericValue(String payload, String? jsonKeyPath) {
     // No key path → try plain numeric parsing.
     if (jsonKeyPath == null || jsonKeyPath.isEmpty) {
-      return _parseNumericString(payload.trim());
+      final rawValue = _parseNumericString(payload.trim());
+      if (rawValue != null) return rawValue;
+
+      // A root-level JSON string (for example `"23.5"`) is a valid source
+      // for a graph just like a root-level JSON number.
+      try {
+        final decoded = jsonDecode(payload);
+        if (decoded is num) return decoded.toDouble();
+        if (decoded is String) return _parseNumericString(decoded);
+      } catch (_) {
+        // Not JSON; the direct parsing above already handled text payloads.
+      }
+      return null;
     }
 
     // Walk the JSON structure along the key path.

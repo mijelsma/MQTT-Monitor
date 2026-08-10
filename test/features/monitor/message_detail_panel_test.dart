@@ -12,6 +12,10 @@ import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
 void main() {
+  test('recognizes a standalone JSON numeric string as a pinnable payload', () {
+    expect(parseNumericPayload('"23.5"'), (23.5, null));
+  });
+
   Widget buildHarness(String payload) {
     final state = AppStateManager.instance;
     final mqtt = MqttService(state);
