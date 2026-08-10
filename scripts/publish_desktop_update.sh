@@ -41,8 +41,13 @@ if [[ -z "${UPDATE_BASE_URL:-}" ]]; then
 fi
 
 # Capture clean Git metadata first. The release helper then writes the numeric
-# native version from the release tag, after GitInfo has been generated.
+# native version required by macOS, after GitInfo has been generated. Keep the
+# original tag label for public update metadata and artifact paths so beta
+# releases remain distinguishable.
 python scripts/generate_git_info.py --prepare-release-version
+release_tag="$(git describe --tags --exact-match HEAD)"
+release_version="${release_tag#v}"
+release_build_number="$(git rev-list --count HEAD)"
 flutter pub get
 
 output_directory="dist/desktop_updater"
@@ -95,4 +100,6 @@ dart run desktop_updater:release publish \
   --config "$config_file" \
   --platform "$platform" \
   --channel "$channel" \
+  --version "$release_version" \
+  --build-number "$release_build_number" \
   --dart-define="UPDATE_ARCHIVE_URL=$archive_url"
