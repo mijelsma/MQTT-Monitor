@@ -329,7 +329,9 @@ class JsonHighlighter extends StatelessWidget {
 
       if (c == '"') {
         flushBuffer();
-        // Determine if this is a key: look back (skipping whitespace) for '{' or ','
+        // A comma can precede both an object key and an array value. Inspect
+        // the token itself instead: only a quoted string followed by a colon
+        // is an object key.
         isKey = _isKeyPosition(json, i);
         inString = true;
         buffer.write(c);
@@ -356,14 +358,28 @@ class JsonHighlighter extends StatelessWidget {
 
   /// Checks if the quote at index [i] starts a JSON key (vs a value).
   static bool _isKeyPosition(String json, int i) {
-    // Walk backwards from the quote, skip whitespace/newlines.
-    for (var j = i - 1; j >= 0; j--) {
+    // Find the end of this JSON string, respecting escape sequences, then
+    // check the next meaningful character. This distinguishes object keys
+    // from strings in arrays after their separating comma.
+    var escaped = false;
+    for (var j = i + 1; j < json.length; j++) {
       final c = json[j];
-      if (c == ' ' || c == '\n' || c == '\r' || c == '\t') continue;
-      // After '{' or ',' we expect a key.
-      return c == '{' || c == ',';
+      if (escaped) {
+        escaped = false;
+      } else if (c == '\\') {
+        escaped = true;
+      } else if (c == '"') {
+        for (var k = j + 1; k < json.length; k++) {
+          final next = json[k];
+          if (next == ' ' || next == '\n' || next == '\r' || next == '\t') {
+            continue;
+          }
+          return next == ':';
+        }
+        return false;
+      }
     }
-    return true;
+    return false;
   }
 }
 
