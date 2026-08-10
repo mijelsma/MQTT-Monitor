@@ -89,9 +89,10 @@ The sequential order preserves all platforms and both channels in the shared
 `app-archive.json`. The workflow also prevents two releases from modifying the
 archive at the same time.
 
-At this stage, the GitHub Release attachments are the updater ZIP archives.
-Keep publishing your conventional DMG/EXE installer assets separately until
-macOS signing/notarization and a Windows installer pipeline are configured.
+The macOS release attachment and in-app update artifact are a signed,
+notarized, stapled DMG. Windows and Linux continue to use updater ZIP archives.
+Publish a separate Windows installer if you need a conventional first-install
+experience there.
 
 ## Normal release procedure
 
@@ -116,13 +117,26 @@ macOS signing/notarization and a Windows installer pipeline are configured.
    it. A prior build of the same channel should discover the update from
    **Settings → About**.
 
-## macOS production requirement
+## macOS signing and notarization
 
-The workflow builds a macOS update archive, but production macOS in-app
-updates must be Developer ID signed, notarized, and stapled. The app correctly
-rejects unsigned macOS updates by default. Add signing/notarization secrets and
-the matching macOS release configuration before publicly relying on macOS
-auto-update; use `ALLOW_UNSIGNED_MACOS_UPDATES` only for a local smoke test.
+The workflow imports a `Developer ID Application` certificate into a temporary
+GitHub Actions keychain, signs the app with hardened runtime, sends it to
+Apple's notary service, staples the accepted ticket, and creates/signs/staples
+the DMG. The exact signed DMG is both uploaded to Hetzner and attached to the
+GitHub Release.
+
+These GitHub repository secrets are required:
+
+| Secret | Value |
+| --- | --- |
+| `MACOS_DEVELOPER_ID_P12_BASE64` | Base64-encoded Developer ID `.p12` export |
+| `MACOS_DEVELOPER_ID_P12_PASSWORD` | Password chosen when exporting the `.p12` |
+| `MACOS_NOTARY_API_KEY_P8_BASE64` | Base64-encoded App Store Connect team API `.p8` key |
+| `MACOS_NOTARY_KEY_ID` | App Store Connect API key ID |
+| `MACOS_NOTARY_ISSUER_ID` | App Store Connect issuer ID |
+
+Keep those values only in GitHub Secrets. The runner removes its temporary
+keychain and decoded key files after every macOS job.
 
 ## Local smoke test
 

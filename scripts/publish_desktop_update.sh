@@ -21,6 +21,15 @@ for required in HETZNER_S3_ACCESS_KEY HETZNER_S3_SECRET_KEY HETZNER_S3_BUCKET HE
   fi
 done
 
+if [[ "$platform" == "macos" ]]; then
+  for required in MACOS_DEVELOPER_ID_APPLICATION MACOS_NOTARY_PROFILE MACOS_KEYCHAIN; do
+    if [[ -z "${!required:-}" ]]; then
+      echo "$required must be set for macOS releases." >&2
+      exit 64
+    fi
+  done
+fi
+
 # Hetzner's normal public URL is virtual-hosted:
 # https://<bucket>.<region>.your-objectstorage.com/<prefix>. A custom public
 # domain can override this derived URL through UPDATE_BASE_URL.
@@ -65,6 +74,20 @@ s3:
   region: "$HETZNER_S3_REGION"
   endpoint: "$HETZNER_S3_ENDPOINT"
 EOF
+
+if [[ "$platform" == "macos" ]]; then
+  cat >> "$config_file" <<EOF
+macos:
+  notarize: true
+  developerIdApplication: "$MACOS_DEVELOPER_ID_APPLICATION"
+  notaryProfile: "$MACOS_NOTARY_PROFILE"
+  keychain: "$MACOS_KEYCHAIN"
+  staple: true
+  gatekeeperAssess: true
+  artifact:
+    kind: dmg
+EOF
+fi
 
 dart run desktop_updater:release publish \
   --config "$config_file" \

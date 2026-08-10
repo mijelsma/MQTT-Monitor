@@ -9,3 +9,13 @@ s3:
   prefix: mqtt-monitor
   region: fsn1
   endpoint: https://fsn1.your-objectstorage.com
+
+# Production macOS releases must use a Developer ID certificate and a
+# notarytool keychain profile. GitHub Actions creates this block from secrets.
+# macos:
+#   notarize: true
+#   developerIdApplication: "Developer ID Application: Your Name (TEAMID)"
+#   notaryProfile: your-notary-profile
+#   keychain: /path/to/notary.keychain-db
+#   artifact:
+#     kind: dmg
