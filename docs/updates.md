@@ -1,17 +1,27 @@
-# Desktop updates and releases
+# Auto-update release README
 
-MQTT Monitor uses `desktop_updater` for in-app desktop updates. The app reads
-one public `app-archive.json`, selects a matching platform and channel, then
-downloads an artifact only after its length and SHA-256 digest have been read
-from a release descriptor.
+This is the complete release path for MQTT Monitor desktop updates:
+
+```text
+release tag
+  → GitHub Actions builds Windows / macOS / Linux
+  → GitHub Actions publishes release files to Hetzner S3
+  → app-archive.json points to the current release for each channel/platform
+
+installed app → public app-archive.json → release.json → verified artifact
+              → download → install/restart
+```
+
+The application never receives S3 credentials. It only downloads the public
+update files, selects its own platform and channel, and verifies the artifact's
+length and SHA-256 before installing it.
 
 The production feed is hosted in a Hetzner Object Storage bucket and published
 by GitHub Actions. The workflow is [release.yml](../.github/workflows/release.yml).
 
-## One shared Hetzner bucket is safe
+## Current setup and permissions
 
-Yes, this app can share a bucket with private apps. Keep every MQTT Monitor
-object below one unique prefix, for example:
+The shared Hetzner bucket is `ota`. MQTT Monitor owns only this prefix:
 
 ```text
 mqtt-monitor/
@@ -20,20 +30,27 @@ mqtt-monitor/
   releases/<version>/<platform>/<artifact>
 ```
 
-Do **not** make the whole bucket public. Create a bucket policy that grants
-anonymous `s3:GetObject` access only to:
+The public update feed is:
 
 ```text
-arn:aws:s3:::<bucket-name>/mqtt-monitor/*
+https://ota.fsn1.your-objectstorage.com/mqtt-monitor/app-archive.json
 ```
+
+This is how we keep one shared bucket safe:
+
+| Who | Allowed access |
+| --- | --- |
+| App users | Anonymous `s3:GetObject` for `ota/mqtt-monitor/*` only |
+| GitHub Actions (`mqtt-monitor-github`) | `s3:GetObject` and `s3:PutObject` for that same prefix only |
+| Admin key | Bucket management; kept local, never put in GitHub |
+
+Everything outside `ota/mqtt-monitor/*` remains private. Neither the app nor
+GitHub has access to the other app folders. Do not restore a bucket-wide public
+rule such as `arn:aws:s3:::ota/*`.
 
 Hetzner supports policies limited to an object prefix, including a private
 bucket with public objects under only that prefix. [Hetzner bucket policy
 documentation](https://docs.hetzner.com/storage/object-storage/faq/buckets-objects/)
-
-Create a second, dedicated S3 credential for GitHub Actions. Restrict it to
-`s3:GetObject` and `s3:PutObject` for the same prefix; it must not have delete
-access or access to the private-app prefixes.
 
 ## GitHub secrets
 
@@ -58,8 +75,9 @@ and should not end with `/`. Hetzner public object URLs use the form
 `https://<bucket>.<location>.your-objectstorage.com/<object>`. [Hetzner Object
 Storage overview](https://docs.hetzner.com/storage/object-storage/overview/)
 
-The application gets the archive URL from this base URL during the release
-build; it is not needed in local development builds.
+The workflow derives the public URL from the bucket, endpoint, and prefix. The
+application receives it as a build-time value; a normal local `flutter run`
+does not have this value unless you pass the Dart defines below.
 
 ## Stable and beta channels
 
@@ -75,7 +93,7 @@ A beta build only receives beta updates; a stable build only receives stable
 updates. Installing a beta build from the GitHub prerelease is therefore the
 opt-in path to the beta channel.
 
-## Release workflow
+## What one release does
 
 For every tag, GitHub Actions does the following in order:
 
@@ -91,14 +109,14 @@ archive at the same time.
 
 The macOS release attachment and in-app update artifact are a signed,
 notarized, stapled DMG. Windows and Linux continue to use updater ZIP archives.
-Publish a separate Windows installer if you need a conventional first-install
-experience there.
+Users need a normal installer/DMG for their first installation; in-app updates
+only work after the app is already installed.
 
-## Normal release procedure
+## Future release procedure
 
 1. Change `version:` in `pubspec.yaml`. Increase both version and build
    number, for example from `0.1.0+2` to `0.2.0+3`.
-2. Commit and push the release commit.
+2. Commit and push the release commit to the branch you are releasing from.
 3. Create and push one tag:
 
    ```bash
@@ -112,7 +130,8 @@ experience there.
    ```
 
 4. Watch **Actions → Release desktop apps**. Its first run creates the update
-   archive; later runs preserve and extend it.
+   archive; later runs preserve and extend it. A beta tag creates a GitHub
+   prerelease; a stable tag creates a normal release.
 5. Open the created GitHub Release and download the platform artifact to test
    it. A prior build of the same channel should discover the update from
    **Settings → About**.
@@ -138,9 +157,17 @@ These GitHub repository secrets are required:
 Keep those values only in GitHub Secrets. The runner removes its temporary
 keychain and decoded key files after every macOS job.
 
-## Local smoke test
+## Local check of the hosted feed
 
-The local macOS test remains useful before your first hosted release. Build an
-older app with `UPDATE_ARCHIVE_URL=http://127.0.0.1:8080/app-archive.json` and
-`ALLOW_UNSIGNED_MACOS_UPDATES=true`, then create a higher-version package with
-the same values and serve `dist/desktop_updater` over a local HTTP server.
+To remove “Updates are not configured” from a local macOS build and point it at
+the beta feed:
+
+```bash
+flutter build macos --debug \
+  --dart-define=UPDATE_ARCHIVE_URL=https://ota.fsn1.your-objectstorage.com/mqtt-monitor/app-archive.json \
+  --dart-define=UPDATE_CHANNEL=beta
+```
+
+To test an actual in-app update, install an **older** build on the same channel,
+then publish a higher version. A build with the same version correctly reports
+that it is up to date.
