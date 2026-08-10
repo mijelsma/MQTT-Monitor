@@ -95,5 +95,4 @@ dart run desktop_updater:release publish \
   --config "$config_file" \
   --platform "$platform" \
   --channel "$channel" \
-  --dart-define="UPDATE_ARCHIVE_URL=$archive_url" \
-  --dart-define="UPDATE_CHANNEL=$channel"
+  --dart-define="UPDATE_ARCHIVE_URL=$archive_url"

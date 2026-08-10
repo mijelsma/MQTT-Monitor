@@ -8,6 +8,7 @@ import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
 import '../../core/state/keys/layout_keys.dart';
 import '../../core/state/keys/settings_keys.dart';
+import '../../core/update/app_update_service.dart';
 import '../../models/mqtt_qos_default.dart';
 import '../../shared/widgets/resizable_split.dart';
 import '../settings/settings_screen.dart';
@@ -127,7 +128,7 @@ class _MonitorViewState extends State<_MonitorView> {
       );
     }
 
-    final updateAvailable = context.select<DesktopUpdaterController, bool>(
+    final updateAvailable = context.select<AppUpdateService, bool>(
       (updater) => updater.state is UpdateAvailable,
     );
 

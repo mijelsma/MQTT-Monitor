@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:desktop_updater/desktop_updater.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
@@ -8,6 +7,7 @@ import 'core/mqtt/mqtt_service.dart';
 import 'core/platform/window_chrome.dart';
 import 'core/state/app_state.dart';
 import 'core/state/keys/settings_keys.dart';
+import 'core/update/app_update_service.dart';
 import 'features/monitor/monitor_screen.dart';
 import 'generated/l10n.dart';
 import 'models/language.dart';
@@ -19,7 +19,7 @@ class App extends StatelessWidget {
 
   final MqttService mqttService;
   final MessageHistoryService historyService;
-  final DesktopUpdaterController updater;
+  final AppUpdateService updater;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +28,7 @@ class App extends StatelessWidget {
         ChangeNotifierProvider<AppStateManager>.value(value: AppStateManager.instance),
         Provider<MqttService>.value(value: mqttService),
         Provider<MessageHistoryService>.value(value: historyService),
-        ChangeNotifierProvider<DesktopUpdaterController>.value(value: updater),
+        ChangeNotifierProvider<AppUpdateService>.value(value: updater),
       ],
       child: const _AppView(),
     );

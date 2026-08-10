@@ -1,14 +1,11 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:desktop_updater/desktop_updater.dart';
 
 import 'app.dart';
 import 'core/history/message_history_service.dart';
 import 'core/mqtt/mqtt_service.dart';
 import 'core/state/app_state.dart';
 import 'core/storage/app_data_directory.dart';
-import 'core/update/app_update_configuration.dart';
+import 'core/update/app_update_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,14 +25,9 @@ void main() async {
   );
   historyService.initialize();
 
-  // The controller is global so its background check and later download/install
-  // state survive navigation to Settings › About.
-  final updater = DesktopUpdaterController(
-    appArchiveUrl: AppUpdateConfiguration.appArchiveUrl,
-    channel: AppUpdateConfiguration.channel,
-    allowUnsignedMacOSUpdates: AppUpdateConfiguration.allowUnsignedMacOSUpdates,
-    skipInitialVersionCheck: true,
-  );
+  // The update service is global so update state survives navigation to
+  // Settings › About.
+  final updater = AppUpdateService(state: AppStateManager.instance);
 
   // Run the app.
   runApp(
@@ -46,7 +38,5 @@ void main() async {
     ),
   );
 
-  if (AppUpdateConfiguration.appArchiveUrl != null) {
-    unawaited(updater.checkForUpdates());
-  }
+  updater.checkForUpdatesOnStartup();
 }

@@ -1,17 +1,21 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+
 import 'package:desktop_updater/desktop_updater.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/update/app_update_service.dart';
 import '../../../generated/git_info.dart';
 import '../../../generated/l10n.dart';
+import '../../../shared/widgets/spacers.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../../../shared/widgets/ui_info_row.dart';
 import '../../../shared/widgets/ui_link_row.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
-import '../../../shared/widgets/spacers.dart';
+import '../../../shared/widgets/ui_switch_row.dart';
 
 class AboutPanel extends StatelessWidget {
   const AboutPanel({super.key});
@@ -22,7 +26,7 @@ class AboutPanel extends StatelessWidget {
     final s = S.of(context);
     final accent = context.tokens.primary;
     final secondary = context.tokens.textSecondary;
-    final updater = context.watch<DesktopUpdaterController>();
+    final updater = context.watch<AppUpdateService>();
 
     final appBranding = Center(
       child: Column(
@@ -73,7 +77,17 @@ class AboutPanel extends StatelessWidget {
         ),
         UiSection(
           label: 'Updates',
-          children: [_UpdateRow(controller: updater)],
+          children: [
+            UiSwitchRow(
+              label: 'Track beta releases',
+              subtitle:
+                  'Receive pre-release updates. Turn this off to return to stable releases.',
+              value: updater.tracksBetaReleases,
+              onChanged: (value) =>
+                  unawaited(updater.setTracksBetaReleases(value)),
+            ),
+            _UpdateRow(service: updater),
+          ],
         ),
         UiSection(
           label: s.aboutPanelSectionResources,
@@ -119,16 +133,16 @@ class AboutPanel extends StatelessWidget {
 }
 
 class _UpdateRow extends StatelessWidget {
-  const _UpdateRow({required this.controller});
+  const _UpdateRow({required this.service});
 
-  final DesktopUpdaterController controller;
+  final AppUpdateService service;
 
   @override
   Widget build(BuildContext context) {
-    final state = controller.state;
+    final state = service.state;
     final accent = context.tokens.primary;
 
-    if (controller.appArchiveUrl == null && state is UpdateIdle) {
+    if (!service.isConfigured && state is UpdateIdle) {
       return const _UpdateActionRow(
         icon: Icons.cloud_off_outlined,
         title: 'Updates are not configured',
@@ -202,7 +216,7 @@ class _UpdateRow extends StatelessWidget {
       UpdateIdle() => _UpdateActionRow(
         icon: Icons.system_update_alt_rounded,
         iconColor: accent,
-        title: 'Check for ${controller.channel} updates',
+        title: 'Check for ${service.channel} updates',
         subtitle: 'Look for a newer version of MQTT Monitor',
         actionLabel: 'Check',
         onTap: () => _check(context),
@@ -211,7 +225,7 @@ class _UpdateRow extends StatelessWidget {
   }
 
   Future<void> _check(BuildContext context) async {
-    final result = await controller.checkForUpdates();
+    final result = await service.checkForUpdates();
     if (!context.mounted || result is! ManualUpdateCheckUpToDate) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('MQTT Monitor is up to date.')),
@@ -220,7 +234,7 @@ class _UpdateRow extends StatelessWidget {
 
   Future<void> _download() async {
     try {
-      await controller.downloadUpdate();
+      await service.downloadUpdate();
     } on Object {
       // The controller changes to UpdateFailed, which this custom UI renders.
     }
@@ -228,7 +242,7 @@ class _UpdateRow extends StatelessWidget {
 
   Future<void> _install() async {
     try {
-      await controller.restartApp();
+      await service.restartApp();
     } on Object {
       // The controller changes to UpdateFailed, which this custom UI renders.
     }

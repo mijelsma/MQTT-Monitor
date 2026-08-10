@@ -1,14 +1,9 @@
 /// Build-time configuration for the desktop update feed.
 ///
-/// Release builds receive the public feed URL and channel from GitHub Actions.
-/// Local development builds can supply the same values with `--dart-define`.
+/// Release builds receive the public feed URL from GitHub Actions. Local
+/// development builds can supply the same value with `--dart-define`.
 abstract final class AppUpdateConfiguration {
   static const archiveUrl = String.fromEnvironment('UPDATE_ARCHIVE_URL');
-
-  static const channel = String.fromEnvironment(
-    'UPDATE_CHANNEL',
-    defaultValue: 'stable',
-  );
 
   /// Only enable this for a local macOS smoke test of an unsigned app.
   ///
