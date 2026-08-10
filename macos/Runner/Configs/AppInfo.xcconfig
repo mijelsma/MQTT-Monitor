@@ -8,7 +8,7 @@
 PRODUCT_NAME = MQTT Monitor
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.mqttMonitor
+PRODUCT_BUNDLE_IDENTIFIER = com.micheljelsma.mqttmonitor
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 Michel Jelsma. Licensed under the MIT License.

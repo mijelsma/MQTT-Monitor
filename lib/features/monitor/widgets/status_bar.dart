@@ -5,7 +5,16 @@ import '../../../models/mqtt_protocol_version.dart';
 import '../../../theme/app_colors.dart';
 
 class StatusBar extends StatelessWidget {
-  const StatusBar({super.key, this.status = ConnectionStatus.disconnected, this.brokerUrl, this.messageCount = 0, this.messageRate = 0, this.activeProtocol});
+  const StatusBar({
+    super.key,
+    this.status = ConnectionStatus.disconnected,
+    this.brokerUrl,
+    this.messageCount = 0,
+    this.messageRate = 0,
+    this.activeProtocol,
+    this.showUpdateAvailable = false,
+    this.onUpdateAvailable,
+  });
 
   final ConnectionStatus status;
   final String? brokerUrl;
@@ -16,10 +25,18 @@ class StatusBar extends StatelessWidget {
   /// connected (or connecting) — disconnected status hides the chip.
   final MqttProtocolVersion? activeProtocol;
 
+  /// True after the background check finds a newer compatible release.
+  final bool showUpdateAvailable;
+  final VoidCallback? onUpdateAvailable;
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final labelStyle = TextStyle(fontSize: 10.5, color: cs.onSurfaceVariant, letterSpacing: -0.1);
+    final labelStyle = TextStyle(
+      fontSize: 10.5,
+      color: cs.onSurfaceVariant,
+      letterSpacing: -0.1,
+    );
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -40,15 +57,68 @@ class StatusBar extends StatelessWidget {
               const SizedBox(width: 8),
               if (brokerUrl != null)
                 Expanded(
-                  child: Text(brokerUrl!, style: labelStyle, overflow: TextOverflow.ellipsis),
+                  child: Text(
+                    brokerUrl!,
+                    style: labelStyle,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 )
               else
                 const Spacer(),
+              if (showUpdateAvailable) ...[
+                const SizedBox(width: 10),
+                _UpdateAvailableBadge(onTap: onUpdateAvailable),
+              ],
+              const SizedBox(width: 8),
               Text('$messageCount msgs · $messageRate/s', style: labelStyle),
             ],
           ),
         ),
       ],
+    );
+  }
+}
+
+class _UpdateAvailableBadge extends StatelessWidget {
+  const _UpdateAvailableBadge({this.onTap});
+
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Open update settings',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+          decoration: BoxDecoration(
+            color: AppColors.info500.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.system_update_alt_rounded,
+                size: 11,
+                color: AppColors.info500,
+              ),
+              SizedBox(width: 4),
+              Text(
+                'Update available',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.info500,
+                  letterSpacing: -0.1,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -64,16 +134,28 @@ class _StatusPill extends StatelessWidget {
       ConnectionStatus.connected => (AppColors.success500, 'Connected'),
       ConnectionStatus.connecting => (AppColors.warning500, 'Connecting'),
       ConnectionStatus.disconnected => (AppColors.error500, 'Disconnected'),
-      ConnectionStatus.errorHostNotFound => (AppColors.error500, 'Host not found'),
-      ConnectionStatus.errorNotPermitted => (AppColors.error500, 'Not permitted'),
-      ConnectionStatus.errorRefused => (AppColors.error500, 'Connection refused'),
+      ConnectionStatus.errorHostNotFound => (
+        AppColors.error500,
+        'Host not found',
+      ),
+      ConnectionStatus.errorNotPermitted => (
+        AppColors.error500,
+        'Not permitted',
+      ),
+      ConnectionStatus.errorRefused => (
+        AppColors.error500,
+        'Connection refused',
+      ),
       ConnectionStatus.errorTlsHandshake => (AppColors.error500, 'TLS failed'),
       ConnectionStatus.error => (AppColors.error500, 'Error'),
     };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -85,7 +167,12 @@ class _StatusPill extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             label,
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color, letterSpacing: -0.1),
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: color,
+              letterSpacing: -0.1,
+            ),
           ),
         ],
       ),
@@ -107,12 +194,17 @@ class _ProtocolChip extends StatelessWidget {
     final color = isFallback ? AppColors.warning500 : AppColors.info500;
     return Tooltip(
       message: switch (protocol) {
-        MqttProtocolVersion.v5 => 'MQTT 5.0 — reason codes and properties available',
-        MqttProtocolVersion.v311 => 'MQTT 3.1.1 — broker does not return delivery reasons',
+        MqttProtocolVersion.v5 =>
+          'MQTT 5.0 — reason codes and properties available',
+        MqttProtocolVersion.v311 =>
+          'MQTT 3.1.1 — broker does not return delivery reasons',
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
-        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -120,7 +212,12 @@ class _ProtocolChip extends StatelessWidget {
             const SizedBox(width: 3),
             Text(
               protocol.shortLabel,
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color, letterSpacing: -0.1),
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: color,
+                letterSpacing: -0.1,
+              ),
             ),
           ],
         ),
