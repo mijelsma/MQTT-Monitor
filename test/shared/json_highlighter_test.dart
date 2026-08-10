@@ -24,4 +24,26 @@ void main() {
       expect((value.style as TextStyle).color, AppColors.success700);
     }
   });
+
+  testWidgets('offers numeric strings in arrays as pinnable values', (tester) async {
+    final pinnedPaths = <String>[];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: const [AppTokens.light]),
+        home: Scaffold(
+          body: JsonHighlighter(
+            source: '{"voltage": ["226.5", "227.5", "227.8"]}',
+            onPin: (keyPath, _) => pinnedPaths.add(keyPath),
+          ),
+        ),
+      ),
+    );
+
+    final pins = find.byIcon(Icons.push_pin_rounded);
+    expect(pins, findsNWidgets(3));
+
+    await tester.tap(pins.at(1));
+    expect(pinnedPaths, ['voltage.[1]']);
+  });
 }

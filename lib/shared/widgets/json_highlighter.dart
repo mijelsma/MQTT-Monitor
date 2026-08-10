@@ -15,7 +15,8 @@ typedef JsonPinCallback = void Function(String keyPath, String label);
 /// Falls back to plain monospaced text if the input is not valid JSON.
 ///
 /// When [onPin] is provided, small action icons are rendered in-line before
-/// every JSON key whose value is numeric, allowing users to pin that value
+/// every JSON key whose value is numeric or a numeric string, allowing users
+/// to pin that value
 /// to the graph dashboard.
 ///
 /// The static [highlight] method produces coloured [TextSpan]s from raw
@@ -136,7 +137,8 @@ class JsonHighlighter extends StatelessWidget {
   static Map<int, _PinnableInfo> _buildPinnableLineMap(Object parsed, String prettyJson) {
     final result = <int, _PinnableInfo>{};
     final lines = prettyJson.split('\n');
-    final numPattern = RegExp(r'^\s*"([^"]+)"\s*:\s*(-?\d+\.?\d*([eE][+-]?\d+)?)\s*,?\s*$');
+    const number = r'[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?';
+    final numPattern = RegExp('^\\s*"([^"]+)"\\s*:\\s*(?:"$number"|$number)\\s*,?\\s*\$');
     final pathStack = <String>[];
     // Track the current array index at each nesting level that is an array.
     // When we push an array marker, we store the running index here.
@@ -214,7 +216,7 @@ class JsonHighlighter extends StatelessWidget {
       // Increment the index for every element; only pin numeric ones.
       if (m == null && isArrayStack.isNotEmpty && isArrayStack.last) {
         arrayIndexStack[arrayIndexStack.length - 1]++;
-        final bareNum = RegExp(r'^\s*(-?\d+\.?\d*([eE][+-]?\d+)?)\s*,?\s*$');
+        final bareNum = RegExp('^\\s*(?:"$number"|$number)\\s*,?\\s*\$');
         final bm = bareNum.firstMatch(lines[i]);
         if (bm != null) {
           final currentIndex = arrayIndexStack.last;
