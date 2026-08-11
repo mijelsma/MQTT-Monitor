@@ -6,29 +6,35 @@ import '../../../theme/app_colors.dart';
 import '../../../models/broker_entry.dart';
 import '../../../shared/widgets/ui_add_button.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
+import '../../../shared/widgets/ui_inline_notice.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
 import '../../../shared/widgets/ui_sortable_row.dart';
 import '../dialogs/broker_dialog.dart';
 import '../settings_viewmodel.dart';
 
+/// Displays broker CRUD, reorder, and persistence-recovery controls.
 class BrokersPanel extends StatelessWidget {
+  /// Creates the broker settings panel.
   const BrokersPanel({super.key});
 
+  /// Opens the broker dialog and persists a newly created profile.
   Future<void> _openAdd(BuildContext context) async {
     final vm = context.read<SettingsViewModel>();
     final entry = await showBrokerDialog(context);
     if (entry == null) return;
-    vm.addBroker(entry);
+    await vm.addBroker(entry);
   }
 
+  /// Opens the broker dialog and persists edits or deletion.
   Future<void> _openEdit(BuildContext context, BrokerEntry broker) async {
     final vm = context.read<SettingsViewModel>();
-    final updated = await showBrokerDialog(context, broker: broker, onDelete: () => vm.deleteBroker(broker.id));
+    final updated = await showBrokerDialog(context, broker: broker, onDelete: () async => vm.deleteBroker(broker.id));
     if (updated == null) return;
-    vm.updateBroker(updated);
+    await vm.updateBroker(updated);
   }
 
+  /// Builds broker rows or an actionable persistence failure notice.
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<SettingsViewModel>();
@@ -39,7 +45,9 @@ class BrokersPanel extends StatelessWidget {
       title: s.brokersPanelTitle,
       description: s.brokersPanelDescription,
       children: [
-        if (brokers.isEmpty)
+        if (vm.brokerFailure case final failure?)
+          UiInlineNotice(kind: UiNoticeKind.error, title: 'Broker profiles unavailable', message: failure.message, detail: failure.details, actionLabel: 'Retry', onAction: vm.retryBrokerLoad, margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8))
+        else if (brokers.isEmpty)
           UiEmptyState(icon: Icons.dns_outlined, title: s.brokersPanelNoBrokersTitle, message: s.brokersPanelNoBrokersMessage)
         else
           UiSection(
@@ -67,7 +75,7 @@ class BrokersPanel extends StatelessWidget {
                 ),
             ],
           ),
-        UiAddButton(label: s.brokersPanelAddBroker, onPressed: () => _openAdd(context)),
+        if (vm.brokerFailure == null) UiAddButton(label: s.brokersPanelAddBroker, onPressed: () => _openAdd(context)),
       ],
     );
   }

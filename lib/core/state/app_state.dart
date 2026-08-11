@@ -1,15 +1,17 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import '../storage/preferences_store.dart';
+import '../storage/shared_preferences_store.dart';
 import 'keys/app_keys.dart';
 import 'keys/layout_keys.dart';
 import 'keys/settings_keys.dart';
 import 'persist.dart';
 import 'state_key.dart';
 
-/// Simple key-value store backed by an in-memory map. Keys that are
-/// marked as persistent are also written to SharedPreferences so they survive app restarts.
-/// Extends ChangeNotifier so widgets can rebuild when any value changes.
+/// Owns remaining generic application state and persists registered keys.
+///
+/// Persisted operations use [PreferencesStore], while runtime values remain
+/// in memory and changes notify interested widgets.
 class AppStateManager extends ChangeNotifier {
   AppStateManager._();
 
@@ -17,13 +19,12 @@ class AppStateManager extends ChangeNotifier {
 
   static final _allKeys = [...AppKeys.all, ...SettingsKeys.all, ...LayoutKeys.all];
 
-  late SharedPreferences _prefs;
+  late PreferencesStore _preferences;
   final Map<String, dynamic> _store = {};
 
-  /// Load SharedPreferences and restore any persisted values. Uses two passes:
-  /// unconditional keys first, then conditional ones (so gate keys are available when the second pass checks them).
-  Future<void> initialize() async {
-    _prefs = await SharedPreferences.getInstance();
+  /// Loads persisted values, resolving unconditional keys before gated keys.
+  Future<void> initialize({PreferencesStore? preferences}) async {
+    _preferences = preferences ?? await SharedPreferencesStore.load();
     for (final key in _allKeys) {
       if (key.persist == Persist.always) _load(key);
     }
@@ -50,20 +51,20 @@ class AppStateManager extends ChangeNotifier {
   /// Removes [key] from both the in-memory store and disk.
   Future<void> reset<T>(StateKey<T> key) async {
     _store.remove(key.key);
-    await _prefs.remove(key.key);
+    await _preferences.remove(key.key);
     notifyListeners();
   }
 
   /// Wipes everything — in-memory and on disk.
   Future<void> resetAll() async {
     _store.clear();
-    await _prefs.clear();
+    await _preferences.clear();
     notifyListeners();
   }
 
   /// Reads a single key from SharedPreferences into the store.
   void _load<T>(StateKey<T> key) {
-    final raw = _prefs.get(key.key);
+    final raw = _preferences.get(key.key);
     if (raw == null) return;
     try {
       _store[key.key] = key.decode(raw);
@@ -78,15 +79,15 @@ class AppStateManager extends ChangeNotifier {
     final raw = key.encode(value);
     switch (raw) {
       case null:
-        await _prefs.remove(key.key);
+        await _preferences.remove(key.key);
       case final bool v:
-        await _prefs.setBool(key.key, v);
+        await _preferences.setBool(key.key, v);
       case final int v:
-        await _prefs.setInt(key.key, v);
+        await _preferences.setInt(key.key, v);
       case final double v:
-        await _prefs.setDouble(key.key, v);
+        await _preferences.setDouble(key.key, v);
       case final String v:
-        await _prefs.setString(key.key, v);
+        await _preferences.setString(key.key, v);
     }
   }
 }

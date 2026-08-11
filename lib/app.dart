@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
+import 'core/broker/broker_repository.dart';
 import 'core/history/message_history_service.dart';
 import 'core/mqtt/mqtt_service.dart';
 import 'core/platform/window_chrome.dart';
@@ -14,18 +15,23 @@ import 'models/language.dart';
 import 'theme/app_theme.dart';
 import 'theme/app_tokens/app_tokens.dart';
 
+/// Provides application-wide services and builds the themed MQTT Monitor app.
 class App extends StatelessWidget {
-  const App({super.key, required this.mqttService, required this.historyService, required this.updater});
+  /// Creates the application root with its process-lifetime dependencies.
+  const App({super.key, required this.mqttService, required this.historyService, required this.updater, required this.brokerRepository});
 
   final MqttService mqttService;
   final MessageHistoryService historyService;
   final AppUpdateService updater;
+  final BrokerRepository brokerRepository;
 
+  /// Exposes root dependencies before building the visual application shell.
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<AppStateManager>.value(value: AppStateManager.instance),
+        ChangeNotifierProvider<BrokerRepository>.value(value: brokerRepository),
         Provider<MqttService>.value(value: mqttService),
         Provider<MessageHistoryService>.value(value: historyService),
         ChangeNotifierProvider<AppUpdateService>.value(value: updater),

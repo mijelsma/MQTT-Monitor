@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
+import '../../core/broker/broker_repository.dart';
 import '../../core/history/message_history_service.dart';
 import '../../core/mqtt/mqtt_message.dart';
 import '../../core/mqtt/mqtt_service.dart';
@@ -30,11 +31,11 @@ final _arrayIndexPattern = RegExp(r'^\[(\d+)\]$');
 /// Manages the collection of graph cards for one broker, listens to MQTT
 /// messages to feed data into the correct cards, and persists layout to state.
 class DashboardViewModel extends ChangeNotifier {
-  DashboardViewModel({required MqttService mqttService, required AppStateManager state, required this.brokerId, required MessageHistoryService historyService}) : _mqtt = mqttService, _state = state, _historyService = historyService {
+  /// Creates a broker-scoped dashboard controller and starts its listeners.
+  DashboardViewModel({required MqttService mqttService, required AppStateManager state, required this.brokerId, required MessageHistoryService historyService, required BrokerRepository brokerRepository}) : _mqtt = mqttService, _state = state, _historyService = historyService, _brokers = brokerRepository {
     // Pre-load all keys needed by this screen.
     _state.load(DashboardKeys.layouts);
     _state.load(DashboardKeys.activeLayoutForBroker(brokerId));
-    _state.load(SettingsKeys.brokers);
     _state.load(SettingsKeys.environmentVariables);
     _state.load(SettingsKeys.environmentVariableValues);
 
@@ -43,12 +44,14 @@ class DashboardViewModel extends ChangeNotifier {
     _backfillFromHistory();
 
     _state.addListener(_onStateChanged);
+    _brokers.addListener(_onBrokersChanged);
     _subscription = _mqtt.messageStream.listen(_onMessage);
   }
 
   final MqttService _mqtt;
   final AppStateManager _state;
   final MessageHistoryService _historyService;
+  final BrokerRepository _brokers;
   final String brokerId;
 
   StreamSubscription<MQTTMessage>? _subscription;
@@ -497,7 +500,7 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   /// The list of configured brokers (used for scope selection in dialogs).
-  List<BrokerEntry> get brokers => _state.read(SettingsKeys.brokers);
+  List<BrokerEntry> get brokers => _brokers.brokers;
 
   /// Environment variables visible to this broker (global + broker-scoped).
   List<EnvironmentVariable> get environmentVariables {
@@ -543,11 +546,16 @@ class DashboardViewModel extends ChangeNotifier {
   /// from the settings screen).
   void _onStateChanged() => notifyListeners();
 
+  /// Notifies dashboard consumers when the available broker list changes.
+  void _onBrokersChanged() => notifyListeners();
+
+  /// Releases message, persistence, broker, and timer listeners.
   @override
   void dispose() {
     _subscription?.cancel();
     _saveTimer?.cancel();
     _state.removeListener(_onStateChanged);
+    _brokers.removeListener(_onBrokersChanged);
 
     // Snapshot data points into the static cache so they survive navigation.
     for (final card in _cards) {

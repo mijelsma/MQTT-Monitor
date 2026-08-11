@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mqtt_monitor/core/broker/broker_repository.dart';
 import 'package:mqtt_monitor/core/history/message_history_service.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_service.dart';
 import 'package:mqtt_monitor/core/state/app_state.dart';
@@ -14,21 +15,19 @@ import 'package:mqtt_monitor/models/sidebar_panel_default.dart';
 import 'package:mqtt_monitor/shared/widgets/payload_editor.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../support/test_dependencies.dart';
 
 void main() {
   final state = AppStateManager.instance;
+  late BrokerRepository brokers;
 
   setUp(() async {
-    SharedPreferences.setMockInitialValues({});
-    await state.initialize();
-    await state.resetAll();
+    final dependencies = await TestDependencies.create();
+    brokers = dependencies.brokers;
   });
 
-  Future<PublishDraftController> pumpSidebar(
-    WidgetTester tester, {
-    required Key expandedSibling,
-  }) async {
+  Future<PublishDraftController> pumpSidebar(WidgetTester tester, {required Key expandedSibling}) async {
     // Use "last status" for every panel so the LayoutKeys written below
     // are honored (otherwise the per-panel default setting would win).
     await state.write(SettingsKeys.defaultSidebarDetail, SidebarPanelDefault.lastStatus);
@@ -36,27 +35,14 @@ void main() {
     await state.write(SettingsKeys.defaultSidebarPublish, SidebarPanelDefault.lastStatus);
     await state.write(SettingsKeys.defaultSidebarShortcuts, SidebarPanelDefault.lastStatus);
 
-    await state.write(
-      LayoutKeys.sidebarDetailCollapsed,
-      expandedSibling != const Key('detail-section-toggle'),
-    );
-    await state.write(
-      LayoutKeys.sidebarHistoryCollapsed,
-      expandedSibling != const Key('history-section-toggle'),
-    );
+    await state.write(LayoutKeys.sidebarDetailCollapsed, expandedSibling != const Key('detail-section-toggle'));
+    await state.write(LayoutKeys.sidebarHistoryCollapsed, expandedSibling != const Key('history-section-toggle'));
     await state.write(LayoutKeys.sidebarPublishCollapsed, false);
-    await state.write(
-      LayoutKeys.sidebarShortcutsCollapsed,
-      expandedSibling != const Key('shortcuts-section-toggle'),
-    );
+    await state.write(LayoutKeys.sidebarShortcutsCollapsed, expandedSibling != const Key('shortcuts-section-toggle'));
 
-    final mqtt = MqttService(state);
-    final history = MessageHistoryService(mqtt, state);
-    final vm = MonitorViewModel(
-      mqttService: mqtt,
-      state: state,
-      historyService: history,
-    );
+    final mqtt = MqttService(state, brokers);
+    final history = MessageHistoryService(mqtt, state, brokers);
+    final vm = MonitorViewModel(mqttService: mqtt, state: state, historyService: history, brokerRepository: brokers);
     final draft = PublishDraftController();
     addTearDown(vm.dispose);
     addTearDown(draft.dispose);
@@ -71,16 +57,9 @@ void main() {
         ],
         child: MaterialApp(
           theme: themeLight,
-          localizationsDelegates: const [
-            S.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
+          localizationsDelegates: const [S.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
           supportedLocales: S.delegate.supportedLocales,
-          home: const Scaffold(
-            body: SizedBox(width: 900, height: 700, child: DetailSidebar()),
-          ),
+          home: const Scaffold(body: SizedBox(width: 900, height: 700, child: DetailSidebar())),
         ),
       ),
     );
@@ -89,14 +68,8 @@ void main() {
   }
 
   Future<void> enterDraft(WidgetTester tester) async {
-    await tester.enterText(
-      find.byKey(const Key('publish-topic-field')),
-      'devices/alpha/set',
-    );
-    final payloadField = find.descendant(
-      of: find.byType(PayloadEditor),
-      matching: find.byType(TextField),
-    );
+    await tester.enterText(find.byKey(const Key('publish-topic-field')), 'devices/alpha/set');
+    final payloadField = find.descendant(of: find.byType(PayloadEditor), matching: find.byType(TextField));
     await tester.enterText(payloadField, '{"enabled":true}');
     await tester.tap(find.byKey(const Key('publish-qos-2')));
     await tester.tap(find.byKey(const Key('publish-retain-toggle')));
@@ -111,47 +84,25 @@ void main() {
   }
 
   test('sidebar speed maps to a short, bounded animation duration', () {
-    expect(
-      sidebarAnimationDurationForSpeed(0),
-      const Duration(milliseconds: 500),
-    );
-    expect(
-      sidebarAnimationDurationForSpeed(60),
-      const Duration(milliseconds: 160),
-    );
-    expect(
-      sidebarAnimationDurationForSpeed(100),
-      const Duration(milliseconds: 40),
-    );
-    expect(
-      sidebarAnimationDurationForSpeed(200),
-      const Duration(milliseconds: 40),
-    );
+    expect(sidebarAnimationDurationForSpeed(0), const Duration(milliseconds: 500));
+    expect(sidebarAnimationDurationForSpeed(60), const Duration(milliseconds: 160));
+    expect(sidebarAnimationDurationForSpeed(100), const Duration(milliseconds: 40));
+    expect(sidebarAnimationDurationForSpeed(200), const Duration(milliseconds: 40));
   });
 
   testWidgets('sidebar panels animate at the configured speed', (tester) async {
     await state.write(SettingsKeys.sidebarAnimationsEnabled, true);
     // A slow speed gives a long enough window to sample mid-animation.
     await state.write(SettingsKeys.sidebarAnimationSpeed, 30);
-    await pumpSidebar(
-      tester,
-      expandedSibling: const Key('history-section-toggle'),
-    );
+    await pumpSidebar(tester, expandedSibling: const Key('history-section-toggle'));
 
     final expectedDuration = sidebarAnimationDurationForSpeed(30);
 
     // Chevron rotation duration follows the configured speed.
     expect(find.byType(AnimatedRotation), findsNWidgets(4));
-    expect(
-      tester
-          .widgetList<AnimatedRotation>(find.byType(AnimatedRotation))
-          .every((rotation) => rotation.duration == expectedDuration),
-      isTrue,
-    );
+    expect(tester.widgetList<AnimatedRotation>(find.byType(AnimatedRotation)).every((rotation) => rotation.duration == expectedDuration), isTrue);
 
-    final initialHeight = tester
-        .getSize(find.byKey(const Key('history-content-clip')))
-        .height;
+    final initialHeight = tester.getSize(find.byKey(const Key('history-content-clip'))).height;
     expect(initialHeight, greaterThan(0));
 
     // Tap to collapse history; mid-animation the panel height is partway
@@ -159,9 +110,7 @@ void main() {
     await tester.tap(find.byKey(const Key('history-section-toggle')));
     await tester.pump(); // process the tap and start the animation ticker
     await tester.pump(expectedDuration ~/ 2);
-    final midHeight = tester
-        .getSize(find.byKey(const Key('history-content-clip')))
-        .height;
+    final midHeight = tester.getSize(find.byKey(const Key('history-content-clip'))).height;
     expect(midHeight, greaterThan(0));
     expect(midHeight, lessThan(initialHeight));
 
@@ -172,18 +121,10 @@ void main() {
 
   testWidgets('sidebar panel animation can be disabled', (tester) async {
     await state.write(SettingsKeys.sidebarAnimationsEnabled, false);
-    await pumpSidebar(
-      tester,
-      expandedSibling: const Key('history-section-toggle'),
-    );
+    await pumpSidebar(tester, expandedSibling: const Key('history-section-toggle'));
 
     expect(find.byType(AnimatedRotation), findsNWidgets(4));
-    expect(
-      tester
-          .widgetList<AnimatedRotation>(find.byType(AnimatedRotation))
-          .every((rotation) => rotation.duration == Duration.zero),
-      isTrue,
-    );
+    expect(tester.widgetList<AnimatedRotation>(find.byType(AnimatedRotation)).every((rotation) => rotation.duration == Duration.zero), isTrue);
 
     // Disabled: collapsing snaps instantly with no intermediate height.
     await tester.tap(find.byKey(const Key('history-section-toggle')));
@@ -191,14 +132,8 @@ void main() {
     expect(find.byKey(const Key('history-content-clip')), findsNothing);
   });
 
-  for (final sibling in <({Key key, String name})>[
-    (key: const Key('detail-section-toggle'), name: 'message detail'),
-    (key: const Key('history-section-toggle'), name: 'history'),
-    (key: const Key('shortcuts-section-toggle'), name: 'shortcuts'),
-  ]) {
-    testWidgets('collapsing ${sibling.name} preserves the Send Message draft', (
-      tester,
-    ) async {
+  for (final sibling in <({Key key, String name})>[(key: const Key('detail-section-toggle'), name: 'message detail'), (key: const Key('history-section-toggle'), name: 'history'), (key: const Key('shortcuts-section-toggle'), name: 'shortcuts')]) {
+    testWidgets('collapsing ${sibling.name} preserves the Send Message draft', (tester) async {
       final draft = await pumpSidebar(tester, expandedSibling: sibling.key);
       await enterDraft(tester);
 
@@ -207,9 +142,7 @@ void main() {
 
       expectDraftPreserved(draft);
       expect(find.byKey(const Key('publish-topic-field')), findsOneWidget);
-      final topicField = tester.widget<TextField>(
-        find.byKey(const Key('publish-topic-field')),
-      );
+      final topicField = tester.widget<TextField>(find.byKey(const Key('publish-topic-field')));
       expect(topicField.controller?.text, 'devices/alpha/set');
       expect(tester.takeException(), isNull);
     });

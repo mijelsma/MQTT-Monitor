@@ -8,11 +8,14 @@ import '../../../theme/app_tokens/app_tokens.dart';
 import '../../settings/dialogs/broker_dialog.dart';
 import '../monitor_viewmodel.dart';
 
+/// Prompts the user to configure subscriptions for an existing broker.
 class NoSubscriptionsState extends StatelessWidget {
+  /// Creates the empty subscription state for [broker].
   const NoSubscriptionsState({super.key, required this.broker});
 
   final BrokerEntry broker;
 
+  /// Builds the empty state and broker-edit action.
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
@@ -31,12 +34,13 @@ class NoSubscriptionsState extends StatelessWidget {
     );
   }
 
+  /// Opens the broker editor and persists updates or deletion.
   Future<void> _openBrokerEditor(BuildContext context) async {
     final vm = context.read<MonitorViewModel>();
 
-    final updated = await showBrokerDialog(context, broker: broker, onDelete: () => vm.deleteBroker(broker.id));
+    final updated = await showBrokerDialog(context, broker: broker, onDelete: () async => vm.deleteBroker(broker.id));
 
     if (updated == null) return;
-    vm.updateBroker(updated);
+    await vm.updateBroker(updated);
   }
 }

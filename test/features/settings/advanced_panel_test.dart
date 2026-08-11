@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mqtt_monitor/core/broker/broker_repository.dart';
 import 'package:mqtt_monitor/core/state/app_state.dart';
 import 'package:mqtt_monitor/core/state/keys/settings_keys.dart';
 import 'package:mqtt_monitor/features/settings/panels/advanced_panel.dart';
@@ -8,19 +9,20 @@ import 'package:mqtt_monitor/features/settings/settings_viewmodel.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../support/test_dependencies.dart';
 
 void main() {
   final state = AppStateManager.instance;
+  late BrokerRepository brokers;
 
   setUp(() async {
-    SharedPreferences.setMockInitialValues({});
-    await state.initialize();
-    await state.resetAll();
+    final dependencies = await TestDependencies.create();
+    brokers = dependencies.brokers;
   });
 
   Future<void> pumpPanel(WidgetTester tester) async {
-    final vm = SettingsViewModel(state: state);
+    final vm = SettingsViewModel(state: state, brokerRepository: brokers);
     addTearDown(vm.dispose);
     await tester.pumpWidget(
       ChangeNotifierProvider<SettingsViewModel>.value(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/broker/broker_repository.dart';
 import '../../core/state/app_state.dart';
 import '../../generated/l10n.dart';
 import '../../theme/app_colors.dart';
@@ -19,7 +20,9 @@ import 'layouts/settings_narrow_layout.dart';
 import 'layouts/settings_wide_layout.dart';
 import 'panels/dashboard_panel.dart';
 
+/// Hosts responsive settings navigation and feature-scoped settings state.
 class SettingsScreen extends StatelessWidget {
+  /// Creates the settings screen.
   const SettingsScreen({super.key});
 
   List<SettingsItem> _items(BuildContext context) {
@@ -37,10 +40,11 @@ class SettingsScreen extends StatelessWidget {
     ];
   }
 
+  /// Builds the broker-aware settings controller and responsive layout.
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (ctx) => SettingsViewModel(state: ctx.read<AppStateManager>()),
+      create: (ctx) => SettingsViewModel(state: ctx.read<AppStateManager>(), brokerRepository: ctx.read<BrokerRepository>()),
       child: Builder(
         builder: (context) {
           final vm = context.watch<SettingsViewModel>();

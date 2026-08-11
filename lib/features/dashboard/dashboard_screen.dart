@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/broker/broker_repository.dart';
 import '../../core/history/message_history_service.dart';
 import '../../core/mqtt/mqtt_service.dart';
 import '../../core/state/app_state.dart';
@@ -21,15 +22,17 @@ import 'widgets/variable_bar.dart';
 
 /// Main dashboard screen. Provides a [DashboardViewModel] to the widget tree.
 class GraphDashboardScreen extends StatelessWidget {
+  /// Creates a dashboard scoped to [brokerId] and labeled [brokerName].
   const GraphDashboardScreen({super.key, required this.brokerId, required this.brokerName});
 
   final String brokerId;
   final String brokerName;
 
+  /// Creates the broker-aware dashboard view model and screen scaffold.
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (ctx) => DashboardViewModel(mqttService: ctx.read<MqttService>(), state: ctx.read<AppStateManager>(), brokerId: brokerId, historyService: ctx.read<MessageHistoryService>()),
+      create: (ctx) => DashboardViewModel(mqttService: ctx.read<MqttService>(), state: ctx.read<AppStateManager>(), brokerId: brokerId, historyService: ctx.read<MessageHistoryService>(), brokerRepository: ctx.read<BrokerRepository>()),
       child: _DashboardScaffold(brokerName: brokerName),
     );
   }

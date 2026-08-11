@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/broker/broker_repository.dart';
+import '../../core/broker/broker_repository_failure.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
 import '../../core/state/keys/dashboard_keys.dart';
@@ -16,48 +18,44 @@ import 'settings_section.dart';
 import '../../models/environment_variable.dart';
 import '../../models/publish_shortcut.dart';
 
+/// Coordinates settings navigation and delegates data to its owning stores.
 class SettingsViewModel extends ChangeNotifier {
-  SettingsViewModel({required AppStateManager state}) : _state = state {
+  /// Creates the settings controller and observes app and broker state.
+  SettingsViewModel({required AppStateManager state, required BrokerRepository brokerRepository}) : _state = state, _brokers = brokerRepository {
     _state.load(DashboardKeys.layouts);
     _state.addListener(_onStateChanged);
+    _brokers.addListener(_onStateChanged);
   }
 
   final AppStateManager _state;
+  final BrokerRepository _brokers;
 
+  /// Notifies settings consumers after either observed owner changes.
   void _onStateChanged() => notifyListeners();
-
-  //  Section navigation
 
   SettingsSection get activeSection => _state.read(AppKeys.activeSettingsSection);
   void selectSection(SettingsSection s) => _state.write(AppKeys.activeSettingsSection, s);
 
-  //  Broker management
+  /// Returns the ordered broker profiles owned by the repository.
+  List<BrokerEntry> get brokers => _brokers.brokers;
 
-  List<BrokerEntry> get brokers => _state.read(SettingsKeys.brokers);
+  /// Returns the recoverable broker persistence failure, if any.
+  BrokerRepositoryFailure? get brokerFailure => _brokers.failure;
 
-  void addBroker(BrokerEntry entry) {
-    _state.write(SettingsKeys.brokers, [...brokers, entry]);
-    _state.write(AppKeys.activeBrokerId, entry.id);
-  }
+  /// Retries loading broker profiles after a recoverable failure.
+  Future<void> retryBrokerLoad() => _brokers.retry();
 
-  void updateBroker(BrokerEntry updated) {
-    final list = [...brokers];
-    final i = list.indexWhere((b) => b.id == updated.id);
-    if (i != -1) list[i] = updated;
-    _state.write(SettingsKeys.brokers, list);
-  }
+  /// Adds [entry] and makes it the active broker.
+  Future<void> addBroker(BrokerEntry entry) => _brokers.add(entry);
 
-  void deleteBroker(String id) {
-    _state.write(SettingsKeys.brokers, brokers.where((b) => b.id != id).toList());
-  }
+  /// Persists the updated broker profile.
+  Future<void> updateBroker(BrokerEntry updated) => _brokers.update(updated);
 
-  void reorderBrokers(int oldIndex, int newIndex) {
-    final list = [...brokers];
-    if (newIndex > oldIndex) newIndex--;
-    final item = list.removeAt(oldIndex);
-    list.insert(newIndex, item);
-    _state.write(SettingsKeys.brokers, list);
-  }
+  /// Deletes the broker identified by [id].
+  Future<void> deleteBroker(String id) => _brokers.delete(id);
+
+  /// Moves a broker using UI reorder indices.
+  Future<void> reorderBrokers(int oldIndex, int newIndex) => _brokers.reorder(oldIndex, newIndex);
 
   // Dashboard layouts
 
@@ -272,9 +270,11 @@ class SettingsViewModel extends ChangeNotifier {
   AppLanguage get language => _state.read(SettingsKeys.language);
   void setLanguage(AppLanguage lang) => _state.write(SettingsKeys.language, lang);
 
+  /// Releases app-state and broker-repository listeners.
   @override
   void dispose() {
     _state.removeListener(_onStateChanged);
+    _brokers.removeListener(_onStateChanged);
     super.dispose();
   }
 }

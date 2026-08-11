@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../core/broker/broker_repository.dart';
+import '../../core/broker/broker_repository_failure.dart';
 import '../../core/history/message_history_service.dart';
 import '../../core/mqtt/connection_status.dart';
 import '../../core/mqtt/mqtt_message.dart';
@@ -30,19 +32,21 @@ enum SearchScope { all, topic, value }
 /// Manages the topic tree, connection state, and user interactions.
 /// Widgets read state from this ViewModel and call its methods for actions.
 class MonitorViewModel extends ChangeNotifier {
-  // Constructor takes the MQTT service and app state manager, starts listening for messages.
-  MonitorViewModel({required MqttService mqttService, required AppStateManager state, required MessageHistoryService historyService}) : _mqtt = mqttService, _state = state, _history = historyService {
+  /// Creates the monitor controller and starts state, broker, and MQTT listeners.
+  MonitorViewModel({required MqttService mqttService, required AppStateManager state, required MessageHistoryService historyService, required BrokerRepository brokerRepository}) : _mqtt = mqttService, _state = state, _history = historyService, _brokers = brokerRepository {
     _state.load(SettingsKeys.environmentVariables);
     _state.load(SettingsKeys.environmentVariableValues);
     _subscription = _mqtt.messageStream.listen(_onMessage);
     _activeBrokerId = activeBroker?.id;
     _state.addListener(_onStateChanged);
+    _brokers.addListener(_onBrokersChanged);
   }
 
   // Internal state
   final MqttService _mqtt;
   final AppStateManager _state;
   final MessageHistoryService _history;
+  final BrokerRepository _brokers;
   StreamSubscription<MQTTMessage>? _subscription;
   String? _activeBrokerId;
 
@@ -82,26 +86,25 @@ class MonitorViewModel extends ChangeNotifier {
   int get messageCount => _state.read(AppKeys.messageCount);
   int get messageRate => _state.read(AppKeys.messageRate);
   bool get showStatusBar => _state.read(SettingsKeys.showStatusBar);
-  // Brokers
-  List<BrokerEntry> get brokers => _state.read(SettingsKeys.brokers);
+
+  /// Returns the configured broker profiles.
+  List<BrokerEntry> get brokers => _brokers.brokers;
+
+  /// Returns the recoverable broker persistence failure, if any.
+  BrokerRepositoryFailure? get brokerFailure => _brokers.failure;
 
   /// The protocol negotiated with the broker, or `null` if not
   /// connected. Mirrors the broker profile's selected protocol version.
   MqttProtocolVersion? get activeProtocol => _mqtt.activeProtocol;
 
-  // The currently active broker, or null if no brokers are configured.
-  BrokerEntry? get activeBroker {
-    final list = brokers;
-    if (list.isEmpty) return null;
-    final id = _state.read(AppKeys.activeBrokerId);
-    if (id != null && list.any((b) => b.id == id)) {
-      return list.firstWhere((b) => b.id == id);
-    }
-    return list.first;
-  }
+  /// Returns the active broker, or `null` when none are configured.
+  BrokerEntry? get activeBroker => _brokers.activeBroker;
 
   /// Selects a broker by its ID.
-  void selectBroker(String id) => _state.write(AppKeys.activeBrokerId, id);
+  Future<void> selectBroker(String id) async => _brokers.select(id);
+
+  /// Retries loading broker profiles after a recoverable failure.
+  Future<void> retryBrokerLoad() => _brokers.retry();
 
   /// Disconnects from the current broker.
   void disconnect() => _mqtt.disconnect();
@@ -156,26 +159,21 @@ class MonitorViewModel extends ChangeNotifier {
   }
 
   /// Adds a new broker and makes it the active one.
-  void addBroker(BrokerEntry entry) {
-    _state.write(SettingsKeys.brokers, [...brokers, entry]);
-    _state.write(AppKeys.activeBrokerId, entry.id);
-  }
+  Future<void> addBroker(BrokerEntry entry) => _brokers.add(entry);
 
   /// Updates an existing broker entry in the list.
-  void updateBroker(BrokerEntry updated) {
-    final list = [...brokers];
-    final i = list.indexWhere((b) => b.id == updated.id);
-    if (i != -1) list[i] = updated;
-    _state.write(SettingsKeys.brokers, list);
-  }
+  Future<void> updateBroker(BrokerEntry updated) => _brokers.update(updated);
 
   /// Deletes a broker by its ID.
-  void deleteBroker(String id) {
-    _state.write(SettingsKeys.brokers, brokers.where((b) => b.id != id).toList());
+  Future<void> deleteBroker(String id) => _brokers.delete(id);
+
+  /// Notifies monitor consumers when remaining application state changes.
+  void _onStateChanged() {
+    notifyListeners();
   }
 
-  /// Reacts to app state changes and clears the tree when the broker switches.
-  void _onStateChanged() {
+  /// Clears broker-scoped projections when active broker ownership changes.
+  void _onBrokersChanged() {
     final newId = activeBroker?.id;
     if (newId != _activeBrokerId) {
       _activeBrokerId = newId;
@@ -455,6 +453,7 @@ class MonitorViewModel extends ChangeNotifier {
   void dispose() {
     _subscription?.cancel();
     _state.removeListener(_onStateChanged);
+    _brokers.removeListener(_onBrokersChanged);
     for (final t in _pendingTimers.values) {
       t.cancel();
     }

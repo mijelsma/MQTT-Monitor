@@ -11,6 +11,7 @@ import 'package:mqtt5_client/mqtt5_server_client.dart' as mqtt5_server;
 import '../../models/broker_entry.dart';
 import '../../models/mqtt_protocol_version.dart';
 import '../../models/startup_connection.dart';
+import '../broker/broker_repository.dart';
 import '../state/app_state.dart';
 import '../state/keys/app_keys.dart';
 import '../state/keys/settings_keys.dart';
@@ -26,13 +27,16 @@ typedef Mqtt5ClientFactory = mqtt5_server.MqttServerClient Function(BrokerEntry 
 const _publishAckTimeout = Duration(seconds: 5);
 const _socketTimeoutMs = 5000;
 
+/// Coordinates MQTT connections, subscriptions, publishing, and telemetry.
 class MqttService {
-  MqttService(this._state, {ClientCertificateService? certificateService, Mqtt3ClientFactory? mqtt3ClientFactory, Mqtt5ClientFactory? mqtt5ClientFactory})
+  /// Creates the service from application state and broker-profile ownership.
+  MqttService(this._state, this._brokers, {ClientCertificateService? certificateService, Mqtt3ClientFactory? mqtt3ClientFactory, Mqtt5ClientFactory? mqtt5ClientFactory})
     : _certificateService = certificateService ?? ClientCertificateService(),
       _mqtt3ClientFactory = mqtt3ClientFactory ?? ((broker) => mqtt3_server.MqttServerClient.withPort(broker.host, broker.effectiveClientId, broker.port, maxConnectionAttempts: 1)),
       _mqtt5ClientFactory = mqtt5ClientFactory ?? ((broker) => mqtt5_server.MqttServerClient.withPort(broker.host, broker.effectiveClientId, broker.port, maxConnectionAttempts: 1));
 
   final AppStateManager _state;
+  final BrokerRepository _brokers;
   final ClientCertificateService _certificateService;
   final Mqtt3ClientFactory _mqtt3ClientFactory;
   final Mqtt5ClientFactory _mqtt5ClientFactory;
@@ -59,8 +63,10 @@ class MqttService {
   int _messageCount = 0;
   int _rateIntervalMs = 0;
 
+  /// Starts state synchronization, broker observation, and rate sampling.
   void initialize() {
     _state.addListener(_onStateChanged);
+    _brokers.addListener(_sync);
     _startRateTimer();
     _sync();
   }
@@ -172,6 +178,7 @@ class MqttService {
 
   MqttProtocolVersion? get activeProtocol => _activeProtocol;
 
+  /// Synchronizes settings-driven connection and telemetry changes.
   void _onStateChanged() {
     _sync();
 
@@ -179,11 +186,9 @@ class MqttService {
     if (intervalMs != _rateIntervalMs) _startRateTimer();
   }
 
+  /// Reconciles the MQTT session with the repository's active broker profile.
   void _sync() {
-    final brokers = _state.read(SettingsKeys.brokers);
-    final activeBrokerId = _state.read(AppKeys.activeBrokerId);
-
-    final broker = brokers.isEmpty ? null : brokers.firstWhere((b) => b.id == activeBrokerId, orElse: () => brokers.first);
+    final broker = _brokers.activeBroker;
 
     final brokerSignature = broker == null ? null : jsonEncode(broker.toJson());
     if (broker?.id == _currentBrokerId && brokerSignature == _currentBrokerSignature) {
@@ -765,12 +770,14 @@ class MqttService {
     _ => mqtt5.MqttQos.atMostOnce,
   };
 
+  /// Tears down the MQTT session and releases all owned resources.
   void dispose() {
     ++_sessionId;
     _cleanup();
     _failPendingPublishes();
     _rateTimer?.cancel();
     _state.removeListener(_onStateChanged);
+    _brokers.removeListener(_sync);
     _messages.close();
   }
 }

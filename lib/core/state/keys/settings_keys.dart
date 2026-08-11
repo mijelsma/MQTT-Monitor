@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../models/broker_entry.dart';
 import '../../../models/chart_type.dart';
 import '../../../models/interpolation_mode.dart';
 import '../../../models/language.dart';
@@ -13,9 +12,6 @@ import '../../../models/publish_shortcut.dart';
 
 /// Defines the keys used in the app state for managing settings and preferences.
 abstract final class SettingsKeys {
-  // Brokers panel
-  static final brokers = StateKey.fromJson<List<BrokerEntry>>('settings.brokers', defaultValue: const [], toJson: (list) => list.map((e) => e.toJson()).toList(), fromJson: (raw) => (raw as List).map((e) => BrokerEntry.fromJson(e as Map<String, dynamic>)).toList());
-
   // UI panel
   static final themeMode = StateKey.forEnum('settings.themeMode', ThemeMode.values, defaultValue: ThemeMode.system);
   static final accentColor = StateKey.integer('settings.accentColor', defaultValue: 0xFF6366F1);
@@ -98,7 +94,6 @@ abstract final class SettingsKeys {
     defaultInterpolation,
     defaultMaxSamples,
     language,
-    brokers,
     environmentVariables,
     environmentVariableValues,
     defaultHistorySize,

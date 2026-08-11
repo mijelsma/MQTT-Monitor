@@ -1,9 +1,9 @@
 import 'dart:async';
 
+import '../broker/broker_repository.dart';
 import '../mqtt/mqtt_message.dart';
 import '../mqtt/mqtt_service.dart';
 import '../state/app_state.dart';
-import '../state/keys/app_keys.dart';
 import '../state/keys/settings_keys.dart';
 import '../../models/topic_node_value.dart';
 
@@ -13,12 +13,15 @@ import '../../models/topic_node_value.dart';
 /// so history is always being collected. Topics can be marked for
 /// "increased monitoring" to keep a larger buffer.
 class MessageHistoryService {
-  MessageHistoryService(MqttService mqtt, this._state) : _messages = mqtt.messageStream;
+  /// Creates app-wide history collection from [mqtt]'s message stream.
+  MessageHistoryService(MqttService mqtt, this._state, this._brokers) : _messages = mqtt.messageStream;
 
-  MessageHistoryService.fromStream(Stream<MQTTMessage> messages, this._state) : _messages = messages;
+  /// Creates history collection from an injected [messages] stream.
+  MessageHistoryService.fromStream(Stream<MQTTMessage> messages, this._state, this._brokers) : _messages = messages;
 
   final Stream<MQTTMessage> _messages;
   final AppStateManager _state;
+  final BrokerRepository _brokers;
   StreamSubscription<MQTTMessage>? _subscription;
 
   /// topic → list of values, newest last.
@@ -35,11 +38,11 @@ class MessageHistoryService {
 
   /// Starts listening to the MQTT message stream.
   void initialize() {
-    _state.load(AppKeys.activeBrokerId);
-    _activeBrokerId = _state.read(AppKeys.activeBrokerId);
+    _activeBrokerId = _brokers.activeBrokerId;
     _loadIncreasedTopics();
     _subscription = _messages.listen(_onMessage);
     _state.addListener(_onSettingsChanged);
+    _brokers.addListener(_onBrokerChanged);
   }
 
   void _loadIncreasedTopics() {
@@ -50,14 +53,19 @@ class MessageHistoryService {
       ..addAll(topics);
   }
 
+  /// Reloads history-size settings and trims retained topic values.
   void _onSettingsChanged() {
-    final brokerId = _state.read(AppKeys.activeBrokerId);
+    _loadIncreasedTopics();
+    _trimAll();
+  }
+
+  /// Clears session history when active broker ownership changes.
+  void _onBrokerChanged() {
+    final brokerId = _brokers.activeBrokerId;
     if (brokerId != _activeBrokerId) {
       _activeBrokerId = brokerId;
       clear();
     }
-    _loadIncreasedTopics();
-    _trimAll();
   }
 
   void _onMessage(MQTTMessage msg) {
@@ -143,8 +151,10 @@ class MessageHistoryService {
     _seqCounters.clear();
   }
 
+  /// Stops message collection and releases state and broker listeners.
   void dispose() {
     _subscription?.cancel();
     _state.removeListener(_onSettingsChanged);
+    _brokers.removeListener(_onBrokerChanged);
   }
 }

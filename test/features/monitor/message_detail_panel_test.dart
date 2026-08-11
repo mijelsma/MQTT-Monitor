@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mqtt_monitor/core/broker/broker_repository.dart';
 import 'package:mqtt_monitor/core/history/message_history_service.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_service.dart';
 import 'package:mqtt_monitor/core/state/app_state.dart';
@@ -11,24 +12,26 @@ import 'package:mqtt_monitor/models/topic_node_value.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
+import '../../support/test_dependencies.dart';
+
 void main() {
+  final state = AppStateManager.instance;
+  late BrokerRepository brokers;
+
+  setUp(() async {
+    final dependencies = await TestDependencies.create();
+    brokers = dependencies.brokers;
+  });
+
   test('recognizes a standalone JSON numeric string as a pinnable payload', () {
     expect(parseNumericPayload('"23.5"'), (23.5, null));
   });
 
   Widget buildHarness(String payload) {
-    final state = AppStateManager.instance;
-    final mqtt = MqttService(state);
-    final history = MessageHistoryService(mqtt, state);
-    final node = TopicTreeNode(
-      segment: 'temperature',
-      fullPath: 'home/temperature',
-    );
-    node.valueNotifier.value = TopicNodeValue(
-      payload: payload,
-      seq: 1,
-      receivedAt: DateTime(2026),
-    );
+    final mqtt = MqttService(state, brokers);
+    final history = MessageHistoryService(mqtt, state, brokers);
+    final node = TopicTreeNode(segment: 'temperature', fullPath: 'home/temperature');
+    node.valueNotifier.value = TopicNodeValue(payload: payload, seq: 1, receivedAt: DateTime(2026));
 
     return MultiProvider(
       providers: [
@@ -37,12 +40,7 @@ void main() {
       ],
       child: MaterialApp(
         theme: themeLight,
-        localizationsDelegates: const [
-          S.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
+        localizationsDelegates: const [S.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
         supportedLocales: S.delegate.supportedLocales,
         home: Scaffold(body: MessageDetailPanel(node: node)),
       ),
@@ -54,10 +52,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('payload-selection-area')), findsOneWidget);
-    expect(
-      tester.widget(find.byKey(const Key('payload-selection-area'))),
-      isA<SelectionArea>(),
-    );
+    expect(tester.widget(find.byKey(const Key('payload-selection-area'))), isA<SelectionArea>());
     expect(tester.takeException(), isNull);
   });
 
