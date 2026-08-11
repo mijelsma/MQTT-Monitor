@@ -17,6 +17,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   provider: ^6.1.5+1
   shared_preferences: ^2.3.5
+  flutter_secure_storage: ^10.3.1
   mqtt_client: ^10.11.9
   mqtt5_client: ^5.0.0
   file_picker: ^10.3.10

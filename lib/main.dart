@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'app.dart';
 import 'core/broker/broker_repository.dart';
+import 'core/broker/flutter_secure_credential_store.dart';
 import 'core/history/message_history_service.dart';
+import 'core/mqtt/app_private_certificate_storage.dart';
 import 'core/mqtt/mqtt_service.dart';
 import 'core/state/app_state.dart';
 import 'core/storage/app_data_directory.dart';
@@ -18,7 +20,11 @@ void main() async {
   // Initialize app state and load persisted values.
   await AppStateManager.instance.initialize(preferences: preferences);
 
-  final brokerRepository = BrokerRepository(preferences);
+  final brokerRepository = BrokerRepository(
+    preferences,
+    credentials: const FlutterSecureCredentialStore(),
+    certificates: AppPrivateCertificateStorage.standard(),
+  );
   await brokerRepository.initialize();
 
   // Create and initialize the MQTT service.
@@ -26,7 +32,11 @@ void main() async {
   mqttService.initialize();
 
   // Create and initialize the global history service.
-  final historyService = MessageHistoryService(mqttService, AppStateManager.instance, brokerRepository);
+  final historyService = MessageHistoryService(
+    mqttService,
+    AppStateManager.instance,
+    brokerRepository,
+  );
   historyService.initialize();
 
   // The update service is global so update state survives navigation to
@@ -34,7 +44,14 @@ void main() async {
   final updater = AppUpdateService(state: AppStateManager.instance);
 
   // Run the app.
-  runApp(App(mqttService: mqttService, historyService: historyService, updater: updater, brokerRepository: brokerRepository));
+  runApp(
+    App(
+      mqttService: mqttService,
+      historyService: historyService,
+      updater: updater,
+      brokerRepository: brokerRepository,
+    ),
+  );
 
   updater.checkForUpdatesOnStartup();
 }

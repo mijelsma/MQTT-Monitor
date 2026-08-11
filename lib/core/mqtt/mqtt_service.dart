@@ -670,7 +670,9 @@ class MqttService {
     for (var i = 0; i < 20; i++) {
       if (status == null || session != _sessionId) return null;
       final code = status.returnCode;
-      if (code != null && code != mqtt3.MqttConnectReturnCode.noneSpecified) return code;
+      if (code != null && code != mqtt3.MqttConnectReturnCode.noneSpecified) {
+        return code;
+      }
       await Future<void>.delayed(const Duration(milliseconds: 50));
     }
     return null;
@@ -680,7 +682,9 @@ class MqttService {
     for (var i = 0; i < 20; i++) {
       if (status == null || session != _sessionId) return null;
       final code = status.reasonCode;
-      if (code != null && code != mqtt5.MqttConnectReasonCode.notSet) return code;
+      if (code != null && code != mqtt5.MqttConnectReasonCode.notSet) {
+        return code;
+      }
       await Future<void>.delayed(const Duration(milliseconds: 50));
     }
     return null;

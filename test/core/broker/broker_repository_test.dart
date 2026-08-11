@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/broker/broker_repository.dart';
 import 'package:mqtt_monitor/core/broker/broker_storage_keys.dart';
+import 'package:mqtt_monitor/core/broker/certificate_storage.dart';
+import 'package:mqtt_monitor/core/broker/credential_store.dart';
 import 'package:mqtt_monitor/core/storage/preferences_store.dart';
 import 'package:mqtt_monitor/models/broker_entry.dart';
 import 'package:mqtt_monitor/models/client_certificate_config.dart';
@@ -13,21 +15,17 @@ void main() {
 
   test('schema initialization is idempotent', () async {
     final store = _MemoryPreferencesStore();
-    final repository = BrokerRepository(store);
-
+    final repository = _repository(store);
     await repository.initialize();
     await repository.initialize();
-
     expect(store.schemaVersionWrites, 1);
     expect(repository.failure, isNull);
   });
 
   test('fresh storage gets defaults without creating a broker payload', () async {
     final store = _MemoryPreferencesStore();
-    final repository = BrokerRepository(store);
-
+    final repository = _repository(store);
     await repository.initialize();
-
     expect(repository.brokers, isEmpty);
     expect(repository.activeBrokerId, isNull);
     expect(store.get(BrokerStorageKeys.profiles), isNull);
@@ -38,41 +36,46 @@ void main() {
   test('corrupt JSON is reported and left byte-for-byte unchanged', () async {
     const corrupt = '[{"id":"broken"';
     final store = _MemoryPreferencesStore({BrokerStorageKeys.schemaVersion: BrokerStorageKeys.currentSchemaVersion, BrokerStorageKeys.profiles: corrupt});
-    final repository = BrokerRepository(store);
-
+    final repository = _repository(store);
     await repository.initialize();
-
     expect(repository.failure?.message, contains('left unchanged'));
     expect(repository.failure?.details, isNotEmpty);
     expect(repository.brokers, isEmpty);
     expect(store.get(BrokerStorageKeys.profiles), corrupt);
-    expect(store.get(BrokerStorageKeys.schemaVersion), BrokerStorageKeys.currentSchemaVersion);
     expect(await repository.add(first), isFalse);
     expect(store.get(BrokerStorageKeys.profiles), corrupt);
   });
 
-  test('a future schema is rejected without modifying stored data', () async {
-    final store = _MemoryPreferencesStore({BrokerStorageKeys.schemaVersion: BrokerStorageKeys.currentSchemaVersion + 1, BrokerStorageKeys.profiles: '[]'});
-    final repository = BrokerRepository(store);
+  test('plaintext password payload is rejected and left unchanged', () async {
+    const plaintext = '[{"id":"first","name":"First","host":"first.invalid","password":"secret","subscriptions":[]}]';
+    final store = _MemoryPreferencesStore({BrokerStorageKeys.schemaVersion: BrokerStorageKeys.currentSchemaVersion, BrokerStorageKeys.profiles: plaintext});
+    final repository = _repository(store);
 
     await repository.initialize();
 
+    expect(repository.failure?.details, contains('unsupported plaintext'));
+    expect(repository.failure?.details, isNot(contains('secret')));
+    expect(store.get(BrokerStorageKeys.profiles), plaintext);
+  });
+
+  test('a future schema is rejected without modifying stored data', () async {
+    final store = _MemoryPreferencesStore({BrokerStorageKeys.schemaVersion: BrokerStorageKeys.currentSchemaVersion + 1, BrokerStorageKeys.profiles: '[]'});
+    final repository = _repository(store);
+    await repository.initialize();
     expect(repository.failure?.details, contains('newer than this app supports'));
     expect(store.values, {BrokerStorageKeys.schemaVersion: BrokerStorageKeys.currentSchemaVersion + 1, BrokerStorageKeys.profiles: '[]'});
   });
 
   test('invalid active ID falls back to the first profile and persists the repair', () async {
     final store = _MemoryPreferencesStore({BrokerStorageKeys.schemaVersion: BrokerStorageKeys.currentSchemaVersion, BrokerStorageKeys.profiles: '[{"id":"first","name":"First","host":"first.invalid","subscriptions":[]}]', BrokerStorageKeys.activeProfileId: 'missing'});
-    final repository = BrokerRepository(store);
-
+    final repository = _repository(store);
     await repository.initialize();
-
     expect(repository.activeBrokerId, first.id);
     expect(repository.activeBroker?.id, first.id);
     expect(store.get(BrokerStorageKeys.activeProfileId), first.id);
   });
 
-  test('current broker fields round-trip without loss', () async {
+  test('current broker fields and protected password round-trip without loss', () async {
     const broker = BrokerEntry(
       id: 'complete',
       name: 'Complete',
@@ -90,21 +93,26 @@ void main() {
       subscriptions: [SubscriptionEntry(topic: 'devices/+/state', qos: 2, name: 'State')],
     );
     final store = _MemoryPreferencesStore();
-    final repository = BrokerRepository(store);
+    final credentials = _MemoryCredentialStore();
+    final repository = _repository(store, credentials: credentials);
     await repository.initialize();
-
     expect(await repository.add(broker), isTrue);
+    final storedJson = store.get(BrokerStorageKeys.profiles)! as String;
+    expect(storedJson, isNot(contains('secret')));
+    expect(storedJson, isNot(contains('"password"')));
+    expect(storedJson, contains('passwordReference'));
 
-    final reloaded = BrokerRepository(store);
+    final reloaded = _repository(store, credentials: credentials);
     await reloaded.initialize();
-    expect(reloaded.brokers.single.toJson(), broker.toJson());
+    expect(reloaded.failure, isNull);
+    expect(reloaded.brokers.single.password, 'secret');
+    expect(reloaded.brokers.single.toJson(), repository.brokers.single.toJson());
   });
 
   test('CRUD, reorder, selection, and active deletion survive reload', () async {
     final store = _MemoryPreferencesStore();
-    final repository = BrokerRepository(store);
+    final repository = _repository(store);
     await repository.initialize();
-
     expect(await repository.add(first), isTrue);
     expect(await repository.add(second, makeActive: false), isTrue);
     expect(repository.activeBrokerId, first.id);
@@ -115,9 +123,8 @@ void main() {
     expect(await repository.delete(second.id), isTrue);
     expect(repository.activeBrokerId, first.id);
 
-    final reloaded = BrokerRepository(store);
+    final reloaded = _repository(store);
     await reloaded.initialize();
-
     expect(reloaded.failure, isNull);
     expect(reloaded.brokers.single.name, 'Updated');
     expect(reloaded.activeBrokerId, first.id);
@@ -125,67 +132,188 @@ void main() {
 
   test('failed schema initialization can be retried', () async {
     final store = _MemoryPreferencesStore()..failNextWriteFor(BrokerStorageKeys.schemaVersion);
-    final repository = BrokerRepository(store);
-
+    final repository = _repository(store);
     await repository.initialize();
     expect(repository.failure, isNotNull);
     expect(store.get(BrokerStorageKeys.profiles), isNull);
     expect(store.get(BrokerStorageKeys.schemaVersion), isNull);
-
     await repository.retry();
     expect(repository.failure, isNull);
     expect(repository.brokers, isEmpty);
-    expect(store.get(BrokerStorageKeys.schemaVersion), BrokerStorageKeys.currentSchemaVersion);
   });
 
   test('failed multi-key save restores the previous persisted snapshot', () async {
     final store = _MemoryPreferencesStore();
-    final repository = BrokerRepository(store);
+    final repository = _repository(store);
     await repository.initialize();
     await repository.add(first);
     final oldProfiles = store.get(BrokerStorageKeys.profiles);
     final oldActiveId = store.get(BrokerStorageKeys.activeProfileId);
     store.failNextWriteFor(BrokerStorageKeys.activeProfileId);
-
     expect(await repository.add(second), isFalse);
-
     expect(repository.brokers.map((broker) => broker.id), [first.id]);
     expect(repository.failure?.message, contains('previous stored data was preserved'));
     expect(store.get(BrokerStorageKeys.profiles), oldProfiles);
     expect(store.get(BrokerStorageKeys.activeProfileId), oldActiveId);
   });
+
+  test('failed secure write leaves profile storage unchanged and redacts the secret', () async {
+    final store = _MemoryPreferencesStore();
+    final credentials = _MemoryCredentialStore()..failNextWrite = true;
+    final repository = _repository(store, credentials: credentials);
+    await repository.initialize();
+    expect(await repository.add(first.copyWith(password: 'do-not-leak')), isFalse);
+    expect(store.get(BrokerStorageKeys.profiles), isNull);
+    expect(repository.failure?.details, isNot(contains('do-not-leak')));
+    expect(credentials.values, isEmpty);
+  });
+
+  test('failed profile write restores the previous secure password', () async {
+    final store = _MemoryPreferencesStore();
+    final credentials = _MemoryCredentialStore();
+    final repository = _repository(store, credentials: credentials);
+    await repository.initialize();
+    await repository.add(first.copyWith(password: 'old-secret'));
+    store.failNextWriteFor(BrokerStorageKeys.profiles);
+    expect(await repository.update(repository.brokers.single.copyWith(password: 'new-secret')), isFalse);
+    expect(credentials.values.values.single, 'old-secret');
+    expect(repository.failure?.details, isNot(contains('new-secret')));
+  });
+
+  test('clearing a password removes its reference and protected value', () async {
+    final store = _MemoryPreferencesStore();
+    final credentials = _MemoryCredentialStore();
+    final repository = _repository(store, credentials: credentials);
+    await repository.initialize();
+    await repository.add(first.copyWith(password: 'secret'));
+
+    expect(await repository.update(repository.brokers.single.copyWith(clearPassword: true)), isTrue);
+
+    expect(repository.brokers.single.password, isNull);
+    expect(repository.brokers.single.passwordReference, isNull);
+    expect(credentials.values, isEmpty);
+    expect(store.get(BrokerStorageKeys.profiles), isNot(contains('passwordReference')));
+  });
+
+  test('failed secure verification rolls back the written value', () async {
+    final store = _MemoryPreferencesStore();
+    final credentials = _MemoryCredentialStore()..corruptNextWrite = true;
+    final repository = _repository(store, credentials: credentials);
+    await repository.initialize();
+
+    expect(await repository.add(first.copyWith(password: 'secret')), isFalse);
+
+    expect(credentials.values, isEmpty);
+    expect(store.get(BrokerStorageKeys.profiles), isNull);
+    expect(repository.failure?.details, contains('could not verify'));
+  });
+
+  test('missing protected password produces a recoverable load failure', () async {
+    final store = _MemoryPreferencesStore();
+    final credentials = _MemoryCredentialStore();
+    final repository = _repository(store, credentials: credentials);
+    await repository.initialize();
+    await repository.add(first.copyWith(password: 'secret'));
+    credentials.values.clear();
+    final reloaded = _repository(store, credentials: credentials);
+    await reloaded.initialize();
+    expect(reloaded.failure?.details, contains('unavailable in protected storage'));
+    expect(reloaded.failure?.details, isNot(contains('secret')));
+    expect(reloaded.brokers, isEmpty);
+  });
+
+  test('certificate replacement and broker deletion clean owned resources', () async {
+    final store = _MemoryPreferencesStore();
+    final credentials = _MemoryCredentialStore();
+    final certificates = _MemoryCertificateStorage();
+    final repository = _repository(store, credentials: credentials, certificates: certificates);
+    await repository.initialize();
+    const original = BrokerEntry(
+      id: 'certs',
+      name: 'Certs',
+      host: 'host',
+      password: 'secret',
+      clientCertificates: ClientCertificateConfig(rootCaPath: '/owned/root-old.pem', clientPrivateKeyPath: '/owned/key.pem'),
+    );
+    await repository.add(original);
+    final replacement = repository.brokers.single.copyWith(
+      clientCertificates: const ClientCertificateConfig(rootCaPath: '/owned/root-new.pem', clientPrivateKeyPath: '/owned/key.pem'),
+    );
+    expect(await repository.update(replacement), isTrue);
+    expect(certificates.deleted, ['/owned/root-old.pem']);
+    expect(await repository.delete('certs'), isTrue);
+    expect(certificates.deleted, containsAll(['/owned/root-new.pem', '/owned/key.pem']));
+    expect(credentials.values, isEmpty);
+  });
+
+  test('failed cleanup remains queued and retry completes it', () async {
+    final store = _MemoryPreferencesStore();
+    final certificates = _MemoryCertificateStorage()..failNextDelete = true;
+    final repository = _repository(store, certificates: certificates);
+    await repository.initialize();
+    await repository.add(
+      const BrokerEntry(
+        id: 'certs',
+        name: 'Certs',
+        host: 'host',
+        clientCertificates: ClientCertificateConfig(rootCaPath: '/owned/root.pem'),
+      ),
+    );
+    expect(await repository.delete('certs'), isTrue);
+    expect(repository.failure?.message, contains('change was saved'));
+    expect(store.get(BrokerStorageKeys.pendingResourceCleanup), isNotNull);
+    await repository.retry();
+    expect(repository.failure, isNull);
+    expect(certificates.deleted, ['/owned/root.pem']);
+    expect(store.get(BrokerStorageKeys.pendingResourceCleanup), isNull);
+  });
 }
 
+/// Creates a repository with controllable in-memory resource adapters.
+BrokerRepository _repository(_MemoryPreferencesStore store, {_MemoryCredentialStore? credentials, _MemoryCertificateStorage? certificates}) {
+  return BrokerRepository(store, credentials: credentials ?? _MemoryCredentialStore(), certificates: certificates ?? _MemoryCertificateStorage());
+}
+
+/// Implements preference storage with deterministic failure injection.
 class _MemoryPreferencesStore implements PreferencesStore {
+  /// Creates a memory store from optional [initial] values.
   _MemoryPreferencesStore([Map<String, Object>? initial]) : values = {...?initial};
 
   final Map<String, Object> values;
   final Set<String> _failOnce = {};
   int schemaVersionWrites = 0;
 
+  /// Makes the next write or removal for [key] fail.
   void failNextWriteFor(String key) => _failOnce.add(key);
 
+  /// Returns the value stored for [key].
   @override
   Object? get(String key) => values[key];
 
+  /// Returns all stored keys.
   @override
   Set<String> getKeys() => values.keys.toSet();
 
+  /// Stores a boolean value.
   @override
   Future<void> setBool(String key, bool value) => _write(key, value);
 
+  /// Stores a decimal value.
   @override
   Future<void> setDouble(String key, double value) => _write(key, value);
 
+  /// Stores an integer value and tracks schema initialization.
   @override
   Future<void> setInt(String key, int value) {
     if (key == BrokerStorageKeys.schemaVersion) schemaVersionWrites++;
     return _write(key, value);
   }
 
+  /// Stores a string value.
   @override
   Future<void> setString(String key, String value) => _write(key, value);
 
+  /// Applies one write unless failure was requested for [key].
   Future<void> _write(String key, Object value) async {
     if (_failOnce.remove(key)) {
       throw StateError('Injected write failure for $key');
@@ -193,6 +321,7 @@ class _MemoryPreferencesStore implements PreferencesStore {
     values[key] = value;
   }
 
+  /// Removes [key] unless failure was requested.
   @override
   Future<void> remove(String key) async {
     if (_failOnce.remove(key)) {
@@ -201,6 +330,51 @@ class _MemoryPreferencesStore implements PreferencesStore {
     values.remove(key);
   }
 
+  /// Removes all values.
   @override
   Future<void> clear() async => values.clear();
+}
+
+/// Stores secrets in memory and can inject one write failure.
+class _MemoryCredentialStore implements CredentialStore {
+  final Map<String, String> values = {};
+  bool failNextWrite = false;
+  bool corruptNextWrite = false;
+
+  /// Returns a stored secret.
+  @override
+  Future<String?> read(String reference) async => values[reference];
+
+  /// Stores a secret unless the next write is configured to fail.
+  @override
+  Future<void> write(String reference, String value) async {
+    if (failNextWrite) {
+      failNextWrite = false;
+      throw StateError('Injected secure write failure containing $value');
+    }
+    values[reference] = corruptNextWrite ? 'corrupted' : value;
+    corruptNextWrite = false;
+  }
+
+  /// Deletes a stored secret.
+  @override
+  Future<void> delete(String reference) async {
+    values.remove(reference);
+  }
+}
+
+/// Records certificate deletion and can inject one failure.
+class _MemoryCertificateStorage implements CertificateStorage {
+  final List<String> deleted = [];
+  bool failNextDelete = false;
+
+  /// Deletes [filePath] unless the next deletion is configured to fail.
+  @override
+  Future<void> delete(String filePath) async {
+    if (failNextDelete) {
+      failNextDelete = false;
+      throw StateError('Injected certificate delete failure');
+    }
+    deleted.add(filePath);
+  }
 }

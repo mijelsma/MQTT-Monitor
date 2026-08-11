@@ -140,7 +140,7 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
       - name: Install Linux build dependencies
-        run: sudo apt-get update && sudo apt-get install --yes libgtk-3-dev ninja-build
+        run: sudo apt-get update && sudo apt-get install --yes libgtk-3-dev libsecret-1-0 libsecret-1-dev ninja-build
       - name: Build Linux release assets
         run: bash scripts/publish_desktop_update.sh linux '${{ needs.release-context.outputs.channel }}'
       - uses: actions/upload-artifact@v4

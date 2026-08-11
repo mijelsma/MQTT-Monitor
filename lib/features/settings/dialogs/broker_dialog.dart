@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -6,6 +7,9 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 import 'package:provider/provider.dart';
 
+import '../../../core/mqtt/app_private_certificate_storage.dart';
+import '../../../core/mqtt/certificate_validation_exception.dart';
+import '../../../core/mqtt/client_certificate_kind.dart';
 import '../../../core/mqtt/client_certificate_service.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/state/keys/settings_keys.dart';
@@ -29,6 +33,7 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import 'subscription_dialog.dart';
 
+/// Builds the compact uppercase label used above dialog sections.
 Widget _sectionLabel(BuildContext context, String label) => Padding(
   padding: const EdgeInsets.only(left: 4, bottom: 2),
   child: Text(
@@ -37,24 +42,30 @@ Widget _sectionLabel(BuildContext context, String label) => Padding(
   ),
 );
 
+/// Opens a broker editor and returns the submitted profile.
 Future<BrokerEntry?> showBrokerDialog(BuildContext context, {BrokerEntry? broker, VoidCallback? onDelete}) {
   return showDialog<BrokerEntry>(
     context: context,
+    barrierDismissible: false,
     barrierColor: Colors.black54,
     builder: (_) => BrokerDialog(broker: broker, onDelete: onDelete),
   );
 }
 
+/// Edits broker connection, authentication, certificate, and subscription data.
 class BrokerDialog extends StatefulWidget {
+  /// Creates a broker editor for an optional existing [broker].
   const BrokerDialog({super.key, this.broker, this.onDelete});
 
   final BrokerEntry? broker;
   final VoidCallback? onDelete;
 
+  /// Creates the mutable dialog state.
   @override
   State<BrokerDialog> createState() => _BrokerDialogState();
 }
 
+/// Owns temporary editor values and uncommitted certificate imports.
 class _BrokerDialogState extends State<BrokerDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
@@ -69,6 +80,8 @@ class _BrokerDialogState extends State<BrokerDialog> {
   late final String _brokerId;
   final _certificateService = ClientCertificateService();
   final _certificateStorage = AppPrivateCertificateStorage.standard();
+  final Set<String> _importedCertificatePaths = {};
+  bool _submitted = false;
   String? _certificateError;
   late bool _validateCertificates;
   late bool _randomClientIdSuffix;
@@ -76,9 +89,11 @@ class _BrokerDialogState extends State<BrokerDialog> {
   bool _obscurePassword = true;
   late List<SubscriptionEntry> _subscriptions;
 
+  /// Returns whether the dialog edits an existing broker.
   bool get _isEditing => widget.broker != null;
   bool _defaultSubscriptionApplied = false;
 
+  /// Initializes controllers and a stable broker ID for certificate ownership.
   @override
   void initState() {
     super.initState();
@@ -99,6 +114,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
     _subscriptions = List.from(b?.subscriptions ?? []);
   }
 
+  /// Adds the configured default subscription once localization is available.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -113,8 +129,10 @@ class _BrokerDialogState extends State<BrokerDialog> {
     }
   }
 
+  /// Disposes controllers and schedules cleanup for abandoned imports.
   @override
   void dispose() {
+    if (!_submitted) unawaited(_cleanupImportedCertificates());
     _name.dispose();
     _host.dispose();
     _port.dispose();
@@ -124,6 +142,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
     super.dispose();
   }
 
+  /// Validates the form and transfers certificate ownership to the repository.
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_clientCertificates.isEmpty && !_useSSL) {
@@ -138,6 +157,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
       return;
     }
     if (!mounted) return;
+    _submitted = true;
     Navigator.pop(
       context,
       BrokerEntry(
@@ -151,6 +171,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
         validateCertificates: _validateCertificates,
         username: _username.text.trim().isEmpty ? null : _username.text.trim(),
         password: _password.text.isEmpty ? null : _password.text,
+        passwordReference: widget.broker?.passwordReference,
         clientId: _clientId.text.trim().isEmpty ? null : _clientId.text.trim(),
         randomClientIdSuffix: _randomClientIdSuffix,
         colorIndex: AppColors.colorIndex(_color),
@@ -159,7 +180,9 @@ class _BrokerDialogState extends State<BrokerDialog> {
     );
   }
 
+  /// Imports and validates one certificate into an isolated broker slot.
   Future<void> _pickCertificate(ClientCertificateKind kind) async {
+    String? importedPath;
     try {
       final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: const ['pem', 'crt', 'cer', 'key'], withData: true);
       if (result == null || result.files.isEmpty) return;
@@ -174,15 +197,23 @@ class _BrokerDialogState extends State<BrokerDialog> {
         throw const CertificateValidationException('The selected file could not be read.');
       }
       _certificateService.validateBytes(kind, bytes);
-      final storedPath = await _certificateStorage.store(_brokerId, kind, bytes, originalFileName: selected.name);
-      if (!mounted) return;
+      importedPath = await _certificateStorage.store(_brokerId, kind, bytes, originalFileName: selected.name);
+      if (!mounted) {
+        await _certificateStorage.delete(importedPath);
+        return;
+      }
+      final previousPath = _certificatePath(kind);
+      if (previousPath != null && _importedCertificatePaths.remove(previousPath)) {
+        await _certificateStorage.delete(previousPath);
+      }
       setState(() {
+        _importedCertificatePaths.add(importedPath!);
         _useSSL = true;
         _certificateError = null;
         _clientCertificates = switch (kind) {
-          ClientCertificateKind.rootCa => _clientCertificates.copyWith(rootCaPath: storedPath),
-          ClientCertificateKind.privateKey => _clientCertificates.copyWith(clientPrivateKeyPath: storedPath),
-          ClientCertificateKind.clientCertificate => _clientCertificates.copyWith(clientCertificatePath: storedPath),
+          ClientCertificateKind.rootCa => _clientCertificates.copyWith(rootCaPath: importedPath),
+          ClientCertificateKind.privateKey => _clientCertificates.copyWith(clientPrivateKeyPath: importedPath),
+          ClientCertificateKind.clientCertificate => _clientCertificates.copyWith(clientCertificatePath: importedPath),
         };
       });
     } on PlatformException catch (error) {
@@ -192,13 +223,34 @@ class _BrokerDialogState extends State<BrokerDialog> {
     } on CertificateValidationException catch (error) {
       if (mounted) setState(() => _certificateError = error.message);
     } catch (error) {
+      if (importedPath != null && !_importedCertificatePaths.contains(importedPath)) {
+        try {
+          await _certificateStorage.delete(importedPath);
+        } on Object {
+          // The original import failure is more actionable to the user.
+        }
+      }
       if (mounted) {
         setState(() => _certificateError = 'Could not import the selected file: $error');
       }
     }
   }
 
-  void _clearCertificate(ClientCertificateKind kind) {
+  /// Clears a certificate slot and deletes it immediately when still temporary.
+  Future<void> _clearCertificate(ClientCertificateKind kind) async {
+    final previousPath = _certificatePath(kind);
+    if (previousPath != null && _importedCertificatePaths.contains(previousPath)) {
+      try {
+        await _certificateStorage.delete(previousPath);
+        _importedCertificatePaths.remove(previousPath);
+      } on Object catch (error) {
+        if (mounted) {
+          setState(() => _certificateError = 'Could not remove the imported certificate: $error');
+        }
+        return;
+      }
+    }
+    if (!mounted) return;
     setState(() {
       _certificateError = null;
       _clientCertificates = switch (kind) {
@@ -209,6 +261,40 @@ class _BrokerDialogState extends State<BrokerDialog> {
     });
   }
 
+  /// Returns the configured path for [kind].
+  String? _certificatePath(ClientCertificateKind kind) => switch (kind) {
+    ClientCertificateKind.rootCa => _clientCertificates.rootCaPath,
+    ClientCertificateKind.privateKey => _clientCertificates.clientPrivateKeyPath,
+    ClientCertificateKind.clientCertificate => _clientCertificates.clientCertificatePath,
+  };
+
+  /// Deletes every certificate imported during an abandoned edit.
+  Future<void> _cleanupImportedCertificates() async {
+    for (final filePath in _importedCertificatePaths) {
+      try {
+        await _certificateStorage.delete(filePath);
+      } on Object {
+        // Repository ownership starts only after submit, so cleanup is best effort.
+      }
+    }
+    _importedCertificatePaths.clear();
+  }
+
+  /// Deletes temporary imports before closing without a submitted profile.
+  Future<void> _cancel() async {
+    await _cleanupImportedCertificates();
+    if (mounted) Navigator.pop(context);
+  }
+
+  /// Deletes temporary imports before requesting deletion of the saved broker.
+  Future<void> _delete() async {
+    await _cleanupImportedCertificates();
+    if (!mounted) return;
+    Navigator.pop(context);
+    widget.onDelete!();
+  }
+
+  /// Adds a subscription using the configured default QoS policy.
   Future<void> _addSubscription() async {
     final state = context.read<AppStateManager>();
     state.load(SettingsKeys.defaultSubscribeQos);
@@ -220,14 +306,17 @@ class _BrokerDialogState extends State<BrokerDialog> {
     setState(() => _subscriptions.add(sub));
   }
 
+  /// Replaces the subscription at [index] when the editor returns a value.
   Future<void> _editSubscription(int index) async {
     final sub = await showSubscriptionDialog(context, entry: _subscriptions[index]);
     if (sub == null) return;
     setState(() => _subscriptions[index] = sub);
   }
 
+  /// Removes the subscription at [index].
   void _removeSubscription(int index) => setState(() => _subscriptions.removeAt(index));
 
+  /// Reorders subscriptions using Flutter's insertion-index convention.
   void _reorderSubscriptions(int oldIndex, int newIndex) {
     setState(() {
       if (newIndex > oldIndex) newIndex--;
@@ -236,6 +325,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
     });
   }
 
+  /// Builds the broker endpoint and protocol controls.
   Widget _buildConnectionSection(Color accent) {
     final s = S.of(context);
     return Column(
@@ -287,6 +377,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
     );
   }
 
+  /// Builds username, password, and mTLS controls.
   Widget _buildAuthSection() {
     final s = S.of(context);
     return Column(
@@ -309,9 +400,36 @@ class _BrokerDialogState extends State<BrokerDialog> {
           ),
         ),
         const VSpacer(18),
-        _CertificatePickerRow(label: 'Root CA certificate', fileName: _fileName(_clientCertificates.rootCaPath), onSelect: () => _pickCertificate(ClientCertificateKind.rootCa), onClear: _clientCertificates.rootCaPath == null ? null : () => _clearCertificate(ClientCertificateKind.rootCa)),
-        _CertificatePickerRow(label: 'Client private key', fileName: _fileName(_clientCertificates.clientPrivateKeyPath), onSelect: () => _pickCertificate(ClientCertificateKind.privateKey), onClear: _clientCertificates.clientPrivateKeyPath == null ? null : () => _clearCertificate(ClientCertificateKind.privateKey)),
-        _CertificatePickerRow(label: 'Client certificate', fileName: _fileName(_clientCertificates.clientCertificatePath), onSelect: () => _pickCertificate(ClientCertificateKind.clientCertificate), onClear: _clientCertificates.clientCertificatePath == null ? null : () => _clearCertificate(ClientCertificateKind.clientCertificate)),
+        _CertificatePickerRow(
+          label: 'Root CA certificate',
+          fileName: _fileName(_clientCertificates.rootCaPath),
+          onSelect: () => _pickCertificate(ClientCertificateKind.rootCa),
+          onClear: _clientCertificates.rootCaPath == null
+              ? null
+              : () {
+                  _clearCertificate(ClientCertificateKind.rootCa);
+                },
+        ),
+        _CertificatePickerRow(
+          label: 'Client private key',
+          fileName: _fileName(_clientCertificates.clientPrivateKeyPath),
+          onSelect: () => _pickCertificate(ClientCertificateKind.privateKey),
+          onClear: _clientCertificates.clientPrivateKeyPath == null
+              ? null
+              : () {
+                  _clearCertificate(ClientCertificateKind.privateKey);
+                },
+        ),
+        _CertificatePickerRow(
+          label: 'Client certificate',
+          fileName: _fileName(_clientCertificates.clientCertificatePath),
+          onSelect: () => _pickCertificate(ClientCertificateKind.clientCertificate),
+          onClear: _clientCertificates.clientCertificatePath == null
+              ? null
+              : () {
+                  _clearCertificate(ClientCertificateKind.clientCertificate);
+                },
+        ),
         if (_certificateError != null)
           Padding(
             padding: const EdgeInsets.only(top: 10),
@@ -321,8 +439,10 @@ class _BrokerDialogState extends State<BrokerDialog> {
     );
   }
 
+  /// Returns a compact filename or the empty-slot label for [filePath].
   String _fileName(String? filePath) => filePath == null ? 'Not configured' : path.basename(filePath);
 
+  /// Builds the editable subscription collection.
   Widget _buildSubscriptionsSection(Color accent) {
     final s = S.of(context);
     return Column(
@@ -363,6 +483,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
     );
   }
 
+  /// Builds the complete broker dialog.
   @override
   Widget build(BuildContext context) {
     final accent = context.tokens.primary;
@@ -371,13 +492,8 @@ class _BrokerDialogState extends State<BrokerDialog> {
     return UiModalScaffold(
       title: _isEditing ? s.brokerDialogEditTitle : s.brokerDialogAddTitle,
       isEditing: _isEditing,
-      onDelete: (widget.onDelete != null)
-          ? () {
-              Navigator.pop(context);
-              widget.onDelete!();
-            }
-          : null,
-      onCancel: () => Navigator.pop(context),
+      onDelete: widget.onDelete == null ? null : _delete,
+      onCancel: _cancel,
       onSubmit: _submit,
       submitLabel: _isEditing ? s.save : s.add,
       body: Form(
@@ -388,7 +504,9 @@ class _BrokerDialogState extends State<BrokerDialog> {
   }
 }
 
+/// Displays one certificate slot with choose, replace, and clear actions.
 class _CertificatePickerRow extends StatelessWidget {
+  /// Creates a certificate picker row.
   const _CertificatePickerRow({required this.label, required this.fileName, required this.onSelect, this.onClear});
 
   final String label;
@@ -396,6 +514,7 @@ class _CertificatePickerRow extends StatelessWidget {
   final VoidCallback onSelect;
   final VoidCallback? onClear;
 
+  /// Builds the certificate slot controls.
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;

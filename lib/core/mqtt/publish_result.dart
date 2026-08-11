@@ -50,8 +50,7 @@ class PublishResult {
   }
 
   /// Builds a "delivered" result for MQTT 5 QoS 1/2 with reason code 0.
-  factory PublishResult.delivered({String? reasonString, int? reasonCode}) =>
-      PublishResult(kind: PublishResultKind.delivered, reasonString: reasonString, reasonCode: reasonCode);
+  factory PublishResult.delivered({String? reasonString, int? reasonCode}) => PublishResult(kind: PublishResultKind.delivered, reasonString: reasonString, reasonCode: reasonCode);
 
   /// Builds a "failed" result from an MQTT 5 reason code and optional
   /// reason string. The reason is parsed via [mqttReasonCodeLabel] so the
@@ -60,18 +59,12 @@ class PublishResult {
   factory PublishResult.failed({required int reasonCode, String? reasonString}) {
     final label = mqttReasonCodeLabel(reasonCode);
     final detail = reasonString?.trim().isNotEmpty == true ? reasonString!.trim() : null;
-    return PublishResult(
-      kind: PublishResultKind.failed,
-      reason: detail == null ? '$label ($reasonCode)' : '$label ($reasonCode) — $detail',
-      reasonCode: reasonCode,
-      reasonString: reasonString,
-    );
+    return PublishResult(kind: PublishResultKind.failed, reason: detail == null ? '$label ($reasonCode)' : '$label ($reasonCode) — $detail', reasonCode: reasonCode, reasonString: reasonString);
   }
 
   /// Builds a "failed" result from a local error (e.g. the local client
   /// threw while serializing the publish).
-  factory PublishResult.localFailure(String message) =>
-      PublishResult(kind: PublishResultKind.failed, reason: message);
+  factory PublishResult.localFailure(String message) => PublishResult(kind: PublishResultKind.failed, reason: message);
 
   /// Builds a "timed out" result.
   factory PublishResult.timedOut(MqttProtocolVersion version, int qos) {
