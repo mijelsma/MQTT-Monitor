@@ -69,6 +69,7 @@ fi
 
 dart run desktop_updater:release publish \
   --config "$config_file" \
+  --app-name "MQTT Monitor" \
   --platform "$platform" \
   --channel "$channel" \
   --version "$release_version" \
