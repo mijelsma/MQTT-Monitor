@@ -1,4 +1,4 @@
-package com.example.mqtt_monitor
+package com.micheljelsma.mqttmonitor
 
 import io.flutter.embedding.android.FlutterActivity
 
