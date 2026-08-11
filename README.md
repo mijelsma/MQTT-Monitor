@@ -3,9 +3,6 @@
   A fast, customizable, native desktop MQTT client for people who actually live in their broker all day.
 </p>
 
-> [!IMPORTANT]
-> MQTT Monitor is currently in beta. The v1.0 release is planned for the end of August 2026.
-
 <p align="center">
   <a href="https://ko-fi.com/micheljelsma">
     <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi">
@@ -17,11 +14,16 @@
 
 ---
 
+> [!IMPORTANT]
+> **MQTT Monitor is currently in beta. The v1.0 release is planned for the end of August 2026.**
+
+
 Watching a fleet of devices, a home automation setup, or a busy production broker deserves something better than a log window. There are other MQTT tools out there, but I wanted one built around how I actually work, so I could see what's happening instead of decoding a raw JSON feed scrolling past. I use it every day myself, it's built around the stuff I kept running into.
 
 It's built with Flutter and runs as a real native app on macOS, Windows, and Linux from one codebase.
 
-**Why Flutter, and not Electron?** Flutter compiles down to native code instead of shipping a bundled browser, which makes it a lot easier to keep macOS, Windows, and Linux builds in sync from a single codebase, and it leaves the door open for a mobile app down the line.
+**Why Flutter?**<br>
+Flutter compiles down to native code instead of shipping a bundled browser, which makes it a lot easier to keep macOS, Windows, and Linux builds in sync from a single codebase, and it leaves the door open for a mobile app down the line.
 
 <p align="center">
   <img src="docs/images/ui-light-purple.png" alt="Screenshot of the topic tree" width="95%">
@@ -39,7 +41,6 @@ It's built with Flutter and runs as a real native app on macOS, Windows, and Lin
 - [Getting Started in VS Code](#getting-started-in-vs-code)
 - [Desktop Updates](docs/updates.md)
 - [Reporting Issues](#reporting-issues)
-- [Credits](#credits)
 
 ---
 
