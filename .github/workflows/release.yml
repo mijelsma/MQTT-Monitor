@@ -5,8 +5,7 @@ on:
     tags:
       - 'v*'
 
-# A release updates one shared app-archive.json. Never let two tags update it
-# at the same time.
+# Keep release publication ordered even when tags are pushed close together.
 concurrency:
   group: desktop-release
   cancel-in-progress: false
@@ -17,7 +16,6 @@ permissions:
 env:
   FLUTTER_CHANNEL: stable
   FLUTTER_VERSION: 3.41.4
-  AWS_EC2_METADATA_DISABLED: 'true'
 
 jobs:
   release-context:
@@ -37,17 +35,6 @@ jobs:
   windows:
     needs: release-context
     runs-on: windows-latest
-    env:
-      UPDATE_BASE_URL: ${{ secrets.UPDATE_BASE_URL }}
-      HETZNER_S3_ACCESS_KEY: ${{ secrets.HETZNER_S3_ACCESS_KEY }}
-      HETZNER_S3_SECRET_KEY: ${{ secrets.HETZNER_S3_SECRET_KEY }}
-      HETZNER_S3_BUCKET: ${{ secrets.HETZNER_S3_BUCKET }}
-      HETZNER_S3_PREFIX: ${{ secrets.HETZNER_S3_PREFIX }}
-      HETZNER_S3_REGION: ${{ secrets.HETZNER_S3_REGION }}
-      HETZNER_S3_ENDPOINT: ${{ secrets.HETZNER_S3_ENDPOINT }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.HETZNER_S3_ACCESS_KEY }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.HETZNER_S3_SECRET_KEY }}
-      AWS_DEFAULT_REGION: ${{ secrets.HETZNER_S3_REGION }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -55,36 +42,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install AWS CLI
-        run: python -m pip install --upgrade awscli
       - uses: subosito/flutter-action@v2
         with:
           channel: ${{ env.FLUTTER_CHANNEL }}
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-      - name: Publish Windows update
+      - name: Build Windows release assets
         shell: bash
         run: bash scripts/publish_desktop_update.sh windows '${{ needs.release-context.outputs.channel }}'
       - uses: actions/upload-artifact@v4
         with:
           name: mqtt-monitor-windows
-          path: dist/desktop_updater/releases
+          path: dist/github-release
+          if-no-files-found: error
 
   macos:
-    needs: [release-context, windows]
+    needs: release-context
     runs-on: macos-latest
     env:
-      UPDATE_BASE_URL: ${{ secrets.UPDATE_BASE_URL }}
-      HETZNER_S3_ACCESS_KEY: ${{ secrets.HETZNER_S3_ACCESS_KEY }}
-      HETZNER_S3_SECRET_KEY: ${{ secrets.HETZNER_S3_SECRET_KEY }}
-      HETZNER_S3_BUCKET: ${{ secrets.HETZNER_S3_BUCKET }}
-      HETZNER_S3_PREFIX: ${{ secrets.HETZNER_S3_PREFIX }}
-      HETZNER_S3_REGION: ${{ secrets.HETZNER_S3_REGION }}
-      HETZNER_S3_ENDPOINT: ${{ secrets.HETZNER_S3_ENDPOINT }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.HETZNER_S3_ACCESS_KEY }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.HETZNER_S3_SECRET_KEY }}
-      AWS_DEFAULT_REGION: ${{ secrets.HETZNER_S3_REGION }}
-      REQUIRE_EXISTING_ARCHIVE: 'true'
       MACOS_DEVELOPER_ID_APPLICATION: 'Developer ID Application: Michel Jelsma (T589Z25JDU)'
       MACOS_NOTARY_PROFILE: mqtt-monitor-notary
       MACOS_DEVELOPER_ID_P12_BASE64: ${{ secrets.MACOS_DEVELOPER_ID_P12_BASE64 }}
@@ -99,8 +74,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install AWS CLI
-        run: python3 -m pip install --upgrade awscli
       - uses: subosito/flutter-action@v2
         with:
           channel: ${{ env.FLUTTER_CHANNEL }}
@@ -137,12 +110,13 @@ jobs:
             --key-id "$MACOS_NOTARY_KEY_ID" \
             --issuer "$MACOS_NOTARY_ISSUER_ID" \
             --keychain "$keychain_path"
-      - name: Publish macOS update
+      - name: Build macOS release assets
         run: bash scripts/publish_desktop_update.sh macos '${{ needs.release-context.outputs.channel }}'
       - uses: actions/upload-artifact@v4
         with:
           name: mqtt-monitor-macos
-          path: dist/desktop_updater/releases
+          path: dist/github-release
+          if-no-files-found: error
       - name: Remove temporary macOS credentials
         if: always()
         shell: bash
@@ -151,20 +125,8 @@ jobs:
           rm -f "$RUNNER_TEMP/mqtt-monitor-developer-id.p12" "$RUNNER_TEMP/AuthKey.p8"
 
   linux:
-    needs: [release-context, macos]
+    needs: release-context
     runs-on: ubuntu-latest
-    env:
-      UPDATE_BASE_URL: ${{ secrets.UPDATE_BASE_URL }}
-      HETZNER_S3_ACCESS_KEY: ${{ secrets.HETZNER_S3_ACCESS_KEY }}
-      HETZNER_S3_SECRET_KEY: ${{ secrets.HETZNER_S3_SECRET_KEY }}
-      HETZNER_S3_BUCKET: ${{ secrets.HETZNER_S3_BUCKET }}
-      HETZNER_S3_PREFIX: ${{ secrets.HETZNER_S3_PREFIX }}
-      HETZNER_S3_REGION: ${{ secrets.HETZNER_S3_REGION }}
-      HETZNER_S3_ENDPOINT: ${{ secrets.HETZNER_S3_ENDPOINT }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.HETZNER_S3_ACCESS_KEY }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.HETZNER_S3_SECRET_KEY }}
-      AWS_DEFAULT_REGION: ${{ secrets.HETZNER_S3_REGION }}
-      REQUIRE_EXISTING_ARCHIVE: 'true'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -172,8 +134,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install AWS CLI
-        run: python3 -m pip install --upgrade awscli
       - uses: subosito/flutter-action@v2
         with:
           channel: ${{ env.FLUTTER_CHANNEL }}
@@ -181,12 +141,13 @@ jobs:
           cache: true
       - name: Install Linux build dependencies
         run: sudo apt-get update && sudo apt-get install --yes libgtk-3-dev ninja-build
-      - name: Publish Linux update
+      - name: Build Linux release assets
         run: bash scripts/publish_desktop_update.sh linux '${{ needs.release-context.outputs.channel }}'
       - uses: actions/upload-artifact@v4
         with:
           name: mqtt-monitor-linux
-          path: dist/desktop_updater/releases
+          path: dist/github-release
+          if-no-files-found: error
 
   github-release:
     needs: [windows, macos, linux]
@@ -200,21 +161,31 @@ jobs:
           pattern: mqtt-monitor-*
           path: release-assets
           merge-multiple: true
-      - name: Create or update GitHub Release
+      - name: Assemble and validate update manifest
+        run: >-
+          python3 scripts/assemble_github_release.py
+          --tag "$GITHUB_REF_NAME"
+          --repository "$GITHUB_REPOSITORY"
+          --assets release-assets
+      - name: Publish GitHub Release
         shell: bash
         run: |
           set -euo pipefail
-          mapfile -d '' files < <(find release-assets -type f \( -name '*.zip' -o -name '*.dmg' -o -name '*.pkg' -o -name '*.exe' \) -print0)
+          mapfile -d '' files < <(find release-assets -maxdepth 1 -type f -print0)
           if (( ${#files[@]} == 0 )); then
             echo 'No release artifacts were produced.' >&2
             exit 1
           fi
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" "${files[@]}" --clobber
+            if [[ "$(gh release view "$GITHUB_REF_NAME" --json isDraft --jq .isDraft)" == 'true' ]]; then
+              gh release edit "$GITHUB_REF_NAME" --draft=false
+            fi
           else
-            flags=(--generate-notes)
+            flags=(--draft --generate-notes)
             if [[ "$GITHUB_REF_NAME" == *-* ]]; then
               flags+=(--prerelease)
             fi
             gh release create "$GITHUB_REF_NAME" "${files[@]}" "${flags[@]}"
+            gh release edit "$GITHUB_REF_NAME" --draft=false
           fi

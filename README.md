@@ -3,6 +3,9 @@
   A fast, customizable, native desktop MQTT client for people who actually live in their broker all day.
 </p>
 
+> [!IMPORTANT]
+> MQTT Monitor is currently in beta. The v1.0 release is planned for the end of August 2026.
+
 <p align="center">
   <a href="https://ko-fi.com/micheljelsma">
     <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi">

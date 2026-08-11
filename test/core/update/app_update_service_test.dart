@@ -21,6 +21,19 @@ void main() {
     expect(service.tracksBetaReleases, isFalse);
     expect(service.channel, AppUpdateService.stableChannel);
     expect(service.state, isA<UpdateIdle>());
+    expect(service.isConfigured, isFalse);
+  });
+
+  test('is configured when a GitHub Releases URL is supplied', () {
+    final service = AppUpdateService(
+      state: state,
+      githubReleasesUrl: Uri.parse(
+        'https://api.github.com/repos/mijelsma/MQTT-Monitor/releases',
+      ),
+    );
+    addTearDown(service.dispose);
+
+    expect(service.isConfigured, isTrue);
   });
 
   test(
