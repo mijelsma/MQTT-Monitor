@@ -1,19 +1,17 @@
-/// Build-time configuration for the desktop update feed.
+/// Build-time configuration for GitHub-backed desktop updates.
 ///
-/// Release builds receive the public feed URL from GitHub Actions. Local
-/// development builds can supply the same value with `--dart-define`.
+/// Release builds receive the public Releases API URL from GitHub Actions.
+/// Local development builds remain unconfigured unless explicitly opted in.
 abstract final class AppUpdateConfiguration {
-  static const archiveUrl = String.fromEnvironment('UPDATE_ARCHIVE_URL');
+  static const releasesUrl = String.fromEnvironment('GITHUB_RELEASES_URL');
 
   /// Only enable this for a local macOS smoke test of an unsigned app.
   ///
   /// Public macOS releases must remain signed and notarized.
-  static const allowUnsignedMacOSUpdates = bool.fromEnvironment(
-    'ALLOW_UNSIGNED_MACOS_UPDATES',
-  );
+  static const allowUnsignedMacOSUpdates = bool.fromEnvironment('ALLOW_UNSIGNED_MACOS_UPDATES');
 
-  static Uri? get appArchiveUrl {
-    final url = archiveUrl.trim();
+  static Uri? get githubReleasesUrl {
+    final url = releasesUrl.trim();
     if (url.isEmpty) return null;
     final uri = Uri.tryParse(url);
     if (uri == null || !uri.hasScheme || uri.host.isEmpty) return null;
