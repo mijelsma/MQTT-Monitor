@@ -41,6 +41,7 @@ Flutter compiles down to native code instead of shipping a bundled browser, whic
 - [Getting Started in VS Code](#getting-started-in-vs-code)
 - [Desktop Updates](docs/updates.md)
 - [Reporting Issues](#reporting-issues)
+- [License](#license)
 
 ---
 
@@ -185,3 +186,12 @@ Found a bug, or something behaving weird? [Open an issue](../../issues) and try 
 - For UI bugs, a screenshot or screen recording, it's usually much faster to spot what's wrong from an image than from a written description
 
 Clear, specific issues are a lot easier for me to track down and fix, so any detail you can add helps.
+
+---
+
+## License
+
+MQTT Monitor is licensed under the [GNU Affero General Public License v3.0](LICENSE)
+(`AGPL-3.0-only`). If you distribute a modified version, or make one available
+for users to interact with over a network, you must make the corresponding
+source code available under the same license.

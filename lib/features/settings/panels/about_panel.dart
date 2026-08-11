@@ -57,7 +57,7 @@ class AboutPanel extends StatelessWidget {
           children: [
             UiInfoRow(label: s.aboutPanelVersionDetail, value: GitInfo.describe),
             UiInfoRow(label: s.aboutPanelCommitHash, value: GitInfo.commitHash),
-            UiInfoRow(label: s.aboutPanelLicense, value: 'MIT'),
+            UiInfoRow(label: s.aboutPanelLicense, value: 'AGPL-3.0'),
             UiInfoRow(label: s.aboutPanelAuthor, value: 'Michel Jelsma'),
           ],
         ),
