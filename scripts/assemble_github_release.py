@@ -11,6 +11,7 @@ from urllib.parse import unquote, urlparse
 
 
 PLATFORMS = ("windows", "macos", "linux")
+CANONICAL_APP_NAME = "MQTT Monitor"
 
 
 def _sha256(path: Path) -> str:
@@ -76,14 +77,14 @@ def main() -> None:
             item["buildNumber"] = descriptor["buildNumber"]
         items.append(item)
 
-    if len(app_names) != 1:
+    if {name.casefold() for name in app_names} != {CANONICAL_APP_NAME.casefold()}:
         raise ValueError(f"Platform descriptors disagree on app name: {sorted(app_names)}")
     if len(channels) != 1:
         raise ValueError(f"Platform descriptors disagree on channel: {sorted(channels)}")
 
     archive = {
         "schemaVersion": 3,
-        "appName": app_names.pop(),
+        "appName": CANONICAL_APP_NAME,
         "items": items,
     }
     (args.assets / "app-archive.json").write_text(

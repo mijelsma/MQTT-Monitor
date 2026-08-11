@@ -33,6 +33,8 @@ class GitHubReleaseScriptsTest(unittest.TestCase):
                     "packageId": "com.mijelsma.mqtt-monitor",
                     "appName": "MQTT Monitor.app"
                     if platform == "macos"
+                    else "Mqtt Monitor"
+                    if platform == "windows"
                     else "MQTT Monitor",
                     "version": "0.3.0",
                     "buildNumber": 42,
