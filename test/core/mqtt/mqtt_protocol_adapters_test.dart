@@ -7,22 +7,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_client/mqtt_client.dart' as mqtt3;
 import 'package:mqtt_client/mqtt_server_client.dart' as mqtt3_server;
 import 'package:mqtt5_client/mqtt5_client.dart' as mqtt5;
-import 'package:mqtt5_client/mqtt5_server_client.dart' as mqtt5_server;
 import 'package:mqtt_monitor/core/mqtt/connection_status.dart';
+import 'package:mqtt_monitor/core/mqtt/adapters/mqtt311/mqtt311_adapter.dart';
+import 'package:mqtt_monitor/core/mqtt/adapters/mqtt5/mqtt5_adapter.dart';
+import 'package:mqtt_monitor/core/mqtt/adapters/mqtt5/mqtt5_event_client.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_reason.dart';
-import 'package:mqtt_monitor/core/mqtt/mqtt_service.dart';
+import 'package:mqtt_monitor/core/mqtt/session/mqtt_connection_intent_store.dart';
+import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
 import 'package:mqtt_monitor/core/broker/broker_repository.dart';
 import 'package:typed_data/typed_buffers.dart' show Uint8Buffer;
 import 'package:mqtt_monitor/core/mqtt/publish_result.dart';
 import 'package:mqtt_monitor/core/state/app_state.dart';
-import 'package:mqtt_monitor/core/state/keys/app_keys.dart';
 import 'package:mqtt_monitor/models/broker_entry.dart';
 import 'package:mqtt_monitor/models/mqtt_protocol_version.dart';
 import 'package:mqtt_monitor/models/subscription_entry.dart';
 
 import '../../support/test_dependencies.dart';
 
+/// Simulates the mqtt_client API used by the MQTT 3.1.1 adapter.
 class _FakeMqtt3Client extends mqtt3_server.MqttServerClient {
+  /// Creates a disconnected fake package client.
   _FakeMqtt3Client() : super('unused', 'test-client');
 
   final status = mqtt3.MqttClientConnectionStatus();
@@ -41,7 +45,7 @@ class _FakeMqtt3Client extends mqtt3_server.MqttServerClient {
   bool suppressAcks = false;
 
   /// When true (default), every published message is also delivered back
-  /// through the `updates` stream — mirroring the way a real broker
+  /// through the `updates` stream, mirroring the way a real broker
   /// echoes messages to a subscriber on the same topic. Tests that
   /// simulate ACL filtering set this to false.
   bool echoesToSubscriber = true;
@@ -50,15 +54,19 @@ class _FakeMqtt3Client extends mqtt3_server.MqttServerClient {
   String? connectedUsername;
   String? connectedPassword;
 
+  /// Returns the mutable package connection status.
   @override
   mqtt3.MqttClientConnectionStatus get connectionStatus => status;
 
+  /// Returns received MQTT package messages.
   @override
   Stream<List<mqtt3.MqttReceivedMessage<mqtt3.MqttMessage>>> get updates => updatesController.stream;
 
+  /// Returns MQTT 3.1.1 publish acknowledgement signals.
   @override
   Stream<mqtt3.MqttPublishMessage>? get published => publishedController.stream;
 
+  /// Records credentials and completes a successful connection.
   @override
   Future<mqtt3.MqttClientConnectionStatus?> connect([String? username, String? password]) async {
     connectCalls++;
@@ -69,17 +77,20 @@ class _FakeMqtt3Client extends mqtt3_server.MqttServerClient {
     return status;
   }
 
+  /// Records a subscription request.
   @override
   mqtt3.Subscription? subscribe(String topic, mqtt3.MqttQos qosLevel) {
     subscriptions.add((topic: topic, qos: qosLevel));
     return null;
   }
 
+  /// Records an unsubscription request.
   @override
   void unsubscribe(String topic, {expectAcknowledge = false}) {
     unsubscriptions.add(topic);
   }
 
+  /// Records a publish and optionally emits its acknowledgement and echo.
   @override
   int publishMessage(String topic, mqtt3.MqttQos qualityOfService, dynamic data, {bool retain = false}) {
     final bytes = Uint8Buffer()..addAll(List<int>.from(data));
@@ -103,21 +114,37 @@ class _FakeMqtt3Client extends mqtt3_server.MqttServerClient {
     return packetId;
   }
 
+  /// Records package-client disconnection.
   @override
   void disconnect() {
     disconnectCalls++;
     status.state = mqtt3.MqttConnectionState.disconnected;
   }
 
+  /// Simulates a connection closed by the broker.
   void brokerDisconnect() {
     status.state = mqtt3.MqttConnectionState.disconnected;
     onDisconnected?.call();
   }
 
+  /// Simulates mqtt_client beginning an automatic reconnect cycle.
+  void beginAutoReconnect() {
+    status.state = mqtt3.MqttConnectionState.disconnected;
+    onAutoReconnect?.call();
+  }
+
+  /// Simulates mqtt_client completing an automatic reconnect cycle.
+  void finishAutoReconnect() {
+    status.state = mqtt3.MqttConnectionState.connected;
+    onAutoReconnected?.call();
+  }
+
+  /// Emits an update with a non-PUBLISH MQTT packet.
   void addMalformedUpdate() {
     updatesController.add([mqtt3.MqttReceivedMessage<mqtt3.MqttMessage>('invalid', mqtt3.MqttConnectMessage())]);
   }
 
+  /// Emits a received publish with [bytes] as its payload.
   void addPublish(String topic, List<int> bytes, {int qos = 0, bool retain = false}) {
     final builder = mqtt3.MqttClientPayloadBuilder();
     for (final byte in bytes) {
@@ -135,6 +162,7 @@ class _FakeMqtt3Client extends mqtt3_server.MqttServerClient {
     updatesController.add([mqtt3.MqttReceivedMessage<mqtt3.MqttMessage>(topic, message)]);
   }
 
+  /// Closes fake-owned stream controllers.
   Future<void> close() async {
     await updatesController.close();
     await publishedController.close();
@@ -146,8 +174,9 @@ class _FakeMqtt3Client extends mqtt3_server.MqttServerClient {
 typedef _EventBus = events.EventBus;
 
 /// A minimal MQTT 5 fake that supports the event-bus packet flow the
-/// service uses to match PUBACK/PUBREC back to pending publishes.
-class _FakeMqtt5Client extends mqtt5_server.MqttServerClient {
+/// adapter uses to match PUBACK/PUBREC back to pending publishes.
+class _FakeMqtt5Client extends Mqtt5EventClient {
+  /// Creates a disconnected fake package client.
   _FakeMqtt5Client() : super('unused', 'test-client');
 
   final status = mqtt5.MqttConnectionStatus();
@@ -163,7 +192,7 @@ class _FakeMqtt5Client extends mqtt5_server.MqttServerClient {
   mqtt5.MqttPublishReasonCode? nextPubackReason = mqtt5.MqttPublishReasonCode.success;
 
   /// When true, `connect()` returns without ever setting
-  /// [MqttConnectionState.connected] or filling in a CONNACK — mirrors
+  /// [MqttConnectionState.connected] or filling in a CONNACK. This mirrors
   /// the way a 3.1.1-only Mosquitto just drops the socket on a MQTT 5
   /// CONNECT packet. Used to test the timeout-driven auto-fallback.
   bool neverConnacks = false;
@@ -172,17 +201,21 @@ class _FakeMqtt5Client extends mqtt5_server.MqttServerClient {
   String? connectedUsername;
   String? connectedPassword;
 
+  /// Returns the mutable package connection status.
   @override
   mqtt5.MqttConnectionStatus get connectionStatus => status;
 
+  /// Returns received MQTT package messages.
   @override
   // ignore: invalid_use_of_protected_member
   Stream<List<mqtt5.MqttReceivedMessage<mqtt5.MqttMessage>>>? get updates => updatesController.stream;
 
+  /// Returns the fake protocol event stream consumed by the MQTT 5 adapter.
+  /// Records credentials and returns the configured CONNACK outcome.
   @override
-  // ignore: invalid_use_of_protected_member
-  mqtt5.MqttEventBus get clientEventBus => eventBus;
+  Stream<mqtt5.MqttMessageAvailable> get protocolEvents => eventBus.on<mqtt5.MqttMessageAvailable>();
 
+  /// Records a subscription request.
   @override
   Future<mqtt5.MqttConnectionStatus?> connect([String? username, String? password]) async {
     connectCalls++;
@@ -210,15 +243,18 @@ class _FakeMqtt5Client extends mqtt5_server.MqttServerClient {
     return status;
   }
 
+  /// Accepts an unsubscription request without recording it.
   @override
   mqtt5.MqttSubscription? subscribe(String topic, mqtt5.MqttQos qosLevel) {
     subscriptions.add((topic: topic, qos: qosLevel));
     return null;
   }
 
+  /// Records a publish and optionally emits an MQTT 5 acknowledgement.
   @override
   void unsubscribeStringTopic(String topic) {}
 
+  /// Records package-client disconnection.
   @override
   int publishMessage(String topic, mqtt5.MqttQos qualityOfService, dynamic data, {bool retain = false, List<mqtt5.MqttUserProperty>? userProperties}) {
     final packetId = publications.length + 1;
@@ -238,6 +274,19 @@ class _FakeMqtt5Client extends mqtt5_server.MqttServerClient {
     status.state = mqtt5.MqttConnectionState.disconnected;
   }
 
+  /// Simulates mqtt5_client beginning an automatic reconnect cycle.
+  void beginAutoReconnect() {
+    status.state = mqtt5.MqttConnectionState.disconnected;
+    onAutoReconnect?.call();
+  }
+
+  /// Simulates mqtt5_client completing an automatic reconnect cycle.
+  void finishAutoReconnect() {
+    status.state = mqtt5.MqttConnectionState.connected;
+    onAutoReconnected?.call();
+  }
+
+  /// Emits a received publish with [bytes] as its payload.
   void addPublish(String topic, List<int> bytes, {int qos = 0, bool retain = false}) {
     final builder = mqtt5.MqttPayloadBuilder();
     for (final byte in bytes) {
@@ -256,6 +305,7 @@ class _FakeMqtt5Client extends mqtt5_server.MqttServerClient {
     updatesController.add([mqtt5.MqttReceivedMessage<mqtt5.MqttMessage>(topic, message)]);
   }
 
+  /// Closes fake-owned stream controllers.
   Future<void> close() async {
     await updatesController.close();
   }
@@ -264,11 +314,26 @@ class _FakeMqtt5Client extends mqtt5_server.MqttServerClient {
 void main() {
   final state = AppStateManager.instance;
   late BrokerRepository brokers;
+  late MqttConnectionIntentStore intents;
 
   setUp(() async {
     final dependencies = await TestDependencies.create();
     brokers = dependencies.brokers;
+    intents = MqttConnectionIntentStore(dependencies.preferences);
   });
+
+  /// Creates a session using real adapters around optional fake clients.
+  MqttSessionController createSession({Mqtt311ClientFactory? mqtt311ClientFactory, Mqtt5ClientFactory? mqtt5ClientFactory}) {
+    return MqttSessionController(
+      state,
+      brokers,
+      intents,
+      adapterFactory: (broker) => switch (broker.protocolVersion) {
+        MqttProtocolVersion.v311 => Mqtt311Adapter(broker, clientFactory: mqtt311ClientFactory),
+        MqttProtocolVersion.v5 => Mqtt5Adapter(broker, clientFactory: mqtt5ClientFactory),
+      },
+    );
+  }
 
   Future<void> settle() async {
     await Future<void>.delayed(Duration.zero);
@@ -289,8 +354,7 @@ void main() {
     );
     final fake = _FakeMqtt3Client();
     await brokers.add(broker);
-    await state.write(AppKeys.disconnected, false);
-    final service = MqttService(state, brokers, mqtt3ClientFactory: (_) => fake);
+    final service = createSession(mqtt311ClientFactory: (_) => fake);
     addTearDown(service.dispose);
     addTearDown(fake.close);
 
@@ -301,7 +365,7 @@ void main() {
     expect(fake.connectedUsername, 'user');
     expect(fake.connectedPassword, 'secret');
     expect(fake.subscriptions, [(topic: 'sensors/+', qos: mqtt3.MqttQos.atLeastOnce), (topic: 'alerts/#', qos: mqtt3.MqttQos.exactlyOnce)]);
-    expect(state.read(AppKeys.connectionStatus), ConnectionStatus.connected);
+    expect(service.connectionStatus, ConnectionStatus.connected);
 
     // Each publish returns a Future<PublishResult>?; null means the
     // local client rejected the call. Under MQTT 3.1.1 any successful
@@ -328,11 +392,8 @@ void main() {
     const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid');
     final clients = <_FakeMqtt3Client>[];
     await brokers.add(broker);
-    await state.write(AppKeys.disconnected, false);
-    final service = MqttService(
-      state,
-      brokers,
-      mqtt3ClientFactory: (_) {
+    final service = createSession(
+      mqtt311ClientFactory: (_) {
         final client = _FakeMqtt3Client();
         clients.add(client);
         return client;
@@ -351,7 +412,7 @@ void main() {
     await settle();
 
     expect(clients.single.disconnectCalls, 1);
-    expect(state.read(AppKeys.connectionStatus), ConnectionStatus.disconnected);
+    expect(service.connectionStatus, ConnectionStatus.disconnected);
     expect(service.publish('offline', 'ignored'), isNull);
 
     service.reconnect();
@@ -359,17 +420,15 @@ void main() {
 
     expect(clients, hasLength(2));
     expect(clients.last.connectCalls, 1);
-    expect(state.read(AppKeys.connectionStatus), ConnectionStatus.connected);
+    expect(service.connectionStatus, ConnectionStatus.connected);
   });
 
   test('editing a profile reconnects and applies its new subscriptions', () async {
     const broker = BrokerEntry(id: 'same-id', name: 'Test', host: 'first.invalid');
     final clients = <_FakeMqtt3Client>[];
     await brokers.add(broker);
-    final service = MqttService(
-      state,
-      brokers,
-      mqtt3ClientFactory: (_) {
+    final service = createSession(
+      mqtt311ClientFactory: (_) {
         final client = _FakeMqtt3Client();
         clients.add(client);
         return client;
@@ -401,7 +460,7 @@ void main() {
     const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid');
     final fake = _FakeMqtt3Client();
     await brokers.add(broker);
-    final service = MqttService(state, brokers, mqtt3ClientFactory: (_) => fake);
+    final service = createSession(mqtt311ClientFactory: (_) => fake);
     addTearDown(service.dispose);
     addTearDown(fake.close);
     service.initialize();
@@ -410,15 +469,56 @@ void main() {
     fake.brokerDisconnect();
     await settle();
 
-    expect(state.read(AppKeys.connectionStatus), ConnectionStatus.disconnected);
-    expect(state.read(AppKeys.connectionError), mqtt311BrokerDisconnectMessage);
+    expect(service.connectionStatus, ConnectionStatus.disconnected);
+    expect(service.connectionError, mqtt311BrokerDisconnectMessage);
+  });
+
+  test('MQTT 3.1.1 auto-reconnect preserves its disconnect limitation', () async {
+    const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid');
+    final fake = _FakeMqtt3Client();
+    await brokers.add(broker);
+    final service = createSession(mqtt311ClientFactory: (_) => fake);
+    addTearDown(service.dispose);
+    addTearDown(fake.close);
+    service.initialize();
+    await settle();
+
+    fake.beginAutoReconnect();
+    await settle();
+    expect(service.connectionStatus, ConnectionStatus.disconnected);
+    expect(service.connectionError, mqtt311BrokerDisconnectMessage);
+
+    fake.finishAutoReconnect();
+    await settle();
+    expect(service.connectionStatus, ConnectionStatus.connected);
+    expect(service.connectionError, isNull);
+  });
+
+  test('MQTT 5 auto-reconnect reports connecting then connected', () async {
+    const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersion.v5);
+    final fake = _FakeMqtt5Client();
+    await brokers.add(broker);
+    final service = createSession(mqtt5ClientFactory: (_) => fake);
+    addTearDown(service.dispose);
+    addTearDown(fake.close);
+    service.initialize();
+    await settle();
+
+    fake.beginAutoReconnect();
+    await settle();
+    expect(service.connectionStatus, ConnectionStatus.connecting);
+
+    fake.finishAutoReconnect();
+    await settle();
+    expect(service.connectionStatus, ConnectionStatus.connected);
+    expect(service.connectionError, isNull);
   });
 
   test('malformed updates are reported and invalid UTF-8 is decoded safely', () async {
     const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid');
     final fake = _FakeMqtt3Client();
     await brokers.add(broker);
-    final service = MqttService(state, brokers, mqtt3ClientFactory: (_) => fake);
+    final service = createSession(mqtt311ClientFactory: (_) => fake);
     addTearDown(service.dispose);
     addTearDown(fake.close);
     service.initialize();
@@ -426,7 +526,7 @@ void main() {
 
     fake.addMalformedUpdate();
     await settle();
-    expect(state.read(AppKeys.connectionError), contains('Malformed MQTT packet'));
+    expect(service.connectionError, contains('Malformed MQTT packet'));
 
     final nextMessage = service.messageStream.first;
     fake.addPublish('binary/value', [0xff, 0x61], qos: 1, retain: true);
@@ -443,8 +543,7 @@ void main() {
       const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersion.v5);
       final fake = _FakeMqtt5Client();
       await brokers.add(broker);
-      await state.write(AppKeys.disconnected, false);
-      final service = MqttService(state, brokers, mqtt5ClientFactory: (_) => fake);
+      final service = createSession(mqtt5ClientFactory: (_) => fake);
       addTearDown(service.dispose);
       addTearDown(fake.close);
 
@@ -463,8 +562,7 @@ void main() {
       const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersion.v5);
       final fake = _FakeMqtt5Client();
       await brokers.add(broker);
-      await state.write(AppKeys.disconnected, false);
-      final service = MqttService(state, brokers, mqtt5ClientFactory: (_) => fake);
+      final service = createSession(mqtt5ClientFactory: (_) => fake);
       addTearDown(service.dispose);
       addTearDown(fake.close);
 
@@ -489,8 +587,7 @@ void main() {
       const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersion.v5);
       final fake = _FakeMqtt5Client();
       await brokers.add(broker);
-      await state.write(AppKeys.disconnected, false);
-      final service = MqttService(state, brokers, mqtt5ClientFactory: (_) => fake);
+      final service = createSession(mqtt5ClientFactory: (_) => fake);
       addTearDown(service.dispose);
       addTearDown(fake.close);
 
@@ -508,8 +605,7 @@ void main() {
       const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersion.v5);
       final fake = _FakeMqtt5Client();
       await brokers.add(broker);
-      await state.write(AppKeys.disconnected, false);
-      final service = MqttService(state, brokers, mqtt5ClientFactory: (_) => fake);
+      final service = createSession(mqtt5ClientFactory: (_) => fake);
       addTearDown(service.dispose);
       addTearDown(fake.close);
 
@@ -531,8 +627,7 @@ void main() {
       const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid');
       final fake = _FakeMqtt3Client();
       await brokers.add(broker);
-      await state.write(AppKeys.disconnected, false);
-      final service = MqttService(state, brokers, mqtt3ClientFactory: (_) => fake);
+      final service = createSession(mqtt311ClientFactory: (_) => fake);
       addTearDown(service.dispose);
       addTearDown(fake.close);
 
@@ -554,8 +649,7 @@ void main() {
       const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersion.v5);
       final fake = _FakeMqtt5Client();
       await brokers.add(broker);
-      await state.write(AppKeys.disconnected, false);
-      final service = MqttService(state, brokers, mqtt5ClientFactory: (_) => fake);
+      final service = createSession(mqtt5ClientFactory: (_) => fake);
       addTearDown(service.dispose);
       addTearDown(fake.close);
 
@@ -571,9 +665,9 @@ void main() {
 
     test('publish returns null when the local client is not connected', () async {
       await brokers.add(const BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid'));
-      await state.write(AppKeys.disconnected, true);
-      final service = MqttService(state, brokers, mqtt3ClientFactory: (_) => _FakeMqtt3Client());
+      final service = createSession(mqtt311ClientFactory: (_) => _FakeMqtt3Client());
       addTearDown(service.dispose);
+      service.disconnect();
       service.initialize();
       await settle();
 
@@ -628,34 +722,33 @@ void main() {
 
     /// Waits until the connection status is reported as an error, or the
     /// [timeout] elapses. Returns the status reached.
-    Future<ConnectionStatus> waitForError(Duration timeout) async {
+    Future<ConnectionStatus> waitForError(MqttSessionController session, Duration timeout) async {
       final deadline = DateTime.now().add(timeout);
       while (DateTime.now().isBefore(deadline)) {
-        final status = state.read(AppKeys.connectionStatus);
+        final status = session.connectionStatus;
         if (status == ConnectionStatus.error) return status;
         await Future<void>.delayed(const Duration(milliseconds: 50));
       }
-      return state.read(AppKeys.connectionStatus);
+      return session.connectionStatus;
     }
 
     test('MQTT 5 rejected CONNACK surfaces the error immediately with a single attempt', () async {
       final (broker, connectPackets) = await startRejectingBroker();
       await brokers.add(broker);
-      await state.write(AppKeys.disconnected, false);
 
       // Real (non-faked) MQTT 5 client against a real TCP socket.
-      final service = MqttService(state, brokers);
+      final service = createSession();
 
       final stopwatch = Stopwatch()..start();
       service.initialize();
       addTearDown(service.dispose);
 
-      final status = await waitForError(const Duration(seconds: 8));
+      final status = await waitForError(service, const Duration(seconds: 8));
       final elapsedMs = stopwatch.elapsedMilliseconds;
 
       expect(status, ConnectionStatus.error, reason: 'the failure must be surfaced');
-      expect(state.read(AppKeys.connectionError), contains('Bad username or password'), reason: 'the broker reason code is reported as a friendly message');
-      expect(state.read(AppKeys.connectionErrorDetail), contains('badUsernameOrPassword'), reason: 'the raw broker detail is preserved behind the friendly message');
+      expect(service.connectionError, contains('Bad username or password'), reason: 'the broker reason code is reported as a friendly message');
+      expect(service.connectionErrorDetail, contains('badUsernameOrPassword'), reason: 'the raw broker detail is preserved behind the friendly message');
       expect(connectPackets, hasLength(1), reason: 'a rejected CONNACK must not trigger blind retries');
       expect(elapsedMs, lessThan(5000), reason: 'the error is reported promptly, not after ~10s of retries');
 
@@ -670,17 +763,16 @@ void main() {
     test('MQTT 5 rejected CONNACK does eventually surface the error (slow retries)', () async {
       final (broker, _) = await startRejectingBroker();
       await brokers.add(broker);
-      await state.write(AppKeys.disconnected, false);
 
-      final service = MqttService(state, brokers);
+      final service = createSession();
       service.initialize();
       addTearDown(service.dispose);
 
-      final status = await waitForError(const Duration(seconds: 20));
+      final status = await waitForError(service, const Duration(seconds: 20));
 
       expect(status, ConnectionStatus.error, reason: 'the rejection must eventually be reported');
-      expect(state.read(AppKeys.connectionError), contains('Bad username or password'), reason: 'the broker reason code is reported as a friendly message');
-      expect(state.read(AppKeys.connectionErrorDetail), contains('badUsernameOrPassword'), reason: 'the raw broker detail is preserved behind the friendly message');
+      expect(service.connectionError, contains('Bad username or password'), reason: 'the broker reason code is reported as a friendly message');
+      expect(service.connectionErrorDetail, contains('badUsernameOrPassword'), reason: 'the raw broker detail is preserved behind the friendly message');
 
       // Dispose while the server is still up (see the fast test).
       service.dispose();
@@ -690,20 +782,19 @@ void main() {
     test('MQTT 3.1.1 rejected CONNACK surfaces a friendly message with the raw return code behind it', () async {
       final (broker, connectPackets) = await startRejectingBroker311();
       await brokers.add(broker);
-      await state.write(AppKeys.disconnected, false);
 
-      final service = MqttService(state, brokers);
+      final service = createSession();
 
       final stopwatch = Stopwatch()..start();
       service.initialize();
       addTearDown(service.dispose);
 
-      final status = await waitForError(const Duration(seconds: 8));
+      final status = await waitForError(service, const Duration(seconds: 8));
       final elapsedMs = stopwatch.elapsedMilliseconds;
 
       expect(status, ConnectionStatus.error, reason: 'the failure must be surfaced');
-      expect(state.read(AppKeys.connectionError), contains('Bad username or password'), reason: 'the 3.1.1 return code is reported as a friendly message');
-      expect(state.read(AppKeys.connectionErrorDetail), contains('MqttConnectReturnCode.badUsernameOrPassword'), reason: 'the broker return code recovered from the late CONNACK is preserved in the details');
+      expect(service.connectionError, contains('Bad username or password'), reason: 'the 3.1.1 return code is reported as a friendly message');
+      expect(service.connectionErrorDetail, contains('MqttConnectReturnCode.badUsernameOrPassword'), reason: 'the broker return code recovered from the late CONNACK is preserved in the details');
       expect(connectPackets, hasLength(1), reason: 'a rejected CONNACK must not trigger blind retries');
       expect(elapsedMs, lessThan(5000), reason: 'the error is reported promptly, not after ~10s of retries');
 

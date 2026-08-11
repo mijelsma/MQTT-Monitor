@@ -12,17 +12,7 @@ import 'spacers.dart';
 /// small and the row should stay on a single line (e.g. "Collapsed /
 /// Expanded / Last Status", or "Q0 / Q1 / Q2 / Last used").
 class UiInlineSegmentRow<T> extends StatelessWidget {
-  const UiInlineSegmentRow({
-    super.key,
-    this.icon,
-    required this.label,
-    this.subtitle,
-    this.footer,
-    this.accent,
-    required this.options,
-    required this.value,
-    required this.onChanged,
-  });
+  const UiInlineSegmentRow({super.key, this.icon, required this.label, this.subtitle, this.footer, this.accent, required this.options, required this.value, required this.onChanged});
 
   /// Optional leading icon shown before the label. Pass an [Icon] for a
   /// stock glyph, or any widget for a custom badge.
@@ -56,36 +46,19 @@ class UiInlineSegmentRow<T> extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              if (icon != null) ...[
-                IconTheme(data: const IconThemeData(size: 16), child: icon!),
-                const SizedBox(width: 10),
-              ],
+              if (icon != null) ...[IconTheme(data: const IconThemeData(size: 16), child: icon!), const SizedBox(width: 10)],
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      label,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
-                    if (subtitle != null) ...[
-                      const VSpacer(2),
-                      Text(
-                        subtitle!,
-                        style: TextStyle(fontSize: 11.5, color: tokens.textSecondary),
-                      ),
-                    ],
+                    Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                    if (subtitle != null) ...[const VSpacer(2), Text(subtitle!, style: TextStyle(fontSize: 11.5, color: tokens.textSecondary))],
                   ],
                 ),
               ),
               const SizedBox(width: 12),
-              _InlineSegmentTrack<T>(
-                accent: resolvedAccent,
-                options: options,
-                value: value,
-                onChanged: onChanged,
-              ),
+              _InlineSegmentTrack<T>(accent: resolvedAccent, options: options, value: value, onChanged: onChanged),
             ],
           ),
           if (footer != null) ...[
@@ -136,15 +109,7 @@ class _InlineSegmentTrack<T> extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (int i = 0; i < options.length; i++) ...[
-            _InlineSegmentChip<T>(
-              option: options[i],
-              selected: options[i].value == value,
-              accent: accent,
-              onTap: () => onChanged(options[i].value),
-            ),
-            if (i < options.length - 1) const SizedBox(width: 2),
-          ],
+          for (int i = 0; i < options.length; i++) ...[_InlineSegmentChip<T>(option: options[i], selected: options[i].value == value, accent: accent, onTap: () => onChanged(options[i].value)), if (i < options.length - 1) const SizedBox(width: 2)],
         ],
       ),
     );
@@ -171,10 +136,7 @@ class _InlineSegmentChip<T> extends StatelessWidget {
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeOut,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-          decoration: BoxDecoration(
-            color: selected ? accent : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
+          decoration: BoxDecoration(color: selected ? accent : Colors.transparent, borderRadius: BorderRadius.circular(8)),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

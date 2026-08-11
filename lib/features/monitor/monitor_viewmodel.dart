@@ -7,11 +7,10 @@ import '../../core/broker/broker_repository_failure.dart';
 import '../../core/history/message_history_service.dart';
 import '../../core/mqtt/connection_status.dart';
 import '../../core/mqtt/mqtt_message.dart';
-import '../../core/mqtt/mqtt_service.dart';
+import '../../core/mqtt/session/mqtt_session_controller.dart';
 import '../../core/mqtt/publish_result.dart';
 import '../../core/mqtt/topic_badge_counts.dart';
 import '../../core/state/app_state.dart';
-import '../../core/state/keys/app_keys.dart';
 import '../../core/state/keys/settings_keys.dart';
 import '../../models/broker_entry.dart';
 import '../../models/environment_variable.dart';
@@ -33,17 +32,18 @@ enum SearchScope { all, topic, value }
 /// Widgets read state from this ViewModel and call its methods for actions.
 class MonitorViewModel extends ChangeNotifier {
   /// Creates the monitor controller and starts state, broker, and MQTT listeners.
-  MonitorViewModel({required MqttService mqttService, required AppStateManager state, required MessageHistoryService historyService, required BrokerRepository brokerRepository}) : _mqtt = mqttService, _state = state, _history = historyService, _brokers = brokerRepository {
+  MonitorViewModel({required MqttSessionController mqttSession, required AppStateManager state, required MessageHistoryService historyService, required BrokerRepository brokerRepository}) : _mqtt = mqttSession, _state = state, _history = historyService, _brokers = brokerRepository {
     _state.load(SettingsKeys.environmentVariables);
     _state.load(SettingsKeys.environmentVariableValues);
     _subscription = _mqtt.messageStream.listen(_onMessage);
     _activeBrokerId = activeBroker?.id;
     _state.addListener(_onStateChanged);
+    _mqtt.addListener(_onStateChanged);
     _brokers.addListener(_onBrokersChanged);
   }
 
   // Internal state
-  final MqttService _mqtt;
+  final MqttSessionController _mqtt;
   final AppStateManager _state;
   final MessageHistoryService _history;
   final BrokerRepository _brokers;
@@ -80,11 +80,11 @@ class MonitorViewModel extends ChangeNotifier {
   SearchScope get scope => _scope;
 
   // Connection status and settings
-  ConnectionStatus get connectionStatus => _state.read(AppKeys.connectionStatus);
-  String? get connectionError => _state.read(AppKeys.connectionError);
-  String? get connectionErrorDetail => _state.read(AppKeys.connectionErrorDetail);
-  int get messageCount => _state.read(AppKeys.messageCount);
-  int get messageRate => _state.read(AppKeys.messageRate);
+  ConnectionStatus get connectionStatus => _mqtt.connectionStatus;
+  String? get connectionError => _mqtt.connectionError;
+  String? get connectionErrorDetail => _mqtt.connectionErrorDetail;
+  int get messageCount => _mqtt.messageCount;
+  int get messageRate => _mqtt.messageRate;
   bool get showStatusBar => _state.read(SettingsKeys.showStatusBar);
 
   /// Returns the configured broker profiles.
@@ -453,6 +453,7 @@ class MonitorViewModel extends ChangeNotifier {
   void dispose() {
     _subscription?.cancel();
     _state.removeListener(_onStateChanged);
+    _mqtt.removeListener(_onStateChanged);
     _brokers.removeListener(_onBrokersChanged);
     for (final t in _pendingTimers.values) {
       t.cancel();

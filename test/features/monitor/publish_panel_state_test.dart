@@ -3,7 +3,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/broker/broker_repository.dart';
 import 'package:mqtt_monitor/core/history/message_history_service.dart';
-import 'package:mqtt_monitor/core/mqtt/mqtt_service.dart';
+import 'package:mqtt_monitor/core/mqtt/session/mqtt_connection_intent_store.dart';
+import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
 import 'package:mqtt_monitor/core/state/app_state.dart';
 import 'package:mqtt_monitor/core/state/keys/layout_keys.dart';
 import 'package:mqtt_monitor/core/state/keys/settings_keys.dart';
@@ -21,10 +22,12 @@ import '../../support/test_dependencies.dart';
 void main() {
   final state = AppStateManager.instance;
   late BrokerRepository brokers;
+  late MqttConnectionIntentStore connectionIntent;
 
   setUp(() async {
     final dependencies = await TestDependencies.create();
     brokers = dependencies.brokers;
+    connectionIntent = MqttConnectionIntentStore(dependencies.preferences);
   });
 
   Future<PublishDraftController> pumpSidebar(WidgetTester tester, {required Key expandedSibling}) async {
@@ -40,11 +43,12 @@ void main() {
     await state.write(LayoutKeys.sidebarPublishCollapsed, false);
     await state.write(LayoutKeys.sidebarShortcutsCollapsed, expandedSibling != const Key('shortcuts-section-toggle'));
 
-    final mqtt = MqttService(state, brokers);
+    final mqtt = MqttSessionController(state, brokers, connectionIntent);
     final history = MessageHistoryService(mqtt, state, brokers);
-    final vm = MonitorViewModel(mqttService: mqtt, state: state, historyService: history, brokerRepository: brokers);
+    final vm = MonitorViewModel(mqttSession: mqtt, state: state, historyService: history, brokerRepository: brokers);
     final draft = PublishDraftController();
     addTearDown(vm.dispose);
+    addTearDown(mqtt.dispose);
     addTearDown(draft.dispose);
 
     await tester.pumpWidget(

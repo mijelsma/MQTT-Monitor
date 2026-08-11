@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/broker/broker_repository.dart';
 import '../../core/history/message_history_service.dart';
-import '../../core/mqtt/mqtt_service.dart';
+import '../../core/mqtt/session/mqtt_session_controller.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
 import '../../core/state/keys/layout_keys.dart';
@@ -40,7 +40,7 @@ class MonitorScreen extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (ctx) => MonitorViewModel(mqttService: ctx.read<MqttService>(), state: ctx.read<AppStateManager>(), historyService: ctx.read<MessageHistoryService>(), brokerRepository: ctx.read<BrokerRepository>()),
+          create: (ctx) => MonitorViewModel(mqttSession: ctx.read<MqttSessionController>(), state: ctx.read<AppStateManager>(), historyService: ctx.read<MessageHistoryService>(), brokerRepository: ctx.read<BrokerRepository>()),
         ),
         ChangeNotifierProvider(
           create: (_) => PublishDraftController(

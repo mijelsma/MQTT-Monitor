@@ -19,7 +19,7 @@ enum PublishResultKind {
 
   /// The publish was handed to the broker but the protocol gives us no
   /// proof of delivery. This covers every QoS 0 publish and every
-  /// MQTT 3.1.1 publish — including those whose PUBACK came back, since
+  /// MQTT 3.1.1 publish, including those whose PUBACK came back, since
   /// 3.1.1 PUBACK carries no failure reason and brokers may still
   /// silently drop messages that violate the ACL.
   noConfirmation,
@@ -32,8 +32,8 @@ enum PublishResultKind {
 }
 
 /// A protocol-level result for a single publish, returned by
-/// [MqttService.publish] once the broker has had a chance to respond (or
-/// has had a reasonable time to).
+/// the active session controller once the broker has had a chance to respond
+/// (or has had a reasonable time to).
 class PublishResult {
   const PublishResult({required this.kind, this.reason, this.reasonCode, this.reasonString});
 
@@ -42,7 +42,7 @@ class PublishResult {
   factory PublishResult.unconfirmed(MqttProtocolVersion version, int qos) {
     final explanation = switch ((version, qos)) {
       (MqttProtocolVersion.v311, 0) => 'No ack at QoS 0 (MQTT 3.1.1).',
-      (MqttProtocolVersion.v311, _) => 'No failure reason in MQTT 3.1.1 PUBACK — broker may still drop silently.',
+      (MqttProtocolVersion.v311, _) => 'No failure reason in MQTT 3.1.1 PUBACK; broker may still drop silently.',
       (MqttProtocolVersion.v5, 0) => 'No ack at QoS 0.',
       (MqttProtocolVersion.v5, _) => 'No failure reason available.',
     };
@@ -59,7 +59,7 @@ class PublishResult {
   factory PublishResult.failed({required int reasonCode, String? reasonString}) {
     final label = mqttReasonCodeLabel(reasonCode);
     final detail = reasonString?.trim().isNotEmpty == true ? reasonString!.trim() : null;
-    return PublishResult(kind: PublishResultKind.failed, reason: detail == null ? '$label ($reasonCode)' : '$label ($reasonCode) — $detail', reasonCode: reasonCode, reasonString: reasonString);
+    return PublishResult(kind: PublishResultKind.failed, reason: detail == null ? '$label ($reasonCode)' : '$label ($reasonCode): $detail', reasonCode: reasonCode, reasonString: reasonString);
   }
 
   /// Builds a "failed" result from a local error (e.g. the local client

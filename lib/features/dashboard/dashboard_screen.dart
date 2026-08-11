@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/broker/broker_repository.dart';
 import '../../core/history/message_history_service.dart';
-import '../../core/mqtt/mqtt_service.dart';
+import '../../core/mqtt/session/mqtt_session_controller.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
 import '../../models/dashboard_layout.dart';
@@ -32,7 +32,7 @@ class GraphDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (ctx) => DashboardViewModel(mqttService: ctx.read<MqttService>(), state: ctx.read<AppStateManager>(), brokerId: brokerId, historyService: ctx.read<MessageHistoryService>(), brokerRepository: ctx.read<BrokerRepository>()),
+      create: (ctx) => DashboardViewModel(mqttSession: ctx.read<MqttSessionController>(), state: ctx.read<AppStateManager>(), brokerId: brokerId, historyService: ctx.read<MessageHistoryService>(), brokerRepository: ctx.read<BrokerRepository>()),
       child: _DashboardScaffold(brokerName: brokerName),
     );
   }

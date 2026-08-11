@@ -2,7 +2,7 @@ import 'dart:async';
 
 import '../broker/broker_repository.dart';
 import '../mqtt/mqtt_message.dart';
-import '../mqtt/mqtt_service.dart';
+import '../mqtt/session/mqtt_session_controller.dart';
 import '../state/app_state.dart';
 import '../state/keys/settings_keys.dart';
 import '../../models/topic_node_value.dart';
@@ -14,7 +14,7 @@ import '../../models/topic_node_value.dart';
 /// "increased monitoring" to keep a larger buffer.
 class MessageHistoryService {
   /// Creates app-wide history collection from [mqtt]'s message stream.
-  MessageHistoryService(MqttService mqtt, this._state, this._brokers) : _messages = mqtt.messageStream;
+  MessageHistoryService(MqttSessionController mqtt, this._state, this._brokers) : _messages = mqtt.messageStream;
 
   /// Creates history collection from an injected [messages] stream.
   MessageHistoryService.fromStream(Stream<MQTTMessage> messages, this._state, this._brokers) : _messages = messages;

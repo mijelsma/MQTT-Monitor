@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'core/broker/broker_repository.dart';
 import 'core/history/message_history_service.dart';
-import 'core/mqtt/mqtt_service.dart';
+import 'core/mqtt/session/mqtt_session_controller.dart';
 import 'core/platform/window_chrome.dart';
 import 'core/state/app_state.dart';
 import 'core/state/keys/settings_keys.dart';
@@ -18,9 +18,9 @@ import 'theme/app_tokens/app_tokens.dart';
 /// Provides application-wide services and builds the themed MQTT Monitor app.
 class App extends StatelessWidget {
   /// Creates the application root with its process-lifetime dependencies.
-  const App({super.key, required this.mqttService, required this.historyService, required this.updater, required this.brokerRepository});
+  const App({super.key, required this.mqttSession, required this.historyService, required this.updater, required this.brokerRepository});
 
-  final MqttService mqttService;
+  final MqttSessionController mqttSession;
   final MessageHistoryService historyService;
   final AppUpdateService updater;
   final BrokerRepository brokerRepository;
@@ -32,7 +32,7 @@ class App extends StatelessWidget {
       providers: [
         ChangeNotifierProvider<AppStateManager>.value(value: AppStateManager.instance),
         ChangeNotifierProvider<BrokerRepository>.value(value: brokerRepository),
-        Provider<MqttService>.value(value: mqttService),
+        ChangeNotifierProvider<MqttSessionController>.value(value: mqttSession),
         Provider<MessageHistoryService>.value(value: historyService),
         ChangeNotifierProvider<AppUpdateService>.value(value: updater),
       ],

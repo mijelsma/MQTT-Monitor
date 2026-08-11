@@ -5,7 +5,8 @@ import 'core/broker/broker_repository.dart';
 import 'core/broker/flutter_secure_credential_store.dart';
 import 'core/history/message_history_service.dart';
 import 'core/mqtt/app_private_certificate_storage.dart';
-import 'core/mqtt/mqtt_service.dart';
+import 'core/mqtt/session/mqtt_connection_intent_store.dart';
+import 'core/mqtt/session/mqtt_session_controller.dart';
 import 'core/state/app_state.dart';
 import 'core/storage/app_data_directory.dart';
 import 'core/storage/shared_preferences_store.dart';
@@ -20,23 +21,15 @@ void main() async {
   // Initialize app state and load persisted values.
   await AppStateManager.instance.initialize(preferences: preferences);
 
-  final brokerRepository = BrokerRepository(
-    preferences,
-    credentials: const FlutterSecureCredentialStore(),
-    certificates: AppPrivateCertificateStorage.standard(),
-  );
+  final brokerRepository = BrokerRepository(preferences, credentials: const FlutterSecureCredentialStore(), certificates: AppPrivateCertificateStorage.standard());
   await brokerRepository.initialize();
 
-  // Create and initialize the MQTT service.
-  final mqttService = MqttService(AppStateManager.instance, brokerRepository);
-  mqttService.initialize();
+  // Create and initialize the active MQTT session.
+  final mqttSession = MqttSessionController(AppStateManager.instance, brokerRepository, MqttConnectionIntentStore(preferences));
+  mqttSession.initialize();
 
   // Create and initialize the global history service.
-  final historyService = MessageHistoryService(
-    mqttService,
-    AppStateManager.instance,
-    brokerRepository,
-  );
+  final historyService = MessageHistoryService(mqttSession, AppStateManager.instance, brokerRepository);
   historyService.initialize();
 
   // The update service is global so update state survives navigation to
@@ -44,14 +37,7 @@ void main() async {
   final updater = AppUpdateService(state: AppStateManager.instance);
 
   // Run the app.
-  runApp(
-    App(
-      mqttService: mqttService,
-      historyService: historyService,
-      updater: updater,
-      brokerRepository: brokerRepository,
-    ),
-  );
+  runApp(App(mqttSession: mqttSession, historyService: historyService, updater: updater, brokerRepository: brokerRepository));
 
   updater.checkForUpdatesOnStartup();
 }

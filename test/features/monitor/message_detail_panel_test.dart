@@ -3,7 +3,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/broker/broker_repository.dart';
 import 'package:mqtt_monitor/core/history/message_history_service.dart';
-import 'package:mqtt_monitor/core/mqtt/mqtt_service.dart';
+import 'package:mqtt_monitor/core/mqtt/session/mqtt_connection_intent_store.dart';
+import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
 import 'package:mqtt_monitor/core/state/app_state.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/message_detail_panel.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
@@ -17,10 +18,12 @@ import '../../support/test_dependencies.dart';
 void main() {
   final state = AppStateManager.instance;
   late BrokerRepository brokers;
+  late MqttConnectionIntentStore connectionIntent;
 
   setUp(() async {
     final dependencies = await TestDependencies.create();
     brokers = dependencies.brokers;
+    connectionIntent = MqttConnectionIntentStore(dependencies.preferences);
   });
 
   test('recognizes a standalone JSON numeric string as a pinnable payload', () {
@@ -28,7 +31,8 @@ void main() {
   });
 
   Widget buildHarness(String payload) {
-    final mqtt = MqttService(state, brokers);
+    final mqtt = MqttSessionController(state, brokers, connectionIntent);
+    addTearDown(mqtt.dispose);
     final history = MessageHistoryService(mqtt, state, brokers);
     final node = TopicTreeNode(segment: 'temperature', fullPath: 'home/temperature');
     node.valueNotifier.value = TopicNodeValue(payload: payload, seq: 1, receivedAt: DateTime(2026));
