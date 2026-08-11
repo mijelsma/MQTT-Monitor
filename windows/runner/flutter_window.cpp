@@ -74,7 +74,7 @@ void FlutterWindow::OnDestroy() {
 }
 
 void FlutterWindow::SetTitleBarDarkMode(bool dark) {
-  HWND hwnd = GetRootWindow();
+  HWND hwnd = GetHandle();
   if (hwnd == nullptr) {
     return;
   }

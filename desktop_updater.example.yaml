@@ -1,0 +1,18 @@
+# Copy this to desktop_updater.local.yaml only when publishing manually.
+# The release workflow generates its configuration automatically. This example
+# is useful for local packaging; scripts/prepare_github_release.py performs the
+# final flat GitHub asset layout.
+updates:
+  baseUrl: https://github.com/OWNER/REPOSITORY/releases/download/v0.2.0
+  channel: stable
+
+# Production macOS releases must use a Developer ID certificate and a
+# notarytool keychain profile. GitHub Actions creates this block from its
+# signing secrets.
+# macos:
+#   notarize: true
+#   developerIdApplication: "Developer ID Application: Your Name (TEAMID)"
+#   notaryProfile: your-notary-profile
+#   keychain: /path/to/notary.keychain-db
+#   artifact:
+#     kind: dmg

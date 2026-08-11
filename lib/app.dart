@@ -7,6 +7,7 @@ import 'core/mqtt/mqtt_service.dart';
 import 'core/platform/window_chrome.dart';
 import 'core/state/app_state.dart';
 import 'core/state/keys/settings_keys.dart';
+import 'core/update/app_update_service.dart';
 import 'features/monitor/monitor_screen.dart';
 import 'generated/l10n.dart';
 import 'models/language.dart';
@@ -14,10 +15,11 @@ import 'theme/app_theme.dart';
 import 'theme/app_tokens/app_tokens.dart';
 
 class App extends StatelessWidget {
-  const App({super.key, required this.mqttService, required this.historyService});
+  const App({super.key, required this.mqttService, required this.historyService, required this.updater});
 
   final MqttService mqttService;
   final MessageHistoryService historyService;
+  final AppUpdateService updater;
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +28,7 @@ class App extends StatelessWidget {
         ChangeNotifierProvider<AppStateManager>.value(value: AppStateManager.instance),
         Provider<MqttService>.value(value: mqttService),
         Provider<MessageHistoryService>.value(value: historyService),
+        ChangeNotifierProvider<AppUpdateService>.value(value: updater),
       ],
       child: const _AppView(),
     );
@@ -99,14 +102,7 @@ class _AppViewState extends State<_AppView> {
 ThemeData _applyAccent(ThemeData base, Color accent, Brightness brightness) {
   final baseTokens = base.extension<AppTokens>()!;
   final isLight = brightness == Brightness.light;
-  final tokens = baseTokens.copyWith(
-    primary: accent,
-    selectedBg: isLight ? accent.withValues(alpha: 0.08) : baseTokens.selectedBg,
-  );
-  final scheme = base.colorScheme.copyWith(
-    primary: accent,
-    primaryContainer: Color.lerp(accent, Colors.white, isLight ? 0.85 : 0.0)!,
-    inversePrimary: Color.lerp(accent, Colors.white, 0.25)!,
-  );
+  final tokens = baseTokens.copyWith(primary: accent, selectedBg: isLight ? accent.withValues(alpha: 0.08) : baseTokens.selectedBg);
+  final scheme = base.colorScheme.copyWith(primary: accent, primaryContainer: Color.lerp(accent, Colors.white, isLight ? 0.85 : 0.0)!, inversePrimary: Color.lerp(accent, Colors.white, 0.25)!);
   return base.copyWith(colorScheme: scheme, extensions: <ThemeExtension<dynamic>>[tokens]);
 }

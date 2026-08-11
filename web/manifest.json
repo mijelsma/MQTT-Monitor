@@ -1,11 +1,11 @@
 {
-    "name": "mqtt_monitor",
-    "short_name": "mqtt_monitor",
+    "name": "MQTT Monitor",
+    "short_name": "MQTT Monitor",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#1A0A2E",
     "theme_color": "#3D1470",
-    "description": "A new Flutter project.",
+    "description": "A desktop MQTT client for monitoring and publishing messages.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

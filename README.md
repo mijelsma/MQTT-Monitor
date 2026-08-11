@@ -3,6 +3,9 @@
   A fast, customizable, native desktop MQTT client for people who actually live in their broker all day.
 </p>
 
+> [!IMPORTANT]
+> MQTT Monitor is currently in beta. The v1.0 release is planned for the end of August 2026.
+
 <p align="center">
   <a href="https://ko-fi.com/micheljelsma">
     <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi">
@@ -34,6 +37,7 @@ It's built with Flutter and runs as a real native app on macOS, Windows, and Lin
 
 - [Features](#features)
 - [Getting Started in VS Code](#getting-started-in-vs-code)
+- [Desktop Updates](docs/updates.md)
 - [Reporting Issues](#reporting-issues)
 - [Credits](#credits)
 

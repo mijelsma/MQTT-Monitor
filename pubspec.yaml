@@ -1,9 +1,9 @@
 name: mqtt_monitor
-description: "A new Flutter project."
+description: "A desktop MQTT client for monitoring and publishing messages."
 
 publish_to: 'none'
 
-version: 0.1.0+2
+version: 0.2.0+6
 
 environment:
   sdk: ^3.11.1
@@ -22,8 +22,13 @@ dependencies:
   file_picker: ^10.3.10
   path: ^1.9.1
   path_provider: ^2.1.5
+  path_provider_platform_interface: ^2.1.2
   fl_chart: ^1.2.0
+  flutter_markdown_plus: ^1.0.12
+  http: ^1.6.0
+  pub_semver: ^2.2.0
   url_launcher: ^6.3.2
+  desktop_updater: ^2.7.0
 
 dev_dependencies:
   flutter_test:

@@ -29,6 +29,9 @@ abstract final class SettingsKeys {
   static final sidebarAnimationsEnabled = StateKey.boolean('settings.sidebarAnimationsEnabled', defaultValue: true);
   static final sidebarAnimationSpeed = StateKey.integer('settings.sidebarAnimationSpeed', defaultValue: 50);
 
+  // Updates
+  static final trackBetaReleases = StateKey.boolean('settings.trackBetaReleases');
+
   // Default sidebar panel states on startup (collapsed / expanded / lastStatus).
   static final defaultSidebarDetail = StateKey.forEnum('settings.defaultSidebarDetail', SidebarPanelDefault.values, defaultValue: SidebarPanelDefault.expanded);
   static final defaultSidebarHistory = StateKey.forEnum('settings.defaultSidebarHistory', SidebarPanelDefault.values, defaultValue: SidebarPanelDefault.collapsed);
@@ -82,6 +85,7 @@ abstract final class SettingsKeys {
     persistLayout,
     sidebarAnimationsEnabled,
     sidebarAnimationSpeed,
+    trackBetaReleases,
     defaultSidebarDetail,
     defaultSidebarHistory,
     defaultSidebarPublish,
