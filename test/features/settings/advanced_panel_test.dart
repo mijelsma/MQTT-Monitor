@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/broker/broker_repository.dart';
-import 'package:mqtt_monitor/core/state/app_state.dart';
-import 'package:mqtt_monitor/core/state/keys/settings_keys.dart';
 import 'package:mqtt_monitor/features/settings/panels/advanced_panel.dart';
 import 'package:mqtt_monitor/features/settings/settings_viewmodel.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
@@ -16,7 +14,6 @@ import 'package:provider/provider.dart';
 import '../../support/test_dependencies.dart';
 
 void main() {
-  final state = AppStateManager.instance;
   late BrokerRepository brokers;
   late TestDependencies dependencies;
 
@@ -26,7 +23,7 @@ void main() {
   });
 
   Future<SettingsViewModel> pumpPanel(WidgetTester tester) async {
-    final viewModel = SettingsViewModel(state: state, brokerRepository: brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, qosPreferences: dependencies.qosPreferences, uiPreferences: dependencies.uiPreferences, updatePreferences: dependencies.updatePreferences);
+    final viewModel = dependencies.createSettingsViewModel();
     addTearDown(viewModel.dispose);
     await tester.pumpWidget(
       ChangeNotifierProvider<SettingsViewModel>.value(
@@ -46,9 +43,9 @@ void main() {
   testWidgets('shows validated defaults for new subscription history', (tester) async {
     await pumpPanel(tester);
 
-    expect(state.read(SettingsKeys.newSubscriptionHistoryEnabled), isTrue);
-    expect(state.read(SettingsKeys.newSubscriptionHistoryRetention), 10);
-    expect(state.read(SettingsKeys.maximumHistoryRetention), 50);
+    expect(dependencies.historyPreferences.newSubscriptionEnabled, isTrue);
+    expect(dependencies.historyPreferences.newSubscriptionRetention, 10);
+    expect(dependencies.historyPreferences.maximumRetention, 50);
     expect(find.text('New subscription history'), findsOneWidget);
     expect(find.text('Default retention'), findsOneWidget);
     expect(find.text('Maximum retention'), findsOneWidget);
@@ -76,11 +73,11 @@ void main() {
 
     final defaultRetention = tester.widgetList<Slider>(find.byType(Slider)).first;
     expect(defaultRetention.onChanged, isNull);
-    expect(state.read(SettingsKeys.newSubscriptionHistoryEnabled), isFalse);
+    expect(dependencies.historyPreferences.newSubscriptionEnabled, isFalse);
   });
 
   testWidgets('maximum reduction can be cancelled or explicitly confirmed', (tester) async {
-    await state.write(SettingsKeys.maximumHistoryRetention, 500);
+    await dependencies.historyPreferences.setMaximumRetention(500);
     await brokers.add(
       const BrokerEntry(
         id: 'broker',
@@ -102,7 +99,7 @@ void main() {
     expect(find.text('Saved subscription policies: 1'), findsOneWidget);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
-    expect(state.read(SettingsKeys.maximumHistoryRetention), 500);
+    expect(dependencies.historyPreferences.maximumRetention, 500);
     expect(brokers.activeBroker!.subscriptions.single.history.retention, 100);
 
     maximumSlider().onChanged!(50);
@@ -112,7 +109,7 @@ void main() {
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
-    expect(state.read(SettingsKeys.maximumHistoryRetention), 50);
+    expect(dependencies.historyPreferences.maximumRetention, 50);
     expect(brokers.activeBroker!.subscriptions.single.history.retention, 50);
   });
 

@@ -3,16 +3,17 @@ import 'package:flutter/material.dart';
 import '../../core/broker/broker_repository.dart';
 import '../../core/broker/broker_repository_failure.dart';
 import '../../core/dashboard/dashboard_repository.dart';
-import '../../core/dashboard/dashboard_series_policy.dart';
+import '../../core/dashboard/dashboard_preferences_repository.dart';
 import '../../core/history/history_policy_rules.dart';
+import '../../core/history/history_preferences_repository.dart';
 import '../../core/history/message_history_service.dart';
+import '../../core/logging/app_logger.dart';
+import '../../core/mqtt/connection_preferences_repository.dart';
 import '../../core/publishing/shortcut_repository.dart';
 import '../../core/publishing/qos_preferences_repository.dart';
 import '../../core/publishing/variable_repository.dart';
-import '../../core/state/app_state.dart';
-import '../../core/state/keys/app_keys.dart';
-import '../../core/state/keys/settings_keys.dart';
 import '../../core/ui/ui_preferences_repository.dart';
+import '../../core/ui/workspace_layout_repository.dart';
 import '../../core/update/update_preferences_repository.dart';
 import '../../models/broker_entry.dart';
 import '../../models/chart_type.dart';
@@ -23,6 +24,7 @@ import '../../models/mqtt_qos_default.dart';
 import '../../models/sidebar_panel_default.dart';
 import '../../models/startup_connection.dart';
 import 'settings_section.dart';
+import 'settings_navigation_controller.dart';
 import '../../models/environment_variable.dart';
 import '../../models/publish_shortcut.dart';
 
@@ -30,7 +32,12 @@ import '../../models/publish_shortcut.dart';
 class SettingsViewModel extends ChangeNotifier {
   /// Creates the settings controller and observes app and broker state.
   SettingsViewModel({
-    required AppStateManager state,
+    required SettingsNavigationController navigation,
+    required ConnectionPreferencesRepository connectionPreferences,
+    required DashboardPreferencesRepository dashboardPreferences,
+    required HistoryPreferencesRepository historyPreferences,
+    required WorkspaceLayoutRepository workspaceLayout,
+    required AppLogger logger,
     required BrokerRepository brokerRepository,
     required ShortcutRepository shortcutRepository,
     required VariableRepository variableRepository,
@@ -39,7 +46,12 @@ class SettingsViewModel extends ChangeNotifier {
     required UpdatePreferencesRepository updatePreferences,
     DashboardRepository? dashboardRepository,
     MessageHistoryService? historyService,
-  }) : _state = state,
+  }) : _navigation = navigation,
+       _connectionPreferences = connectionPreferences,
+       _dashboardPreferences = dashboardPreferences,
+       _historyPreferences = historyPreferences,
+       _workspaceLayout = workspaceLayout,
+       _logger = logger,
        _brokers = brokerRepository,
        _shortcuts = shortcutRepository,
        _variables = variableRepository,
@@ -48,7 +60,11 @@ class SettingsViewModel extends ChangeNotifier {
        _updatePreferences = updatePreferences,
        _dashboard = dashboardRepository,
        _historyService = historyService {
-    _state.addListener(_onStateChanged);
+    _navigation.addListener(_onStateChanged);
+    _connectionPreferences.addListener(_onStateChanged);
+    _dashboardPreferences.addListener(_onStateChanged);
+    _historyPreferences.addListener(_onStateChanged);
+    _workspaceLayout.addListener(_onStateChanged);
     _brokers.addListener(_onStateChanged);
     _dashboard?.addListener(_onStateChanged);
     _shortcuts.addListener(_onStateChanged);
@@ -57,7 +73,12 @@ class SettingsViewModel extends ChangeNotifier {
     _uiPreferences.addListener(_onStateChanged);
   }
 
-  final AppStateManager _state;
+  final SettingsNavigationController _navigation;
+  final ConnectionPreferencesRepository _connectionPreferences;
+  final DashboardPreferencesRepository _dashboardPreferences;
+  final HistoryPreferencesRepository _historyPreferences;
+  final WorkspaceLayoutRepository _workspaceLayout;
+  final AppLogger _logger;
   final BrokerRepository _brokers;
   final ShortcutRepository _shortcuts;
   final VariableRepository _variables;
@@ -70,8 +91,8 @@ class SettingsViewModel extends ChangeNotifier {
   /// Notifies settings consumers after either observed owner changes.
   void _onStateChanged() => notifyListeners();
 
-  SettingsSection get activeSection => _state.read(AppKeys.activeSettingsSection);
-  void selectSection(SettingsSection s) => _state.write(AppKeys.activeSettingsSection, s);
+  SettingsSection get activeSection => _navigation.section;
+  void selectSection(SettingsSection s) => _navigation.select(s);
 
   /// Returns the ordered broker profiles owned by the repository.
   List<BrokerEntry> get brokers => _brokers.brokers;
@@ -98,42 +119,40 @@ class SettingsViewModel extends ChangeNotifier {
 
   // Dashboard defaults
 
-  double get defaultDotSize => _state.read(SettingsKeys.defaultDotSize);
-  void setDefaultDotSize(double value) => _state.write(SettingsKeys.defaultDotSize, value);
+  double get defaultDotSize => _dashboardPreferences.dotSize;
+  void setDefaultDotSize(double value) => _dashboardPreferences.setDotSize(value);
 
-  Color get defaultCardColor => Color(_state.read(SettingsKeys.defaultCardColor));
-  void setDefaultCardColor(Color value) => _state.write(SettingsKeys.defaultCardColor, value.toARGB32());
+  Color get defaultCardColor => Color(_dashboardPreferences.cardColor);
+  void setDefaultCardColor(Color value) => _dashboardPreferences.setCardColor(value.toARGB32());
 
-  ChartType get defaultChartType => _state.read(SettingsKeys.defaultChartType);
-  void setDefaultChartType(ChartType value) => _state.write(SettingsKeys.defaultChartType, value);
+  ChartType get defaultChartType => _dashboardPreferences.chartType;
+  void setDefaultChartType(ChartType value) => _dashboardPreferences.setChartType(value);
 
-  InterpolationMode get defaultInterpolation => _state.read(SettingsKeys.defaultInterpolation);
-  void setDefaultInterpolation(InterpolationMode value) => _state.write(SettingsKeys.defaultInterpolation, value);
+  InterpolationMode get defaultInterpolation => _dashboardPreferences.interpolation;
+  void setDefaultInterpolation(InterpolationMode value) => _dashboardPreferences.setInterpolation(value);
 
-  int get defaultMaxSamples => DashboardSeriesPolicy.normalizeSetting(_state.read(SettingsKeys.defaultMaxSamples));
-  void setDefaultMaxSamples(int value) => _state.write(SettingsKeys.defaultMaxSamples, DashboardSeriesPolicy.normalizeSetting(value));
+  int get defaultMaxSamples => _dashboardPreferences.maximumSamples;
+  void setDefaultMaxSamples(int value) => _dashboardPreferences.setMaximumSamples(value);
 
   // Subscription history
 
-  bool get newSubscriptionHistoryEnabled => _state.read(SettingsKeys.newSubscriptionHistoryEnabled);
+  bool get newSubscriptionHistoryEnabled => _historyPreferences.newSubscriptionEnabled;
 
   Future<void> setNewSubscriptionHistoryEnabled(bool value) {
-    return _state.write(SettingsKeys.newSubscriptionHistoryEnabled, value);
+    return _historyPreferences.setNewSubscriptionEnabled(value);
   }
 
   int get maximumHistoryRetention {
-    final value = _state.read(SettingsKeys.maximumHistoryRetention);
-    return HistoryPolicyRules.isValidMaximum(value) ? value : HistoryPolicyRules.defaultMaximumRetention;
+    return _historyPreferences.maximumRetention;
   }
 
   int get newSubscriptionHistoryRetention {
-    final value = _state.read(SettingsKeys.newSubscriptionHistoryRetention);
-    return HistoryPolicyRules.isValidRetention(value, maximum: maximumHistoryRetention) ? value : HistoryPolicyRules.defaultRetention;
+    return _historyPreferences.newSubscriptionRetention;
   }
 
   Future<void> setNewSubscriptionHistoryRetention(int value) {
     HistoryPolicyRules.validateRetention(value, maximum: maximumHistoryRetention);
-    return _state.write(SettingsKeys.newSubscriptionHistoryRetention, value);
+    return _historyPreferences.setNewSubscriptionRetention(value);
   }
 
   /// Reports values that would be destructively clamped by [maximum].
@@ -147,10 +166,7 @@ class SettingsViewModel extends ChangeNotifier {
   Future<bool> applyMaximumHistoryRetention(int maximum) async {
     HistoryPolicyRules.validateMaximum(maximum);
     if (!await _brokers.clampSubscriptionHistory(maximum)) return false;
-    if (newSubscriptionHistoryRetention > maximum) {
-      await _state.write(SettingsKeys.newSubscriptionHistoryRetention, maximum);
-    }
-    await _state.write(SettingsKeys.maximumHistoryRetention, maximum);
+    await _historyPreferences.setMaximumRetention(maximum);
     _historyService?.trimToMaximum(maximum);
     return true;
   }
@@ -163,15 +179,18 @@ class SettingsViewModel extends ChangeNotifier {
 
     try {
       // The broker repository already cleared the shared preference store.
-      await _state.resetAll(clearPreferences: false);
       _dashboard?.resetAfterPreferencesClear();
       await _shortcuts.resetAfterPreferencesClear();
       await _variables.resetAfterPreferencesClear();
       await _qosPreferences.resetAfterPreferencesClear();
       await _uiPreferences.resetAfterPreferencesClear();
       await _updatePreferences.resetAfterPreferencesClear();
-      _state.setLayoutPersistenceEnabled(_uiPreferences.persistLayout);
-      await _state.write(AppKeys.activeSettingsSection, selectedSection);
+      await _connectionPreferences.resetAfterPreferencesClear();
+      await _dashboardPreferences.resetAfterPreferencesClear();
+      await _historyPreferences.resetAfterPreferencesClear();
+      await _workspaceLayout.resetAfterPreferencesClear();
+      _workspaceLayout.setPersistenceEnabled(_uiPreferences.persistLayout);
+      _navigation.select(selectedSection);
       _historyService?.clear();
       await _brokers.initialize();
       await _dashboard?.initialize();
@@ -180,14 +199,20 @@ class SettingsViewModel extends ChangeNotifier {
       await _qosPreferences.initialize();
       await _uiPreferences.initialize();
       await _updatePreferences.initialize();
+      await _connectionPreferences.initialize();
+      await _dashboardPreferences.initialize();
+      await _historyPreferences.initialize();
+      _workspaceLayout.setPersistenceEnabled(_uiPreferences.persistLayout);
+      await _workspaceLayout.initialize();
       return brokerReset;
-    } on Object {
+    } on Object catch (error) {
+      _logger.log(AppLogLevel.error, 'settings.reset', 'Resetting application settings failed.', error: error);
       return (succeeded: false, cleanupFailures: brokerReset.cleanupFailures);
     }
   }
 
-  int get messageRateSampleSize => _state.read(SettingsKeys.messageRateSampleSize);
-  void setMessageRateSampleSize(int value) => _state.write(SettingsKeys.messageRateSampleSize, value);
+  int get messageRateSampleSize => _historyPreferences.rateSampleSize;
+  void setMessageRateSampleSize(int value) => _historyPreferences.setRateSampleSize(value);
 
   // ── Default QoS levels ───────────────────────────────────────────────
 
@@ -289,7 +314,7 @@ class SettingsViewModel extends ChangeNotifier {
 
   bool get persistLayout => _uiPreferences.persistLayout;
   void setPersistLayout(bool v) {
-    _state.setLayoutPersistenceEnabled(v);
+    _workspaceLayout.setPersistenceEnabled(v);
     _uiPreferences.setPersistLayout(v);
   }
 
@@ -313,21 +338,25 @@ class SettingsViewModel extends ChangeNotifier {
   SidebarPanelDefault get defaultSidebarShortcuts => _uiPreferences.defaultSidebarShortcuts;
   void setDefaultSidebarShortcuts(SidebarPanelDefault v) => _uiPreferences.setDefaultSidebarShortcuts(v);
 
-  int get rateIntervalMs => _state.read(SettingsKeys.rateIntervalMs);
-  void setRateIntervalMs(int v) => _state.write(SettingsKeys.rateIntervalMs, v);
+  int get rateIntervalMs => _connectionPreferences.rateIntervalMs;
+  void setRateIntervalMs(int v) => _connectionPreferences.setRateIntervalMs(v);
 
-  StartupConnection get startupConnection => _state.read(SettingsKeys.startupConnection);
-  void setStartupConnection(StartupConnection v) => _state.write(SettingsKeys.startupConnection, v);
+  StartupConnection get startupConnection => _connectionPreferences.startupConnection;
+  void setStartupConnection(StartupConnection v) => _connectionPreferences.setStartupConnection(v);
 
   //  Language
 
   AppLanguage get language => _uiPreferences.language;
   void setLanguage(AppLanguage lang) => _uiPreferences.setLanguage(lang);
 
-  /// Releases app-state and broker-repository listeners.
+  /// Releases navigation and repository listeners.
   @override
   void dispose() {
-    _state.removeListener(_onStateChanged);
+    _navigation.removeListener(_onStateChanged);
+    _connectionPreferences.removeListener(_onStateChanged);
+    _dashboardPreferences.removeListener(_onStateChanged);
+    _historyPreferences.removeListener(_onStateChanged);
+    _workspaceLayout.removeListener(_onStateChanged);
     _brokers.removeListener(_onStateChanged);
     _dashboard?.removeListener(_onStateChanged);
     _shortcuts.removeListener(_onStateChanged);

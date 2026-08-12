@@ -9,8 +9,8 @@ import 'package:mqtt_monitor/core/mqtt/mqtt_protocol_event.dart';
 import 'package:mqtt_monitor/core/mqtt/publish_result.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_connection_intent_store.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
-import 'package:mqtt_monitor/core/state/app_state.dart';
-import 'package:mqtt_monitor/core/state/keys/settings_keys.dart';
+import 'package:mqtt_monitor/core/mqtt/connection_preferences_repository.dart';
+import 'package:mqtt_monitor/core/logging/app_logger.dart';
 import 'package:mqtt_monitor/models/broker_entry.dart';
 import 'package:mqtt_monitor/models/mqtt_protocol_version.dart';
 import 'package:mqtt_monitor/models/startup_connection.dart';
@@ -114,15 +114,18 @@ class _ManualTimer implements Timer {
 }
 
 void main() {
-  final appState = AppStateManager.instance;
+  late ConnectionPreferencesRepository connectionPreferences;
+  late LocalAppLogger logger;
   late BrokerRepository brokers;
   late MqttConnectionIntentStore intent;
 
   setUp(() async {
     final dependencies = await TestDependencies.create();
     brokers = dependencies.brokers;
+    connectionPreferences = dependencies.connectionPreferences;
+    logger = dependencies.logger;
     intent = MqttConnectionIntentStore(dependencies.preferences);
-    await appState.write(SettingsKeys.startupConnection, StartupConnection.alwaysConnect);
+    await connectionPreferences.setStartupConnection(StartupConnection.alwaysConnect);
   });
 
   /// Lets unawaited reconciliation work cross its asynchronous boundaries.
@@ -133,14 +136,15 @@ void main() {
   }
 
   test('last-status startup honors persisted disconnected intent', () async {
-    await appState.write(SettingsKeys.startupConnection, StartupConnection.lastStatus);
+    await connectionPreferences.setStartupConnection(StartupConnection.lastStatus);
     await intent.setConnectionRequested(false);
     await brokers.add(const BrokerEntry(id: 'broker', name: 'Broker', host: 'one.invalid'));
     final adapters = <_ControllableAdapter>[];
     final controller = MqttSessionController(
-      appState,
+      connectionPreferences,
       brokers,
       intent,
+      logger: logger,
       adapterFactory: (broker) {
         final adapter = _ControllableAdapter(broker.protocolVersion);
         adapters.add(adapter);
@@ -179,9 +183,10 @@ void main() {
     await brokers.add(broker);
     final adapters = <_ControllableAdapter>[];
     final controller = MqttSessionController(
-      appState,
+      connectionPreferences,
       brokers,
       intent,
+      logger: logger,
       adapterFactory: (profile) {
         final adapter = _ControllableAdapter(profile.protocolVersion);
         adapters.add(adapter);
@@ -211,9 +216,10 @@ void main() {
     await brokers.add(broker);
     final adapters = <_ControllableAdapter>[];
     final controller = MqttSessionController(
-      appState,
+      connectionPreferences,
       brokers,
       intent,
+      logger: logger,
       adapterFactory: (profile) {
         final adapter = _ControllableAdapter(profile.protocolVersion);
         adapters.add(adapter);
@@ -261,9 +267,10 @@ void main() {
     final firstConnect = Completer<void>();
     final adapters = <_ControllableAdapter>[];
     final controller = MqttSessionController(
-      appState,
+      connectionPreferences,
       brokers,
       intent,
+      logger: logger,
       adapterFactory: (profile) {
         final adapter = _ControllableAdapter(profile.protocolVersion, connectGate: adapters.isEmpty ? firstConnect : null);
         adapters.add(adapter);
@@ -301,9 +308,10 @@ void main() {
     await brokers.add(const BrokerEntry(id: 'broker', name: 'Broker', host: 'one.invalid'));
     final adapters = <_ControllableAdapter>[];
     final controller = MqttSessionController(
-      appState,
+      connectionPreferences,
       brokers,
       intent,
+      logger: logger,
       adapterFactory: (broker) {
         final adapter = _ControllableAdapter(broker.protocolVersion);
         adapters.add(adapter);
@@ -341,9 +349,10 @@ void main() {
     late void Function(Timer) sample;
     final adapters = <_ControllableAdapter>[];
     final controller = MqttSessionController(
-      appState,
+      connectionPreferences,
       brokers,
       intent,
+      logger: logger,
       adapterFactory: (broker) {
         final adapter = _ControllableAdapter(broker.protocolVersion);
         adapters.add(adapter);

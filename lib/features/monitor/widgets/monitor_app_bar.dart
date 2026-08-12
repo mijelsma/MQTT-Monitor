@@ -3,11 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../../../core/mqtt/connection_status.dart';
 import '../../../generated/l10n.dart';
+import '../../../navigation/app_navigation.dart';
 import '../../../shared/widgets/app_bar_action_button.dart';
 import '../../../shared/widgets/spacers.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../../dashboard/dashboard_screen.dart';
-import '../../settings/settings_screen.dart';
 import '../monitor_viewmodel.dart';
 import '../monitor_workspace_controller.dart';
 import '../search_scope.dart';
@@ -67,7 +66,12 @@ class _MonitorAppBarState extends State<MonitorAppBar> {
         children: [
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 280),
-            child: _SearchBox(controller: widget.filterController, scope: workspace.scope, hasText: hasText, onScopeChanged: workspace.setScope),
+            child: _SearchBox(
+              controller: widget.filterController,
+              scope: workspace.scope,
+              hasText: hasText,
+              onScopeChanged: workspace.setScope,
+            ),
           ),
           const HSpacer(8),
           _CollapseExpandButton(),
@@ -76,13 +80,27 @@ class _MonitorAppBarState extends State<MonitorAppBar> {
         ],
       ),
       titleSpacing: 10,
-      actions: const [BrokerSelector(), HSpacer(8), _ConnectionButton(), HSpacer(4), _DashboardButton(), HSpacer(4), _SettingsButton(), HSpacer(8)],
+      actions: const [
+        BrokerSelector(),
+        HSpacer(8),
+        _ConnectionButton(),
+        HSpacer(4),
+        _DashboardButton(),
+        HSpacer(4),
+        _SettingsButton(),
+        HSpacer(8),
+      ],
     );
   }
 }
 
 class _SearchBox extends StatelessWidget {
-  const _SearchBox({required this.controller, required this.scope, required this.hasText, required this.onScopeChanged});
+  const _SearchBox({
+    required this.controller,
+    required this.scope,
+    required this.hasText,
+    required this.onScopeChanged,
+  });
 
   final TextEditingController controller;
   final SearchScope scope;
@@ -108,10 +126,18 @@ class _SearchBox extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
-              style: TextStyle(fontSize: 13, color: tokens.textPrimary, height: 1.0),
+              style: TextStyle(
+                fontSize: 13,
+                color: tokens.textPrimary,
+                height: 1.0,
+              ),
               decoration: InputDecoration(
                 hintText: '${S.of(context).searchHint}…',
-                hintStyle: TextStyle(fontSize: 13, color: tokens.textTertiary, fontWeight: FontWeight.w400),
+                hintStyle: TextStyle(
+                  fontSize: 13,
+                  color: tokens.textTertiary,
+                  fontWeight: FontWeight.w400,
+                ),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
@@ -124,7 +150,11 @@ class _SearchBox extends StatelessWidget {
             const SizedBox(width: 4),
             GestureDetector(
               onTap: controller.clear,
-              child: Icon(Icons.cancel_rounded, size: 14, color: tokens.textTertiary),
+              child: Icon(
+                Icons.cancel_rounded,
+                size: 14,
+                color: tokens.textTertiary,
+              ),
             ),
           ],
           const SizedBox(width: 6),
@@ -168,7 +198,11 @@ class _ScopePicker extends StatelessWidget {
               height: 36,
               child: Text(
                 _label(context, s),
-                style: TextStyle(fontSize: 13, fontWeight: s == scope ? FontWeight.w600 : FontWeight.w400, color: s == scope ? tokens.primary : tokens.textSecondary),
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: s == scope ? FontWeight.w600 : FontWeight.w400,
+                  color: s == scope ? tokens.primary : tokens.textSecondary,
+                ),
               ),
             ),
           )
@@ -180,10 +214,18 @@ class _ScopePicker extends StatelessWidget {
           children: [
             Text(
               _label(context, scope),
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: tokens.textSecondary),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: tokens.textSecondary,
+              ),
             ),
             const SizedBox(width: 2),
-            Icon(Icons.keyboard_arrow_down_rounded, size: 13, color: tokens.textTertiary),
+            Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 13,
+              color: tokens.textTertiary,
+            ),
           ],
         ),
       ),
@@ -200,8 +242,14 @@ class _CollapseExpandButton extends StatelessWidget {
 
     return IconButton(
       onPressed: anyExpanded ? vm.collapseAll : vm.expandAll,
-      icon: Icon(anyExpanded ? Icons.unfold_less_rounded : Icons.unfold_more_rounded, size: 18, color: tokens.textSecondary),
-      tooltip: anyExpanded ? S.of(context).collapseAll : S.of(context).expandAll,
+      icon: Icon(
+        anyExpanded ? Icons.unfold_less_rounded : Icons.unfold_more_rounded,
+        size: 18,
+        color: tokens.textSecondary,
+      ),
+      tooltip: anyExpanded
+          ? S.of(context).collapseAll
+          : S.of(context).expandAll,
       splashRadius: 16,
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
@@ -218,7 +266,11 @@ class _ClearAllTopicsButton extends StatelessWidget {
 
     return IconButton(
       onPressed: vm.clearAllTopics,
-      icon: Icon(Icons.delete_sweep_rounded, size: 18, color: tokens.textSecondary),
+      icon: Icon(
+        Icons.delete_sweep_rounded,
+        size: 18,
+        color: tokens.textSecondary,
+      ),
       tooltip: S.of(context).clearAllTopics,
       splashRadius: 16,
       padding: EdgeInsets.zero,
@@ -237,12 +289,16 @@ class _ConnectionButton extends StatelessWidget {
     if (vm.brokers.isEmpty) return const SizedBox.shrink();
 
     final (icon, onTap) = switch (vm.connectionStatus) {
-      ConnectionStatus.connected || ConnectionStatus.connecting => (Icons.link_off_rounded, vm.disconnect as VoidCallback?),
+      ConnectionStatus.connected || ConnectionStatus.connecting => (
+        Icons.link_off_rounded,
+        vm.disconnect as VoidCallback?,
+      ),
       _ => (Icons.link_rounded, vm.reconnect as VoidCallback?),
     };
 
     final tooltip = switch (vm.connectionStatus) {
-      ConnectionStatus.connected || ConnectionStatus.connecting => S.of(context).disconnect,
+      ConnectionStatus.connected ||
+      ConnectionStatus.connecting => S.of(context).disconnect,
       _ => S.of(context).reconnect,
     };
 
@@ -263,11 +319,10 @@ class _DashboardButton extends StatelessWidget {
       tooltip: S.of(context).sectionDashboard,
       onTap: broker == null
           ? null
-          : () => Navigator.push(
+          : () => context.read<AppNavigation>().openDashboard(
               context,
-              MaterialPageRoute(
-                builder: (_) => GraphDashboardScreen(brokerId: broker.id, brokerName: broker.name),
-              ),
+              brokerId: broker.id,
+              brokerName: broker.name,
             ),
     );
   }
@@ -281,7 +336,7 @@ class _SettingsButton extends StatelessWidget {
     return AppBarActionButton(
       icon: Icons.tune_rounded,
       tooltip: S.of(context).settings,
-      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
+      onTap: () => context.read<AppNavigation>().openSettings(context),
     );
   }
 }

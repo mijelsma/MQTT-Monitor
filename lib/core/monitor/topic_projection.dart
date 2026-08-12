@@ -18,6 +18,8 @@ class TopicProjection extends ChangeNotifier {
   final ValueNotifier<({IngestedMessage message, List<TopicTreeNode> path, bool structureChanged, bool topicCreated})?> updates = ValueNotifier(null);
 
   StreamSubscription<IngestedMessage>? _subscription;
+  Future<void>? _shutdown;
+  bool _notifierDisposed = false;
   String? _activeBrokerId;
 
   /// Returns roots in stable display order.
@@ -71,11 +73,22 @@ class TopicProjection extends ChangeNotifier {
     clear();
   }
 
+  /// Stops projection input and waits for the stream subscription to detach.
+  Future<void> shutdown() => _shutdown ??= _shutdownResources();
+
+  Future<void> _shutdownResources() async {
+    _brokers.removeListener(_onBrokerChanged);
+    final subscription = _subscription;
+    _subscription = null;
+    await subscription?.cancel();
+  }
+
   /// Releases projection listeners and signals.
   @override
   void dispose() {
-    _brokers.removeListener(_onBrokerChanged);
-    _subscription?.cancel();
+    if (_notifierDisposed) return;
+    _notifierDisposed = true;
+    unawaited(shutdown());
     updates.dispose();
     super.dispose();
   }

@@ -4,8 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/broker/broker_repository.dart';
 import 'package:mqtt_monitor/core/history/message_history_service.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_message.dart';
-import 'package:mqtt_monitor/core/state/app_state.dart';
-import 'package:mqtt_monitor/core/state/keys/settings_keys.dart';
 import 'package:mqtt_monitor/models/broker_entry.dart';
 import 'package:mqtt_monitor/models/subscription_entry.dart';
 import 'package:mqtt_monitor/models/subscription_history_policy.dart';
@@ -13,16 +11,16 @@ import 'package:mqtt_monitor/models/subscription_history_policy.dart';
 import '../../support/test_dependencies.dart';
 
 void main() {
-  final state = AppStateManager.instance;
   late StreamController<MQTTMessage> messages;
   late MessageHistoryService history;
   late BrokerRepository brokers;
+  late TestDependencies dependencies;
 
   setUp(() async {
-    final dependencies = await TestDependencies.create();
+    dependencies = await TestDependencies.create();
     brokers = dependencies.brokers;
     messages = StreamController<MQTTMessage>.broadcast();
-    history = MessageHistoryService.fromStream(messages.stream, state, brokers)..initialize();
+    history = MessageHistoryService.fromStream(messages.stream, dependencies.historyPreferences, brokers)..initialize();
   });
 
   tearDown(() async {
@@ -99,7 +97,7 @@ void main() {
   });
 
   test('confirmed global maximum trims existing live buffers', () async {
-    await state.write(SettingsKeys.maximumHistoryRetention, 100);
+    await dependencies.historyPreferences.setMaximumRetention(100);
     await addBroker('broker', [subscription('all', '#', retention: 100)]);
     for (var index = 1; index <= 60; index++) {
       messages.add(message('sensor/value', '$index', index % 60));

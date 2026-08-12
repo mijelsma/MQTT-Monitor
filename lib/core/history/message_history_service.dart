@@ -6,50 +6,25 @@ import '../broker/broker_repository.dart';
 import '../ingestion/ingested_message.dart';
 import '../ingestion/message_ingestion_coordinator.dart';
 import '../mqtt/mqtt_message.dart';
-import '../state/app_state.dart';
-import '../state/keys/settings_keys.dart';
+import 'history_preferences_repository.dart';
 import 'history_policy_resolution.dart';
 import 'history_policy_resolver.dart';
 import 'history_policy_rules.dart';
 
 /// Owns bounded, broker-scoped, in-memory message history.
 class MessageHistoryService {
-  MessageHistoryService(
-    MessageIngestionCoordinator ingestion,
-    this._state,
-    this._brokers, {
-    HistoryPolicyResolver resolver = const HistoryPolicyResolver(),
-  }) : _messages = ingestion.messages,
-       _ownedIngestion = null,
-       _resolver = resolver;
+  MessageHistoryService(MessageIngestionCoordinator ingestion, this._preferences, this._brokers, {HistoryPolicyResolver resolver = const HistoryPolicyResolver()}) : _messages = ingestion.messages, _ownedIngestion = null, _resolver = resolver;
 
-  factory MessageHistoryService.fromStream(
-    Stream<MQTTMessage> messages,
-    AppStateManager state,
-    BrokerRepository brokers, {
-    HistoryPolicyResolver resolver = const HistoryPolicyResolver(),
-  }) {
+  factory MessageHistoryService.fromStream(Stream<MQTTMessage> messages, HistoryPreferencesRepository preferences, BrokerRepository brokers, {HistoryPolicyResolver resolver = const HistoryPolicyResolver()}) {
     final ingestion = MessageIngestionCoordinator.fromStream(messages, brokers);
-    return MessageHistoryService._owned(
-      ingestion,
-      state,
-      brokers,
-      resolver: resolver,
-    );
+    return MessageHistoryService._owned(ingestion, preferences, brokers, resolver: resolver);
   }
 
-  MessageHistoryService._owned(
-    MessageIngestionCoordinator ingestion,
-    this._state,
-    this._brokers, {
-    required HistoryPolicyResolver resolver,
-  }) : _messages = ingestion.messages,
-       _ownedIngestion = ingestion,
-       _resolver = resolver;
+  MessageHistoryService._owned(MessageIngestionCoordinator ingestion, this._preferences, this._brokers, {required HistoryPolicyResolver resolver}) : _messages = ingestion.messages, _ownedIngestion = ingestion, _resolver = resolver;
 
   final Stream<IngestedMessage> _messages;
   final MessageIngestionCoordinator? _ownedIngestion;
-  final AppStateManager _state;
+  final HistoryPreferencesRepository _preferences;
   final BrokerRepository _brokers;
   final HistoryPolicyResolver _resolver;
   final Map<String, ListQueue<TopicNodeValue>> _history = {};
@@ -70,19 +45,13 @@ class MessageHistoryService {
   HistoryPolicyResolution resolutionFor(String topic) {
     final broker = _brokers.activeBroker;
     if (broker == null) return const HistoryPolicyResolution.unmatched();
-    return _resolver.resolve(
-      topic,
-      broker.subscriptions,
-      maximumRetention: _maximumRetention,
-    );
+    return _resolver.resolve(topic, broker.subscriptions, maximumRetention: _maximumRetention);
   }
 
   /// Returns retained values for [topic], ordered oldest to newest.
   List<TopicNodeValue> getHistory(String topic) {
     final values = _history[topic];
-    return values == null
-        ? const []
-        : List<TopicNodeValue>.unmodifiable(values);
+    return values == null ? const [] : List<TopicNodeValue>.unmodifiable(values);
   }
 
   /// Returns the number of allocated topic buffers.
@@ -115,10 +84,7 @@ class MessageHistoryService {
   }
 
   int get _maximumRetention {
-    final value = _state.read(SettingsKeys.maximumHistoryRetention);
-    return HistoryPolicyRules.isValidMaximum(value)
-        ? value
-        : HistoryPolicyRules.defaultMaximumRetention;
+    return _preferences.maximumRetention;
   }
 
   /// Resolves policy before allocating or looking up a history buffer.

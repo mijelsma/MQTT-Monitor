@@ -1,24 +1,30 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-/// Updates the native window chrome (title bar) to match the app theme.
-abstract final class WindowChrome {
-  static const _channel = MethodChannel('mqtt_monitor/window_chrome');
+import '../logging/app_logger.dart';
 
-  /// Switches the native title bar between light and dark appearance.
-  ///
-  /// Wired up on macOS (window appearance) and Windows (DWM immersive dark
-  /// mode). Other platforms have no native runner handler and are skipped.
-  static Future<void> setAppearance(Brightness brightness) async {
+abstract interface class WindowChromeController {
+  Future<void> setAppearance(Brightness brightness);
+}
+
+/// Updates supported native title bars and records recoverable channel misses.
+class PlatformWindowChromeController implements WindowChromeController {
+  PlatformWindowChromeController(this._logger, {MethodChannel channel = const MethodChannel('mqtt_monitor/window_chrome')}) : _channel = channel;
+
+  final AppLogger _logger;
+  final MethodChannel _channel;
+
+  @override
+  Future<void> setAppearance(Brightness brightness) async {
     if (defaultTargetPlatform != TargetPlatform.macOS && defaultTargetPlatform != TargetPlatform.windows) {
       return;
     }
     try {
       await _channel.invokeMethod<void>('setAppearance', brightness.name);
-    } on PlatformException {
-      // Native chrome is unavailable on this platform.
-    } on MissingPluginException {
-      // No native runner registers the channel.
+    } on PlatformException catch (error) {
+      _logger.log(AppLogLevel.warning, 'window.chrome', 'Native window appearance could not be updated.', error: error);
+    } on MissingPluginException catch (error) {
+      _logger.log(AppLogLevel.debug, 'window.chrome', 'No native window appearance handler is registered.', error: error);
     }
   }
 }

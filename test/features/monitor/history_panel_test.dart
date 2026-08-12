@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/broker/broker_repository.dart';
 import 'package:mqtt_monitor/core/history/message_history_service.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_message.dart';
-import 'package:mqtt_monitor/core/state/app_state.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/history_panel.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
 import 'package:mqtt_monitor/models/broker_entry.dart';
@@ -20,7 +19,6 @@ import 'package:provider/provider.dart';
 import '../../support/test_dependencies.dart';
 
 void main() {
-  final state = AppStateManager.instance;
   late BrokerRepository brokers;
   late StreamController<MQTTMessage> messages;
   late MessageHistoryService history;
@@ -30,7 +28,7 @@ void main() {
     final dependencies = await TestDependencies.create();
     brokers = dependencies.brokers;
     messages = StreamController<MQTTMessage>.broadcast();
-    history = MessageHistoryService.fromStream(messages.stream, state, brokers)..initialize();
+    history = MessageHistoryService.fromStream(messages.stream, dependencies.historyPreferences, brokers)..initialize();
     node = TopicTreeNode(segment: 'value', fullPath: 'sensor/value')..valueNotifier.value = TopicNodeValue(payload: 'live', seq: 1, receivedAt: DateTime(2026));
   });
 

@@ -5,11 +5,7 @@ import 'package:mqtt_monitor/core/broker/broker_repository.dart';
 import 'package:mqtt_monitor/core/history/message_history_service.dart';
 import 'package:mqtt_monitor/core/ingestion/message_ingestion_coordinator.dart';
 import 'package:mqtt_monitor/core/monitor/topic_projection.dart';
-import 'package:mqtt_monitor/core/mqtt/session/mqtt_connection_intent_store.dart';
-import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
 import 'package:mqtt_monitor/core/publishing/publish_command_service.dart';
-import 'package:mqtt_monitor/core/state/app_state.dart';
-import 'package:mqtt_monitor/core/state/keys/layout_keys.dart';
 import 'package:mqtt_monitor/features/monitor/detail_sidebar_controller.dart';
 import 'package:mqtt_monitor/features/monitor/monitor_viewmodel.dart';
 import 'package:mqtt_monitor/features/monitor/monitor_workspace_controller.dart';
@@ -29,15 +25,12 @@ import 'package:provider/provider.dart';
 import '../../support/test_dependencies.dart';
 
 void main() {
-  final state = AppStateManager.instance;
   late BrokerRepository brokers;
-  late MqttConnectionIntentStore connectionIntent;
   late TestDependencies dependencies;
 
   setUp(() async {
     dependencies = await TestDependencies.create();
     brokers = dependencies.brokers;
-    connectionIntent = MqttConnectionIntentStore(dependencies.preferences);
   });
 
   Future<({PublishDraftController draft, MonitorWorkspaceController workspace})> pumpSidebar(WidgetTester tester, {required Key expandedSibling}) async {
@@ -48,18 +41,18 @@ void main() {
     await dependencies.uiPreferences.setDefaultSidebarPublish(SidebarPanelDefault.lastStatus);
     await dependencies.uiPreferences.setDefaultSidebarShortcuts(SidebarPanelDefault.lastStatus);
 
-    await state.write(LayoutKeys.sidebarDetailCollapsed, expandedSibling != const Key('detail-section-toggle'));
-    await state.write(LayoutKeys.sidebarHistoryCollapsed, expandedSibling != const Key('history-section-toggle'));
-    await state.write(LayoutKeys.sidebarPublishCollapsed, false);
-    await state.write(LayoutKeys.sidebarShortcutsCollapsed, expandedSibling != const Key('shortcuts-section-toggle'));
+    await dependencies.workspaceLayout.setCollapsed(0, expandedSibling != const Key('detail-section-toggle'));
+    await dependencies.workspaceLayout.setCollapsed(1, expandedSibling != const Key('history-section-toggle'));
+    await dependencies.workspaceLayout.setCollapsed(2, false);
+    await dependencies.workspaceLayout.setCollapsed(3, expandedSibling != const Key('shortcuts-section-toggle'));
 
-    final mqtt = MqttSessionController(state, brokers, connectionIntent);
+    final mqtt = dependencies.mqttSession;
     final ingestion = MessageIngestionCoordinator(mqtt, brokers);
     final projection = TopicProjection(ingestion, brokers);
-    final history = MessageHistoryService(ingestion, state, brokers);
+    final history = MessageHistoryService(ingestion, dependencies.historyPreferences, brokers);
     final vm = MonitorViewModel(mqttSession: mqtt, uiPreferences: dependencies.uiPreferences, brokerRepository: brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, publisher: PublishCommandService(mqtt, dependencies.templateResolver), templateResolver: dependencies.templateResolver);
     final workspace = MonitorWorkspaceController(projection: projection, history: history, uiPreferences: dependencies.uiPreferences);
-    final sidebar = DetailSidebarController(state, dependencies.uiPreferences);
+    final sidebar = DetailSidebarController(dependencies.workspaceLayout, dependencies.uiPreferences);
     final draft = PublishDraftController();
     addTearDown(vm.dispose);
     addTearDown(workspace.dispose);
@@ -71,7 +64,6 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
-          ChangeNotifierProvider<AppStateManager>.value(value: state),
           ChangeNotifierProvider.value(value: dependencies.uiPreferences),
           ChangeNotifierProvider<BrokerRepository>.value(value: brokers),
           ChangeNotifierProvider<MonitorViewModel>.value(value: vm),

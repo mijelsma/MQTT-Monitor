@@ -5,8 +5,8 @@ import 'package:flutter/foundation.dart';
 import '../../../models/mqtt_protocol_version.dart';
 import '../../../models/startup_connection.dart';
 import '../../broker/broker_repository.dart';
-import '../../state/app_state.dart';
-import '../../state/keys/settings_keys.dart';
+import '../../logging/app_logger.dart';
+import '../connection_preferences_repository.dart';
 import '../adapters/mqtt311/mqtt311_adapter.dart';
 import '../adapters/mqtt5/mqtt5_adapter.dart';
 import '../connection_status.dart';
@@ -26,23 +26,35 @@ const _unchanged = Object();
 /// Owns active MQTT session intent, transitions, telemetry, and generation safety.
 class MqttSessionController extends ChangeNotifier implements PublishTransport {
   /// Creates the active-session controller from settings and broker ownership.
-  MqttSessionController(this._settings, this._brokers, this._intentStore, {MqttProtocolAdapterFactory? adapterFactory, Timer Function(Duration duration, void Function(Timer timer) callback)? periodicTimerFactory})
-    : _adapterFactory =
-          adapterFactory ??
-          ((broker) => switch (broker.protocolVersion) {
-            MqttProtocolVersion.v311 => Mqtt311Adapter(broker),
-            MqttProtocolVersion.v5 => Mqtt5Adapter(broker),
-          }),
-      _connectionRequested = _intentStore.connectionRequested,
-      _periodicTimerFactory = periodicTimerFactory ?? Timer.periodic;
+  MqttSessionController(
+    this._preferences,
+    this._brokers,
+    this._intentStore, {
+    required AppLogger logger,
+    MqttProtocolAdapterFactory? adapterFactory,
+    Timer Function(Duration duration, void Function(Timer timer) callback)?
+    periodicTimerFactory,
+  }) : _adapterFactory =
+           adapterFactory ??
+           ((broker) => switch (broker.protocolVersion) {
+             MqttProtocolVersion.v311 => Mqtt311Adapter(broker),
+             MqttProtocolVersion.v5 => Mqtt5Adapter(broker),
+           }),
+       _connectionRequested = _intentStore.connectionRequested,
+       _logger = logger,
+       _periodicTimerFactory = periodicTimerFactory ?? Timer.periodic;
 
-  final AppStateManager _settings;
+  final ConnectionPreferencesRepository _preferences;
   final BrokerRepository _brokers;
   final MqttConnectionIntentStore _intentStore;
+  final AppLogger _logger;
   final MqttProtocolAdapterFactory _adapterFactory;
-  final Timer Function(Duration duration, void Function(Timer timer) callback) _periodicTimerFactory;
-  final StreamController<MQTTMessage> _messages = StreamController<MQTTMessage>.broadcast();
-  final MqttSubscriptionReconciler _subscriptions = MqttSubscriptionReconciler();
+  final Timer Function(Duration duration, void Function(Timer timer) callback)
+  _periodicTimerFactory;
+  final StreamController<MQTTMessage> _messages =
+      StreamController<MQTTMessage>.broadcast();
+  final MqttSubscriptionReconciler _subscriptions =
+      MqttSubscriptionReconciler();
 
   MqttSessionState _state = const MqttSessionState();
   MqttSessionTarget? _target;
@@ -58,6 +70,8 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
   bool _firstSync = true;
   bool _initialized = false;
   bool _disposed = false;
+  bool _notifierDisposed = false;
+  Future<void>? _shutdown;
 
   /// Returns the latest immutable session snapshot.
   MqttSessionState get state => _state;
@@ -87,7 +101,7 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
   void initialize() {
     if (_initialized) return;
     _initialized = true;
-    _settings.addListener(_onSettingsChanged);
+    _preferences.addListener(_onSettingsChanged);
     _brokers.addListener(_onBrokersChanged);
     _startRateTimer();
     _sync();
@@ -95,14 +109,19 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
 
   /// Publishes through the active protocol adapter when connected.
   @override
-  Future<PublishResult>? publish(String topic, String payload, {int qos = 0, bool retain = false}) {
+  Future<PublishResult>? publish(
+    String topic,
+    String payload, {
+    int qos = 0,
+    bool retain = false,
+  }) {
     return _adapter?.publish(topic, payload, qos: qos, retain: retain);
   }
 
   /// Persists disconnected intent and tears down the current session.
   void disconnect() {
     _connectionRequested = false;
-    unawaited(_intentStore.setConnectionRequested(false));
+    _persistConnectionIntent(false);
     _target = null;
     _teardown();
   }
@@ -110,7 +129,7 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
   /// Persists connected intent and starts a fresh session for the active broker.
   void reconnect() {
     _connectionRequested = true;
-    unawaited(_intentStore.setConnectionRequested(true));
+    _persistConnectionIntent(true);
     _sync(force: true);
   }
 
@@ -119,7 +138,7 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
 
   /// Restarts rate sampling only when its setting changed.
   void _onSettingsChanged() {
-    final intervalMs = _settings.read(SettingsKeys.rateIntervalMs);
+    final intervalMs = _preferences.rateIntervalMs;
     if (intervalMs != _rateIntervalMs) _startRateTimer();
   }
 
@@ -129,13 +148,13 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
     final broker = _brokers.activeBroker;
     if (_firstSync) {
       _firstSync = false;
-      switch (_settings.read(SettingsKeys.startupConnection)) {
+      switch (_preferences.startupConnection) {
         case StartupConnection.alwaysConnect:
           _connectionRequested = true;
-          unawaited(_intentStore.setConnectionRequested(true));
+          _persistConnectionIntent(true);
         case StartupConnection.stayDisconnected:
           _connectionRequested = false;
-          unawaited(_intentStore.setConnectionRequested(false));
+          _persistConnectionIntent(false);
         case StartupConnection.lastStatus:
           break;
       }
@@ -159,13 +178,20 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
   Future<void> _startSession(MqttSessionTarget target, int generation) async {
     await _releaseAdapter();
     if (!_isCurrent(generation, target)) return;
-    _resetCounters(status: ConnectionStatus.connecting, protocol: target.broker.protocolVersion);
+    _resetCounters(
+      status: ConnectionStatus.connecting,
+      protocol: target.broker.protocolVersion,
+    );
 
     final adapter = _adapterFactory(target.broker);
     _adapter = adapter;
     _subscriptions.attach(adapter, target.broker.subscriptions);
-    _eventSubscription = adapter.events.listen((event) => _onProtocolEvent(adapter, generation, event));
-    _messageSubscription = adapter.messages.listen((message) => _onMessage(adapter, generation, message));
+    _eventSubscription = adapter.events.listen(
+      (event) => _onProtocolEvent(adapter, generation, event),
+    );
+    _messageSubscription = adapter.messages.listen(
+      (message) => _onMessage(adapter, generation, message),
+    );
     try {
       await adapter.connect();
       if (!_isCurrentAdapter(adapter, generation)) return;
@@ -175,17 +201,36 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
       }
     } on MqttConnectionFailure catch (failure) {
       if (_isCurrentAdapter(adapter, generation)) {
-        _emit(status: failure.status, error: failure.message, detail: failure.detail);
+        _emit(
+          status: failure.status,
+          error: failure.message,
+          detail: failure.detail,
+        );
       }
     } on Object catch (error) {
       if (_isCurrentAdapter(adapter, generation)) {
-        _emit(status: ConnectionStatus.error, error: 'The MQTT client could not start the connection.', detail: error.runtimeType.toString());
+        _logger.log(
+          AppLogLevel.error,
+          'mqtt.session',
+          'The MQTT adapter failed while starting a connection.',
+          error: error,
+          sensitiveValues: [target.broker.password ?? ''],
+        );
+        _emit(
+          status: ConnectionStatus.error,
+          error: 'The MQTT client could not start the connection.',
+          detail: error.runtimeType.toString(),
+        );
       }
     }
   }
 
   /// Applies a lifecycle event only when its adapter generation is current.
-  void _onProtocolEvent(MqttProtocolAdapter adapter, int generation, MqttProtocolEvent event) {
+  void _onProtocolEvent(
+    MqttProtocolAdapter adapter,
+    int generation,
+    MqttProtocolEvent event,
+  ) {
     if (!_isCurrentAdapter(adapter, generation)) return;
     switch (event.type) {
       case MqttProtocolEventType.connected:
@@ -196,16 +241,28 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
         _emit(status: ConnectionStatus.connecting);
       case MqttProtocolEventType.disconnected:
         _subscriptions.onDisconnected();
-        _emit(status: ConnectionStatus.disconnected, error: event.message, detail: event.detail);
+        _emit(
+          status: ConnectionStatus.disconnected,
+          error: event.message,
+          detail: event.detail,
+        );
       case MqttProtocolEventType.notice:
         _emit(error: event.message, detail: event.detail);
       case MqttProtocolEventType.failure:
-        _emit(status: event.status ?? ConnectionStatus.error, error: event.message, detail: event.detail);
+        _emit(
+          status: event.status ?? ConnectionStatus.error,
+          error: event.message,
+          detail: event.detail,
+        );
     }
   }
 
   /// Forwards a current adapter message and updates session telemetry.
-  void _onMessage(MqttProtocolAdapter adapter, int generation, MQTTMessage message) {
+  void _onMessage(
+    MqttProtocolAdapter adapter,
+    int generation,
+    MQTTMessage message,
+  ) {
     if (!_isCurrentAdapter(adapter, generation)) return;
     _messages.add(message);
     _messageCount++;
@@ -216,7 +273,10 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
   void _teardown() {
     ++_generation;
     unawaited(_releaseAdapter());
-    _resetCounters(status: ConnectionStatus.disconnected, protocol: _state.activeProtocol);
+    _resetCounters(
+      status: ConnectionStatus.disconnected,
+      protocol: _state.activeProtocol,
+    );
   }
 
   /// Cancels controller subscriptions before disposing the active adapter.
@@ -233,17 +293,22 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
 
   /// Returns whether [target] still owns the requested [generation].
   bool _isCurrent(int generation, MqttSessionTarget target) {
-    return !_disposed && generation == _generation && target == _target && _connectionRequested;
+    return !_disposed &&
+        generation == _generation &&
+        target == _target &&
+        _connectionRequested;
   }
 
   /// Returns whether [adapter] still owns the requested [generation].
   bool _isCurrentAdapter(MqttProtocolAdapter adapter, int generation) {
-    return !_disposed && generation == _generation && identical(adapter, _adapter);
+    return !_disposed &&
+        generation == _generation &&
+        identical(adapter, _adapter);
   }
 
   /// Starts or restarts periodic message-rate sampling.
   void _startRateTimer() {
-    final intervalMs = _settings.read(SettingsKeys.rateIntervalMs);
+    final intervalMs = _preferences.rateIntervalMs;
     _rateTimer?.cancel();
     _rateIntervalMs = intervalMs;
     _rateCounter = 0;
@@ -256,38 +321,82 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
   }
 
   /// Clears counters while applying a lifecycle [status] and [protocol].
-  void _resetCounters({required ConnectionStatus status, required MqttProtocolVersion? protocol}) {
+  void _resetCounters({
+    required ConnectionStatus status,
+    required MqttProtocolVersion? protocol,
+  }) {
     _messageCount = 0;
     _rateCounter = 0;
-    _emit(status: status, error: null, detail: null, messageCount: 0, messageRate: 0, protocol: protocol);
+    _emit(
+      status: status,
+      error: null,
+      detail: null,
+      messageCount: 0,
+      messageRate: 0,
+      protocol: protocol,
+    );
   }
 
   /// Replaces selected state fields and notifies only when values changed.
-  void _emit({ConnectionStatus? status, Object? error = _unchanged, Object? detail = _unchanged, int? messageCount, int? messageRate, Object? protocol = _unchanged}) {
+  void _emit({
+    ConnectionStatus? status,
+    Object? error = _unchanged,
+    Object? detail = _unchanged,
+    int? messageCount,
+    int? messageRate,
+    Object? protocol = _unchanged,
+  }) {
     final next = MqttSessionState(
       status: status ?? _state.status,
       error: identical(error, _unchanged) ? _state.error : error as String?,
-      errorDetail: identical(detail, _unchanged) ? _state.errorDetail : detail as String?,
+      errorDetail: identical(detail, _unchanged)
+          ? _state.errorDetail
+          : detail as String?,
       messageCount: messageCount ?? _state.messageCount,
       messageRate: messageRate ?? _state.messageRate,
-      activeProtocol: identical(protocol, _unchanged) ? _state.activeProtocol : protocol as MqttProtocolVersion?,
+      activeProtocol: identical(protocol, _unchanged)
+          ? _state.activeProtocol
+          : protocol as MqttProtocolVersion?,
     );
     if (next == _state) return;
     _state = next;
     notifyListeners();
   }
 
-  /// Releases the active session and every controller-owned resource.
-  @override
-  void dispose() {
-    if (_disposed) return;
+  void _persistConnectionIntent(bool value) {
+    unawaited(
+      _intentStore.setConnectionRequested(value).onError((error, _) {
+        _logger.log(
+          AppLogLevel.warning,
+          'mqtt.session',
+          'The requested connection state could not be persisted.',
+          error: error,
+        );
+      }),
+    );
+  }
+
+  /// Stops asynchronous MQTT work and waits for owned streams to close.
+  Future<void> shutdown() {
+    return _shutdown ??= _shutdownResources();
+  }
+
+  Future<void> _shutdownResources() async {
     _disposed = true;
     ++_generation;
     _rateTimer?.cancel();
-    _settings.removeListener(_onSettingsChanged);
+    _preferences.removeListener(_onSettingsChanged);
     _brokers.removeListener(_onBrokersChanged);
-    unawaited(_releaseAdapter());
-    unawaited(_messages.close());
+    await _releaseAdapter();
+    if (!_messages.isClosed) await _messages.close();
+  }
+
+  /// Releases the notifier; application shutdown should await [shutdown] first.
+  @override
+  void dispose() {
+    if (_notifierDisposed) return;
+    _notifierDisposed = true;
+    unawaited(shutdown());
     super.dispose();
   }
 }

@@ -17,7 +17,6 @@ import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
 import 'package:mqtt_monitor/core/broker/broker_repository.dart';
 import 'package:typed_data/typed_buffers.dart' show Uint8Buffer;
 import 'package:mqtt_monitor/core/mqtt/publish_result.dart';
-import 'package:mqtt_monitor/core/state/app_state.dart';
 import 'package:mqtt_monitor/models/broker_entry.dart';
 import 'package:mqtt_monitor/models/mqtt_protocol_version.dart';
 import 'package:mqtt_monitor/models/subscription_entry.dart';
@@ -312,12 +311,12 @@ class _FakeMqtt5Client extends Mqtt5EventClient {
 }
 
 void main() {
-  final state = AppStateManager.instance;
   late BrokerRepository brokers;
   late MqttConnectionIntentStore intents;
+  late TestDependencies dependencies;
 
   setUp(() async {
-    final dependencies = await TestDependencies.create();
+    dependencies = await TestDependencies.create();
     brokers = dependencies.brokers;
     intents = MqttConnectionIntentStore(dependencies.preferences);
   });
@@ -325,9 +324,10 @@ void main() {
   /// Creates a session using real adapters around optional fake clients.
   MqttSessionController createSession({Mqtt311ClientFactory? mqtt311ClientFactory, Mqtt5ClientFactory? mqtt5ClientFactory}) {
     return MqttSessionController(
-      state,
+      dependencies.connectionPreferences,
       brokers,
       intents,
+      logger: dependencies.logger,
       adapterFactory: (broker) => switch (broker.protocolVersion) {
         MqttProtocolVersion.v311 => Mqtt311Adapter(broker, clientFactory: mqtt311ClientFactory),
         MqttProtocolVersion.v5 => Mqtt5Adapter(broker, clientFactory: mqtt5ClientFactory),

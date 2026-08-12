@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/broker/broker_repository.dart';
-import 'package:mqtt_monitor/core/state/app_state.dart';
 import 'package:mqtt_monitor/features/settings/panels/ui_panel.dart';
 import 'package:mqtt_monitor/features/settings/settings_viewmodel.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
@@ -12,17 +10,14 @@ import 'package:provider/provider.dart';
 import '../../support/test_dependencies.dart';
 
 void main() {
-  final state = AppStateManager.instance;
-  late BrokerRepository brokers;
   late TestDependencies dependencies;
 
   setUp(() async {
     dependencies = await TestDependencies.create();
-    brokers = dependencies.brokers;
   });
 
   testWidgets('UI settings control sidebar animation and speed', (tester) async {
-    final vm = SettingsViewModel(state: state, brokerRepository: brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, qosPreferences: dependencies.qosPreferences, uiPreferences: dependencies.uiPreferences, updatePreferences: dependencies.updatePreferences);
+    final vm = dependencies.createSettingsViewModel();
     addTearDown(vm.dispose);
 
     await tester.pumpWidget(

@@ -3,12 +3,16 @@ import 'package:provider/provider.dart';
 
 import '../../core/broker/broker_repository.dart';
 import '../../core/dashboard/dashboard_repository.dart';
+import '../../core/dashboard/dashboard_preferences_repository.dart';
 import '../../core/history/message_history_service.dart';
+import '../../core/history/history_preferences_repository.dart';
+import '../../core/logging/app_logger.dart';
+import '../../core/mqtt/connection_preferences_repository.dart';
 import '../../core/publishing/shortcut_repository.dart';
 import '../../core/publishing/qos_preferences_repository.dart';
 import '../../core/publishing/variable_repository.dart';
-import '../../core/state/app_state.dart';
 import '../../core/ui/ui_preferences_repository.dart';
+import '../../core/ui/workspace_layout_repository.dart';
 import '../../core/update/update_preferences_repository.dart';
 import '../../generated/l10n.dart';
 import '../../theme/app_colors.dart';
@@ -23,6 +27,7 @@ import 'panels/variables_panel.dart';
 import 'settings_item.dart';
 import 'settings_section.dart';
 import 'settings_viewmodel.dart';
+import 'settings_navigation_controller.dart';
 import 'layouts/settings_narrow_layout.dart';
 import 'layouts/settings_wide_layout.dart';
 import 'panels/dashboard_panel.dart';
@@ -52,7 +57,12 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (ctx) => SettingsViewModel(
-        state: ctx.read<AppStateManager>(),
+        navigation: ctx.read<SettingsNavigationController>(),
+        connectionPreferences: ctx.read<ConnectionPreferencesRepository>(),
+        dashboardPreferences: ctx.read<DashboardPreferencesRepository>(),
+        historyPreferences: ctx.read<HistoryPreferencesRepository>(),
+        workspaceLayout: ctx.read<WorkspaceLayoutRepository>(),
+        logger: ctx.read<AppLogger>(),
         brokerRepository: ctx.read<BrokerRepository>(),
         shortcutRepository: ctx.read<ShortcutRepository>(),
         variableRepository: ctx.read<VariableRepository>(),

@@ -7,13 +7,10 @@ import 'package:mqtt_monitor/core/update/app_update_lifecycle.dart';
 import 'package:mqtt_monitor/core/update/app_update_service.dart';
 import 'package:mqtt_monitor/core/update/github_release_source.dart';
 import 'package:mqtt_monitor/core/update/update_preferences_repository.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('starts after child build and disposes the owned updater', (
-    tester,
-  ) async {
+  testWidgets('starts the lifetime-owned updater after child build', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final store = await SharedPreferencesStore.load();
     final preferences = UpdatePreferencesRepository(store);
@@ -24,22 +21,14 @@ void main() {
       expect(childBuilt, isTrue);
     });
     final controllers = _LifecycleControllerFactory();
-    late AppUpdateService service;
+    final service = AppUpdateService(preferences: preferences, releaseSource: source, controllerFactory: controllers);
 
     await tester.pumpWidget(
       AppUpdateLifecycle(
-        create: () {
-          service = AppUpdateService(
-            preferences: preferences,
-            releaseSource: source,
-            controllerFactory: controllers,
-          );
-          return service;
-        },
+        service: service,
         child: Builder(
           builder: (context) {
             childBuilt = true;
-            expect(context.read<AppUpdateService>(), same(service));
             return const SizedBox();
           },
         ),
@@ -52,12 +41,11 @@ void main() {
 
     await tester.pumpWidget(const SizedBox());
 
+    expect(source.closed, isFalse);
+    service.dispose();
     expect(source.closed, isTrue);
     expect(controllers.created, isNotEmpty);
-    expect(
-      controllers.created.every((controller) => controller.disposed),
-      isTrue,
-    );
+    expect(controllers.created.every((controller) => controller.disposed), isTrue);
   });
 }
 
@@ -69,9 +57,7 @@ class _LifecycleReleaseSource implements AppUpdateReleaseSource {
   bool closed = false;
 
   @override
-  Future<GitHubReleaseSelection?> findLatest({
-    required bool includePrereleases,
-  }) async {
+  Future<GitHubReleaseSelection?> findLatest({required bool includePrereleases}) async {
     calls += 1;
     onFindLatest();
     return null;
@@ -85,11 +71,7 @@ class _LifecycleControllerFactory implements AppUpdateControllerFactory {
   final List<_LifecycleController> created = [];
 
   @override
-  AppUpdateController create({
-    required Uri? appArchiveUrl,
-    required String channel,
-    required bool allowUnsignedMacOSUpdates,
-  }) {
+  AppUpdateController create({required Uri? appArchiveUrl, required String channel, required bool allowUnsignedMacOSUpdates}) {
     final controller = _LifecycleController();
     created.add(controller);
     return controller;
@@ -109,8 +91,7 @@ class _LifecycleController implements AppUpdateController {
   void removeListener(VoidCallback listener) {}
 
   @override
-  Future<ManualUpdateCheckResult> checkForUpdates() async =>
-      const ManualUpdateCheckUpToDate();
+  Future<ManualUpdateCheckResult> checkForUpdates() async => const ManualUpdateCheckUpToDate();
 
   @override
   Future<void> downloadUpdate() async {}

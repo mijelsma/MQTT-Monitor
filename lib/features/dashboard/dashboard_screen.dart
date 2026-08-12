@@ -7,14 +7,12 @@ import '../../core/dashboard/dashboard_series_store.dart';
 import '../../core/history/message_history_service.dart';
 import '../../core/publishing/template_resolver.dart';
 import '../../core/publishing/variable_repository.dart';
-import '../../core/state/app_state.dart';
-import '../../core/state/keys/app_keys.dart';
+import '../../navigation/app_navigation.dart';
 import '../../models/dashboard_layout.dart';
 import '../../shared/widgets/empty_state_shell.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 import '../settings/dialogs/create_dashboard_dialog.dart';
-import '../settings/settings_screen.dart';
 import '../settings/settings_section.dart';
 import 'dashboard_view_model.dart';
 import 'dialogs/new_empty_dashboard_dialog.dart';
@@ -119,7 +117,6 @@ class _DashboardScaffold extends StatelessWidget {
   }
 
   void _openSettings(BuildContext context, SettingsSection section) {
-    context.read<AppStateManager>().write(AppKeys.activeSettingsSection, section);
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+    context.read<AppNavigation>().openSettings(context, section: section);
   }
 }

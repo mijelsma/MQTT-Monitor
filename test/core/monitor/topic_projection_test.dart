@@ -33,7 +33,7 @@ void main() {
     source = StreamController<MQTTMessage>.broadcast(sync: true);
     ingestion = MessageIngestionCoordinator.fromStream(source.stream, dependencies.brokers)..initialize();
     projection = TopicProjection(ingestion, dependencies.brokers)..initialize();
-    history = MessageHistoryService(ingestion, dependencies.state, dependencies.brokers)..initialize();
+    history = MessageHistoryService(ingestion, dependencies.historyPreferences, dependencies.brokers)..initialize();
     workspace = MonitorWorkspaceController(projection: projection, history: history, uiPreferences: dependencies.uiPreferences);
   });
 

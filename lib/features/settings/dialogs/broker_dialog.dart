@@ -12,9 +12,9 @@ import '../../../core/mqtt/certificate_validation_exception.dart';
 import '../../../core/mqtt/client_certificate_kind.dart';
 import '../../../core/mqtt/client_certificate_service.dart';
 import '../../../core/history/history_policy_rules.dart';
+import '../../../core/history/history_preferences_repository.dart';
+import '../../../core/logging/app_logger.dart';
 import '../../../core/publishing/qos_preferences_repository.dart';
-import '../../../core/state/app_state.dart';
-import '../../../core/state/keys/settings_keys.dart';
 import '../../../generated/l10n.dart';
 import '../../../models/broker_entry.dart';
 import '../../../models/client_certificate_config.dart';
@@ -91,6 +91,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
   late Color _color;
   bool _obscurePassword = true;
   late List<SubscriptionEntry> _subscriptions;
+  late AppLogger _logger;
 
   /// Returns whether the dialog edits an existing broker.
   bool get _isEditing => widget.broker != null;
@@ -121,22 +122,20 @@ class _BrokerDialogState extends State<BrokerDialog> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _logger = context.read<AppLogger>();
     if (widget.broker == null && !_defaultSubscriptionApplied) {
       _defaultSubscriptionApplied = true;
-      final state = context.read<AppStateManager>();
-      state.load(SettingsKeys.newSubscriptionHistoryEnabled);
-      state.load(SettingsKeys.newSubscriptionHistoryRetention);
-      state.load(SettingsKeys.maximumHistoryRetention);
+      final history = context.read<HistoryPreferencesRepository>();
       final qosPreferences = context.read<QosPreferencesRepository>();
       final defaultQos = qosPreferences.resolve(qosPreferences.defaultSubscribe);
-      final maximum = state.read<int>(SettingsKeys.maximumHistoryRetention);
-      final retention = state.read<int>(SettingsKeys.newSubscriptionHistoryRetention).clamp(HistoryPolicyRules.minimumRetention, maximum);
+      final maximum = history.maximumRetention;
+      final retention = history.newSubscriptionRetention.clamp(HistoryPolicyRules.minimumRetention, maximum);
       _subscriptions.add(
         SubscriptionEntry.create(
           topic: '#',
           qos: defaultQos,
           name: S.of(context).brokerDialogDefaultSubscriptionName,
-          history: SubscriptionHistoryPolicy(enabled: state.read(SettingsKeys.newSubscriptionHistoryEnabled), retention: retention),
+          history: SubscriptionHistoryPolicy(enabled: history.newSubscriptionEnabled, retention: retention),
         ),
       );
     }
@@ -239,8 +238,8 @@ class _BrokerDialogState extends State<BrokerDialog> {
       if (importedPath != null && !_importedCertificatePaths.contains(importedPath)) {
         try {
           await _certificateStorage.delete(importedPath);
-        } on Object {
-          // The original import failure is more actionable to the user.
+        } on Object catch (cleanupError) {
+          _logger.log(AppLogLevel.warning, 'broker.certificateCleanup', 'A failed certificate import left temporary cleanup work.', error: cleanupError);
         }
       }
       if (mounted) {
@@ -286,8 +285,8 @@ class _BrokerDialogState extends State<BrokerDialog> {
     for (final filePath in _importedCertificatePaths) {
       try {
         await _certificateStorage.delete(filePath);
-      } on Object {
-        // Repository ownership starts only after submit, so cleanup is best effort.
+      } on Object catch (error) {
+        _logger.log(AppLogLevel.warning, 'broker.certificateCleanup', 'A temporary certificate could not be removed.', error: error);
       }
     }
     _importedCertificatePaths.clear();
@@ -309,33 +308,22 @@ class _BrokerDialogState extends State<BrokerDialog> {
 
   /// Adds a subscription using the configured default QoS policy.
   Future<void> _addSubscription() async {
-    final state = context.read<AppStateManager>();
-    state.load(SettingsKeys.newSubscriptionHistoryEnabled);
-    state.load(SettingsKeys.newSubscriptionHistoryRetention);
-    state.load(SettingsKeys.maximumHistoryRetention);
+    final history = context.read<HistoryPreferencesRepository>();
     final qosPreferences = context.read<QosPreferencesRepository>();
     final defaultQos = qosPreferences.resolve(qosPreferences.defaultSubscribe);
-    final maximum = state.read<int>(SettingsKeys.maximumHistoryRetention);
-    final sub = await showSubscriptionDialog(
-      context,
-      defaultQos: defaultQos,
-      defaultHistoryEnabled: state.read(SettingsKeys.newSubscriptionHistoryEnabled),
-      defaultHistoryRetention: state.read<int>(SettingsKeys.newSubscriptionHistoryRetention).clamp(HistoryPolicyRules.minimumRetention, maximum),
-      maximumHistoryRetention: maximum,
-      existingTopicFilters: _subscriptions.map((entry) => entry.topic).toSet(),
-    );
+    final maximum = history.maximumRetention;
+    final sub = await showSubscriptionDialog(context, defaultQos: defaultQos, defaultHistoryEnabled: history.newSubscriptionEnabled, defaultHistoryRetention: history.newSubscriptionRetention.clamp(HistoryPolicyRules.minimumRetention, maximum), maximumHistoryRetention: maximum, existingTopicFilters: _subscriptions.map((entry) => entry.topic).toSet());
     if (sub == null) return;
     setState(() => _subscriptions.add(sub));
   }
 
   /// Replaces the subscription at [index] when the editor returns a value.
   Future<void> _editSubscription(int index) async {
-    final state = context.read<AppStateManager>();
-    state.load(SettingsKeys.maximumHistoryRetention);
+    final history = context.read<HistoryPreferencesRepository>();
     final sub = await showSubscriptionDialog(
       context,
       entry: _subscriptions[index],
-      maximumHistoryRetention: state.read(SettingsKeys.maximumHistoryRetention),
+      maximumHistoryRetention: history.maximumRetention,
       existingTopicFilters: {
         for (var i = 0; i < _subscriptions.length; i++)
           if (i != index) _subscriptions[i].topic,

@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/broker/broker_repository.dart';
 import 'package:mqtt_monitor/core/history/message_history_service.dart';
 import 'package:mqtt_monitor/core/ingestion/message_ingestion_coordinator.dart';
-import 'package:mqtt_monitor/core/mqtt/session/mqtt_connection_intent_store.dart';
-import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
-import 'package:mqtt_monitor/core/state/app_state.dart';
+import 'package:mqtt_monitor/core/history/history_preferences_repository.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/message_detail_panel.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
 import 'package:mqtt_monitor/models/topic_node.dart';
@@ -17,14 +14,10 @@ import 'package:provider/provider.dart';
 import '../../support/test_dependencies.dart';
 
 void main() {
-  final state = AppStateManager.instance;
-  late BrokerRepository brokers;
-  late MqttConnectionIntentStore connectionIntent;
+  late TestDependencies dependencies;
 
   setUp(() async {
-    final dependencies = await TestDependencies.create();
-    brokers = dependencies.brokers;
-    connectionIntent = MqttConnectionIntentStore(dependencies.preferences);
+    dependencies = await TestDependencies.create();
   });
 
   test('recognizes a standalone JSON numeric string as a pinnable payload', () {
@@ -32,16 +25,16 @@ void main() {
   });
 
   Widget buildHarness(String payload) {
-    final mqtt = MqttSessionController(state, brokers, connectionIntent);
+    final mqtt = dependencies.mqttSession;
     addTearDown(mqtt.dispose);
-    final ingestion = MessageIngestionCoordinator(mqtt, brokers);
-    final history = MessageHistoryService(ingestion, state, brokers);
+    final ingestion = MessageIngestionCoordinator(mqtt, dependencies.brokers);
+    final history = MessageHistoryService(ingestion, dependencies.historyPreferences, dependencies.brokers);
     final node = TopicTreeNode(segment: 'temperature', fullPath: 'home/temperature');
     node.valueNotifier.value = TopicNodeValue(payload: payload, seq: 1, receivedAt: DateTime(2026));
 
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<AppStateManager>.value(value: state),
+        ChangeNotifierProvider<HistoryPreferencesRepository>.value(value: dependencies.historyPreferences),
         Provider<MessageHistoryService>.value(value: history),
       ],
       child: MaterialApp(

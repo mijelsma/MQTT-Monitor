@@ -3,7 +3,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/dashboard/dashboard_repository.dart';
 import 'package:mqtt_monitor/features/settings/panels/dashboard_panel.dart';
-import 'package:mqtt_monitor/features/settings/settings_viewmodel.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
@@ -15,16 +14,7 @@ void main() {
     final dependencies = await TestDependencies.create();
     final dashboard = DashboardRepository(dependencies.preferences, dependencies.brokers);
     await dashboard.initialize();
-    final viewModel = SettingsViewModel(
-      state: dependencies.state,
-      brokerRepository: dependencies.brokers,
-      shortcutRepository: dependencies.shortcuts,
-      variableRepository: dependencies.variables,
-      qosPreferences: dependencies.qosPreferences,
-      uiPreferences: dependencies.uiPreferences,
-      updatePreferences: dependencies.updatePreferences,
-      dashboardRepository: dashboard,
-    );
+    final viewModel = dependencies.createSettingsViewModel(dashboardRepository: dashboard);
 
     await tester.pumpWidget(
       ChangeNotifierProvider.value(

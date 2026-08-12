@@ -12,13 +12,11 @@ import '../../core/publishing/qos_preferences_repository.dart';
 import '../../core/publishing/shortcut_repository.dart';
 import '../../core/publishing/template_resolver.dart';
 import '../../core/publishing/variable_repository.dart';
-import '../../core/state/app_state.dart';
-import '../../core/state/keys/app_keys.dart';
-import '../../core/state/keys/layout_keys.dart';
 import '../../core/update/app_update_service.dart';
 import '../../core/ui/ui_preferences_repository.dart';
+import '../../core/ui/workspace_layout_repository.dart';
+import '../../navigation/app_navigation.dart';
 import '../../shared/widgets/resizable_split.dart';
-import '../settings/settings_screen.dart';
 import '../settings/settings_section.dart';
 import 'monitor_viewmodel.dart';
 import 'detail_sidebar_controller.dart';
@@ -59,7 +57,7 @@ class MonitorScreen extends StatelessWidget {
         ChangeNotifierProvider(
           create: (ctx) => MonitorWorkspaceController(projection: ctx.read<TopicProjection>(), history: ctx.read<MessageHistoryService>(), uiPreferences: ctx.read<UiPreferencesRepository>()),
         ),
-        ChangeNotifierProvider(create: (ctx) => DetailSidebarController(ctx.read<AppStateManager>(), ctx.read<UiPreferencesRepository>())),
+        ChangeNotifierProvider(create: (ctx) => DetailSidebarController(ctx.read<WorkspaceLayoutRepository>(), ctx.read<UiPreferencesRepository>())),
         ChangeNotifierProvider(
           create: (ctx) => PublishDraftController(
             initialQos: initialPublishQos,
@@ -92,7 +90,7 @@ class _MonitorViewState extends State<_MonitorView> {
   @override
   void initState() {
     super.initState();
-    _splitRatio = context.read<AppStateManager>().read(LayoutKeys.monitorSplitRatio);
+    _splitRatio = context.read<WorkspaceLayoutRepository>().monitorSplitRatio;
     _filterController.addListener(() {
       context.read<MonitorWorkspaceController>().setFilter(_filterController.text);
     });
@@ -135,7 +133,7 @@ class _MonitorViewState extends State<_MonitorView> {
         maxRatio: 0.75,
         minSecondSize: 350,
         onRatioUpdate: (ratio) => setState(() => _splitRatio = ratio),
-        onRatioChanged: (ratio) => context.read<AppStateManager>().write(LayoutKeys.monitorSplitRatio, ratio),
+        onRatioChanged: (ratio) => context.read<WorkspaceLayoutRepository>().setMonitorSplitRatio(ratio),
         first: TopicTree(filterController: _filterController),
         second: const DetailSidebar(),
       );
@@ -169,7 +167,6 @@ class _MonitorViewState extends State<_MonitorView> {
   }
 
   void _openSettings(BuildContext context, SettingsSection section) {
-    context.read<AppStateManager>().write(AppKeys.activeSettingsSection, section);
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+    context.read<AppNavigation>().openSettings(context, section: section);
   }
 }
