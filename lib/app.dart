@@ -17,13 +17,12 @@ import 'core/publishing/template_resolver.dart';
 import 'core/publishing/variable_repository.dart';
 import 'core/platform/window_chrome.dart';
 import 'core/state/app_state.dart';
-import 'core/state/keys/settings_keys.dart';
 import 'core/update/app_update_service.dart';
+import 'core/ui/ui_preferences_repository.dart';
 import 'features/monitor/monitor_screen.dart';
 import 'generated/l10n.dart';
-import 'models/language.dart';
 import 'theme/app_theme.dart';
-import 'theme/app_tokens/app_tokens.dart';
+import 'theme/app_theme_builder.dart';
 
 /// Provides application-wide services and builds the themed MQTT Monitor app.
 class App extends StatelessWidget {
@@ -44,6 +43,7 @@ class App extends StatelessWidget {
     required this.templateResolver,
     required this.jsonValidator,
     required this.qosPreferences,
+    required this.uiPreferences,
   });
 
   final MqttSessionController mqttSession;
@@ -60,6 +60,7 @@ class App extends StatelessWidget {
   final TemplateResolver templateResolver;
   final JsonPayloadValidator jsonValidator;
   final QosPreferencesRepository qosPreferences;
+  final UiPreferencesRepository uiPreferences;
 
   /// Exposes root dependencies before building the visual application shell.
   @override
@@ -76,6 +77,7 @@ class App extends StatelessWidget {
         Provider<TemplateResolver>.value(value: templateResolver),
         Provider<JsonPayloadValidator>.value(value: jsonValidator),
         ChangeNotifierProvider<QosPreferencesRepository>.value(value: qosPreferences),
+        ChangeNotifierProvider<UiPreferencesRepository>.value(value: uiPreferences),
         ChangeNotifierProvider<MqttSessionController>.value(value: mqttSession),
         Provider<MessageIngestionCoordinator>.value(value: ingestion),
         ChangeNotifierProvider<TopicProjection>.value(value: topicProjection),
@@ -95,12 +97,12 @@ class _AppView extends StatefulWidget {
 }
 
 class _AppViewState extends State<_AppView> {
-  late final AppStateManager _state;
+  late final UiPreferencesRepository _preferences;
   Brightness? _lastAppearance;
 
   Brightness get _effectiveBrightness {
     final platform = WidgetsBinding.instance.platformDispatcher.platformBrightness;
-    return switch (_state.read(SettingsKeys.themeMode)) {
+    return switch (_preferences.themeMode) {
       ThemeMode.light => Brightness.light,
       ThemeMode.dark => Brightness.dark,
       ThemeMode.system => platform,
@@ -110,7 +112,7 @@ class _AppViewState extends State<_AppView> {
   @override
   void initState() {
     super.initState();
-    _state = AppStateManager.instance;
+    _preferences = context.read<UiPreferencesRepository>();
     WidgetsBinding.instance.platformDispatcher.onPlatformBrightnessChanged = _syncAppearance;
     _syncAppearance();
   }
@@ -130,9 +132,9 @@ class _AppViewState extends State<_AppView> {
 
   @override
   Widget build(BuildContext context) {
-    final themeMode = context.select<AppStateManager, ThemeMode>((s) => s.read(SettingsKeys.themeMode));
-    final language = context.select<AppStateManager, AppLanguage>((s) => s.read(SettingsKeys.language));
-    final accentValue = context.select<AppStateManager, int>((s) => s.read(SettingsKeys.accentColor));
+    final themeMode = context.select<UiPreferencesRepository, ThemeMode>((preferences) => preferences.themeMode);
+    final language = context.select<UiPreferencesRepository, String>((preferences) => preferences.language.name);
+    final accentValue = context.select<UiPreferencesRepository, int>((preferences) => preferences.accentColor);
     final accent = Color(accentValue);
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _syncAppearance());
@@ -140,21 +142,13 @@ class _AppViewState extends State<_AppView> {
     return MaterialApp(
       title: 'MQTT Monitor',
       debugShowCheckedModeBanner: false,
-      theme: _applyAccent(themeLight, accent, Brightness.light),
-      darkTheme: _applyAccent(themeDark, accent, Brightness.dark),
+      theme: AppThemeBuilder.withAccent(themeLight, accent, Brightness.light),
+      darkTheme: AppThemeBuilder.withAccent(themeDark, accent, Brightness.dark),
       themeMode: themeMode,
-      locale: Locale(language.name),
+      locale: Locale(language),
       supportedLocales: S.delegate.supportedLocales,
       localizationsDelegates: const [S.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
       home: const MonitorScreen(),
     );
   }
-}
-
-ThemeData _applyAccent(ThemeData base, Color accent, Brightness brightness) {
-  final baseTokens = base.extension<AppTokens>()!;
-  final isLight = brightness == Brightness.light;
-  final tokens = baseTokens.copyWith(primary: accent, selectedBg: isLight ? accent.withValues(alpha: 0.08) : baseTokens.selectedBg);
-  final scheme = base.colorScheme.copyWith(primary: accent, primaryContainer: Color.lerp(accent, Colors.white, isLight ? 0.85 : 0.0)!, inversePrimary: Color.lerp(accent, Colors.white, 0.25)!);
-  return base.copyWith(colorScheme: scheme, extensions: <ThemeExtension<dynamic>>[tokens]);
 }
