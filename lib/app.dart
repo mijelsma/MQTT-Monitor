@@ -18,6 +18,8 @@ import 'core/publishing/variable_repository.dart';
 import 'core/platform/window_chrome.dart';
 import 'core/state/app_state.dart';
 import 'core/update/app_update_service.dart';
+import 'core/update/app_update_lifecycle.dart';
+import 'core/update/update_preferences_repository.dart';
 import 'core/ui/ui_preferences_repository.dart';
 import 'features/monitor/monitor_screen.dart';
 import 'generated/l10n.dart';
@@ -33,7 +35,8 @@ class App extends StatelessWidget {
     required this.ingestion,
     required this.topicProjection,
     required this.historyService,
-    required this.updater,
+    required this.updatePreferences,
+    required this.createUpdater,
     required this.brokerRepository,
     required this.dashboardRepository,
     required this.dashboardSeriesStore,
@@ -50,7 +53,8 @@ class App extends StatelessWidget {
   final MessageIngestionCoordinator ingestion;
   final TopicProjection topicProjection;
   final MessageHistoryService historyService;
-  final AppUpdateService updater;
+  final UpdatePreferencesRepository updatePreferences;
+  final AppUpdateService Function() createUpdater;
   final BrokerRepository brokerRepository;
   final DashboardRepository dashboardRepository;
   final DashboardSeriesStore dashboardSeriesStore;
@@ -78,13 +82,13 @@ class App extends StatelessWidget {
         Provider<JsonPayloadValidator>.value(value: jsonValidator),
         ChangeNotifierProvider<QosPreferencesRepository>.value(value: qosPreferences),
         ChangeNotifierProvider<UiPreferencesRepository>.value(value: uiPreferences),
+        ChangeNotifierProvider<UpdatePreferencesRepository>.value(value: updatePreferences),
         ChangeNotifierProvider<MqttSessionController>.value(value: mqttSession),
         Provider<MessageIngestionCoordinator>.value(value: ingestion),
         ChangeNotifierProvider<TopicProjection>.value(value: topicProjection),
         Provider<MessageHistoryService>.value(value: historyService),
-        ChangeNotifierProvider<AppUpdateService>.value(value: updater),
       ],
-      child: const _AppView(),
+      child: AppUpdateLifecycle(create: createUpdater, child: const _AppView()),
     );
   }
 }

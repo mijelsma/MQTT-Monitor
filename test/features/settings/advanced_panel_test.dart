@@ -26,7 +26,7 @@ void main() {
   });
 
   Future<SettingsViewModel> pumpPanel(WidgetTester tester) async {
-    final viewModel = SettingsViewModel(state: state, brokerRepository: brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, qosPreferences: dependencies.qosPreferences, uiPreferences: dependencies.uiPreferences);
+    final viewModel = SettingsViewModel(state: state, brokerRepository: brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, qosPreferences: dependencies.qosPreferences, uiPreferences: dependencies.uiPreferences, updatePreferences: dependencies.updatePreferences);
     addTearDown(viewModel.dispose);
     await tester.pumpWidget(
       ChangeNotifierProvider<SettingsViewModel>.value(
@@ -126,6 +126,7 @@ void main() {
 
   testWidgets('reset requires confirmation and restores defaults', (tester) async {
     await dependencies.uiPreferences.setShowStatusBar(false);
+    await dependencies.updatePreferences.setTracksBetaReleases(true);
     await brokers.add(const BrokerEntry(id: 'broker', name: 'Broker', host: 'broker.invalid'));
     await pumpPanel(tester);
     final resetButton = find.text('Reset everything');
@@ -137,6 +138,7 @@ void main() {
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(dependencies.uiPreferences.showStatusBar, isFalse);
+    expect(dependencies.updatePreferences.tracksBetaReleases, isTrue);
     expect(brokers.brokers, hasLength(1));
 
     await tester.tap(resetButton);
@@ -145,6 +147,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(dependencies.uiPreferences.showStatusBar, isTrue);
+    expect(dependencies.updatePreferences.tracksBetaReleases, isFalse);
     expect(brokers.brokers, isEmpty);
     expect(find.text('All settings were reset to defaults.'), findsOneWidget);
   });

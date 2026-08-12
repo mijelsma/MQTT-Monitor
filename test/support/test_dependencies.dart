@@ -12,12 +12,13 @@ import 'package:mqtt_monitor/core/publishing/template_resolver.dart';
 import 'package:mqtt_monitor/core/publishing/variable_repository.dart';
 import 'package:mqtt_monitor/core/storage/shared_preferences_store.dart';
 import 'package:mqtt_monitor/core/ui/ui_preferences_repository.dart';
+import 'package:mqtt_monitor/core/update/update_preferences_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Builds isolated application dependencies for persistence-aware tests.
 class TestDependencies {
   /// Creates a test dependency bundle from initialized owners.
-  const TestDependencies({required this.state, required this.brokers, required this.preferences, required this.mqttSession, required this.publisher, required this.shortcuts, required this.variables, required this.templateResolver, required this.qosPreferences, required this.uiPreferences});
+  const TestDependencies({required this.state, required this.brokers, required this.preferences, required this.mqttSession, required this.publisher, required this.shortcuts, required this.variables, required this.templateResolver, required this.qosPreferences, required this.uiPreferences, required this.updatePreferences});
 
   final AppStateManager state;
   final BrokerRepository brokers;
@@ -29,6 +30,7 @@ class TestDependencies {
   final TemplateResolver templateResolver;
   final QosPreferencesRepository qosPreferences;
   final UiPreferencesRepository uiPreferences;
+  final UpdatePreferencesRepository updatePreferences;
 
   /// Resets mock preferences and initializes app and broker state.
   static Future<TestDependencies> create() async {
@@ -38,7 +40,9 @@ class TestDependencies {
     await state.initialize(preferences: preferences);
     await state.resetAll();
     final uiPreferences = UiPreferencesRepository(preferences);
+    final updatePreferences = UpdatePreferencesRepository(preferences);
     await uiPreferences.initialize();
+    await updatePreferences.initialize();
     final brokers = BrokerRepository(preferences, credentials: _MemoryCredentialStore(), certificates: _MemoryCertificateStorage());
     await brokers.initialize();
     const templateResolver = TemplateResolver();
@@ -51,7 +55,7 @@ class TestDependencies {
     await qosPreferences.initialize();
     await variables.initialize();
     await shortcuts.initialize();
-    return TestDependencies(state: state, brokers: brokers, preferences: preferences, mqttSession: mqttSession, publisher: publisher, shortcuts: shortcuts, variables: variables, templateResolver: templateResolver, qosPreferences: qosPreferences, uiPreferences: uiPreferences);
+    return TestDependencies(state: state, brokers: brokers, preferences: preferences, mqttSession: mqttSession, publisher: publisher, shortcuts: shortcuts, variables: variables, templateResolver: templateResolver, qosPreferences: qosPreferences, uiPreferences: uiPreferences, updatePreferences: updatePreferences);
   }
 }
 

@@ -97,7 +97,16 @@ class GitHubReleaseSelection {
 
 /// Selects update releases from GitHub while leaving download and installation
 /// to `desktop_updater`.
-class GitHubReleaseSource {
+abstract interface class AppUpdateReleaseSource {
+  Future<GitHubReleaseSelection?> findLatest({
+    required bool includePrereleases,
+  });
+
+  void close();
+}
+
+/// Loads and selects update candidates from the GitHub Releases API.
+class GitHubReleaseSource implements AppUpdateReleaseSource {
   GitHubReleaseSource({required this.releasesUrl, http.Client? client})
     : _client = client ?? http.Client(),
       _ownsClient = client == null;
@@ -113,6 +122,7 @@ class GitHubReleaseSource {
   String? _etag;
   List<GitHubRelease>? _cachedReleases;
 
+  @override
   Future<GitHubReleaseSelection?> findLatest({
     required bool includePrereleases,
   }) async {
@@ -185,6 +195,7 @@ class GitHubReleaseSource {
     return releases;
   }
 
+  @override
   void close() {
     if (_ownsClient) _client.close();
   }

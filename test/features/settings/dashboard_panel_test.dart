@@ -15,7 +15,16 @@ void main() {
     final dependencies = await TestDependencies.create();
     final dashboard = DashboardRepository(dependencies.preferences, dependencies.brokers);
     await dashboard.initialize();
-    final viewModel = SettingsViewModel(state: dependencies.state, brokerRepository: dependencies.brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, qosPreferences: dependencies.qosPreferences, uiPreferences: dependencies.uiPreferences, dashboardRepository: dashboard);
+    final viewModel = SettingsViewModel(
+      state: dependencies.state,
+      brokerRepository: dependencies.brokers,
+      shortcutRepository: dependencies.shortcuts,
+      variableRepository: dependencies.variables,
+      qosPreferences: dependencies.qosPreferences,
+      uiPreferences: dependencies.uiPreferences,
+      updatePreferences: dependencies.updatePreferences,
+      dashboardRepository: dashboard,
+    );
 
     await tester.pumpWidget(
       ChangeNotifierProvider.value(

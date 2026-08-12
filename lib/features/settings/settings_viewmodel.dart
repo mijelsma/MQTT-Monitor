@@ -13,6 +13,7 @@ import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
 import '../../core/state/keys/settings_keys.dart';
 import '../../core/ui/ui_preferences_repository.dart';
+import '../../core/update/update_preferences_repository.dart';
 import '../../models/broker_entry.dart';
 import '../../models/chart_type.dart';
 import '../../models/dashboard_layout.dart';
@@ -35,6 +36,7 @@ class SettingsViewModel extends ChangeNotifier {
     required VariableRepository variableRepository,
     required QosPreferencesRepository qosPreferences,
     required UiPreferencesRepository uiPreferences,
+    required UpdatePreferencesRepository updatePreferences,
     DashboardRepository? dashboardRepository,
     MessageHistoryService? historyService,
   }) : _state = state,
@@ -43,6 +45,7 @@ class SettingsViewModel extends ChangeNotifier {
        _variables = variableRepository,
        _qosPreferences = qosPreferences,
        _uiPreferences = uiPreferences,
+       _updatePreferences = updatePreferences,
        _dashboard = dashboardRepository,
        _historyService = historyService {
     _state.addListener(_onStateChanged);
@@ -60,6 +63,7 @@ class SettingsViewModel extends ChangeNotifier {
   final VariableRepository _variables;
   final QosPreferencesRepository _qosPreferences;
   final UiPreferencesRepository _uiPreferences;
+  final UpdatePreferencesRepository _updatePreferences;
   final DashboardRepository? _dashboard;
   final MessageHistoryService? _historyService;
 
@@ -165,6 +169,7 @@ class SettingsViewModel extends ChangeNotifier {
       await _variables.resetAfterPreferencesClear();
       await _qosPreferences.resetAfterPreferencesClear();
       await _uiPreferences.resetAfterPreferencesClear();
+      await _updatePreferences.resetAfterPreferencesClear();
       _state.setLayoutPersistenceEnabled(_uiPreferences.persistLayout);
       await _state.write(AppKeys.activeSettingsSection, selectedSection);
       _historyService?.clear();
@@ -174,6 +179,7 @@ class SettingsViewModel extends ChangeNotifier {
       await _shortcuts.initialize();
       await _qosPreferences.initialize();
       await _uiPreferences.initialize();
+      await _updatePreferences.initialize();
       return brokerReset;
     } on Object {
       return (succeeded: false, cleanupFailures: brokerReset.cleanupFailures);

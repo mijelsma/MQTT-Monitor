@@ -21,6 +21,7 @@ import 'core/state/app_state.dart';
 import 'core/storage/app_data_directory.dart';
 import 'core/storage/shared_preferences_store.dart';
 import 'core/update/app_update_service.dart';
+import 'core/update/update_preferences_repository.dart';
 import 'core/ui/ui_preferences_repository.dart';
 
 /// Initializes persistence and process-lifetime services, then starts the app.
@@ -29,7 +30,9 @@ void main() async {
   await AppDataDirectory.configure();
   final preferences = await SharedPreferencesStore.load();
   final uiPreferences = UiPreferencesRepository(preferences);
+  final updatePreferences = UpdatePreferencesRepository(preferences);
   await uiPreferences.initialize();
+  await updatePreferences.initialize();
 
   // Initialize app state and load persisted values.
   await AppStateManager.instance.initialize(preferences: preferences, persistLayout: uiPreferences.persistLayout);
@@ -61,10 +64,6 @@ void main() async {
   dashboardSeriesStore.initialize();
   mqttSession.initialize();
 
-  // The update service is global so update state survives navigation to
-  // Settings › About.
-  final updater = AppUpdateService(state: AppStateManager.instance);
-
   // Run the app.
   runApp(
     App(
@@ -72,7 +71,8 @@ void main() async {
       ingestion: ingestion,
       topicProjection: topicProjection,
       historyService: historyService,
-      updater: updater,
+      updatePreferences: updatePreferences,
+      createUpdater: () => AppUpdateService(preferences: updatePreferences),
       brokerRepository: brokerRepository,
       dashboardRepository: dashboardRepository,
       dashboardSeriesStore: dashboardSeriesStore,
@@ -85,6 +85,4 @@ void main() async {
       uiPreferences: uiPreferences,
     ),
   );
-
-  updater.checkForUpdatesOnStartup();
 }

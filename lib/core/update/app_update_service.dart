@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:desktop_updater/desktop_updater.dart';
 import 'package:flutter/foundation.dart';
 
-import '../state/app_state.dart';
-import '../state/keys/settings_keys.dart';
 import 'app_update_configuration.dart';
+import 'app_update_controller.dart';
 import 'github_release_source.dart';
+import 'update_preferences_repository.dart';
 
 /// Owns the app's update channel and update lifecycle.
 ///
@@ -14,30 +14,46 @@ import 'github_release_source.dart';
 /// service recreates that controller when the user changes the beta preference,
 /// so the preference takes effect immediately rather than on the next launch.
 class AppUpdateService extends ChangeNotifier {
-  AppUpdateService({required AppStateManager state, Uri? githubReleasesUrl, GitHubReleaseSource? releaseSource, bool allowUnsignedMacOSUpdates = AppUpdateConfiguration.allowUnsignedMacOSUpdates})
-    : _state = state,
-      _releaseSource = releaseSource ?? _createReleaseSource(githubReleasesUrl ?? AppUpdateConfiguration.githubReleasesUrl),
-      _allowUnsignedMacOSUpdates = allowUnsignedMacOSUpdates {
+  AppUpdateService({
+    required UpdatePreferencesRepository preferences,
+    Uri? githubReleasesUrl,
+    AppUpdateReleaseSource? releaseSource,
+    AppUpdateControllerFactory controllerFactory =
+        const DesktopAppUpdateControllerFactory(),
+    bool allowUnsignedMacOSUpdates =
+        AppUpdateConfiguration.allowUnsignedMacOSUpdates,
+  }) : _preferences = preferences,
+       _releaseSource =
+           releaseSource ??
+           _createReleaseSource(
+             githubReleasesUrl ?? AppUpdateConfiguration.githubReleasesUrl,
+           ),
+       _controllerFactory = controllerFactory,
+       _allowUnsignedMacOSUpdates = allowUnsignedMacOSUpdates {
+    _lastTracksBetaReleases = preferences.tracksBetaReleases;
     _controller = _createController(appArchiveUrl: null, channel: channel);
     _controller.addListener(_notifyListeners);
+    _preferences.addListener(_onPreferencesChanged);
   }
 
   static const stableChannel = 'stable';
   static const betaChannel = 'beta';
 
-  final AppStateManager _state;
-  final GitHubReleaseSource? _releaseSource;
+  final UpdatePreferencesRepository _preferences;
+  final AppUpdateReleaseSource? _releaseSource;
+  final AppUpdateControllerFactory _controllerFactory;
   final bool _allowUnsignedMacOSUpdates;
-  late DesktopUpdaterController _controller;
+  late AppUpdateController _controller;
   UpdateState? _discoveryState;
   GitHubRelease? _selectedRelease;
   int _selectionEpoch = 0;
+  late bool _lastTracksBetaReleases;
 
   /// Whether this build has GitHub release discovery configured.
   bool get isConfigured => _releaseSource != null;
 
   /// Whether beta releases are included in update checks.
-  bool get tracksBetaReleases => _state.read(SettingsKeys.trackBetaReleases);
+  bool get tracksBetaReleases => _preferences.tracksBetaReleases;
 
   /// The update feed channel currently being checked.
   String get channel => tracksBetaReleases ? betaChannel : stableChannel;
@@ -48,7 +64,9 @@ class AppUpdateService extends ChangeNotifier {
   /// GitHub Release selected by the most recent successful check.
   GitHubRelease? get selectedRelease => _selectedRelease;
 
-  Uri get releasePageUrl => _selectedRelease?.htmlUrl ?? Uri.parse('https://github.com/mijelsma/mqtt-monitor/releases');
+  Uri get releasePageUrl =>
+      _selectedRelease?.htmlUrl ??
+      Uri.parse('https://github.com/mijelsma/mqtt-monitor/releases');
 
   /// Starts the quiet startup check after the widget tree has been created.
   void checkForUpdatesOnStartup() {
@@ -59,8 +77,13 @@ class AppUpdateService extends ChangeNotifier {
   /// Selects the stable or beta feed, persists the choice, and checks it now.
   Future<void> setTracksBetaReleases(bool value) async {
     if (value == tracksBetaReleases) return;
+    await _preferences.setTracksBetaReleases(value);
+  }
 
-    await _state.write(SettingsKeys.trackBetaReleases, value);
+  void _onPreferencesChanged() {
+    final tracksBetaReleases = _preferences.tracksBetaReleases;
+    if (tracksBetaReleases == _lastTracksBetaReleases) return;
+    _lastTracksBetaReleases = tracksBetaReleases;
     _selectionEpoch += 1;
     _selectedRelease = null;
     _discoveryState = null;
@@ -87,7 +110,9 @@ class AppUpdateService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final selection = await releaseSource.findLatest(includePrereleases: tracksBetaReleases);
+      final selection = await releaseSource.findLatest(
+        includePrereleases: tracksBetaReleases,
+      );
       if (epoch != _selectionEpoch) return null;
 
       _selectedRelease = selection?.release;
@@ -98,7 +123,10 @@ class AppUpdateService extends ChangeNotifier {
         return const ManualUpdateCheckUpToDate();
       }
 
-      _replaceController(appArchiveUrl: selection.archiveUrl, channel: selection.channel);
+      _replaceController(
+        appArchiveUrl: selection.archiveUrl,
+        channel: selection.channel,
+      );
       _discoveryState = null;
       return await _controller.checkForUpdates();
     } on Object catch (error, stackTrace) {
@@ -109,15 +137,28 @@ class AppUpdateService extends ChangeNotifier {
     }
   }
 
-  DesktopUpdaterController _createController({required Uri? appArchiveUrl, required String channel}) {
-    return DesktopUpdaterController(appArchiveUrl: appArchiveUrl, channel: channel, allowUnsignedMacOSUpdates: _allowUnsignedMacOSUpdates, skipInitialVersionCheck: true);
+  AppUpdateController _createController({
+    required Uri? appArchiveUrl,
+    required String channel,
+  }) {
+    return _controllerFactory.create(
+      appArchiveUrl: appArchiveUrl,
+      channel: channel,
+      allowUnsignedMacOSUpdates: _allowUnsignedMacOSUpdates,
+    );
   }
 
-  void _replaceController({required Uri? appArchiveUrl, required String channel}) {
+  void _replaceController({
+    required Uri? appArchiveUrl,
+    required String channel,
+  }) {
     _controller
       ..removeListener(_notifyListeners)
       ..dispose();
-    _controller = _createController(appArchiveUrl: appArchiveUrl, channel: channel)..addListener(_notifyListeners);
+    _controller = _createController(
+      appArchiveUrl: appArchiveUrl,
+      channel: channel,
+    )..addListener(_notifyListeners);
     notifyListeners();
   }
 
@@ -126,6 +167,7 @@ class AppUpdateService extends ChangeNotifier {
   @override
   void dispose() {
     _selectionEpoch += 1;
+    _preferences.removeListener(_onPreferencesChanged);
     _releaseSource?.close();
     _controller
       ..removeListener(_notifyListeners)
@@ -134,7 +176,7 @@ class AppUpdateService extends ChangeNotifier {
   }
 }
 
-GitHubReleaseSource? _createReleaseSource(Uri? url) {
+AppUpdateReleaseSource? _createReleaseSource(Uri? url) {
   if (url == null) return null;
   return GitHubReleaseSource(releasesUrl: url);
 }

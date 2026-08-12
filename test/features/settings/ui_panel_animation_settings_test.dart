@@ -22,7 +22,7 @@ void main() {
   });
 
   testWidgets('UI settings control sidebar animation and speed', (tester) async {
-    final vm = SettingsViewModel(state: state, brokerRepository: brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, qosPreferences: dependencies.qosPreferences, uiPreferences: dependencies.uiPreferences);
+    final vm = SettingsViewModel(state: state, brokerRepository: brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, qosPreferences: dependencies.qosPreferences, uiPreferences: dependencies.uiPreferences, updatePreferences: dependencies.updatePreferences);
     addTearDown(vm.dispose);
 
     await tester.pumpWidget(

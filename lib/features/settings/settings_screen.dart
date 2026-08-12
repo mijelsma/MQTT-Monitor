@@ -9,6 +9,7 @@ import '../../core/publishing/qos_preferences_repository.dart';
 import '../../core/publishing/variable_repository.dart';
 import '../../core/state/app_state.dart';
 import '../../core/ui/ui_preferences_repository.dart';
+import '../../core/update/update_preferences_repository.dart';
 import '../../generated/l10n.dart';
 import '../../theme/app_colors.dart';
 import 'panels/about_panel.dart';
@@ -57,6 +58,7 @@ class SettingsScreen extends StatelessWidget {
         variableRepository: ctx.read<VariableRepository>(),
         qosPreferences: ctx.read<QosPreferencesRepository>(),
         uiPreferences: ctx.read<UiPreferencesRepository>(),
+        updatePreferences: ctx.read<UpdatePreferencesRepository>(),
         dashboardRepository: ctx.read<DashboardRepository>(),
         historyService: ctx.read<MessageHistoryService>(),
       ),

@@ -9,9 +9,6 @@ import '../state_key.dart';
 abstract final class SettingsKeys {
   static final rateIntervalMs = StateKey.integer('settings.rateIntervalMs', defaultValue: 1000);
 
-  // Updates
-  static final trackBetaReleases = StateKey.boolean('settings.trackBetaReleases');
-
   // Connection
   static final startupConnection = StateKey.forEnum('settings.startupConnection', StartupConnection.values, defaultValue: StartupConnection.lastStatus);
 
@@ -28,5 +25,5 @@ abstract final class SettingsKeys {
   static final maximumHistoryRetention = StateKey.integer('settings.maximumHistoryRetention', defaultValue: HistoryPolicyRules.defaultMaximumRetention);
   static final messageRateSampleSize = StateKey.integer('settings.messageRateSampleSize', defaultValue: 10);
 
-  static final List<StateKey> all = [trackBetaReleases, rateIntervalMs, startupConnection, defaultDotSize, defaultCardColor, defaultChartType, defaultInterpolation, defaultMaxSamples, newSubscriptionHistoryEnabled, newSubscriptionHistoryRetention, maximumHistoryRetention, messageRateSampleSize];
+  static final List<StateKey> all = [rateIntervalMs, startupConnection, defaultDotSize, defaultCardColor, defaultChartType, defaultInterpolation, defaultMaxSamples, newSubscriptionHistoryEnabled, newSubscriptionHistoryRetention, maximumHistoryRetention, messageRateSampleSize];
 }

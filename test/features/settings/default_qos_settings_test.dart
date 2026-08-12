@@ -80,5 +80,5 @@ void main() {
 }
 
 SettingsViewModel _viewModel(AppStateManager state, BrokerRepository brokers, TestDependencies dependencies) {
-  return SettingsViewModel(state: state, brokerRepository: brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, qosPreferences: dependencies.qosPreferences, uiPreferences: dependencies.uiPreferences);
+  return SettingsViewModel(state: state, brokerRepository: brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, qosPreferences: dependencies.qosPreferences, uiPreferences: dependencies.uiPreferences, updatePreferences: dependencies.updatePreferences);
 }
