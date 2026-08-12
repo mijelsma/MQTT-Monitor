@@ -57,6 +57,37 @@ void main() {
     expect(root.pulseNotifier.value, 1);
     expect(leaf.pulseNotifier.value, 1);
   });
+
+  test('one pulse per second does not suppress slower messages', () {
+    var now = DateTime(2026);
+    final controller = TopicPulseController(clock: () => now);
+    final leaf = TopicTreeNode(segment: 'leaf', fullPath: 'leaf');
+
+    for (var message = 0; message < 5; message++) {
+      controller.schedule([leaf], 1);
+      now = now.add(const Duration(seconds: 2));
+    }
+
+    expect(leaf.pulseNotifier.value, 5);
+    controller.clear();
+  });
+
+  test('shared ancestors are throttled across independently firing leaves', () {
+    var now = DateTime(2026);
+    final controller = TopicPulseController(clock: () => now);
+    final root = TopicTreeNode(segment: 'root', fullPath: 'root');
+    final first = TopicTreeNode(segment: 'first', fullPath: 'root/first');
+    final second = TopicTreeNode(segment: 'second', fullPath: 'root/second');
+
+    controller.schedule([root, first], 1);
+    now = now.add(const Duration(milliseconds: 100));
+    controller.schedule([root, second], 1);
+
+    expect(root.pulseNotifier.value, 1);
+    expect(first.pulseNotifier.value, 1);
+    expect(second.pulseNotifier.value, 1);
+    controller.clear();
+  });
 }
 
 class _ManualTimer implements Timer {

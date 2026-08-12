@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../theme/app_tokens/app_tokens.dart';
 import '../monitor_workspace_controller.dart';
 import 'topic_tree_empty_state.dart';
-import 'topic_tree_row.dart';
+import 'topic_tree_list.dart';
 
 /// The main MQTT topic tree panel.
 ///
@@ -19,20 +18,15 @@ class TopicTree extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = context.watch<MonitorWorkspaceController>();
     final rows = vm.visibleRows;
-    final tokens = context.tokens;
     final hasFilter = vm.filter.isNotEmpty;
 
     if (rows.isEmpty) return TopicTreeEmptyState(hasFilter: hasFilter);
 
-    return ListView.separated(
-      padding: EdgeInsets.zero,
-      itemCount: rows.length,
-      separatorBuilder: (_, i) => Divider(height: 0.5, thickness: 0.5, color: tokens.border, indent: 10.0 + rows[i].depth * 18.0 + 27, endIndent: 0),
-      itemBuilder: (context, i) {
-        final row = rows[i];
-        final isSelected = vm.selectedNode?.fullPath == row.node.fullPath;
-        return TopicTreeRow(key: ValueKey(row.node.fullPath), node: row.node, depth: row.depth, metrics: row.metrics, selected: isSelected, onToggle: () => vm.toggleExpand(row.node), onSelect: () => vm.selectNode(row.node));
-      },
+    return TopicTreeList(
+      rows: rows,
+      selectedNode: vm.selectedNode,
+      onToggle: vm.toggleExpand,
+      onSelect: vm.selectNode,
     );
   }
 }
