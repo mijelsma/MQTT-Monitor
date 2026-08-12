@@ -16,6 +16,7 @@ import '../../shared/widgets/resizable_split.dart';
 import '../settings/settings_screen.dart';
 import '../settings/settings_section.dart';
 import 'monitor_viewmodel.dart';
+import 'detail_sidebar_controller.dart';
 import 'monitor_workspace_controller.dart';
 import 'publish_draft_controller.dart';
 import 'widgets/broker_load_failure_state.dart';
@@ -47,6 +48,7 @@ class MonitorScreen extends StatelessWidget {
         ChangeNotifierProvider(
           create: (ctx) => MonitorWorkspaceController(projection: ctx.read<TopicProjection>(), history: ctx.read<MessageHistoryService>(), state: ctx.read<AppStateManager>()),
         ),
+        ChangeNotifierProvider(create: (ctx) => DetailSidebarController(ctx.read<AppStateManager>())),
         ChangeNotifierProvider(
           create: (_) => PublishDraftController(
             initialQos: initialPublishQos,

@@ -325,6 +325,9 @@
     "sidebarShortcutsManage": "Snelkoppelingen beheren",
     "sidebarNoSelectionTitle": "Selecteer een topic om te bekijken",
     "sidebarNoSelectionSubtitle": "Kies een topic uit de boom\nom berichtdetails te bekijken",
+    "sidebarResizeDetailHistory": "Formaat van Berichtdetails en Geschiedenis wijzigen",
+    "sidebarResizeHistoryPublish": "Formaat van Geschiedenis en Publiceren wijzigen",
+    "sidebarResizePublishShortcuts": "Formaat van Publiceren en Snelkoppelingen wijzigen",
 
     "durationLessThanSecond": "< 1 seconde",
     "durationSeconds": "{count} {count, plural, =1{seconde} other{seconden}}",

@@ -2674,6 +2674,36 @@ class S {
     );
   }
 
+  /// `Resize Message Detail and History`
+  String get sidebarResizeDetailHistory {
+    return Intl.message(
+      'Resize Message Detail and History',
+      name: 'sidebarResizeDetailHistory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Resize History and Publish`
+  String get sidebarResizeHistoryPublish {
+    return Intl.message(
+      'Resize History and Publish',
+      name: 'sidebarResizeHistoryPublish',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Resize Publish and Shortcuts`
+  String get sidebarResizePublishShortcuts {
+    return Intl.message(
+      'Resize Publish and Shortcuts',
+      name: 'sidebarResizePublishShortcuts',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `< 1 second`
   String get durationLessThanSecond {
     return Intl.message(

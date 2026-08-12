@@ -460,6 +460,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "Select a topic to inspect",
     ),
     "sidebarPublish": MessageLookupByLibrary.simpleMessage("PUBLISH"),
+    "sidebarResizeDetailHistory": MessageLookupByLibrary.simpleMessage(
+      "Resize Message Detail and History",
+    ),
+    "sidebarResizeHistoryPublish": MessageLookupByLibrary.simpleMessage(
+      "Resize History and Publish",
+    ),
+    "sidebarResizePublishShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Resize Publish and Shortcuts",
+    ),
     "sidebarShortcuts": MessageLookupByLibrary.simpleMessage("SHORTCUTS"),
     "sidebarShortcutsEmpty": MessageLookupByLibrary.simpleMessage(
       "No shortcuts available.\nAdd shortcuts in Settings.",

@@ -481,6 +481,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "Selecteer een topic om te bekijken",
     ),
     "sidebarPublish": MessageLookupByLibrary.simpleMessage("PUBLICEREN"),
+    "sidebarResizeDetailHistory": MessageLookupByLibrary.simpleMessage(
+      "Formaat van Berichtdetails en Geschiedenis wijzigen",
+    ),
+    "sidebarResizeHistoryPublish": MessageLookupByLibrary.simpleMessage(
+      "Formaat van Geschiedenis en Publiceren wijzigen",
+    ),
+    "sidebarResizePublishShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Formaat van Publiceren en Snelkoppelingen wijzigen",
+    ),
     "sidebarShortcuts": MessageLookupByLibrary.simpleMessage("SNELKOPPELINGEN"),
     "sidebarShortcutsEmpty": MessageLookupByLibrary.simpleMessage(
       "Geen snelkoppelingen beschikbaar.\nVoeg ze toe via Instellingen.",

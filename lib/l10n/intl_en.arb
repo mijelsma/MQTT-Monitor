@@ -325,6 +325,9 @@
     "sidebarShortcutsManage": "Manage Shortcuts",
     "sidebarNoSelectionTitle": "Select a topic to inspect",
     "sidebarNoSelectionSubtitle": "Choose a topic from the tree\nto view message details",
+    "sidebarResizeDetailHistory": "Resize Message Detail and History",
+    "sidebarResizeHistoryPublish": "Resize History and Publish",
+    "sidebarResizePublishShortcuts": "Resize Publish and Shortcuts",
 
     "durationLessThanSecond": "< 1 second",
     "durationSeconds": "{count} {count, plural, =1{second} other{seconds}}",
