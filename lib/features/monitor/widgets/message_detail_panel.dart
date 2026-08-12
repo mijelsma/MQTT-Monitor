@@ -5,7 +5,8 @@ import 'package:provider/provider.dart';
 
 import '../../../core/history/message_history_service.dart';
 import '../../../core/state/app_state.dart';
-import '../../../core/state/keys/dashboard_keys.dart';
+import '../../../core/dashboard/dashboard_repository.dart';
+import '../../../core/dashboard/dashboard_series_policy.dart';
 import '../../../core/state/keys/settings_keys.dart';
 import '../../../generated/l10n.dart';
 import '../../../models/graph_card_model.dart';
@@ -629,8 +630,8 @@ void _onPin(BuildContext context, String topic, String? keyPath, String? default
   if (brokerId == null) return;
 
   final state = context.read<AppStateManager>();
-  final key = DashboardKeys.cardsForBroker(brokerId);
-  final cards = List.of(state.read(key));
+  final dashboard = context.read<DashboardRepository>();
+  final cards = dashboard.cardsForBroker(brokerId);
 
   // Read all defaults from settings.
   state.load(SettingsKeys.defaultCardColor);
@@ -639,15 +640,14 @@ void _onPin(BuildContext context, String topic, String? keyPath, String? default
   state.load(SettingsKeys.defaultInterpolation);
   state.load(SettingsKeys.defaultMaxSamples);
 
-  final color = Color(state.read(SettingsKeys.defaultCardColor));
+  final colorValue = state.read(SettingsKeys.defaultCardColor);
   final dotSize = state.read(SettingsKeys.defaultDotSize);
   final chartType = state.read(SettingsKeys.defaultChartType);
   final interpolation = state.read(SettingsKeys.defaultInterpolation);
-  final maxSamples = state.read(SettingsKeys.defaultMaxSamples);
+  final maxSamples = DashboardSeriesPolicy.normalize(state.read(SettingsKeys.defaultMaxSamples));
 
   final id = '${DateTime.now().millisecondsSinceEpoch}_${cards.length}';
-  cards.add(GraphCardModel(id: id, topic: topic, jsonKeyPath: keyPath, displayName: defaultName ?? keyPath ?? topic.split('/').last, unit: unit, color: color, chartType: chartType, interpolation: interpolation, dotSize: dotSize, maxDataPoints: maxSamples, position: cards.length));
-  await state.write(key, cards);
+  await dashboard.addCard(brokerId, GraphCardModel(id: id, topic: topic, jsonKeyPath: keyPath, displayName: defaultName ?? keyPath ?? topic.split('/').last, unit: unit, colorValue: colorValue, chartType: chartType, interpolation: interpolation, dotSize: dotSize, maxDataPoints: maxSamples, position: cards.length));
 
   if (!context.mounted) return;
   final messenger = ScaffoldMessenger.of(context);

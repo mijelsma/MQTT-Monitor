@@ -7,6 +7,7 @@ import '../../../models/mqtt_qos_default.dart';
 import '../../../models/sidebar_panel_default.dart';
 import '../../../models/startup_connection.dart';
 import '../../history/history_policy_rules.dart';
+import '../../dashboard/dashboard_series_policy.dart';
 import '../state_key.dart';
 import '../../../models/environment_variable.dart';
 import '../../../models/publish_shortcut.dart';
@@ -50,7 +51,7 @@ abstract final class SettingsKeys {
   static final defaultCardColor = StateKey.integer('settings.defaultCardColor', defaultValue: 0xFF8B5CF6);
   static final defaultChartType = StateKey.forEnum('settings.defaultChartType', ChartType.values, defaultValue: ChartType.line);
   static final defaultInterpolation = StateKey.forEnum('settings.defaultInterpolation', InterpolationMode.values, defaultValue: InterpolationMode.curved);
-  static final defaultMaxSamples = StateKey.integer('settings.defaultMaxSamples', defaultValue: 0);
+  static final defaultMaxSamples = StateKey.integer('settings.defaultMaxSamples', defaultValue: DashboardSeriesPolicy.defaultSamples);
 
   // Language panel
   static final language = StateKey.forEnum('settings.language', AppLanguage.values, defaultValue: AppLanguage.en);

@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../../../models/data_point.dart';
 import '../../../models/graph_card_model.dart';
 import '../../../shared/widgets/graph_card.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
@@ -8,9 +10,10 @@ import 'resize_grip_painter.dart';
 
 /// Wraps a [GraphCard] with drag-to-move and drag-to-resize behavior.
 class CardTile extends StatefulWidget {
-  const CardTile({super.key, required this.card, required this.width, required this.height, required this.metrics, required this.onEdit, required this.onRemove, required this.onResize, required this.onDragStarted, required this.onDragEnd});
+  const CardTile({super.key, required this.card, required this.series, required this.width, required this.height, required this.metrics, required this.onEdit, required this.onRemove, required this.onResize, required this.onDragStarted, required this.onDragEnd});
 
   final GraphCardModel card;
+  final ValueListenable<List<DataPoint>> series;
   final double width;
   final double height;
   final GridMetrics metrics;
@@ -93,11 +96,19 @@ class _CardTileState extends State<CardTile> {
         child: SizedBox(
           width: widget.width,
           height: widget.height,
-          child: Opacity(opacity: 0.85, child: GraphCard(model: card)),
+          child: Opacity(
+            opacity: 0.85,
+            child: GraphCard(model: card, dataPoints: widget.series.value),
+          ),
         ),
       ),
       childWhenDragging: const SizedBox.shrink(),
-      child: GraphCard(model: card, onEdit: widget.onEdit, onRemove: widget.onRemove),
+      child: RepaintBoundary(
+        child: ValueListenableBuilder<List<DataPoint>>(
+          valueListenable: widget.series,
+          builder: (context, dataPoints, _) => GraphCard(model: card, dataPoints: dataPoints, onEdit: widget.onEdit, onRemove: widget.onRemove),
+        ),
+      ),
     );
   }
 

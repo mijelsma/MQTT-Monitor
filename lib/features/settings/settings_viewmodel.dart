@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../core/broker/broker_repository.dart';
 import '../../core/broker/broker_repository_failure.dart';
+import '../../core/dashboard/dashboard_repository.dart';
+import '../../core/dashboard/dashboard_series_policy.dart';
 import '../../core/history/history_policy_rules.dart';
 import '../../core/history/message_history_service.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
-import '../../core/state/keys/dashboard_keys.dart';
 import '../../core/state/keys/settings_keys.dart';
 import '../../models/broker_entry.dart';
 import '../../models/chart_type.dart';
@@ -23,14 +24,15 @@ import '../../models/publish_shortcut.dart';
 /// Coordinates settings navigation and delegates data to its owning stores.
 class SettingsViewModel extends ChangeNotifier {
   /// Creates the settings controller and observes app and broker state.
-  SettingsViewModel({required AppStateManager state, required BrokerRepository brokerRepository, MessageHistoryService? historyService}) : _state = state, _brokers = brokerRepository, _historyService = historyService {
-    _state.load(DashboardKeys.layouts);
+  SettingsViewModel({required AppStateManager state, required BrokerRepository brokerRepository, DashboardRepository? dashboardRepository, MessageHistoryService? historyService}) : _state = state, _brokers = brokerRepository, _dashboard = dashboardRepository, _historyService = historyService {
     _state.addListener(_onStateChanged);
     _brokers.addListener(_onStateChanged);
+    _dashboard?.addListener(_onStateChanged);
   }
 
   final AppStateManager _state;
   final BrokerRepository _brokers;
+  final DashboardRepository? _dashboard;
   final MessageHistoryService? _historyService;
 
   /// Notifies settings consumers after either observed owner changes.
@@ -76,8 +78,8 @@ class SettingsViewModel extends ChangeNotifier {
   InterpolationMode get defaultInterpolation => _state.read(SettingsKeys.defaultInterpolation);
   void setDefaultInterpolation(InterpolationMode value) => _state.write(SettingsKeys.defaultInterpolation, value);
 
-  int get defaultMaxSamples => _state.read(SettingsKeys.defaultMaxSamples);
-  void setDefaultMaxSamples(int value) => _state.write(SettingsKeys.defaultMaxSamples, value);
+  int get defaultMaxSamples => DashboardSeriesPolicy.normalize(_state.read(SettingsKeys.defaultMaxSamples));
+  void setDefaultMaxSamples(int value) => _state.write(SettingsKeys.defaultMaxSamples, DashboardSeriesPolicy.normalize(value));
 
   // Subscription history
 
@@ -130,9 +132,11 @@ class SettingsViewModel extends ChangeNotifier {
     try {
       // The broker repository already cleared the shared preference store.
       await _state.resetAll(clearPreferences: false);
+      _dashboard?.resetAfterPreferencesClear();
       await _state.write(AppKeys.activeSettingsSection, selectedSection);
       _historyService?.clear();
       await _brokers.initialize();
+      await _dashboard?.initialize();
       return brokerReset;
     } on Object {
       return (succeeded: false, cleanupFailures: brokerReset.cleanupFailures);
@@ -165,11 +169,11 @@ class SettingsViewModel extends ChangeNotifier {
   /// honoring the "last used" strategy when applicable.
   int resolveDefaultQos(MqttQosDefault strategy) => strategy.resolve(lastUsedQos);
 
-  List<DashboardLayout> get layouts => _state.read(DashboardKeys.layouts);
+  List<DashboardLayout> get layouts => _dashboard?.layouts ?? const [];
 
   void deleteLayout(String id) {
     final list = layouts.where((p) => p.id != id).toList();
-    _state.write(DashboardKeys.layouts, list);
+    _dashboard?.setLayouts(list);
   }
 
   void reorderLayouts(int oldIndex, int newIndex) {
@@ -177,18 +181,18 @@ class SettingsViewModel extends ChangeNotifier {
     if (newIndex > oldIndex) newIndex--;
     final item = list.removeAt(oldIndex);
     list.insert(newIndex, item);
-    _state.write(DashboardKeys.layouts, list);
+    _dashboard?.setLayouts(list);
   }
 
   void addLayout(DashboardLayout layout) {
-    _state.write(DashboardKeys.layouts, [...layouts, layout]);
+    _dashboard?.setLayouts([...layouts, layout]);
   }
 
   void updateLayout(DashboardLayout updated) {
     final list = [...layouts];
     final i = list.indexWhere((p) => p.id == updated.id);
     if (i != -1) list[i] = updated;
-    _state.write(DashboardKeys.layouts, list);
+    _dashboard?.setLayouts(list);
   }
 
   // ── Environment variables ─────────────────────────────────────────────
@@ -323,6 +327,7 @@ class SettingsViewModel extends ChangeNotifier {
   void dispose() {
     _state.removeListener(_onStateChanged);
     _brokers.removeListener(_onStateChanged);
+    _dashboard?.removeListener(_onStateChanged);
     super.dispose();
   }
 }

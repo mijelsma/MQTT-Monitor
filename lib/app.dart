@@ -3,6 +3,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'core/broker/broker_repository.dart';
+import 'core/dashboard/dashboard_repository.dart';
+import 'core/dashboard/dashboard_series_store.dart';
 import 'core/history/message_history_service.dart';
 import 'core/ingestion/message_ingestion_coordinator.dart';
 import 'core/monitor/topic_projection.dart';
@@ -20,7 +22,7 @@ import 'theme/app_tokens/app_tokens.dart';
 /// Provides application-wide services and builds the themed MQTT Monitor app.
 class App extends StatelessWidget {
   /// Creates the application root with its process-lifetime dependencies.
-  const App({super.key, required this.mqttSession, required this.ingestion, required this.topicProjection, required this.historyService, required this.updater, required this.brokerRepository});
+  const App({super.key, required this.mqttSession, required this.ingestion, required this.topicProjection, required this.historyService, required this.updater, required this.brokerRepository, required this.dashboardRepository, required this.dashboardSeriesStore});
 
   final MqttSessionController mqttSession;
   final MessageIngestionCoordinator ingestion;
@@ -28,6 +30,8 @@ class App extends StatelessWidget {
   final MessageHistoryService historyService;
   final AppUpdateService updater;
   final BrokerRepository brokerRepository;
+  final DashboardRepository dashboardRepository;
+  final DashboardSeriesStore dashboardSeriesStore;
 
   /// Exposes root dependencies before building the visual application shell.
   @override
@@ -36,6 +40,8 @@ class App extends StatelessWidget {
       providers: [
         ChangeNotifierProvider<AppStateManager>.value(value: AppStateManager.instance),
         ChangeNotifierProvider<BrokerRepository>.value(value: brokerRepository),
+        ChangeNotifierProvider<DashboardRepository>.value(value: dashboardRepository),
+        Provider<DashboardSeriesStore>.value(value: dashboardSeriesStore),
         ChangeNotifierProvider<MqttSessionController>.value(value: mqttSession),
         Provider<MessageIngestionCoordinator>.value(value: ingestion),
         ChangeNotifierProvider<TopicProjection>.value(value: topicProjection),

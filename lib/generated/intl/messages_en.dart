@@ -246,7 +246,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "dashboardPanelMaxSamples": MessageLookupByLibrary.simpleMessage("Samples"),
     "dashboardPanelMaxSamplesHint": MessageLookupByLibrary.simpleMessage(
-      "0 = unlimited",
+      "1-5000 samples (default 500)",
     ),
     "dashboardPanelNoDashboardsMessage": MessageLookupByLibrary.simpleMessage(
       "Create dashboard or save from dashboard view",

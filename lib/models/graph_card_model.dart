@@ -1,17 +1,16 @@
-import 'package:flutter/material.dart';
-
+import '../core/dashboard/dashboard_series_policy.dart';
 import 'chart_type.dart';
-import 'data_point.dart';
 import 'interpolation_mode.dart';
 
+/// Immutable persisted configuration for one dashboard graph.
 class GraphCardModel {
-  GraphCardModel({
+  const GraphCardModel({
     required this.id,
     required this.topic,
     this.jsonKeyPath,
     required this.displayName,
     this.unit,
-    required this.color,
+    required this.colorValue,
     this.chartType = ChartType.line,
     this.interpolation = InterpolationMode.curved,
     this.colSpan = 1,
@@ -19,53 +18,61 @@ class GraphCardModel {
     this.gridCol = 0,
     this.gridRow = 0,
     this.position = 0,
-    this.maxDataPoints = 0,
+    this.maxDataPoints = DashboardSeriesPolicy.defaultSamples,
     this.dotSize = 4.0,
     this.showFill = true,
     this.fillOpacity = 0.08,
     this.yMin,
     this.yMax,
-    List<DataPoint>? dataPoints,
-  }) : dataPoints = dataPoints ?? [];
+  }) : assert(maxDataPoints >= DashboardSeriesPolicy.minimumSamples && maxDataPoints <= DashboardSeriesPolicy.maximumSamples);
 
   final String id;
-  String topic;
+  final String topic;
   final String? jsonKeyPath;
-  String displayName;
-  String? unit;
-  Color color;
-  ChartType chartType;
-  InterpolationMode interpolation;
-  int colSpan;
-  int rowSpan;
-  int gridCol;
-  int gridRow;
-  int position;
-  int maxDataPoints;
-  double dotSize;
-  bool showFill;
-  double fillOpacity;
-  double? yMin;
-  double? yMax;
-  final List<DataPoint> dataPoints;
+  final String displayName;
+  final String? unit;
+  final int colorValue;
+  final ChartType chartType;
+  final InterpolationMode interpolation;
+  final int colSpan;
+  final int rowSpan;
+  final int gridCol;
+  final int gridRow;
+  final int position;
+  final int maxDataPoints;
+  final double dotSize;
+  final bool showFill;
+  final double fillOpacity;
+  final double? yMin;
+  final double? yMax;
 
-  /// Adds a data point, trimming the buffer if it exceeds [maxDataPoints].
-  /// When [maxDataPoints] is 0 all values are kept (unlimited).
-  void addDataPoint(DataPoint point) {
-    dataPoints.add(point);
-    if (maxDataPoints > 0 && dataPoints.length > maxDataPoints) {
-      dataPoints.removeRange(0, dataPoints.length - maxDataPoints);
-    }
-  }
-
-  GraphCardModel copyWith({String? topic, String? displayName, String? unit, Color? color, ChartType? chartType, InterpolationMode? interpolation, int? colSpan, int? rowSpan, int? gridCol, int? gridRow, int? position, int? maxDataPoints, double? dotSize, bool? showFill, double? fillOpacity, double? Function()? yMin, double? Function()? yMax}) {
+  GraphCardModel copyWith({
+    String? topic,
+    String? displayName,
+    String? unit,
+    bool clearUnit = false,
+    int? colorValue,
+    ChartType? chartType,
+    InterpolationMode? interpolation,
+    int? colSpan,
+    int? rowSpan,
+    int? gridCol,
+    int? gridRow,
+    int? position,
+    int? maxDataPoints,
+    double? dotSize,
+    bool? showFill,
+    double? fillOpacity,
+    double? Function()? yMin,
+    double? Function()? yMax,
+  }) {
     return GraphCardModel(
       id: id,
       topic: topic ?? this.topic,
       jsonKeyPath: jsonKeyPath,
       displayName: displayName ?? this.displayName,
-      unit: unit ?? this.unit,
-      color: color ?? this.color,
+      unit: clearUnit ? null : unit ?? this.unit,
+      colorValue: colorValue ?? this.colorValue,
       chartType: chartType ?? this.chartType,
       interpolation: interpolation ?? this.interpolation,
       colSpan: colSpan ?? this.colSpan,
@@ -79,7 +86,6 @@ class GraphCardModel {
       fillOpacity: fillOpacity ?? this.fillOpacity,
       yMin: yMin != null ? yMin() : this.yMin,
       yMax: yMax != null ? yMax() : this.yMax,
-      dataPoints: dataPoints,
     );
   }
 
@@ -90,7 +96,7 @@ class GraphCardModel {
       jsonKeyPath: json['jsonKeyPath'] as String?,
       displayName: json['displayName'] as String,
       unit: json['unit'] as String?,
-      color: Color(json['color'] as int),
+      colorValue: json['color'] as int,
       chartType: ChartType.values.firstWhere((e) => e.name == json['chartType'], orElse: () => ChartType.line),
       interpolation: InterpolationMode.values.firstWhere((e) => e.name == json['interpolation'], orElse: () => InterpolationMode.curved),
       colSpan: json['colSpan'] as int? ?? 1,
@@ -98,7 +104,7 @@ class GraphCardModel {
       gridCol: json['gridCol'] as int? ?? 0,
       gridRow: json['gridRow'] as int? ?? 0,
       position: json['position'] as int? ?? 0,
-      maxDataPoints: json['maxDataPoints'] as int? ?? 0,
+      maxDataPoints: _readMaximum(json['maxDataPoints']),
       dotSize: (json['dotSize'] as num?)?.toDouble() ?? 4.0,
       showFill: json['showFill'] as bool? ?? true,
       fillOpacity: (json['fillOpacity'] as num?)?.toDouble() ?? 0.08,
@@ -113,7 +119,7 @@ class GraphCardModel {
     if (jsonKeyPath != null) 'jsonKeyPath': jsonKeyPath,
     'displayName': displayName,
     if (unit != null) 'unit': unit,
-    'color': color.toARGB32(),
+    'color': colorValue,
     'chartType': chartType.name,
     'interpolation': interpolation.name,
     'colSpan': colSpan,
@@ -128,4 +134,12 @@ class GraphCardModel {
     if (yMin != null) 'yMin': yMin,
     if (yMax != null) 'yMax': yMax,
   };
+}
+
+int _readMaximum(Object? raw) {
+  if (raw is! int) {
+    throw const FormatException('Dashboard card maxDataPoints is required');
+  }
+  DashboardSeriesPolicy.validate(raw);
+  return raw;
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/dashboard/dashboard_series_policy.dart';
 import '../../../models/chart_type.dart';
 import '../../../models/graph_card_model.dart';
 import '../../../models/interpolation_mode.dart';
@@ -72,10 +73,10 @@ class _EditGraphDialogState extends State<_EditGraphDialog> {
     _topicController = TextEditingController(text: widget.card.topic);
     _nameController = TextEditingController(text: widget.card.displayName);
     _unitController = TextEditingController(text: widget.card.unit ?? '');
-    _maxSamplesController = TextEditingController(text: widget.card.maxDataPoints > 0 ? widget.card.maxDataPoints.toString() : '');
+    _maxSamplesController = TextEditingController(text: widget.card.maxDataPoints.toString());
     _yMinController = TextEditingController(text: widget.card.yMin?.toString() ?? '');
     _yMaxController = TextEditingController(text: widget.card.yMax?.toString() ?? '');
-    _color = widget.card.color;
+    _color = Color(widget.card.colorValue);
     _chartType = widget.card.chartType;
     _interpolation = widget.card.interpolation;
     _dotSize = widget.card.dotSize;
@@ -115,7 +116,7 @@ class _EditGraphDialogState extends State<_EditGraphDialog> {
         dotSize: _dotSize,
         showFill: _showFill,
         fillOpacity: _fillOpacity,
-        maxDataPoints: int.tryParse(_maxSamplesController.text.trim()) ?? 0,
+        maxDataPoints: DashboardSeriesPolicy.normalize(int.tryParse(_maxSamplesController.text.trim())),
         yMin: double.tryParse(_yMinController.text.trim()),
         yMax: double.tryParse(_yMaxController.text.trim()),
       ),
@@ -187,8 +188,8 @@ class _EditGraphDialogState extends State<_EditGraphDialog> {
           if (_showFill) ...[UiSliderRow(margin: const EdgeInsets.only(bottom: 6), label: 'Fill Intensity', value: _fillOpacity, min: 0.02, max: 0.5, divisions: 24, displayValue: '${(_fillOpacity * 100).round()}%', onChanged: (v) => setState(() => _fillOpacity = v))],
 
           // Max samples and Y-axis range
-          UiField(margin: const EdgeInsets.only(top: 16, bottom: 2), label: 'Max Samples', controller: _maxSamplesController, hint: 'Unlimited', optional: true),
-          Text('Leave empty to keep all values', style: TextStyle(fontSize: 11, color: tokens.textTertiary)),
+          UiField(margin: const EdgeInsets.only(top: 16, bottom: 2), label: 'Max Samples', controller: _maxSamplesController, hint: '${DashboardSeriesPolicy.minimumSamples}-${DashboardSeriesPolicy.maximumSamples}'),
+          Text('Each graph keeps at most ${DashboardSeriesPolicy.maximumSamples} values. Default: ${DashboardSeriesPolicy.defaultSamples}.', style: TextStyle(fontSize: 11, color: tokens.textTertiary)),
           const VSpacer(16),
 
           // Y-axis range

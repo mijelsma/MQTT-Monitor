@@ -155,6 +155,7 @@ class _DashboardGridState extends State<DashboardGrid> {
           top: card.gridRow * metrics.strideY,
           child: CardTile(
             card: card,
+            series: vm.seriesFor(card.id),
             width: metrics.widthForCols(card.colSpan).clamp(0.0, metrics.totalWidth),
             height: metrics.heightForRows(card.rowSpan),
             metrics: metrics,

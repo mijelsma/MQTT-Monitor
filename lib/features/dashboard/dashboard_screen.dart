@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/broker/broker_repository.dart';
+import '../../core/dashboard/dashboard_repository.dart';
+import '../../core/dashboard/dashboard_series_store.dart';
 import '../../core/history/message_history_service.dart';
-import '../../core/ingestion/message_ingestion_coordinator.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
 import '../../models/dashboard_layout.dart';
@@ -32,7 +33,7 @@ class GraphDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (ctx) => DashboardViewModel(ingestion: ctx.read<MessageIngestionCoordinator>(), state: ctx.read<AppStateManager>(), brokerId: brokerId, historyService: ctx.read<MessageHistoryService>(), brokerRepository: ctx.read<BrokerRepository>()),
+      create: (ctx) => DashboardViewModel(repository: ctx.read<DashboardRepository>(), seriesStore: ctx.read<DashboardSeriesStore>(), state: ctx.read<AppStateManager>(), brokerId: brokerId, historyService: ctx.read<MessageHistoryService>(), brokerRepository: ctx.read<BrokerRepository>()),
       child: _DashboardScaffold(brokerName: brokerName),
     );
   }

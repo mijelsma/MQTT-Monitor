@@ -1,7 +1,7 @@
 import 'graph_card_model.dart';
 
 class DashboardLayout {
-  DashboardLayout({required this.id, required this.title, this.brokerIds = const [], this.colorIndex = 0, this.cards = const []});
+  DashboardLayout({required this.id, required this.title, List<String> brokerIds = const [], this.colorIndex = 0, List<GraphCardModel> cards = const []}) : brokerIds = List.unmodifiable(brokerIds), cards = List.unmodifiable(cards);
 
   final String id;
   final String title;

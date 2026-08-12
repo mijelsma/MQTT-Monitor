@@ -3,8 +3,4 @@ class DataPoint {
 
   final DateTime timestamp;
   final double value;
-
-  factory DataPoint.fromJson(Map<String, dynamic> json) => DataPoint(timestamp: DateTime.fromMillisecondsSinceEpoch(json['t'] as int), value: (json['v'] as num).toDouble());
-
-  Map<String, dynamic> toJson() => {'t': timestamp.millisecondsSinceEpoch, 'v': value};
 }

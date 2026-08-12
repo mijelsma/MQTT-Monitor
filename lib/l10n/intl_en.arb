@@ -33,7 +33,7 @@
     "dashboardPanelInterpolation": "Interpolation",
     "dashboardPanelDotSize": "Dot size",
     "dashboardPanelMaxSamples": "Samples",
-    "dashboardPanelMaxSamplesHint": "0 = unlimited",
+    "dashboardPanelMaxSamplesHint": "1-5000 samples (default 500)",
     "dashboardPanelDashboards": "Dashboards",
     "dashboardPanelNoDashboardsTitle": "No dashboards yet",
     "dashboardPanelNoDashboardsMessage": "Create dashboard or save from dashboard view",

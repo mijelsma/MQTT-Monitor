@@ -263,7 +263,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Meetpunten",
     ),
     "dashboardPanelMaxSamplesHint": MessageLookupByLibrary.simpleMessage(
-      "0 = onbeperkt",
+      "1-5000 meetpunten (standaard 500)",
     ),
     "dashboardPanelNoDashboardsMessage": MessageLookupByLibrary.simpleMessage(
       "Maak een dashboard of sla op vanuit de dashboardweergave",

@@ -33,7 +33,7 @@
     "dashboardPanelInterpolation": "Interpolatie",
     "dashboardPanelDotSize": "Puntgrootte",
     "dashboardPanelMaxSamples": "Meetpunten",
-    "dashboardPanelMaxSamplesHint": "0 = onbeperkt",
+    "dashboardPanelMaxSamplesHint": "1-5000 meetpunten (standaard 500)",
     "dashboardPanelDashboards": "Dashboards",
     "dashboardPanelNoDashboardsTitle": "Nog geen dashboards",
     "dashboardPanelNoDashboardsMessage": "Maak een dashboard of sla op vanuit de dashboardweergave",

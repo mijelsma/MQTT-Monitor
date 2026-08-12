@@ -33,7 +33,7 @@ class _DashboardPanelState extends State<DashboardPanel> {
     super.initState();
     final vm = context.read<SettingsViewModel>();
     final val = vm.defaultMaxSamples;
-    _maxSamplesController = TextEditingController(text: val == 0 ? '' : val.toString());
+    _maxSamplesController = TextEditingController(text: val.toString());
   }
 
   @override
@@ -80,8 +80,9 @@ class _DashboardPanelState extends State<DashboardPanel> {
               controller: _maxSamplesController,
               keyboardType: TextInputType.number,
               onFieldSubmitted: (v) {
-                final parsed = int.tryParse(v.trim()) ?? 0;
+                final parsed = int.tryParse(v.trim()) ?? vm.defaultMaxSamples;
                 vm.setDefaultMaxSamples(parsed);
+                _maxSamplesController.text = vm.defaultMaxSamples.toString();
               },
             ),
           ],
