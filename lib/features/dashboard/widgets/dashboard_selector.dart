@@ -94,7 +94,7 @@ class _DashboardSelectorState extends State<DashboardSelector> {
             Container(
               width: 6,
               height: 6,
-              decoration: const BoxDecoration(color: AppColors.warning500, shape: BoxShape.circle),
+              decoration: BoxDecoration(color: context.tokens.warning, shape: BoxShape.circle),
             ),
           ],
 

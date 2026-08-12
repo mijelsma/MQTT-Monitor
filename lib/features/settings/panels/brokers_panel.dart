@@ -46,7 +46,7 @@ class BrokersPanel extends StatelessWidget {
       description: s.brokersPanelDescription,
       children: [
         if (vm.brokerFailure case final failure?)
-          UiInlineNotice(kind: UiNoticeKind.error, title: 'Broker profiles unavailable', message: failure.message, detail: failure.details, actionLabel: 'Retry', onAction: vm.retryBrokerLoad, margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8))
+          UiInlineNotice(kind: UiNoticeKind.error, title: s.brokerProfilesUnavailable, message: failure.message, detail: failure.details, actionLabel: s.retry, onAction: vm.retryBrokerLoad, margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8))
         else if (brokers.isEmpty)
           UiEmptyState(icon: Icons.dns_outlined, title: s.brokersPanelNoBrokersTitle, message: s.brokersPanelNoBrokersMessage)
         else

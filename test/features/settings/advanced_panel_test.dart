@@ -26,29 +26,16 @@ void main() {
   });
 
   Future<SettingsViewModel> pumpPanel(WidgetTester tester) async {
-    final viewModel = SettingsViewModel(
-      state: state,
-      brokerRepository: brokers,
-      shortcutRepository: dependencies.shortcuts,
-      variableRepository: dependencies.variables,
-      qosPreferences: dependencies.qosPreferences,
-    );
+    final viewModel = SettingsViewModel(state: state, brokerRepository: brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, qosPreferences: dependencies.qosPreferences, uiPreferences: dependencies.uiPreferences);
     addTearDown(viewModel.dispose);
     await tester.pumpWidget(
       ChangeNotifierProvider<SettingsViewModel>.value(
         value: viewModel,
         child: MaterialApp(
           theme: themeLight,
-          localizationsDelegates: const [
-            S.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
+          localizationsDelegates: const [S.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
           supportedLocales: S.delegate.supportedLocales,
-          home: const Scaffold(
-            body: SizedBox(width: 700, height: 900, child: AdvancedPanel()),
-          ),
+          home: const Scaffold(body: SizedBox(width: 700, height: 900, child: AdvancedPanel())),
         ),
       ),
     );
@@ -56,9 +43,7 @@ void main() {
     return viewModel;
   }
 
-  testWidgets('shows validated defaults for new subscription history', (
-    tester,
-  ) async {
+  testWidgets('shows validated defaults for new subscription history', (tester) async {
     await pumpPanel(tester);
 
     expect(state.read(SettingsKeys.newSubscriptionHistoryEnabled), isTrue);
@@ -69,9 +54,7 @@ void main() {
     expect(find.text('Maximum retention'), findsOneWidget);
   });
 
-  testWidgets('history controls expose domain-supported ranges', (
-    tester,
-  ) async {
+  testWidgets('history controls expose domain-supported ranges', (tester) async {
     await pumpPanel(tester);
 
     final sliders = tester.widgetList<Slider>(find.byType(Slider)).toList();
@@ -85,43 +68,30 @@ void main() {
     expect(sliders.last.divisions, 19);
   });
 
-  testWidgets('turning off the new policy disables its retention slider', (
-    tester,
-  ) async {
+  testWidgets('turning off the new policy disables its retention slider', (tester) async {
     await pumpPanel(tester);
 
     await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
 
-    final defaultRetention = tester
-        .widgetList<Slider>(find.byType(Slider))
-        .first;
+    final defaultRetention = tester.widgetList<Slider>(find.byType(Slider)).first;
     expect(defaultRetention.onChanged, isNull);
     expect(state.read(SettingsKeys.newSubscriptionHistoryEnabled), isFalse);
   });
 
-  testWidgets('maximum reduction can be cancelled or explicitly confirmed', (
-    tester,
-  ) async {
+  testWidgets('maximum reduction can be cancelled or explicitly confirmed', (tester) async {
     await state.write(SettingsKeys.maximumHistoryRetention, 500);
     await brokers.add(
       const BrokerEntry(
         id: 'broker',
         name: 'Broker',
         host: 'broker.invalid',
-        subscriptions: [
-          SubscriptionEntry(
-            id: 'subscription',
-            topic: '#',
-            history: SubscriptionHistoryPolicy(retention: 100),
-          ),
-        ],
+        subscriptions: [SubscriptionEntry(id: 'subscription', topic: '#', history: SubscriptionHistoryPolicy(retention: 100))],
       ),
     );
     await pumpPanel(tester);
 
-    Slider maximumSlider() =>
-        tester.widgetList<Slider>(find.byType(Slider)).last;
+    Slider maximumSlider() => tester.widgetList<Slider>(find.byType(Slider)).last;
 
     maximumSlider().onChanged!(50);
     await tester.pump();
@@ -146,25 +116,17 @@ void main() {
     expect(brokers.activeBroker!.subscriptions.single.history.retention, 50);
   });
 
-  testWidgets('advanced warning retains emphasized themed styling', (
-    tester,
-  ) async {
+  testWidgets('advanced warning retains emphasized themed styling', (tester) async {
     await pumpPanel(tester);
 
-    final warning = tester.widget<Text>(
-      find.textContaining('affect performance'),
-    );
+    final warning = tester.widget<Text>(find.textContaining('affect performance'));
     expect(warning.style?.fontWeight, FontWeight.w600);
     expect(warning.style?.color, isNotNull);
   });
 
-  testWidgets('reset requires confirmation and restores defaults', (
-    tester,
-  ) async {
-    await state.write(SettingsKeys.showStatusBar, false);
-    await brokers.add(
-      const BrokerEntry(id: 'broker', name: 'Broker', host: 'broker.invalid'),
-    );
+  testWidgets('reset requires confirmation and restores defaults', (tester) async {
+    await dependencies.uiPreferences.setShowStatusBar(false);
+    await brokers.add(const BrokerEntry(id: 'broker', name: 'Broker', host: 'broker.invalid'));
     await pumpPanel(tester);
     final resetButton = find.text('Reset everything');
     await tester.ensureVisible(resetButton);
@@ -174,7 +136,7 @@ void main() {
     expect(find.text('Reset all settings?'), findsOneWidget);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
-    expect(state.read(SettingsKeys.showStatusBar), isFalse);
+    expect(dependencies.uiPreferences.showStatusBar, isFalse);
     expect(brokers.brokers, hasLength(1));
 
     await tester.tap(resetButton);
@@ -182,7 +144,7 @@ void main() {
     await tester.tap(find.text('Reset everything').last);
     await tester.pumpAndSettle();
 
-    expect(state.read(SettingsKeys.showStatusBar), isTrue);
+    expect(dependencies.uiPreferences.showStatusBar, isTrue);
     expect(brokers.brokers, isEmpty);
     expect(find.text('All settings were reset to defaults.'), findsOneWidget);
   });

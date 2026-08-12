@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/broker/broker_repository_failure.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/broker_load_failure_state.dart';
+import 'package:mqtt_monitor/generated/l10n.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 
 void main() {
@@ -11,6 +13,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: themeLight,
+        supportedLocales: S.delegate.supportedLocales,
+        localizationsDelegates: const [S.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
         home: BrokerLoadFailureState(
           failure: const BrokerRepositoryFailure(message: 'Stored profiles were left unchanged.', details: 'FormatException'),
           onRetry: () async {

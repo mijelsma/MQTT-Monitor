@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/broker/broker_repository_failure.dart';
+import '../../../generated/l10n.dart';
 import '../../../shared/widgets/empty_state_shell.dart';
-import '../../../theme/app_colors.dart';
+import '../../../theme/app_tokens/app_tokens.dart';
 
 /// Shows a recoverable empty state when broker profiles cannot be loaded.
 class BrokerLoadFailureState extends StatelessWidget {
@@ -15,12 +16,13 @@ class BrokerLoadFailureState extends StatelessWidget {
   /// Builds the error presentation and retry button.
   @override
   Widget build(BuildContext context) {
+    final strings = S.of(context);
     return EmptyStateShell(
-      gradientColors: const [AppColors.error500, AppColors.warning500],
+      gradientColors: [context.tokens.error, context.tokens.warning],
       icon: Icons.storage_rounded,
-      title: 'Broker profiles unavailable',
+      title: strings.brokerProfilesUnavailable,
       subtitle: failure.message,
-      action: FilledButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh_rounded, size: 18), label: const Text('Retry')),
+      action: FilledButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh_rounded, size: 18), label: Text(strings.retry)),
     );
   }
 }

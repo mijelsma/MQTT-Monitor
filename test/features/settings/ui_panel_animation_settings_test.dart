@@ -3,7 +3,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/broker/broker_repository.dart';
 import 'package:mqtt_monitor/core/state/app_state.dart';
-import 'package:mqtt_monitor/core/state/keys/settings_keys.dart';
 import 'package:mqtt_monitor/features/settings/panels/ui_panel.dart';
 import 'package:mqtt_monitor/features/settings/settings_viewmodel.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
@@ -23,7 +22,7 @@ void main() {
   });
 
   testWidgets('UI settings control sidebar animation and speed', (tester) async {
-    final vm = SettingsViewModel(state: state, brokerRepository: brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, qosPreferences: dependencies.qosPreferences);
+    final vm = SettingsViewModel(state: state, brokerRepository: brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, qosPreferences: dependencies.qosPreferences, uiPreferences: dependencies.uiPreferences);
     addTearDown(vm.dispose);
 
     await tester.pumpWidget(
@@ -47,12 +46,12 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Right panel animations'));
     await tester.pumpAndSettle();
-    expect(state.read(SettingsKeys.sidebarAnimationsEnabled), isFalse);
+    expect(dependencies.uiPreferences.sidebarAnimationsEnabled, isFalse);
     expect(find.text('Panel animation speed'), findsNothing);
 
     await tester.tap(find.text('Right panel animations'));
     await tester.pumpAndSettle();
-    await state.write(SettingsKeys.sidebarAnimationSpeed, 80);
+    await dependencies.uiPreferences.setSidebarAnimationSpeed(80);
     await tester.pump();
     expect(find.text('80%'), findsOneWidget);
   });

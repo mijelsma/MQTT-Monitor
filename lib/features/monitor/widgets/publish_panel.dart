@@ -7,7 +7,6 @@ import '../../../core/publishing/publish_command_result.dart';
 import '../../../generated/l10n.dart';
 import '../../../shared/widgets/feedback_badge.dart';
 import '../../../shared/widgets/payload_editor.dart';
-import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../monitor_viewmodel.dart';
 import '../publish_command_feedback.dart';
@@ -232,7 +231,7 @@ class _RetainPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final color = value ? AppColors.warning500 : tokens.muted;
+    final color = value ? tokens.warning : tokens.muted;
     return GestureDetector(
       key: const Key('publish-retain-toggle'),
       onTap: () => onChanged(!value),
@@ -242,9 +241,9 @@ class _RetainPill extends StatelessWidget {
           duration: const Duration(milliseconds: 120),
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
           decoration: BoxDecoration(
-            color: value ? AppColors.warning500.withValues(alpha: 0.10) : tokens.inputFill,
+            color: value ? tokens.warning.withValues(alpha: 0.10) : tokens.inputFill,
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: value ? AppColors.warning500.withValues(alpha: 0.4) : tokens.border, width: 0.5),
+            border: Border.all(color: value ? tokens.warning.withValues(alpha: 0.4) : tokens.border, width: 0.5),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,

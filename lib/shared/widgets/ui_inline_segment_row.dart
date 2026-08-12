@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_tokens/app_tokens.dart';
 import 'spacers.dart';
+import 'ui_inline_segment_option.dart';
+
+export 'ui_inline_segment_option.dart';
 
 /// A compact, inline segmented selector for a small enum of options.
 ///
@@ -77,17 +80,6 @@ class UiInlineSegmentRow<T> extends StatelessWidget {
   }
 }
 
-class UiInlineSegmentOption<T> {
-  const UiInlineSegmentOption({required this.value, required this.label, this.icon});
-
-  final T value;
-  final String label;
-
-  /// Optional icon rendered before the label inside the chip. Pass an
-  /// [Icon] for a stock glyph, or any widget (e.g. a numbered badge).
-  final Widget? icon;
-}
-
 class _InlineSegmentTrack<T> extends StatelessWidget {
   const _InlineSegmentTrack({required this.accent, required this.options, required this.value, required this.onChanged});
 
@@ -102,7 +94,7 @@ class _InlineSegmentTrack<T> extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: tokens.inputFill,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(tokens.controlRadius),
         border: Border.all(color: tokens.border, width: 0.5),
       ),
       padding: const EdgeInsets.all(2),
@@ -128,15 +120,21 @@ class _InlineSegmentChip<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final fg = selected ? tokens.onPrimary : tokens.textPrimary;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
+    return Semantics(
+      container: true,
+      label: option.label,
+      excludeSemantics: true,
+      button: true,
+      selected: selected,
+      inMutuallyExclusiveGroup: true,
+      child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(tokens.controlRadius - 2),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeOut,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-          decoration: BoxDecoration(color: selected ? accent : Colors.transparent, borderRadius: BorderRadius.circular(8)),
+          decoration: BoxDecoration(color: selected ? accent : Colors.transparent, borderRadius: BorderRadius.circular(tokens.controlRadius - 2)),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

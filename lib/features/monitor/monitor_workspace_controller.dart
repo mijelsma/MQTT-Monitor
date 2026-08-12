@@ -5,23 +5,14 @@ import '../../core/monitor/topic_node_metrics.dart';
 import '../../core/monitor/topic_projection.dart';
 import '../../core/monitor/topic_pulse_controller.dart';
 import '../../core/mqtt/topic_badge_counts.dart';
-import '../../core/state/app_state.dart';
-import '../../core/state/keys/settings_keys.dart';
+import '../../core/ui/ui_preferences_repository.dart';
 import '../../models/flat_tree_row.dart';
 import '../../models/topic_node.dart';
 import 'search_scope.dart';
 
 /// Owns monitor selection, filtering, expansion, pulses, and cached rows.
 class MonitorWorkspaceController extends ChangeNotifier {
-  MonitorWorkspaceController({
-    required TopicProjection projection,
-    required MessageHistoryService history,
-    required AppStateManager state,
-    TopicPulseController? pulses,
-  }) : _projection = projection,
-       _history = history,
-       _state = state,
-       _pulses = pulses ?? TopicPulseController() {
+  MonitorWorkspaceController({required TopicProjection projection, required MessageHistoryService history, required UiPreferencesRepository uiPreferences, TopicPulseController? pulses}) : _projection = projection, _history = history, _uiPreferences = uiPreferences, _pulses = pulses ?? TopicPulseController() {
     _projection.addListener(_onStructureChanged);
     _projection.updates.addListener(_onProjectionUpdate);
     _rebuildRows();
@@ -29,10 +20,9 @@ class MonitorWorkspaceController extends ChangeNotifier {
 
   final TopicProjection _projection;
   final MessageHistoryService _history;
-  final AppStateManager _state;
+  final UiPreferencesRepository _uiPreferences;
   final TopicPulseController _pulses;
-  final Map<TopicTreeNode, ValueNotifier<TopicNodeMetrics>> _filteredMetrics =
-      {};
+  final Map<TopicTreeNode, ValueNotifier<TopicNodeMetrics>> _filteredMetrics = {};
 
   TopicTreeNode? _selectedNode;
   String _filter = '';
@@ -47,9 +37,7 @@ class MonitorWorkspaceController extends ChangeNotifier {
   List<FlatTreeRow> get visibleRows => _visibleRows;
   int get visibleRowDerivationCount => _visibleRowDerivationCount;
 
-  bool get anyExpanded => _allNodes(
-    _projection.roots,
-  ).any((node) => node.isBranch && node.isExpanded);
+  bool get anyExpanded => _allNodes(_projection.roots).any((node) => node.isBranch && node.isExpanded);
 
   /// Selects a node for the detail and history panels.
   void selectNode(TopicTreeNode? node) {
@@ -140,23 +128,17 @@ class MonitorWorkspaceController extends ChangeNotifier {
     if (update == null) return;
     final filter = _normalizedFilter;
     if (filter.isEmpty || _subtreeMatchesFilter(update.path.last, filter)) {
-      _pulses.schedule(update.path, _state.read(SettingsKeys.pulseRatePps));
+      _pulses.schedule(update.path, _uiPreferences.pulseRatePps);
     }
     if (filter.isEmpty || update.structureChanged) return;
 
-    final topicMatches = update.path.last.fullPath.toLowerCase().contains(
-      filter,
-    );
-    if (_scope == SearchScope.topic ||
-        (_scope == SearchScope.all && topicMatches)) {
+    final topicMatches = update.path.last.fullPath.toLowerCase().contains(filter);
+    if (_scope == SearchScope.topic || (_scope == SearchScope.all && topicMatches)) {
       if (!topicMatches) return;
       for (final node in update.path) {
         final metrics = _filteredMetrics[node];
         if (metrics != null) {
-          metrics.value = metrics.value.add(
-            topics: update.topicCreated ? 1 : 0,
-            messages: 1,
-          );
+          metrics.value = metrics.value.add(topics: update.topicCreated ? 1 : 0, messages: 1);
         }
       }
       return;
@@ -172,19 +154,10 @@ class MonitorWorkspaceController extends ChangeNotifier {
     final rows = <FlatTreeRow>[];
     Map<TopicTreeNode, TopicBadgeCounts>? filteredCounts;
     if (filter.isNotEmpty) {
-      filteredCounts = deriveTopicBadgeCounts(
-        _projection.roots,
-        includesTopic: (node) => _nodeMatchesFilter(node, filter),
-      );
+      filteredCounts = deriveTopicBadgeCounts(_projection.roots, includesTopic: (node) => _nodeMatchesFilter(node, filter));
       for (final entry in filteredCounts.entries) {
-        final notifier = _filteredMetrics.putIfAbsent(
-          entry.key,
-          () => ValueNotifier(const TopicNodeMetrics()),
-        );
-        notifier.value = TopicNodeMetrics(
-          topicCount: entry.value.topicCount,
-          messageCount: entry.value.messageCount,
-        );
+        final notifier = _filteredMetrics.putIfAbsent(entry.key, () => ValueNotifier(const TopicNodeMetrics()));
+        notifier.value = TopicNodeMetrics(topicCount: entry.value.topicCount, messageCount: entry.value.messageCount);
       }
     }
 
@@ -192,15 +165,7 @@ class MonitorWorkspaceController extends ChangeNotifier {
       if (filteredCounts != null && filteredCounts[node]!.topicCount == 0) {
         return;
       }
-      rows.add(
-        FlatTreeRow(
-          node: node,
-          depth: depth,
-          metrics: filteredCounts == null
-              ? node.metricsNotifier
-              : _filteredMetrics[node]!,
-        ),
-      );
+      rows.add(FlatTreeRow(node: node, depth: depth, metrics: filteredCounts == null ? node.metricsNotifier : _filteredMetrics[node]!));
       if (!node.isExpanded) return;
       for (final child in node.children.values) {
         visit(child, depth + 1);
@@ -232,25 +197,18 @@ class MonitorWorkspaceController extends ChangeNotifier {
 
   bool _subtreeMatchesFilter(TopicTreeNode node, String filter) {
     if (_nodeMatchesFilter(node, filter)) return true;
-    return node.children.values.any(
-      (child) => _subtreeMatchesFilter(child, filter),
-    );
+    return node.children.values.any((child) => _subtreeMatchesFilter(child, filter));
   }
 
   bool _nodeMatchesFilter(TopicTreeNode node, String filter) {
-    if (_scope != SearchScope.value &&
-        node.fullPath.toLowerCase().contains(filter)) {
+    if (_scope != SearchScope.value && node.fullPath.toLowerCase().contains(filter)) {
       return true;
     }
     final payload = node.valueNotifier.value?.payload;
-    return _scope != SearchScope.topic &&
-        payload != null &&
-        payload.toLowerCase().contains(filter);
+    return _scope != SearchScope.topic && payload != null && payload.toLowerCase().contains(filter);
   }
 
-  bool _isWithin(String? candidate, String root) =>
-      candidate != null &&
-      (candidate == root || candidate.startsWith('$root/'));
+  bool _isWithin(String? candidate, String root) => candidate != null && (candidate == root || candidate.startsWith('$root/'));
 
   Iterable<TopicTreeNode> _allNodes(Iterable<TopicTreeNode> nodes) sync* {
     for (final node in nodes) {

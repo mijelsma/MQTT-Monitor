@@ -11,35 +11,18 @@ import 'package:provider/provider.dart';
 import '../../support/test_dependencies.dart';
 
 void main() {
-  testWidgets('sample slider exposes 1 then five-sample stops through 1000', (
-    tester,
-  ) async {
+  testWidgets('sample slider exposes 1 then five-sample stops through 1000', (tester) async {
     final dependencies = await TestDependencies.create();
-    final dashboard = DashboardRepository(
-      dependencies.preferences,
-      dependencies.brokers,
-    );
+    final dashboard = DashboardRepository(dependencies.preferences, dependencies.brokers);
     await dashboard.initialize();
-    final viewModel = SettingsViewModel(
-      state: dependencies.state,
-      brokerRepository: dependencies.brokers,
-      shortcutRepository: dependencies.shortcuts,
-      variableRepository: dependencies.variables,
-      qosPreferences: dependencies.qosPreferences,
-      dashboardRepository: dashboard,
-    );
+    final viewModel = SettingsViewModel(state: dependencies.state, brokerRepository: dependencies.brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, qosPreferences: dependencies.qosPreferences, uiPreferences: dependencies.uiPreferences, dashboardRepository: dashboard);
 
     await tester.pumpWidget(
       ChangeNotifierProvider.value(
         value: viewModel,
         child: MaterialApp(
           theme: themeLight,
-          localizationsDelegates: const [
-            S.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
+          localizationsDelegates: const [S.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
           supportedLocales: S.delegate.supportedLocales,
           home: const Scaffold(body: DashboardPanel()),
         ),
@@ -55,16 +38,8 @@ void main() {
     expect(slider.semanticFormatterCallback!(200), '1000');
     expect(find.text('1'), findsOneWidget);
     expect(find.text('1000'), findsOneWidget);
-    expect(
-      find.text(
-        'Marker size for data points in new line graphs. Choose 0 to hide markers.',
-      ),
-      findsOneWidget,
-    );
-    expect(
-      find.text('Maximum number of recent values retained by each new graph.'),
-      findsOneWidget,
-    );
+    expect(find.text('Marker size for data points in new line graphs. Choose 0 to hide markers.'), findsOneWidget);
+    expect(find.text('Maximum number of recent values retained by each new graph.'), findsOneWidget);
 
     slider.onChanged!(0);
     await tester.pump();

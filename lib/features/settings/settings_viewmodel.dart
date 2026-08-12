@@ -12,6 +12,7 @@ import '../../core/publishing/variable_repository.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
 import '../../core/state/keys/settings_keys.dart';
+import '../../core/ui/ui_preferences_repository.dart';
 import '../../models/broker_entry.dart';
 import '../../models/chart_type.dart';
 import '../../models/dashboard_layout.dart';
@@ -27,20 +28,30 @@ import '../../models/publish_shortcut.dart';
 /// Coordinates settings navigation and delegates data to its owning stores.
 class SettingsViewModel extends ChangeNotifier {
   /// Creates the settings controller and observes app and broker state.
-  SettingsViewModel({required AppStateManager state, required BrokerRepository brokerRepository, required ShortcutRepository shortcutRepository, required VariableRepository variableRepository, required QosPreferencesRepository qosPreferences, DashboardRepository? dashboardRepository, MessageHistoryService? historyService})
-    : _state = state,
-      _brokers = brokerRepository,
-      _shortcuts = shortcutRepository,
-      _variables = variableRepository,
-      _qosPreferences = qosPreferences,
-      _dashboard = dashboardRepository,
-      _historyService = historyService {
+  SettingsViewModel({
+    required AppStateManager state,
+    required BrokerRepository brokerRepository,
+    required ShortcutRepository shortcutRepository,
+    required VariableRepository variableRepository,
+    required QosPreferencesRepository qosPreferences,
+    required UiPreferencesRepository uiPreferences,
+    DashboardRepository? dashboardRepository,
+    MessageHistoryService? historyService,
+  }) : _state = state,
+       _brokers = brokerRepository,
+       _shortcuts = shortcutRepository,
+       _variables = variableRepository,
+       _qosPreferences = qosPreferences,
+       _uiPreferences = uiPreferences,
+       _dashboard = dashboardRepository,
+       _historyService = historyService {
     _state.addListener(_onStateChanged);
     _brokers.addListener(_onStateChanged);
     _dashboard?.addListener(_onStateChanged);
     _shortcuts.addListener(_onStateChanged);
     _variables.addListener(_onStateChanged);
     _qosPreferences.addListener(_onStateChanged);
+    _uiPreferences.addListener(_onStateChanged);
   }
 
   final AppStateManager _state;
@@ -48,6 +59,7 @@ class SettingsViewModel extends ChangeNotifier {
   final ShortcutRepository _shortcuts;
   final VariableRepository _variables;
   final QosPreferencesRepository _qosPreferences;
+  final UiPreferencesRepository _uiPreferences;
   final DashboardRepository? _dashboard;
   final MessageHistoryService? _historyService;
 
@@ -152,6 +164,8 @@ class SettingsViewModel extends ChangeNotifier {
       await _shortcuts.resetAfterPreferencesClear();
       await _variables.resetAfterPreferencesClear();
       await _qosPreferences.resetAfterPreferencesClear();
+      await _uiPreferences.resetAfterPreferencesClear();
+      _state.setLayoutPersistenceEnabled(_uiPreferences.persistLayout);
       await _state.write(AppKeys.activeSettingsSection, selectedSection);
       _historyService?.clear();
       await _brokers.initialize();
@@ -159,6 +173,7 @@ class SettingsViewModel extends ChangeNotifier {
       await _variables.initialize();
       await _shortcuts.initialize();
       await _qosPreferences.initialize();
+      await _uiPreferences.initialize();
       return brokerReset;
     } on Object {
       return (succeeded: false, cleanupFailures: brokerReset.cleanupFailures);
@@ -243,51 +258,54 @@ class SettingsViewModel extends ChangeNotifier {
 
   // Theme
 
-  ThemeMode get themeMode => _state.read(SettingsKeys.themeMode);
-  void setThemeMode(ThemeMode m) => _state.write(SettingsKeys.themeMode, m);
+  ThemeMode get themeMode => _uiPreferences.themeMode;
+  void setThemeMode(ThemeMode m) => _uiPreferences.setThemeMode(m);
 
-  Color get accentColor => Color(_state.read(SettingsKeys.accentColor));
-  void setAccentColor(Color value) => _state.write(SettingsKeys.accentColor, value.toARGB32());
+  Color get accentColor => Color(_uiPreferences.accentColor);
+  void setAccentColor(Color value) => _uiPreferences.setAccentColor(value.toARGB32());
 
   //  UI settings
 
-  bool get showStatusBar => _state.read(SettingsKeys.showStatusBar);
-  void setShowStatusBar(bool v) => _state.write(SettingsKeys.showStatusBar, v);
+  bool get showStatusBar => _uiPreferences.showStatusBar;
+  void setShowStatusBar(bool v) => _uiPreferences.setShowStatusBar(v);
 
-  bool get showActivity => _state.read(SettingsKeys.showActivity);
-  void setShowActivity(bool v) => _state.write(SettingsKeys.showActivity, v);
+  bool get showActivity => _uiPreferences.showActivity;
+  void setShowActivity(bool v) => _uiPreferences.setShowActivity(v);
 
-  bool get disableSelectionHighlight => _state.read(SettingsKeys.disableSelectionHighlight);
-  void setDisableSelectionHighlight(bool v) => _state.write(SettingsKeys.disableSelectionHighlight, v);
+  bool get disableSelectionHighlight => _uiPreferences.disableSelectionHighlight;
+  void setDisableSelectionHighlight(bool v) => _uiPreferences.setDisableSelectionHighlight(v);
 
-  int get pulseRatePps => _state.read(SettingsKeys.pulseRatePps);
-  void setPulseRatePps(int v) => _state.write(SettingsKeys.pulseRatePps, v);
+  int get pulseRatePps => _uiPreferences.pulseRatePps;
+  void setPulseRatePps(int v) => _uiPreferences.setPulseRatePps(v);
 
-  int get pulseFadeMs => _state.read(SettingsKeys.pulseFadeMs);
-  void setPulseFadeMs(int v) => _state.write(SettingsKeys.pulseFadeMs, v);
+  int get pulseFadeMs => _uiPreferences.pulseFadeMs;
+  void setPulseFadeMs(int v) => _uiPreferences.setPulseFadeMs(v);
 
-  bool get persistLayout => _state.read(SettingsKeys.persistLayout);
-  void setPersistLayout(bool v) => _state.write(SettingsKeys.persistLayout, v);
+  bool get persistLayout => _uiPreferences.persistLayout;
+  void setPersistLayout(bool v) {
+    _state.setLayoutPersistenceEnabled(v);
+    _uiPreferences.setPersistLayout(v);
+  }
 
-  bool get sidebarAnimationsEnabled => _state.read(SettingsKeys.sidebarAnimationsEnabled);
-  void setSidebarAnimationsEnabled(bool v) => _state.write(SettingsKeys.sidebarAnimationsEnabled, v);
+  bool get sidebarAnimationsEnabled => _uiPreferences.sidebarAnimationsEnabled;
+  void setSidebarAnimationsEnabled(bool v) => _uiPreferences.setSidebarAnimationsEnabled(v);
 
-  int get sidebarAnimationSpeed => _state.read(SettingsKeys.sidebarAnimationSpeed).clamp(0, 100).toInt();
-  void setSidebarAnimationSpeed(int v) => _state.write(SettingsKeys.sidebarAnimationSpeed, v.clamp(0, 100).toInt());
+  int get sidebarAnimationSpeed => _uiPreferences.sidebarAnimationSpeed;
+  void setSidebarAnimationSpeed(int v) => _uiPreferences.setSidebarAnimationSpeed(v);
 
   // ── Sidebar panel default states ──────────────────────────────────────
 
-  SidebarPanelDefault get defaultSidebarDetail => _state.read(SettingsKeys.defaultSidebarDetail);
-  void setDefaultSidebarDetail(SidebarPanelDefault v) => _state.write(SettingsKeys.defaultSidebarDetail, v);
+  SidebarPanelDefault get defaultSidebarDetail => _uiPreferences.defaultSidebarDetail;
+  void setDefaultSidebarDetail(SidebarPanelDefault v) => _uiPreferences.setDefaultSidebarDetail(v);
 
-  SidebarPanelDefault get defaultSidebarHistory => _state.read(SettingsKeys.defaultSidebarHistory);
-  void setDefaultSidebarHistory(SidebarPanelDefault v) => _state.write(SettingsKeys.defaultSidebarHistory, v);
+  SidebarPanelDefault get defaultSidebarHistory => _uiPreferences.defaultSidebarHistory;
+  void setDefaultSidebarHistory(SidebarPanelDefault v) => _uiPreferences.setDefaultSidebarHistory(v);
 
-  SidebarPanelDefault get defaultSidebarPublish => _state.read(SettingsKeys.defaultSidebarPublish);
-  void setDefaultSidebarPublish(SidebarPanelDefault v) => _state.write(SettingsKeys.defaultSidebarPublish, v);
+  SidebarPanelDefault get defaultSidebarPublish => _uiPreferences.defaultSidebarPublish;
+  void setDefaultSidebarPublish(SidebarPanelDefault v) => _uiPreferences.setDefaultSidebarPublish(v);
 
-  SidebarPanelDefault get defaultSidebarShortcuts => _state.read(SettingsKeys.defaultSidebarShortcuts);
-  void setDefaultSidebarShortcuts(SidebarPanelDefault v) => _state.write(SettingsKeys.defaultSidebarShortcuts, v);
+  SidebarPanelDefault get defaultSidebarShortcuts => _uiPreferences.defaultSidebarShortcuts;
+  void setDefaultSidebarShortcuts(SidebarPanelDefault v) => _uiPreferences.setDefaultSidebarShortcuts(v);
 
   int get rateIntervalMs => _state.read(SettingsKeys.rateIntervalMs);
   void setRateIntervalMs(int v) => _state.write(SettingsKeys.rateIntervalMs, v);
@@ -297,8 +315,8 @@ class SettingsViewModel extends ChangeNotifier {
 
   //  Language
 
-  AppLanguage get language => _state.read(SettingsKeys.language);
-  void setLanguage(AppLanguage lang) => _state.write(SettingsKeys.language, lang);
+  AppLanguage get language => _uiPreferences.language;
+  void setLanguage(AppLanguage lang) => _uiPreferences.setLanguage(lang);
 
   /// Releases app-state and broker-repository listeners.
   @override
@@ -309,6 +327,7 @@ class SettingsViewModel extends ChangeNotifier {
     _shortcuts.removeListener(_onStateChanged);
     _variables.removeListener(_onStateChanged);
     _qosPreferences.removeListener(_onStateChanged);
+    _uiPreferences.removeListener(_onStateChanged);
     super.dispose();
   }
 }

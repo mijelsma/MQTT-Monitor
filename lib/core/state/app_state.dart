@@ -21,16 +21,24 @@ class AppStateManager extends ChangeNotifier {
 
   late PreferencesStore _preferences;
   final Map<String, dynamic> _store = {};
+  bool _persistLayout = true;
+  static final Set<String> _layoutKeyNames = {for (final key in LayoutKeys.all) key.key};
 
   /// Loads persisted values, resolving unconditional keys before gated keys.
-  Future<void> initialize({PreferencesStore? preferences}) async {
+  Future<void> initialize({PreferencesStore? preferences, bool persistLayout = true}) async {
     _preferences = preferences ?? await SharedPreferencesStore.load();
+    _persistLayout = persistLayout;
     for (final key in _allKeys) {
-      if (key.persist == Persist.always) _load(key);
+      if (key.persist == Persist.always && _shouldUse(key)) _load(key);
     }
     for (final key in _allKeys) {
-      if (key.persist.resolve(read)) _load(key);
+      if (_shouldUse(key) && key.persist.resolve(read)) _load(key);
     }
+  }
+
+  /// Updates whether layout keys are read and written to persistent storage.
+  void setLayoutPersistenceEnabled(bool enabled) {
+    _persistLayout = enabled;
   }
 
   /// Loads a single dynamic key from SharedPreferences into the in-memory
@@ -75,7 +83,7 @@ class AppStateManager extends ChangeNotifier {
   /// SharedPreferences needs typed setters, so we match on the
   /// encoded type.
   Future<void> _save<T>(StateKey<T> key, T value) async {
-    if (!key.persist.resolve(read)) return;
+    if (!_shouldUse(key) || !key.persist.resolve(read)) return;
     final raw = key.encode(value);
     switch (raw) {
       case null:
@@ -90,4 +98,6 @@ class AppStateManager extends ChangeNotifier {
         await _preferences.setString(key.key, v);
     }
   }
+
+  bool _shouldUse(StateKey key) => _persistLayout || !_layoutKeyNames.contains(key.key);
 }

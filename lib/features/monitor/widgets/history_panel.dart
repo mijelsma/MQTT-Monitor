@@ -11,7 +11,6 @@ import '../../../shared/format_helpers.dart';
 import '../../../shared/widgets/copy_button.dart';
 import '../../../shared/widgets/qos_tag.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
-import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 
 /// Panel showing the message history for a selected topic.
@@ -169,7 +168,7 @@ class _MonitoringBarState extends State<_MonitoringBar> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final strings = S.of(context);
-    final color = widget.resolution.enabled ? AppColors.success500 : tokens.textTertiary;
+    final color = widget.resolution.enabled ? tokens.success : tokens.textTertiary;
     final status = widget.resolution.enabled
         ? '${strings.historyPanelRetainingUpTo} ${widget.resolution.retention}'
         : widget.resolution.matchesSubscription
@@ -179,7 +178,7 @@ class _MonitoringBarState extends State<_MonitoringBar> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: widget.resolution.enabled ? AppColors.success500.withValues(alpha: 0.06) : tokens.surface,
+        color: widget.resolution.enabled ? tokens.success.withValues(alpha: 0.06) : tokens.surface,
         border: Border(bottom: BorderSide(color: tokens.border, width: 0.5)),
       ),
       child: Row(
@@ -197,9 +196,9 @@ class _MonitoringBarState extends State<_MonitoringBar> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: widget.resolution.enabled ? AppColors.success500.withValues(alpha: 0.1) : Colors.transparent,
+              color: widget.resolution.enabled ? tokens.success.withValues(alpha: 0.1) : Colors.transparent,
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: widget.resolution.enabled ? AppColors.success500.withValues(alpha: 0.3) : tokens.border, width: 0.5),
+              border: Border.all(color: widget.resolution.enabled ? tokens.success.withValues(alpha: 0.3) : tokens.border, width: 0.5),
             ),
             child: Text(
               status,
@@ -239,18 +238,18 @@ class _ClearButtonState extends State<_ClearButton> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
           decoration: BoxDecoration(
-            color: _hovering ? AppColors.error500.withValues(alpha: 0.1) : Colors.transparent,
+            color: _hovering ? tokens.error.withValues(alpha: 0.1) : Colors.transparent,
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: _hovering ? AppColors.error500.withValues(alpha: 0.3) : tokens.border, width: 0.5),
+            border: Border.all(color: _hovering ? tokens.error.withValues(alpha: 0.3) : tokens.border, width: 0.5),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.delete_sweep_rounded, size: 12, color: _hovering ? AppColors.error500 : tokens.textTertiary),
+              Icon(Icons.delete_sweep_rounded, size: 12, color: _hovering ? tokens.error : tokens.textTertiary),
               const SizedBox(width: 4),
               Text(
                 S.of(context).historyPanelClear,
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _hovering ? AppColors.error500 : tokens.textTertiary, letterSpacing: 0.3),
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _hovering ? tokens.error : tokens.textTertiary, letterSpacing: 0.3),
               ),
             ],
           ),
@@ -311,7 +310,7 @@ class _HistoryRow extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       QosChip(qos: value.qos),
-                      if (value.retain) ...[const SizedBox(width: 6), Icon(Icons.push_pin_rounded, size: 9, color: AppColors.warning500)],
+                      if (value.retain) ...[const SizedBox(width: 6), Icon(Icons.push_pin_rounded, size: 9, color: tokens.warning)],
                       if (isLatest) ...[
                         const SizedBox(width: 6),
                         Container(

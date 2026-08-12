@@ -108,7 +108,7 @@ class _DashboardScaffold extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error500),
+            style: FilledButton.styleFrom(backgroundColor: context.tokens.error),
             child: const Text('Erase'),
           ),
         ],

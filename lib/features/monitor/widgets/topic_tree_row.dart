@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/monitor/topic_node_metrics.dart';
-import '../../../core/state/app_state.dart';
-import '../../../core/state/keys/settings_keys.dart';
+import '../../../core/ui/ui_preferences_repository.dart';
+import 'package:provider/provider.dart';
 import '../../../shared/widgets/count_pill.dart';
 import '../../../models/topic_node.dart';
 import '../../../models/topic_node_value.dart';
@@ -18,15 +18,7 @@ import '../topic_payload_preview.dart';
 /// A repaint-only overlay owns the optional activity animation so pulse ticks
 /// never rebuild or lay out the row's text and badges.
 class TopicTreeRow extends StatefulWidget {
-  const TopicTreeRow({
-    super.key,
-    required this.node,
-    required this.depth,
-    required this.metrics,
-    required this.onToggle,
-    this.onSelect,
-    this.selected = false,
-  });
+  const TopicTreeRow({super.key, required this.node, required this.depth, required this.metrics, required this.onToggle, this.onSelect, this.selected = false});
 
   final TopicTreeNode node;
   final int depth;
@@ -78,9 +70,7 @@ class _TopicTreeRowState extends State<TopicTreeRow> {
 
   void _readCurrentValue() {
     _currentValue = widget.node.valueNotifier.value;
-    _payloadPreview = _currentValue == null
-        ? null
-        : buildTopicPayloadPreview(_currentValue!.payload);
+    _payloadPreview = _currentValue == null ? null : buildTopicPayloadPreview(_currentValue!.payload);
   }
 
   void _onMetricsChanged() {
@@ -99,9 +89,7 @@ class _TopicTreeRowState extends State<TopicTreeRow> {
     final tokens = context.tokens;
     final node = widget.node;
 
-    final hideHighlight = AppStateManager.instance.read(
-      SettingsKeys.disableSelectionHighlight,
-    );
+    final hideHighlight = context.select<UiPreferencesRepository, bool>((preferences) => preferences.disableSelectionHighlight);
     final effectiveSelected = widget.selected && !hideHighlight;
 
     return Stack(
@@ -116,24 +104,13 @@ class _TopicTreeRowState extends State<TopicTreeRow> {
             widget.onSelect?.call();
           },
           splashColor: tokens.primary.withValues(alpha: 0.07),
-          highlightColor: effectiveSelected
-              ? tokens.selectedBg
-              : Colors.transparent,
+          highlightColor: effectiveSelected ? tokens.selectedBg : Colors.transparent,
           child: Container(
             decoration: BoxDecoration(
               color: effectiveSelected ? tokens.selectedBg : Colors.transparent,
-              border: effectiveSelected
-                  ? Border(left: BorderSide(color: tokens.primary, width: 2.5))
-                  : null,
+              border: effectiveSelected ? Border(left: BorderSide(color: tokens.primary, width: 2.5)) : null,
             ),
-            padding: EdgeInsets.fromLTRB(
-              effectiveSelected
-                  ? 7.5 + widget.depth * 18.0
-                  : 10.0 + widget.depth * 18.0,
-              9,
-              14,
-              9,
-            ),
+            padding: EdgeInsets.fromLTRB(effectiveSelected ? 7.5 + widget.depth * 18.0 : 10.0 + widget.depth * 18.0, 9, 14, 9),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -146,23 +123,14 @@ class _TopicTreeRowState extends State<TopicTreeRow> {
                           turns: node.isExpanded ? 0.25 : 0.0,
                           duration: const Duration(milliseconds: 160),
                           curve: Curves.easeInOut,
-                          child: Icon(
-                            Icons.chevron_right_rounded,
-                            size: 15,
-                            color: tokens.textTertiary,
-                          ),
+                          child: Icon(Icons.chevron_right_rounded, size: 15, color: tokens.textTertiary),
                         )
                       : Center(
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
                             width: 5,
                             height: 5,
-                            decoration: BoxDecoration(
-                              color: _currentValue != null
-                                  ? tokens.primary.withValues(alpha: 0.6)
-                                  : tokens.muted,
-                              shape: BoxShape.circle,
-                            ),
+                            decoration: BoxDecoration(color: _currentValue != null ? tokens.primary.withValues(alpha: 0.6) : tokens.muted, shape: BoxShape.circle),
                           ),
                         ),
                 ),
@@ -172,35 +140,16 @@ class _TopicTreeRowState extends State<TopicTreeRow> {
                   child: Text.rich(
                     TextSpan(
                       text: node.segment,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: node.isBranch
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                        color: node.isBranch
-                            ? tokens.textPrimary
-                            : tokens.textSecondary,
-                        height: 1.3,
-                      ),
+                      style: TextStyle(fontSize: 13, fontWeight: node.isBranch ? FontWeight.w600 : FontWeight.w400, color: node.isBranch ? tokens.textPrimary : tokens.textSecondary, height: 1.3),
                       children: _currentValue != null
                           ? [
                               TextSpan(
                                 text: ' = ',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: tokens.textTertiary,
-                                  fontWeight: FontWeight.w300,
-                                  height: 1.3,
-                                ),
+                                style: TextStyle(fontSize: 12, color: tokens.textTertiary, fontWeight: FontWeight.w300, height: 1.3),
                               ),
                               TextSpan(
                                 text: _payloadPreview,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: tokens.primary,
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.3,
-                                ),
+                                style: TextStyle(fontSize: 13, color: tokens.primary, fontWeight: FontWeight.w500, height: 1.3),
                               ),
                             ]
                           : null,
@@ -214,24 +163,12 @@ class _TopicTreeRowState extends State<TopicTreeRow> {
                 // Badges (branches) or value (leaves)
                 if (node.isBranch) ...[
                   if (_currentValue != null) const SizedBox(width: 6),
-                  CountPill(
-                    count: _currentMetrics.topicCount,
-                    label: 'topics',
-                    color: tokens.textSecondary,
-                  ),
+                  CountPill(count: _currentMetrics.topicCount, label: 'topics', color: tokens.textSecondary),
                   const SizedBox(width: 4),
-                  CountPill(
-                    count: _currentMetrics.messageCount,
-                    label: 'msgs',
-                    color: tokens.primary,
-                  ),
+                  CountPill(count: _currentMetrics.messageCount, label: 'msgs', color: tokens.primary),
                 ] else if (_currentValue != null) ...[
                   const SizedBox(width: 6),
-                  CountPill(
-                    count: _currentMetrics.messageCount,
-                    label: 'msgs',
-                    color: tokens.primary,
-                  ),
+                  CountPill(count: _currentMetrics.messageCount, label: 'msgs', color: tokens.primary),
                 ],
               ],
             ),
@@ -243,8 +180,7 @@ class _TopicTreeRowState extends State<TopicTreeRow> {
 }
 
 class _TopicPulseOverlay extends StatefulWidget {
-  const _TopicPulseOverlay({required this.node, required this.color})
-    : super(key: const ValueKey('topic-pulse-overlay'));
+  const _TopicPulseOverlay({required this.node, required this.color}) : super(key: const ValueKey('topic-pulse-overlay'));
 
   final TopicTreeNode node;
   final Color color;
@@ -253,8 +189,8 @@ class _TopicPulseOverlay extends StatefulWidget {
   State<_TopicPulseOverlay> createState() => _TopicPulseOverlayState();
 }
 
-class _TopicPulseOverlayState extends State<_TopicPulseOverlay>
-    with SingleTickerProviderStateMixin {
+class _TopicPulseOverlayState extends State<_TopicPulseOverlay> with SingleTickerProviderStateMixin {
+  late UiPreferencesRepository _preferences;
   AnimationController? _controller;
   Animation<double>? _animation;
 
@@ -262,6 +198,12 @@ class _TopicPulseOverlayState extends State<_TopicPulseOverlay>
   void initState() {
     super.initState();
     widget.node.pulseNotifier.addListener(_onPulse);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _preferences = context.read<UiPreferencesRepository>();
   }
 
   @override
@@ -275,18 +217,11 @@ class _TopicPulseOverlayState extends State<_TopicPulseOverlay>
 
   void _onPulse() {
     if (!mounted) return;
-    if (!AppStateManager.instance.read(SettingsKeys.showActivity)) return;
+    if (!_preferences.showActivity) return;
 
     if (_controller == null) {
-      final controller = AnimationController(
-        vsync: this,
-        value: 1.0,
-        debugLabel: 'TopicTreeRow pulse: ${widget.node.fullPath}',
-      );
-      final animation = CurvedAnimation(
-        parent: controller,
-        curve: Curves.easeOut,
-      );
+      final controller = AnimationController(vsync: this, value: 1.0, debugLabel: 'TopicTreeRow pulse: ${widget.node.fullPath}');
+      final animation = CurvedAnimation(parent: controller, curve: Curves.easeOut);
       setState(() {
         _controller = controller;
         _animation = animation;
@@ -294,9 +229,7 @@ class _TopicPulseOverlayState extends State<_TopicPulseOverlay>
     }
 
     final controller = _controller!;
-    controller.duration = Duration(
-      milliseconds: AppStateManager.instance.read(SettingsKeys.pulseFadeMs),
-    );
+    controller.duration = Duration(milliseconds: _preferences.pulseFadeMs);
     controller.forward(from: 0.0);
   }
 
@@ -320,10 +253,7 @@ class _TopicPulseOverlayState extends State<_TopicPulseOverlay>
     return IgnorePointer(
       child: RepaintBoundary(
         child: CustomPaint(
-          painter: _TopicPulsePainter(
-            animation: animation,
-            color: widget.color,
-          ),
+          painter: _TopicPulsePainter(animation: animation, color: widget.color),
         ),
       ),
     );
@@ -331,8 +261,7 @@ class _TopicPulseOverlayState extends State<_TopicPulseOverlay>
 }
 
 class _TopicPulsePainter extends CustomPainter {
-  _TopicPulsePainter({required this.animation, required this.color})
-    : super(repaint: animation);
+  _TopicPulsePainter({required this.animation, required this.color}) : super(repaint: animation);
 
   static const double peakAlpha = 0.28;
 
@@ -342,13 +271,9 @@ class _TopicPulsePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final alpha = (1.0 - animation.value) * peakAlpha;
-    canvas.drawRect(
-      Offset.zero & size,
-      Paint()..color = color.withValues(alpha: alpha),
-    );
+    canvas.drawRect(Offset.zero & size, Paint()..color = color.withValues(alpha: alpha));
   }
 
   @override
-  bool shouldRepaint(_TopicPulsePainter oldDelegate) =>
-      oldDelegate.animation != animation || oldDelegate.color != color;
+  bool shouldRepaint(_TopicPulsePainter oldDelegate) => oldDelegate.animation != animation || oldDelegate.color != color;
 }

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/monitor/topic_node_metrics.dart';
-import 'package:mqtt_monitor/core/state/keys/settings_keys.dart';
+import 'package:mqtt_monitor/core/ui/ui_preferences_repository.dart';
 import 'package:mqtt_monitor/features/monitor/topic_payload_preview.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/topic_tree_list.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/topic_tree_row.dart';
@@ -13,40 +13,37 @@ import 'package:mqtt_monitor/models/flat_tree_row.dart';
 import 'package:mqtt_monitor/models/topic_node.dart';
 import 'package:mqtt_monitor/models/topic_node_value.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
+import 'package:provider/provider.dart';
 
 import '../../support/test_dependencies.dart';
 
 void main() {
-  testWidgets('rapid distant scrolling stays within topic-scaling budgets', (
-    tester,
-  ) async {
-    const budgets = {
-      10: Duration(milliseconds: 500),
-      100: Duration(milliseconds: 1200),
-      1000: Duration(milliseconds: 1200),
-    };
+  late TestDependencies dependencies;
+
+  setUp(() async {
+    dependencies = await TestDependencies.create();
+  });
+
+  testWidgets('rapid distant scrolling stays within topic-scaling budgets', (tester) async {
+    const budgets = {10: Duration(milliseconds: 500), 100: Duration(milliseconds: 1200), 1000: Duration(milliseconds: 1200)};
     final results = <({int topics, Duration elapsed})>[];
 
     for (final entry in budgets.entries) {
       final fixture = _TopicTreeFixture.create(entry.key);
-      await tester.pumpWidget(_treeApp(fixture.rows));
+      await tester.pumpWidget(_treeApp(fixture.rows, dependencies.uiPreferences));
       await tester.pump();
 
       final list = tester.widget<ListView>(find.byType(ListView));
       expect(list.itemExtent, topicTreeItemExtent);
       expect(find.byType(TopicTreeRow).evaluate().length, lessThan(25));
 
-      final position = tester
-          .state<ScrollableState>(find.byType(Scrollable))
-          .position;
+      final position = tester.state<ScrollableState>(find.byType(Scrollable)).position;
       await _jumpBetweenEnds(tester, position, repetitions: 2);
 
       var pulseControllersCreated = 0;
       void trackPulseControllers(ObjectEvent event) {
         final object = event.object;
-        if (event is ObjectCreated &&
-            object is AnimationController &&
-            object.debugLabel?.startsWith('TopicTreeRow pulse:') == true) {
+        if (event is ObjectCreated && object is AnimationController && object.debugLabel?.startsWith('TopicTreeRow pulse:') == true) {
           pulseControllersCreated++;
         }
       }
@@ -58,16 +55,8 @@ void main() {
       FlutterMemoryAllocations.instance.removeListener(trackPulseControllers);
 
       results.add((topics: entry.key, elapsed: stopwatch.elapsed));
-      expect(
-        find.byType(TopicTreeRow).evaluate().length,
-        lessThan(25),
-        reason: 'Live row widgets must remain bounded by the viewport cache.',
-      );
-      expect(
-        pulseControllersCreated,
-        0,
-        reason: 'Scrolling inactive rows must not allocate pulse controllers.',
-      );
+      expect(find.byType(TopicTreeRow).evaluate().length, lessThan(25), reason: 'Live row widgets must remain bounded by the viewport cache.');
+      expect(pulseControllersCreated, 0, reason: 'Scrolling inactive rows must not allocate pulse controllers.');
 
       await tester.pumpWidget(const SizedBox.shrink());
       fixture.dispose();
@@ -80,42 +69,26 @@ void main() {
         '${result.topics} | ${result.elapsed.inMicroseconds} | '
         '${budgets[result.topics]!.inMicroseconds}',
       );
-      expect(
-        result.elapsed,
-        lessThan(budgets[result.topics]!),
-        reason:
-            '${result.topics}-topic rapid scrolling exceeded its regression budget.',
-      );
+      expect(result.elapsed, lessThan(budgets[result.topics]!), reason: '${result.topics}-topic rapid scrolling exceeded its regression budget.');
     }
   });
 
-  testWidgets('pulse animation remains lazy and preserves its fade behavior', (
-    tester,
-  ) async {
-    final dependencies = await TestDependencies.create();
-    final state = dependencies.state;
+  testWidgets('pulse animation remains lazy and preserves its fade behavior', (tester) async {
     addTearDown(() => debugOnRebuildDirtyWidget = null);
-    final node = TopicTreeNode(segment: 'temperature', fullPath: 'temperature')
-      ..valueNotifier.value = TopicNodeValue(
-        payload: '21.5',
-        seq: 1,
-        receivedAt: DateTime(2026),
-      );
-    await state.write(SettingsKeys.pulseFadeMs, 500);
-    await state.write(SettingsKeys.showActivity, false);
+    final node = TopicTreeNode(segment: 'temperature', fullPath: 'temperature')..valueNotifier.value = TopicNodeValue(payload: '21.5', seq: 1, receivedAt: DateTime(2026));
+    await dependencies.uiPreferences.setPulseFadeMs(500);
+    await dependencies.uiPreferences.setShowActivity(false);
 
     var pulseControllersCreated = 0;
     void trackPulseControllers(ObjectEvent event) {
       final object = event.object;
-      if (event is ObjectCreated &&
-          object is AnimationController &&
-          object.debugLabel == 'TopicTreeRow pulse: temperature') {
+      if (event is ObjectCreated && object is AnimationController && object.debugLabel == 'TopicTreeRow pulse: temperature') {
         pulseControllersCreated++;
       }
     }
 
     FlutterMemoryAllocations.instance.addListener(trackPulseControllers);
-    await tester.pumpWidget(_rowApp(node));
+    await tester.pumpWidget(_rowApp(node, dependencies.uiPreferences));
     expect(pulseControllersCreated, 0);
     expect(await _pulseAlpha(tester), 0);
 
@@ -124,7 +97,7 @@ void main() {
     expect(pulseControllersCreated, 0);
     expect(await _pulseAlpha(tester), 0);
 
-    await state.write(SettingsKeys.showActivity, true);
+    await dependencies.uiPreferences.setShowActivity(true);
     var rowRebuilds = 0;
     var overlayRebuilds = 0;
     debugOnRebuildDirtyWidget = (element, _) {
@@ -159,7 +132,7 @@ void main() {
     expect(rowRebuilds, 0);
     expect(overlayRebuilds, 1);
 
-    await state.write(SettingsKeys.pulseFadeMs, 50);
+    await dependencies.uiPreferences.setPulseFadeMs(50);
     node.pulseNotifier.value++;
     await tester.pump();
     expect(await _pulseAlpha(tester), closeTo(0.28, 0.01));
@@ -168,7 +141,7 @@ void main() {
     expect(rowRebuilds, 0);
     expect(overlayRebuilds, 1);
 
-    await state.write(SettingsKeys.pulseFadeMs, 2000);
+    await dependencies.uiPreferences.setPulseFadeMs(2000);
     node.pulseNotifier.value++;
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 1000));
@@ -179,15 +152,8 @@ void main() {
     expect(rowRebuilds, 0);
     expect(overlayRebuilds, 1);
 
-    node.valueNotifier.value = TopicNodeValue(
-      payload: '22.0',
-      seq: 2,
-      receivedAt: DateTime(2026, 1, 1, 0, 0, 1),
-    );
-    node.metricsNotifier.value = const TopicNodeMetrics(
-      topicCount: 1,
-      messageCount: 2,
-    );
+    node.valueNotifier.value = TopicNodeValue(payload: '22.0', seq: 2, receivedAt: DateTime(2026, 1, 1, 0, 0, 1));
+    node.metricsNotifier.value = const TopicNodeMetrics(topicCount: 1, messageCount: 2);
     await tester.pump();
     expect(rowRebuilds, 1);
     expect(overlayRebuilds, 2);
@@ -205,18 +171,13 @@ void main() {
     node.metricsNotifier.dispose();
   });
 
-  testWidgets('frequent pulses remain repaint-only during distant scrolling', (
-    tester,
-  ) async {
-    final dependencies = await TestDependencies.create();
-    await dependencies.state.write(SettingsKeys.showActivity, true);
-    await dependencies.state.write(SettingsKeys.pulseFadeMs, 500);
+  testWidgets('frequent pulses remain repaint-only during distant scrolling', (tester) async {
+    await dependencies.uiPreferences.setShowActivity(true);
+    await dependencies.uiPreferences.setPulseFadeMs(500);
     final fixture = _TopicTreeFixture.create(1000);
-    await tester.pumpWidget(_treeApp(fixture.rows));
+    await tester.pumpWidget(_treeApp(fixture.rows, dependencies.uiPreferences));
     await tester.pump();
-    final position = tester
-        .state<ScrollableState>(find.byType(Scrollable))
-        .position;
+    final position = tester.state<ScrollableState>(find.byType(Scrollable)).position;
     await _jumpBetweenEnds(tester, position, repetitions: 2);
 
     var dirtyRowRebuilds = 0;
@@ -230,9 +191,7 @@ void main() {
       for (final row in fixture.rows) {
         row.node.pulseNotifier.value++;
       }
-      position.jumpTo(
-        iteration.isEven ? position.maxScrollExtent : position.minScrollExtent,
-      );
+      position.jumpTo(iteration.isEven ? position.maxScrollExtent : position.minScrollExtent);
       await tester.pump(const Duration(milliseconds: 16));
     }
     stopwatch.stop();
@@ -243,83 +202,51 @@ void main() {
     fixture.dispose();
   });
 
-  testWidgets(
-    'large and control-heavy payloads use bounded previews while scrolling',
-    (tester) async {
-      final controlPattern = String.fromCharCodes(
-        List<int>.generate(32, (index) => index),
-      );
-      final payloads = {
-        'one-megabyte-ascii': List.filled(1024 * 1024, 'x').join(),
-        'one-megabyte-controls': List.filled(
-          1024 * 1024 ~/ controlPattern.length,
-          controlPattern,
-        ).join(),
-      };
-      const scales = [10, 100, 1000];
-      const budget = Duration(seconds: 2);
+  testWidgets('large and control-heavy payloads use bounded previews while scrolling', (tester) async {
+    final controlPattern = String.fromCharCodes(List<int>.generate(32, (index) => index));
+    final payloads = {'one-megabyte-ascii': List.filled(1024 * 1024, 'x').join(), 'one-megabyte-controls': List.filled(1024 * 1024 ~/ controlPattern.length, controlPattern).join()};
+    const scales = [10, 100, 1000];
+    const budget = Duration(seconds: 2);
 
-      for (final payloadEntry in payloads.entries) {
-        for (final topicTotal in scales) {
-          final fixture = _TopicTreeFixture.create(
-            topicTotal,
-            payload: payloadEntry.value,
-          );
-          await tester.pumpWidget(_treeApp(fixture.rows));
-          await tester.pump();
+    for (final payloadEntry in payloads.entries) {
+      for (final topicTotal in scales) {
+        final fixture = _TopicTreeFixture.create(topicTotal, payload: payloadEntry.value);
+        await tester.pumpWidget(_treeApp(fixture.rows, dependencies.uiPreferences));
+        await tester.pump();
 
-          final raw = fixture.rows.first.node.valueNotifier.value!.payload;
-          expect(identical(raw, payloadEntry.value), isTrue);
-          final preview = _visiblePayloadPreview(tester);
-          expect(
-            preview.runes.length,
-            lessThanOrEqualTo(topicPayloadPreviewMaxRunes),
-          );
-          expect(preview.length, lessThan(raw.length));
-          expect(
-            preview.runes.any(
-              (rune) =>
-                  rune <= 0x1F ||
-                  (rune >= 0x7F && rune <= 0x9F) ||
-                  rune == 0x2028 ||
-                  rune == 0x2029,
-            ),
-            isFalse,
-          );
+        final raw = fixture.rows.first.node.valueNotifier.value!.payload;
+        expect(identical(raw, payloadEntry.value), isTrue);
+        final preview = _visiblePayloadPreview(tester);
+        expect(preview.runes.length, lessThanOrEqualTo(topicPayloadPreviewMaxRunes));
+        expect(preview.length, lessThan(raw.length));
+        expect(preview.runes.any((rune) => rune <= 0x1F || (rune >= 0x7F && rune <= 0x9F) || rune == 0x2028 || rune == 0x2029), isFalse);
 
-          final position = tester
-              .state<ScrollableState>(find.byType(Scrollable))
-              .position;
-          await _jumpBetweenEnds(tester, position, repetitions: 2);
-          final stopwatch = Stopwatch()..start();
-          await _jumpBetweenEnds(tester, position, repetitions: 12);
-          stopwatch.stop();
-          debugPrint(
-            'Topic-tree bounded-preview guard: ${payloadEntry.key}, '
-            '$topicTotal topics, ${stopwatch.elapsedMicroseconds} µs',
-          );
-          expect(
-            stopwatch.elapsed,
-            lessThan(budget),
-            reason:
-                '${payloadEntry.key} at $topicTotal topics exceeded the '
-                'bounded-preview scrolling budget.',
-          );
+        final position = tester.state<ScrollableState>(find.byType(Scrollable)).position;
+        await _jumpBetweenEnds(tester, position, repetitions: 2);
+        final stopwatch = Stopwatch()..start();
+        await _jumpBetweenEnds(tester, position, repetitions: 12);
+        stopwatch.stop();
+        debugPrint(
+          'Topic-tree bounded-preview guard: ${payloadEntry.key}, '
+          '$topicTotal topics, ${stopwatch.elapsedMicroseconds} µs',
+        );
+        expect(
+          stopwatch.elapsed,
+          lessThan(budget),
+          reason:
+              '${payloadEntry.key} at $topicTotal topics exceeded the '
+              'bounded-preview scrolling budget.',
+        );
 
-          await tester.pumpWidget(const SizedBox.shrink());
-          fixture.dispose();
-        }
+        await tester.pumpWidget(const SizedBox.shrink());
+        fixture.dispose();
       }
-    },
-  );
+    }
+  });
 
-  testWidgets('fixed row extent expands for accessibility text scaling', (
-    tester,
-  ) async {
+  testWidgets('fixed row extent expands for accessibility text scaling', (tester) async {
     final fixture = _TopicTreeFixture.create(10);
-    await tester.pumpWidget(
-      _treeApp(fixture.rows, textScaler: const TextScaler.linear(2)),
-    );
+    await tester.pumpWidget(_treeApp(fixture.rows, dependencies.uiPreferences, textScaler: const TextScaler.linear(2)));
 
     final list = tester.widget<ListView>(find.byType(ListView));
     expect(list.itemExtent, greaterThan(topicTreeItemExtent));
@@ -330,11 +257,7 @@ void main() {
   });
 }
 
-Future<void> _jumpBetweenEnds(
-  WidgetTester tester,
-  ScrollPosition position, {
-  required int repetitions,
-}) async {
+Future<void> _jumpBetweenEnds(WidgetTester tester, ScrollPosition position, {required int repetitions}) async {
   for (var i = 0; i < repetitions; i++) {
     position.jumpTo(position.maxScrollExtent);
     await tester.pump();
@@ -343,56 +266,44 @@ Future<void> _jumpBetweenEnds(
   }
 }
 
-Widget _rowApp(TopicTreeNode node) => MaterialApp(
-  theme: themeLight,
-  home: Scaffold(
-    body: Align(
-      alignment: Alignment.topLeft,
-      child: TopicTreeRow(
-        node: node,
-        depth: 0,
-        metrics: node.metricsNotifier,
-        onToggle: () {},
+Widget _rowApp(TopicTreeNode node, UiPreferencesRepository preferences) => ChangeNotifierProvider.value(
+  value: preferences,
+  child: MaterialApp(
+    theme: themeLight,
+    home: Scaffold(
+      body: Align(
+        alignment: Alignment.topLeft,
+        child: TopicTreeRow(node: node, depth: 0, metrics: node.metricsNotifier, onToggle: () {}),
       ),
     ),
   ),
 );
 
-Widget _treeApp(
-  List<FlatTreeRow> rows, {
-  TextScaler textScaler = TextScaler.noScaling,
-}) => MaterialApp(
-  theme: themeLight,
-  builder: (context, child) => MediaQuery(
-    data: MediaQuery.of(context).copyWith(textScaler: textScaler),
-    child: child!,
-  ),
-  home: Scaffold(
-    body: SizedBox(
-      width: 500,
-      height: 120,
-      child: TopicTreeList(
-        rows: rows,
-        selectedNode: null,
-        onToggle: (_) {},
-        onSelect: (_) {},
+Widget _treeApp(List<FlatTreeRow> rows, UiPreferencesRepository preferences, {TextScaler textScaler = TextScaler.noScaling}) => ChangeNotifierProvider.value(
+  value: preferences,
+  child: MaterialApp(
+    theme: themeLight,
+    builder: (context, child) => MediaQuery(
+      data: MediaQuery.of(context).copyWith(textScaler: textScaler),
+      child: child!,
+    ),
+    home: Scaffold(
+      body: SizedBox(
+        width: 500,
+        height: 120,
+        child: TopicTreeList(rows: rows, selectedNode: null, onToggle: (_) {}, onSelect: (_) {}),
       ),
     ),
   ),
 );
 
 Future<double> _pulseAlpha(WidgetTester tester) async {
-  final boundaries = find.descendant(
-    of: find.byKey(const ValueKey('topic-pulse-overlay')),
-    matching: find.byType(RepaintBoundary),
-  );
+  final boundaries = find.descendant(of: find.byKey(const ValueKey('topic-pulse-overlay')), matching: find.byType(RepaintBoundary));
   if (boundaries.evaluate().isEmpty) return 0;
   final boundary = tester.renderObject<RenderRepaintBoundary>(boundaries);
   return (await tester.runAsync(() async {
     final image = await boundary.toImage();
-    final bytes = await image.toByteData(
-      format: ui.ImageByteFormat.rawStraightRgba,
-    );
+    final bytes = await image.toByteData(format: ui.ImageByteFormat.rawStraightRgba);
     final alpha = bytes!.getUint8(3) / 255;
     image.dispose();
     return alpha;
@@ -400,14 +311,7 @@ Future<double> _pulseAlpha(WidgetTester tester) async {
 }
 
 String _visiblePayloadPreview(WidgetTester tester) {
-  final richText = tester.widget<RichText>(
-    find
-        .descendant(
-          of: find.byType(TopicTreeRow).first,
-          matching: find.byType(RichText),
-        )
-        .first,
-  );
+  final richText = tester.widget<RichText>(find.descendant(of: find.byType(TopicTreeRow).first, matching: find.byType(RichText)).first);
   final root = richText.text as TextSpan;
   return (root.children!.last as TextSpan).text!;
 }
@@ -420,12 +324,7 @@ class _TopicTreeFixture {
   static _TopicTreeFixture create(int topicTotal, {String? payload}) {
     final rows = List<FlatTreeRow>.generate(topicTotal, (index) {
       final path = 'topic-${index.toString().padLeft(4, '0')}';
-      final node = TopicTreeNode(segment: path, fullPath: path)
-        ..valueNotifier.value = TopicNodeValue(
-          payload: payload ?? '$index',
-          seq: 1,
-          receivedAt: DateTime(2026),
-        );
+      final node = TopicTreeNode(segment: path, fullPath: path)..valueNotifier.value = TopicNodeValue(payload: payload ?? '$index', seq: 1, receivedAt: DateTime(2026));
       return FlatTreeRow(node: node, depth: 0, metrics: node.metricsNotifier);
     });
     return _TopicTreeFixture(rows);

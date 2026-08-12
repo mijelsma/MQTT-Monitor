@@ -11,8 +11,7 @@ import '../../core/publishing/shortcut_repository.dart';
 import '../../core/publishing/template_resolution.dart';
 import '../../core/publishing/template_resolver.dart';
 import '../../core/publishing/variable_repository.dart';
-import '../../core/state/app_state.dart';
-import '../../core/state/keys/settings_keys.dart';
+import '../../core/ui/ui_preferences_repository.dart';
 import '../../models/broker_entry.dart';
 import '../../models/environment_variable.dart';
 import '../../models/mqtt_protocol_version.dart';
@@ -20,15 +19,15 @@ import '../../models/publish_shortcut.dart';
 
 /// Owns monitor connection, broker, publish, shortcut, and variable commands.
 class MonitorViewModel extends ChangeNotifier {
-  MonitorViewModel({required MqttSessionController mqttSession, required AppStateManager state, required BrokerRepository brokerRepository, required ShortcutRepository shortcutRepository, required VariableRepository variableRepository, required PublishCommandService publisher, required TemplateResolver templateResolver})
+  MonitorViewModel({required MqttSessionController mqttSession, required UiPreferencesRepository uiPreferences, required BrokerRepository brokerRepository, required ShortcutRepository shortcutRepository, required VariableRepository variableRepository, required PublishCommandService publisher, required TemplateResolver templateResolver})
     : _mqtt = mqttSession,
-      _state = state,
+      _uiPreferences = uiPreferences,
       _brokers = brokerRepository,
       _shortcuts = shortcutRepository,
       _variables = variableRepository,
       _publisher = publisher,
       _templateResolver = templateResolver {
-    _state.addListener(_onStateChanged);
+    _uiPreferences.addListener(_onStateChanged);
     _mqtt.addListener(_onStateChanged);
     _brokers.addListener(_onStateChanged);
     _shortcuts.addListener(_onStateChanged);
@@ -36,7 +35,7 @@ class MonitorViewModel extends ChangeNotifier {
   }
 
   final MqttSessionController _mqtt;
-  final AppStateManager _state;
+  final UiPreferencesRepository _uiPreferences;
   final BrokerRepository _brokers;
   final ShortcutRepository _shortcuts;
   final VariableRepository _variables;
@@ -48,7 +47,7 @@ class MonitorViewModel extends ChangeNotifier {
   String? get connectionErrorDetail => _mqtt.connectionErrorDetail;
   int get messageCount => _mqtt.messageCount;
   int get messageRate => _mqtt.messageRate;
-  bool get showStatusBar => _state.read(SettingsKeys.showStatusBar);
+  bool get showStatusBar => _uiPreferences.showStatusBar;
   List<BrokerEntry> get brokers => _brokers.brokers;
   BrokerRepositoryFailure? get brokerFailure => _brokers.failure;
   MqttProtocolVersion? get activeProtocol => _mqtt.activeProtocol;
@@ -90,7 +89,7 @@ class MonitorViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
-    _state.removeListener(_onStateChanged);
+    _uiPreferences.removeListener(_onStateChanged);
     _mqtt.removeListener(_onStateChanged);
     _brokers.removeListener(_onStateChanged);
     _shortcuts.removeListener(_onStateChanged);

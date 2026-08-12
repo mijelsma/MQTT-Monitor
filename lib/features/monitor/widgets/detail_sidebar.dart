@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/state/app_state.dart';
-import '../../../core/state/keys/settings_keys.dart';
+import '../../../core/ui/ui_preferences_repository.dart';
 import '../../../generated/l10n.dart';
 import '../../../models/topic_node_value.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
@@ -34,12 +33,8 @@ class _DetailSidebarState extends State<DetailSidebar> {
     final tokens = context.tokens;
     final workspace = context.watch<MonitorWorkspaceController>();
     final panelController = context.read<DetailSidebarController>();
-    final animationsEnabled = context.select<AppStateManager, bool>(
-      (state) => state.read(SettingsKeys.sidebarAnimationsEnabled),
-    );
-    final animationSpeed = context.select<AppStateManager, int>(
-      (state) => state.read(SettingsKeys.sidebarAnimationSpeed),
-    );
+    final animationsEnabled = context.select<UiPreferencesRepository, bool>((preferences) => preferences.sidebarAnimationsEnabled);
+    final animationSpeed = context.select<UiPreferencesRepository, int>((preferences) => preferences.sidebarAnimationSpeed);
     final selected = workspace.selectedNode;
 
     if (selected?.fullPath != _lastTopicPath) {
@@ -74,41 +69,14 @@ class _DetailSidebarState extends State<DetailSidebar> {
       color: tokens.bg,
       child: WorkspacePanelLayout(
         controller: panelController,
-        animationDuration: workspacePanelAnimationDurationForSpeed(
-          animationSpeed,
-        ),
+        animationDuration: workspacePanelAnimationDurationForSpeed(animationSpeed),
         animationsEnabled: animationsEnabled,
-        dividerSemanticLabelBuilder: (first, second) =>
-            _dividerSemanticLabel(strings, first, second),
+        dividerSemanticLabelBuilder: (first, second) => _dividerSemanticLabel(strings, first, second),
         sections: [
-          WorkspacePanelSection(
-            title: strings.sidebarMessageDetail,
-            icon: Icons.info_outline_rounded,
-            body: detailContent,
-            toggleKey: const Key('detail-section-toggle'),
-            contentKey: const Key('detail-content-clip'),
-          ),
-          WorkspacePanelSection(
-            title: strings.sidebarHistory,
-            icon: Icons.history_rounded,
-            body: historyContent,
-            toggleKey: const Key('history-section-toggle'),
-            contentKey: const Key('history-content-clip'),
-          ),
-          WorkspacePanelSection(
-            title: strings.sidebarPublish,
-            icon: Icons.send_rounded,
-            body: const PublishPanel(),
-            toggleKey: const Key('publish-section-toggle'),
-            contentKey: const Key('publish-content-clip'),
-          ),
-          WorkspacePanelSection(
-            title: strings.sidebarShortcuts,
-            icon: Icons.bolt_rounded,
-            body: const ShortcutsPanel(),
-            toggleKey: const Key('shortcuts-section-toggle'),
-            contentKey: const Key('shortcuts-content-clip'),
-          ),
+          WorkspacePanelSection(title: strings.sidebarMessageDetail, icon: Icons.info_outline_rounded, body: detailContent, toggleKey: const Key('detail-section-toggle'), contentKey: const Key('detail-content-clip')),
+          WorkspacePanelSection(title: strings.sidebarHistory, icon: Icons.history_rounded, body: historyContent, toggleKey: const Key('history-section-toggle'), contentKey: const Key('history-content-clip')),
+          WorkspacePanelSection(title: strings.sidebarPublish, icon: Icons.send_rounded, body: const PublishPanel(), toggleKey: const Key('publish-section-toggle'), contentKey: const Key('publish-content-clip')),
+          WorkspacePanelSection(title: strings.sidebarShortcuts, icon: Icons.bolt_rounded, body: const ShortcutsPanel(), toggleKey: const Key('shortcuts-section-toggle'), contentKey: const Key('shortcuts-content-clip')),
         ],
       ),
     );
@@ -132,10 +100,6 @@ class _NoSelection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return UiEmptyState.compact(
-      icon: Icons.touch_app_rounded,
-      title: S.of(context).sidebarNoSelectionTitle,
-      message: S.of(context).sidebarNoSelectionSubtitle,
-    );
+    return UiEmptyState.compact(icon: Icons.touch_app_rounded, title: S.of(context).sidebarNoSelectionTitle, message: S.of(context).sidebarNoSelectionSubtitle);
   }
 }

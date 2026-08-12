@@ -35,6 +35,11 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m5(count) =>
       "${count} ${Intl.plural(count, one: 'seconde', other: 'seconden')}";
 
+  static String m6(count, rate) => "${count} berichten · ${rate}/s";
+
+  static String m7(count) =>
+      "${count} ${Intl.plural(count, one: 'optie', other: 'opties')}";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "aboutPanelAuthor": MessageLookupByLibrary.simpleMessage("Auteur"),
@@ -191,6 +196,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "brokerDialogValidateName": MessageLookupByLibrary.simpleMessage(
       "Voer een naam in",
     ),
+    "brokerProfilesUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Brokerprofielen niet beschikbaar",
+    ),
     "brokersPanelAddBroker": MessageLookupByLibrary.simpleMessage(
       "Broker toevoegen",
     ),
@@ -212,6 +220,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Alle topics wissen",
     ),
     "collapseAll": MessageLookupByLibrary.simpleMessage("Alles inklappen"),
+    "copy": MessageLookupByLibrary.simpleMessage("Kopiëren"),
     "dashboardDialogEditTitle": MessageLookupByLibrary.simpleMessage(
       "Dashboard bewerken",
     ),
@@ -310,6 +319,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "detailYes": MessageLookupByLibrary.simpleMessage("Ja"),
     "disconnect": MessageLookupByLibrary.simpleMessage("Verbinding verbreken"),
+    "dismiss": MessageLookupByLibrary.simpleMessage("Sluiten"),
     "durationHours": m3,
     "durationLessThanSecond": MessageLookupByLibrary.simpleMessage(
       "< 1 seconde",
@@ -323,6 +333,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "filterNoMatchingTopicsSubtitle": MessageLookupByLibrary.simpleMessage(
       "Probeer het filter aan te passen of te wissen.",
     ),
+    "hideDetails": MessageLookupByLibrary.simpleMessage("Details verbergen"),
     "historyPanelClear": MessageLookupByLibrary.simpleMessage("Wissen"),
     "historyPanelDisabled": MessageLookupByLibrary.simpleMessage(
       "Geschiedenis uitgeschakeld",
@@ -420,6 +431,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "publishTopicHint": MessageLookupByLibrary.simpleMessage("voorbeeld/topic"),
     "reconnect": MessageLookupByLibrary.simpleMessage("Opnieuw verbinden"),
     "remove": MessageLookupByLibrary.simpleMessage("Verwijderen"),
+    "retry": MessageLookupByLibrary.simpleMessage("Opnieuw proberen"),
     "save": MessageLookupByLibrary.simpleMessage("Opslaan"),
     "scopeGlobal": MessageLookupByLibrary.simpleMessage("Globaal"),
     "scopeSelectedBrokers": MessageLookupByLibrary.simpleMessage(
@@ -491,6 +503,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "shortcutsPanelTitle": MessageLookupByLibrary.simpleMessage(
       "Snelkoppelingen",
     ),
+    "showDetails": MessageLookupByLibrary.simpleMessage("Details tonen"),
     "sidebarHistory": MessageLookupByLibrary.simpleMessage("GESCHIEDENIS"),
     "sidebarMessageDetail": MessageLookupByLibrary.simpleMessage(
       "BERICHTDETAILS",
@@ -526,6 +539,33 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "sidebarShortcutsManage": MessageLookupByLibrary.simpleMessage(
       "Snelkoppelingen beheren",
+    ),
+    "statusConnected": MessageLookupByLibrary.simpleMessage("Verbonden"),
+    "statusConnecting": MessageLookupByLibrary.simpleMessage("Verbinden"),
+    "statusConnectionRefused": MessageLookupByLibrary.simpleMessage(
+      "Verbinding geweigerd",
+    ),
+    "statusDisconnected": MessageLookupByLibrary.simpleMessage("Verbroken"),
+    "statusError": MessageLookupByLibrary.simpleMessage("Fout"),
+    "statusHostNotFound": MessageLookupByLibrary.simpleMessage(
+      "Host niet gevonden",
+    ),
+    "statusMessages": m6,
+    "statusMqtt311Detail": MessageLookupByLibrary.simpleMessage(
+      "MQTT 3.1.1 — broker retourneert geen bezorgredenen",
+    ),
+    "statusMqtt5Detail": MessageLookupByLibrary.simpleMessage(
+      "MQTT 5.0 — redencodes en eigenschappen beschikbaar",
+    ),
+    "statusNotPermitted": MessageLookupByLibrary.simpleMessage(
+      "Niet toegestaan",
+    ),
+    "statusOpenUpdateSettings": MessageLookupByLibrary.simpleMessage(
+      "Update-instellingen openen",
+    ),
+    "statusTlsFailed": MessageLookupByLibrary.simpleMessage("TLS mislukt"),
+    "statusUpdateAvailable": MessageLookupByLibrary.simpleMessage(
+      "Update beschikbaar",
     ),
     "subscriptionDialogAddTitle": MessageLookupByLibrary.simpleMessage(
       "Abonnement toevoegen",
@@ -765,6 +805,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "variablesPanelNoVariablesTitle": MessageLookupByLibrary.simpleMessage(
       "Nog geen variabelen",
     ),
+    "variablesPanelOptionsCount": m7,
     "variablesPanelTitle": MessageLookupByLibrary.simpleMessage("Variabelen"),
   };
 }

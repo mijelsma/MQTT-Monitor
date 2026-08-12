@@ -18,7 +18,6 @@ import '../../../shared/widgets/json_highlighter.dart';
 import '../../../shared/widgets/qos_tag.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../shared/widgets/ui_inline_notice.dart';
-import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../monitor_viewmodel.dart';
 import '../monitor_workspace_controller.dart';
@@ -254,7 +253,7 @@ class _PropertiesCard extends StatelessWidget {
         children: [
           _PropertyRow(
             icon: Icons.swap_vert_rounded,
-            iconColor: QosTag.colorFor(value.qos),
+            iconColor: QosTag.colorFor(context, value.qos),
             label: S.of(context).detailQoS,
             labelWidth: labelWidth,
             child: Row(
@@ -269,7 +268,7 @@ class _PropertiesCard extends StatelessWidget {
           _divider(tokens),
           _PropertyRow(
             icon: Icons.push_pin_rounded,
-            iconColor: value.retain ? AppColors.warning500 : tokens.muted,
+            iconColor: value.retain ? tokens.warning : tokens.muted,
             label: S.of(context).detailRetained,
             labelWidth: labelWidth,
             child: value.retain
@@ -278,7 +277,7 @@ class _PropertiesCard extends StatelessWidget {
                     children: [
                       Text(
                         S.of(context).detailYes,
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.warning500),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: tokens.warning),
                       ),
                       if (onClearRetained != null) ...[const SizedBox(width: 8), _ClearRetainedButton(onTap: onClearRetained!)],
                     ],
@@ -394,7 +393,7 @@ class _DeleteTopicButtonState extends State<_DeleteTopicButton> {
         child: GestureDetector(
           onTap: widget.onDelete,
           behavior: HitTestBehavior.opaque,
-          child: Icon(Icons.delete_outline_rounded, size: 14, color: _hovering ? AppColors.error500 : tokens.textTertiary),
+          child: Icon(Icons.delete_outline_rounded, size: 14, color: _hovering ? tokens.error : tokens.textTertiary),
         ),
       ),
     );
@@ -415,6 +414,7 @@ class _ClearRetainedButtonState extends State<_ClearRetainedButton> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Tooltip(
       message: S.of(context).detailClearRetained,
       child: MouseRegion(
@@ -427,18 +427,18 @@ class _ClearRetainedButtonState extends State<_ClearRetainedButton> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: _hovering ? AppColors.warning500.withValues(alpha: 0.12) : Colors.transparent,
+              color: _hovering ? tokens.warning.withValues(alpha: 0.12) : Colors.transparent,
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: AppColors.warning500.withValues(alpha: 0.3), width: 0.5),
+              border: Border.all(color: tokens.warning.withValues(alpha: 0.3), width: 0.5),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.delete_outline_rounded, size: 11, color: AppColors.warning500),
+                Icon(Icons.delete_outline_rounded, size: 11, color: tokens.warning),
                 const SizedBox(width: 3),
                 Text(
                   S.of(context).detailClearRetained,
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: AppColors.warning500),
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: tokens.warning),
                 ),
               ],
             ),
@@ -475,7 +475,7 @@ class _PayloadCardState extends State<_PayloadCard> {
     final numericParts = showPin ? parseNumericPayload(widget.payload) : null;
     final isNumeric = numericParts != null;
     final formatLabel = isJson ? 'JSON' : 'TEXT';
-    final formatColor = isJson ? AppColors.success500 : tokens.textTertiary;
+    final formatColor = isJson ? tokens.success : tokens.textTertiary;
 
     // Build the main payload content widget.
     Widget content;
@@ -539,7 +539,7 @@ class _PayloadCardState extends State<_PayloadCard> {
             decoration: BoxDecoration(
               color: tokens.inputFill,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: widget.isHistorical ? AppColors.warning500.withValues(alpha: 0.6) : tokens.border, width: widget.isHistorical ? 1.5 : 0.5),
+              border: Border.all(color: widget.isHistorical ? tokens.warning.withValues(alpha: 0.6) : tokens.border, width: widget.isHistorical ? 1.5 : 0.5),
             ),
             child: Stack(
               children: [

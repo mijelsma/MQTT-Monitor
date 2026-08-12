@@ -21,15 +21,18 @@ import 'core/state/app_state.dart';
 import 'core/storage/app_data_directory.dart';
 import 'core/storage/shared_preferences_store.dart';
 import 'core/update/app_update_service.dart';
+import 'core/ui/ui_preferences_repository.dart';
 
 /// Initializes persistence and process-lifetime services, then starts the app.
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppDataDirectory.configure();
   final preferences = await SharedPreferencesStore.load();
+  final uiPreferences = UiPreferencesRepository(preferences);
+  await uiPreferences.initialize();
 
   // Initialize app state and load persisted values.
-  await AppStateManager.instance.initialize(preferences: preferences);
+  await AppStateManager.instance.initialize(preferences: preferences, persistLayout: uiPreferences.persistLayout);
 
   final brokerRepository = BrokerRepository(preferences, credentials: const FlutterSecureCredentialStore(), certificates: AppPrivateCertificateStorage.standard());
   await brokerRepository.initialize();
@@ -79,6 +82,7 @@ void main() async {
       templateResolver: templateResolver,
       jsonValidator: jsonValidator,
       qosPreferences: qosPreferences,
+      uiPreferences: uiPreferences,
     ),
   );
 

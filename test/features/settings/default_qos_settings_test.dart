@@ -25,13 +25,10 @@ void main() {
       expect(vm.defaultSubscribeQos, MqttQosDefault.qos1);
     });
 
-    test(
-      'lastUsedQos defaults to 1 so the "last used" option also starts at QoS 1',
-      () {
-        final vm = _viewModel(state, brokers, dependencies);
-        expect(vm.lastUsedQos, 1);
-      },
-    );
+    test('lastUsedQos defaults to 1 so the "last used" option also starts at QoS 1', () {
+      final vm = _viewModel(state, brokers, dependencies);
+      expect(vm.lastUsedQos, 1);
+    });
 
     test('resolveDefaultQos returns the explicit QoS for fixed strategies', () {
       final vm = _viewModel(state, brokers, dependencies);
@@ -41,16 +38,13 @@ void main() {
       expect(vm.resolveDefaultQos(vm.defaultPublishQos), 0);
     });
 
-    test(
-      'resolveDefaultQos falls through to lastUsedQos for the lastUsed strategy',
-      () {
-        final vm = _viewModel(state, brokers, dependencies);
-        vm.recordQos(2);
-        expect(vm.resolveDefaultQos(MqttQosDefault.lastUsed), 2);
-        vm.recordQos(0);
-        expect(vm.resolveDefaultQos(MqttQosDefault.lastUsed), 0);
-      },
-    );
+    test('resolveDefaultQos falls through to lastUsedQos for the lastUsed strategy', () {
+      final vm = _viewModel(state, brokers, dependencies);
+      vm.recordQos(2);
+      expect(vm.resolveDefaultQos(MqttQosDefault.lastUsed), 2);
+      vm.recordQos(0);
+      expect(vm.resolveDefaultQos(MqttQosDefault.lastUsed), 0);
+    });
 
     test('recordQos clamps out-of-range picks', () {
       final vm = _viewModel(state, brokers, dependencies);
@@ -60,27 +54,20 @@ void main() {
       expect(vm.lastUsedQos, 2);
     });
 
-    test(
-      'recording survives a settings read cycle through shared prefs',
-      () async {
-        final vm = _viewModel(state, brokers, dependencies);
-        vm.recordQos(2);
-        // Force-flush the persistent state and re-read it to confirm the
-        // lastUsedQos value round-trips through SharedPreferences.
-        final restored = QosPreferencesRepository(dependencies.preferences);
-        await restored.initialize();
-        expect(restored.lastUsed, 2);
-      },
-    );
+    test('recording survives a settings read cycle through shared prefs', () async {
+      final vm = _viewModel(state, brokers, dependencies);
+      vm.recordQos(2);
+      // Force-flush the persistent state and re-read it to confirm the
+      // lastUsedQos value round-trips through SharedPreferences.
+      final restored = QosPreferencesRepository(dependencies.preferences);
+      await restored.initialize();
+      expect(restored.lastUsed, 2);
+    });
 
     test('default strategies survive repository recreation', () async {
       await dependencies.qosPreferences.setDefaultPublish(MqttQosDefault.qos0);
-      await dependencies.qosPreferences.setDefaultShortcut(
-        MqttQosDefault.lastUsed,
-      );
-      await dependencies.qosPreferences.setDefaultSubscribe(
-        MqttQosDefault.qos2,
-      );
+      await dependencies.qosPreferences.setDefaultShortcut(MqttQosDefault.lastUsed);
+      await dependencies.qosPreferences.setDefaultSubscribe(MqttQosDefault.qos2);
 
       final restored = QosPreferencesRepository(dependencies.preferences);
       await restored.initialize();
@@ -92,16 +79,6 @@ void main() {
   });
 }
 
-SettingsViewModel _viewModel(
-  AppStateManager state,
-  BrokerRepository brokers,
-  TestDependencies dependencies,
-) {
-  return SettingsViewModel(
-    state: state,
-    brokerRepository: brokers,
-    shortcutRepository: dependencies.shortcuts,
-    variableRepository: dependencies.variables,
-    qosPreferences: dependencies.qosPreferences,
-  );
+SettingsViewModel _viewModel(AppStateManager state, BrokerRepository brokers, TestDependencies dependencies) {
+  return SettingsViewModel(state: state, brokerRepository: brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, qosPreferences: dependencies.qosPreferences, uiPreferences: dependencies.uiPreferences);
 }

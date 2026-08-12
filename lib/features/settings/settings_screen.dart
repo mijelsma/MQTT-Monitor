@@ -8,6 +8,7 @@ import '../../core/publishing/shortcut_repository.dart';
 import '../../core/publishing/qos_preferences_repository.dart';
 import '../../core/publishing/variable_repository.dart';
 import '../../core/state/app_state.dart';
+import '../../core/ui/ui_preferences_repository.dart';
 import '../../generated/l10n.dart';
 import '../../theme/app_colors.dart';
 import 'panels/about_panel.dart';
@@ -55,6 +56,7 @@ class SettingsScreen extends StatelessWidget {
         shortcutRepository: ctx.read<ShortcutRepository>(),
         variableRepository: ctx.read<VariableRepository>(),
         qosPreferences: ctx.read<QosPreferencesRepository>(),
+        uiPreferences: ctx.read<UiPreferencesRepository>(),
         dashboardRepository: ctx.read<DashboardRepository>(),
         historyService: ctx.read<MessageHistoryService>(),
       ),

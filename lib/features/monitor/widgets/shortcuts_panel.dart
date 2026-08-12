@@ -9,7 +9,6 @@ import '../../../models/publish_shortcut.dart';
 import '../../../shared/widgets/feedback_badge.dart';
 import '../../../shared/widgets/qos_tag.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
-import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../../dashboard/widgets/variable_bar.dart';
 import '../../settings/settings_screen.dart';
@@ -168,7 +167,7 @@ class _ShortcutCardState extends State<_ShortcutCard> with FeedbackMixin<_Shortc
                   if (sc.retain)
                     Padding(
                       padding: const EdgeInsets.only(right: 4),
-                      child: Icon(Icons.push_pin_rounded, size: 10, color: AppColors.warning500.withValues(alpha: 0.55)),
+                      child: Icon(Icons.push_pin_rounded, size: 10, color: tokens.warning.withValues(alpha: 0.55)),
                     ),
                   QosChip(qos: sc.qos, color: color),
                 ],
@@ -191,10 +190,11 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Column(
       children: [
         Expanded(
-          child: UiEmptyState.compact(icon: Icons.bolt_rounded, title: S.of(context).sidebarShortcutsEmpty, iconColor: AppColors.warning500.withValues(alpha: 0.5), iconBackgroundColor: AppColors.warning500.withValues(alpha: 0.06)),
+          child: UiEmptyState.compact(icon: Icons.bolt_rounded, title: S.of(context).sidebarShortcutsEmpty, iconColor: tokens.warning.withValues(alpha: 0.5), iconBackgroundColor: tokens.warning.withValues(alpha: 0.06)),
         ),
         _SettingsLink(onTap: () => _openSettings(context)),
       ],

@@ -496,7 +496,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
                 leading: QosTag(qos: sub.qos),
                 title: hasName ? sub.name! : sub.topic,
                 subtitle: hasName ? sub.topic : null,
-                trailing: [BadgeTag(label: historyLabel, color: sub.history.enabled ? AppColors.success500 : context.tokens.textTertiary)],
+                trailing: [BadgeTag(label: historyLabel, color: sub.history.enabled ? context.tokens.success : context.tokens.textTertiary)],
                 onTap: () => _editSubscription(i),
                 onDelete: () => _removeSubscription(i),
               );

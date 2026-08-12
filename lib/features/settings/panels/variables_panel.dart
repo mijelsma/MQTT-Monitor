@@ -70,7 +70,7 @@ class VariablesPanel extends StatelessWidget {
 
   String _subtitle(S s, EnvironmentVariable v) {
     final count = v.options.length;
-    return count == 0 ? s.variablesPanelNoOptions : '$count option${count == 1 ? '' : 's'}';
+    return count == 0 ? s.variablesPanelNoOptions : s.variablesPanelOptionsCount(count);
   }
 }
 

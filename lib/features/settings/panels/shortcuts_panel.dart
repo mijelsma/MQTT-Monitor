@@ -11,7 +11,7 @@ import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
 import '../../../shared/widgets/ui_sortable_row.dart';
-import '../../../theme/app_colors.dart';
+import '../../../theme/app_tokens/app_tokens.dart';
 import '../dialogs/shortcut_dialog.dart';
 import '../settings_viewmodel.dart';
 
@@ -66,7 +66,7 @@ class ShortcutsPanel extends StatelessWidget {
                   trailing: [
                     ScopeBadge(isGlobal: shortcuts[i].isGlobal, brokerCount: shortcuts[i].brokerIds.length),
                     QosTag(qos: shortcuts[i].qos),
-                    if (shortcuts[i].retain) BadgeTag(label: 'RET', color: AppColors.warning500),
+                    if (shortcuts[i].retain) BadgeTag(label: 'RET', color: context.tokens.warning),
                   ],
                   onTap: () => _editShortcut(context, shortcuts[i]),
                   onDelete: () => vm.deleteShortcut(shortcuts[i].id),

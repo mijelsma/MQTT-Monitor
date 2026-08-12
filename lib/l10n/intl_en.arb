@@ -8,6 +8,12 @@
     "settings": "Settings",
     "optional": "Optional",
     "noBroker": "No Broker",
+    "retry": "Retry",
+    "brokerProfilesUnavailable": "Broker profiles unavailable",
+    "copy": "Copy",
+    "dismiss": "Dismiss",
+    "showDetails": "Show details",
+    "hideDetails": "Hide details",
 
     "sectionBrokers": "Brokers",
     "sectionDashboard": "Dashboard",
@@ -56,6 +62,12 @@
     "variablesPanelDefinedVariables": "Defined Variables",
     "variablesPanelAddVariable": "Add Variable",
     "variablesPanelNoOptions": "No options",
+    "variablesPanelOptionsCount": "{count} {count, plural, =1{option} other{options}}",
+    "@variablesPanelOptionsCount": {
+        "placeholders": {
+            "count": { "type": "int" }
+        }
+    },
 
     "variableDialogEditTitle": "Edit Variable",
     "variableDialogAddTitle": "Add Variable",
@@ -364,5 +376,24 @@
     "detailClearRetained": "Clear retained message",
     "detailRetainedCleared": "Retained message cleared",
     "detailRetainedClearFailed": "Failed to clear — not connected",
+    "statusConnected": "Connected",
+    "statusConnecting": "Connecting",
+    "statusDisconnected": "Disconnected",
+    "statusHostNotFound": "Host not found",
+    "statusNotPermitted": "Not permitted",
+    "statusConnectionRefused": "Connection refused",
+    "statusTlsFailed": "TLS failed",
+    "statusError": "Error",
+    "statusMessages": "{count} msgs · {rate}/s",
+    "@statusMessages": {
+        "placeholders": {
+            "count": { "type": "int" },
+            "rate": { "type": "int" }
+        }
+    },
+    "statusUpdateAvailable": "Update available",
+    "statusOpenUpdateSettings": "Open update settings",
+    "statusMqtt5Detail": "MQTT 5.0 — reason codes and properties available",
+    "statusMqtt311Detail": "MQTT 3.1.1 — broker does not return delivery reasons",
     "clearAllTopics": "Clear all topics"
 }

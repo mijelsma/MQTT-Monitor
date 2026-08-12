@@ -99,6 +99,51 @@ class S {
     return Intl.message('No Broker', name: 'noBroker', desc: '', args: []);
   }
 
+  /// `Retry`
+  String get retry {
+    return Intl.message('Retry', name: 'retry', desc: '', args: []);
+  }
+
+  /// `Broker profiles unavailable`
+  String get brokerProfilesUnavailable {
+    return Intl.message(
+      'Broker profiles unavailable',
+      name: 'brokerProfilesUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy`
+  String get copy {
+    return Intl.message('Copy', name: 'copy', desc: '', args: []);
+  }
+
+  /// `Dismiss`
+  String get dismiss {
+    return Intl.message('Dismiss', name: 'dismiss', desc: '', args: []);
+  }
+
+  /// `Show details`
+  String get showDetails {
+    return Intl.message(
+      'Show details',
+      name: 'showDetails',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hide details`
+  String get hideDetails {
+    return Intl.message(
+      'Hide details',
+      name: 'hideDetails',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Brokers`
   String get sectionBrokers {
     return Intl.message('Brokers', name: 'sectionBrokers', desc: '', args: []);
@@ -516,6 +561,16 @@ class S {
       name: 'variablesPanelNoOptions',
       desc: '',
       args: [],
+    );
+  }
+
+  /// `{count} {count, plural, =1{option} other{options}}`
+  String variablesPanelOptionsCount(int count) {
+    return Intl.message(
+      '$count ${Intl.plural(count, one: 'option', other: 'options')}',
+      name: 'variablesPanelOptionsCount',
+      desc: '',
+      args: [count],
     );
   }
 
@@ -2889,6 +2944,131 @@ class S {
     return Intl.message(
       'Failed to clear — not connected',
       name: 'detailRetainedClearFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connected`
+  String get statusConnected {
+    return Intl.message(
+      'Connected',
+      name: 'statusConnected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connecting`
+  String get statusConnecting {
+    return Intl.message(
+      'Connecting',
+      name: 'statusConnecting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Disconnected`
+  String get statusDisconnected {
+    return Intl.message(
+      'Disconnected',
+      name: 'statusDisconnected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Host not found`
+  String get statusHostNotFound {
+    return Intl.message(
+      'Host not found',
+      name: 'statusHostNotFound',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not permitted`
+  String get statusNotPermitted {
+    return Intl.message(
+      'Not permitted',
+      name: 'statusNotPermitted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connection refused`
+  String get statusConnectionRefused {
+    return Intl.message(
+      'Connection refused',
+      name: 'statusConnectionRefused',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `TLS failed`
+  String get statusTlsFailed {
+    return Intl.message(
+      'TLS failed',
+      name: 'statusTlsFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Error`
+  String get statusError {
+    return Intl.message('Error', name: 'statusError', desc: '', args: []);
+  }
+
+  /// `{count} msgs · {rate}/s`
+  String statusMessages(int count, int rate) {
+    return Intl.message(
+      '$count msgs · $rate/s',
+      name: 'statusMessages',
+      desc: '',
+      args: [count, rate],
+    );
+  }
+
+  /// `Update available`
+  String get statusUpdateAvailable {
+    return Intl.message(
+      'Update available',
+      name: 'statusUpdateAvailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Open update settings`
+  String get statusOpenUpdateSettings {
+    return Intl.message(
+      'Open update settings',
+      name: 'statusOpenUpdateSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `MQTT 5.0 — reason codes and properties available`
+  String get statusMqtt5Detail {
+    return Intl.message(
+      'MQTT 5.0 — reason codes and properties available',
+      name: 'statusMqtt5Detail',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `MQTT 3.1.1 — broker does not return delivery reasons`
+  String get statusMqtt311Detail {
+    return Intl.message(
+      'MQTT 3.1.1 — broker does not return delivery reasons',
+      name: 'statusMqtt311Detail',
       desc: '',
       args: [],
     );

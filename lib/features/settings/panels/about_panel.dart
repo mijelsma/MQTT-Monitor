@@ -9,7 +9,6 @@ import '../../../core/update/app_update_service.dart';
 import '../../../generated/git_info.dart';
 import '../../../generated/l10n.dart';
 import '../../../shared/widgets/spacers.dart';
-import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../../../shared/widgets/ui_info_row.dart';
 import '../../../shared/widgets/ui_link_row.dart';
@@ -25,8 +24,9 @@ class AboutPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final s = S.of(context);
-    final accent = context.tokens.primary;
-    final secondary = context.tokens.textSecondary;
+    final tokens = context.tokens;
+    final accent = tokens.primary;
+    final secondary = tokens.textSecondary;
     final updater = context.watch<AppUpdateService>();
 
     final appBranding = Center(
@@ -74,7 +74,7 @@ class AboutPanel extends StatelessWidget {
           children: [
             UiLinkRow(label: s.aboutPanelSourceCode, icon: Icons.code_rounded, accent: accent, onTap: () => _openUrl('https://github.com/mijelsma/mqtt-monitor')),
             UiLinkRow(label: s.aboutPanelChangelog, icon: Icons.history_rounded, accent: accent, onTap: () => _openUrl('https://github.com/mijelsma/mqtt-monitor/releases')),
-            UiLinkRow(label: s.aboutPanelReportIssue, icon: Icons.bug_report_outlined, accent: AppColors.error500, onTap: () => _openUrl('https://github.com/mijelsma/mqtt-monitor/issues')),
+            UiLinkRow(label: s.aboutPanelReportIssue, icon: Icons.bug_report_outlined, accent: tokens.error, onTap: () => _openUrl('https://github.com/mijelsma/mqtt-monitor/issues')),
             UiLinkRow(label: s.aboutPanelSupportProject, icon: Icons.favorite_border_rounded, accent: accent, onTap: () => _openUrl('https://ko-fi.com/micheljelsma')),
           ],
         ),
@@ -108,11 +108,11 @@ class _UpdateRow extends StatelessWidget {
       UpdateChecking() => const _UpdateActionRow(icon: Icons.sync_rounded, title: 'Checking for updates…', subtitle: 'Contacting the update service', busy: true),
       UpdateAvailable(:final descriptor) => _UpdateActionRow(icon: Icons.system_update_rounded, iconColor: accent, title: 'Version ${descriptor.version} is available', subtitle: 'Download and verify the update before installing it', actionLabel: 'Download', onTap: _download),
       UpdateFreshInstallRequired(:final descriptor) => _UpdateActionRow(icon: Icons.open_in_new_rounded, title: 'Version ${descriptor.version} is available', subtitle: 'This release needs a fresh download', actionLabel: 'View release', onTap: () => _openUrl(service.releasePageUrl.toString())),
-      UpdateBlockedBySupportPolicy(:final descriptor) => _UpdateActionRow(icon: Icons.warning_amber_rounded, iconColor: AppColors.error500, title: 'Version ${descriptor.version} is required', subtitle: 'This version is no longer supported', actionLabel: 'View release', onTap: () => _openUrl(service.releasePageUrl.toString())),
+      UpdateBlockedBySupportPolicy(:final descriptor) => _UpdateActionRow(icon: Icons.warning_amber_rounded, iconColor: context.tokens.error, title: 'Version ${descriptor.version} is required', subtitle: 'This version is no longer supported', actionLabel: 'View release', onTap: () => _openUrl(service.releasePageUrl.toString())),
       UpdateDownloading(:final receivedBytes, :final totalBytes) => _UpdateActionRow(icon: Icons.downloading_rounded, title: 'Downloading update', subtitle: '${_formatBytes(receivedBytes)} of ${_formatBytes(totalBytes)}', progress: totalBytes == 0 ? null : receivedBytes / totalBytes, busy: true),
       UpdateReadyToInstall() => _UpdateActionRow(icon: Icons.restart_alt_rounded, iconColor: accent, title: 'Update ready to install', subtitle: 'The app will close and restart to finish the update', actionLabel: 'Restart', onTap: _install),
       UpdateInstalling() => const _UpdateActionRow(icon: Icons.restart_alt_rounded, title: 'Installing update…', subtitle: 'MQTT Monitor will restart shortly', busy: true),
-      UpdateFailed() => _UpdateActionRow(icon: Icons.error_outline_rounded, iconColor: AppColors.error500, title: 'Could not check for updates', subtitle: 'Check your connection and try again', actionLabel: 'Try again', onTap: () => _check(context)),
+      UpdateFailed() => _UpdateActionRow(icon: Icons.error_outline_rounded, iconColor: context.tokens.error, title: 'Could not check for updates', subtitle: 'Check your connection and try again', actionLabel: 'Try again', onTap: () => _check(context)),
       UpdateIdle() => _UpdateActionRow(icon: Icons.system_update_alt_rounded, iconColor: accent, title: 'Check for ${service.channel} updates', subtitle: 'Look for a newer version of MQTT Monitor', actionLabel: 'Check', onTap: () => _check(context)),
     };
   }

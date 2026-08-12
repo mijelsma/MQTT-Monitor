@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/app_tokens/app_tokens.dart';
 import 'badge_tag.dart';
 
 /// Full-size QoS badge (used in topic tree rows, etc.).
@@ -10,15 +10,15 @@ class QosTag extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BadgeTag(label: 'Q$qos', color: colorFor(qos));
+    return BadgeTag(label: 'Q$qos', color: colorFor(context, qos));
   }
 
   /// Returns the semantic color for a given QoS level.
-  static Color colorFor(int qos) => switch (qos) {
-    0 => AppColors.neutral400,
-    1 => AppColors.info500,
-    2 => AppColors.warning500,
-    _ => AppColors.neutral400,
+  static Color colorFor(BuildContext context, int qos) => switch (qos) {
+    0 => context.tokens.muted,
+    1 => context.tokens.info,
+    2 => context.tokens.warning,
+    _ => context.tokens.muted,
   };
 }
 
@@ -34,7 +34,7 @@ class QosChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? QosTag.colorFor(qos);
+    final c = color ?? QosTag.colorFor(context, qos);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
       decoration: BoxDecoration(color: c.withValues(alpha: 0.11), borderRadius: BorderRadius.circular(3.5)),

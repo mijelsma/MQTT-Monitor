@@ -2,19 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../core/mqtt/connection_status.dart';
 import '../../../models/mqtt_protocol_version.dart';
-import '../../../theme/app_colors.dart';
+import '../../../generated/l10n.dart';
+import '../../../theme/app_tokens/app_tokens.dart';
 
 class StatusBar extends StatelessWidget {
-  const StatusBar({
-    super.key,
-    this.status = ConnectionStatus.disconnected,
-    this.brokerUrl,
-    this.messageCount = 0,
-    this.messageRate = 0,
-    this.activeProtocol,
-    this.showUpdateAvailable = false,
-    this.onUpdateAvailable,
-  });
+  const StatusBar({super.key, this.status = ConnectionStatus.disconnected, this.brokerUrl, this.messageCount = 0, this.messageRate = 0, this.activeProtocol, this.showUpdateAvailable = false, this.onUpdateAvailable});
 
   final ConnectionStatus status;
   final String? brokerUrl;
@@ -32,11 +24,7 @@ class StatusBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final labelStyle = TextStyle(
-      fontSize: 10.5,
-      color: cs.onSurfaceVariant,
-      letterSpacing: -0.1,
-    );
+    final labelStyle = TextStyle(fontSize: 10.5, color: cs.onSurfaceVariant, letterSpacing: -0.1);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -50,27 +38,17 @@ class StatusBar extends StatelessWidget {
           child: Row(
             children: [
               _StatusPill(status: status),
-              if (activeProtocol != null) ...[
-                const SizedBox(width: 6),
-                _ProtocolChip(protocol: activeProtocol!),
-              ],
+              if (activeProtocol != null) ...[const SizedBox(width: 6), _ProtocolChip(protocol: activeProtocol!)],
               const SizedBox(width: 8),
               if (brokerUrl != null)
                 Expanded(
-                  child: Text(
-                    brokerUrl!,
-                    style: labelStyle,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  child: Text(brokerUrl!, style: labelStyle, overflow: TextOverflow.ellipsis),
                 )
               else
                 const Spacer(),
-              if (showUpdateAvailable) ...[
-                const SizedBox(width: 10),
-                _UpdateAvailableBadge(onTap: onUpdateAvailable),
-              ],
+              if (showUpdateAvailable) ...[const SizedBox(width: 10), _UpdateAvailableBadge(onTap: onUpdateAvailable)],
               const SizedBox(width: 8),
-              Text('$messageCount msgs · $messageRate/s', style: labelStyle),
+              Text(S.of(context).statusMessages(messageCount, messageRate), style: labelStyle),
             ],
           ),
         ),
@@ -86,34 +64,23 @@ class _UpdateAvailableBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Tooltip(
-      message: 'Open update settings',
+      message: S.of(context).statusOpenUpdateSettings,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-          decoration: BoxDecoration(
-            color: AppColors.info500.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: const Row(
+          decoration: BoxDecoration(color: tokens.info.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.system_update_alt_rounded,
-                size: 11,
-                color: AppColors.info500,
-              ),
+              Icon(Icons.system_update_alt_rounded, size: 11, color: tokens.info),
               SizedBox(width: 4),
               Text(
-                'Update available',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.info500,
-                  letterSpacing: -0.1,
-                ),
+                S.of(context).statusUpdateAvailable,
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: tokens.info, letterSpacing: -0.1),
               ),
             ],
           ),
@@ -130,32 +97,22 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final strings = S.of(context);
     var (color, label) = switch (status) {
-      ConnectionStatus.connected => (AppColors.success500, 'Connected'),
-      ConnectionStatus.connecting => (AppColors.warning500, 'Connecting'),
-      ConnectionStatus.disconnected => (AppColors.error500, 'Disconnected'),
-      ConnectionStatus.errorHostNotFound => (
-        AppColors.error500,
-        'Host not found',
-      ),
-      ConnectionStatus.errorNotPermitted => (
-        AppColors.error500,
-        'Not permitted',
-      ),
-      ConnectionStatus.errorRefused => (
-        AppColors.error500,
-        'Connection refused',
-      ),
-      ConnectionStatus.errorTlsHandshake => (AppColors.error500, 'TLS failed'),
-      ConnectionStatus.error => (AppColors.error500, 'Error'),
+      ConnectionStatus.connected => (tokens.success, strings.statusConnected),
+      ConnectionStatus.connecting => (tokens.warning, strings.statusConnecting),
+      ConnectionStatus.disconnected => (tokens.error, strings.statusDisconnected),
+      ConnectionStatus.errorHostNotFound => (tokens.error, strings.statusHostNotFound),
+      ConnectionStatus.errorNotPermitted => (tokens.error, strings.statusNotPermitted),
+      ConnectionStatus.errorRefused => (tokens.error, strings.statusConnectionRefused),
+      ConnectionStatus.errorTlsHandshake => (tokens.error, strings.statusTlsFailed),
+      ConnectionStatus.error => (tokens.error, strings.statusError),
     };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -167,12 +124,7 @@ class _StatusPill extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: color,
-              letterSpacing: -0.1,
-            ),
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color, letterSpacing: -0.1),
           ),
         ],
       ),
@@ -191,20 +143,17 @@ class _ProtocolChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isFallback = protocol == MqttProtocolVersion.v311;
-    final color = isFallback ? AppColors.warning500 : AppColors.info500;
+    final tokens = context.tokens;
+    final strings = S.of(context);
+    final color = isFallback ? tokens.warning : tokens.info;
     return Tooltip(
       message: switch (protocol) {
-        MqttProtocolVersion.v5 =>
-          'MQTT 5.0 — reason codes and properties available',
-        MqttProtocolVersion.v311 =>
-          'MQTT 3.1.1 — broker does not return delivery reasons',
+        MqttProtocolVersion.v5 => strings.statusMqtt5Detail,
+        MqttProtocolVersion.v311 => strings.statusMqtt311Detail,
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(20),
-        ),
+        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -212,12 +161,7 @@ class _ProtocolChip extends StatelessWidget {
             const SizedBox(width: 3),
             Text(
               protocol.shortLabel,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: color,
-                letterSpacing: -0.1,
-              ),
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color, letterSpacing: -0.1),
             ),
           ],
         ),

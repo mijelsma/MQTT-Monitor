@@ -8,6 +8,12 @@
     "settings": "Instellingen",
     "optional": "Optioneel",
     "noBroker": "Geen broker",
+    "retry": "Opnieuw proberen",
+    "brokerProfilesUnavailable": "Brokerprofielen niet beschikbaar",
+    "copy": "Kopiëren",
+    "dismiss": "Sluiten",
+    "showDetails": "Details tonen",
+    "hideDetails": "Details verbergen",
 
     "sectionBrokers": "Brokers",
     "sectionDashboard": "Dashboard",
@@ -56,6 +62,12 @@
     "variablesPanelDefinedVariables": "Gedefinieerde variabelen",
     "variablesPanelAddVariable": "Variabele toevoegen",
     "variablesPanelNoOptions": "Geen opties",
+    "variablesPanelOptionsCount": "{count} {count, plural, =1{optie} other{opties}}",
+    "@variablesPanelOptionsCount": {
+        "placeholders": {
+            "count": { "type": "int" }
+        }
+    },
 
     "variableDialogEditTitle": "Variabele bewerken",
     "variableDialogAddTitle": "Variabele toevoegen",
@@ -364,5 +376,24 @@
     "detailClearRetained": "Retained bericht verwijderen",
     "detailRetainedCleared": "Retained bericht verwijderd",
     "detailRetainedClearFailed": "Wissen mislukt — niet verbonden",
+    "statusConnected": "Verbonden",
+    "statusConnecting": "Verbinden",
+    "statusDisconnected": "Verbroken",
+    "statusHostNotFound": "Host niet gevonden",
+    "statusNotPermitted": "Niet toegestaan",
+    "statusConnectionRefused": "Verbinding geweigerd",
+    "statusTlsFailed": "TLS mislukt",
+    "statusError": "Fout",
+    "statusMessages": "{count} berichten · {rate}/s",
+    "@statusMessages": {
+        "placeholders": {
+            "count": { "type": "int" },
+            "rate": { "type": "int" }
+        }
+    },
+    "statusUpdateAvailable": "Update beschikbaar",
+    "statusOpenUpdateSettings": "Update-instellingen openen",
+    "statusMqtt5Detail": "MQTT 5.0 — redencodes en eigenschappen beschikbaar",
+    "statusMqtt311Detail": "MQTT 3.1.1 — broker retourneert geen bezorgredenen",
     "clearAllTopics": "Alle topics wissen"
 }

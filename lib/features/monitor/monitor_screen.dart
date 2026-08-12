@@ -16,6 +16,7 @@ import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
 import '../../core/state/keys/layout_keys.dart';
 import '../../core/update/app_update_service.dart';
+import '../../core/ui/ui_preferences_repository.dart';
 import '../../shared/widgets/resizable_split.dart';
 import '../settings/settings_screen.dart';
 import '../settings/settings_section.dart';
@@ -47,7 +48,7 @@ class MonitorScreen extends StatelessWidget {
         ChangeNotifierProvider(
           create: (ctx) => MonitorViewModel(
             mqttSession: ctx.read<MqttSessionController>(),
-            state: ctx.read<AppStateManager>(),
+            uiPreferences: ctx.read<UiPreferencesRepository>(),
             brokerRepository: ctx.read<BrokerRepository>(),
             shortcutRepository: ctx.read<ShortcutRepository>(),
             variableRepository: ctx.read<VariableRepository>(),
@@ -56,9 +57,9 @@ class MonitorScreen extends StatelessWidget {
           ),
         ),
         ChangeNotifierProvider(
-          create: (ctx) => MonitorWorkspaceController(projection: ctx.read<TopicProjection>(), history: ctx.read<MessageHistoryService>(), state: ctx.read<AppStateManager>()),
+          create: (ctx) => MonitorWorkspaceController(projection: ctx.read<TopicProjection>(), history: ctx.read<MessageHistoryService>(), uiPreferences: ctx.read<UiPreferencesRepository>()),
         ),
-        ChangeNotifierProvider(create: (ctx) => DetailSidebarController(ctx.read<AppStateManager>())),
+        ChangeNotifierProvider(create: (ctx) => DetailSidebarController(ctx.read<AppStateManager>(), ctx.read<UiPreferencesRepository>())),
         ChangeNotifierProvider(
           create: (ctx) => PublishDraftController(
             initialQos: initialPublishQos,

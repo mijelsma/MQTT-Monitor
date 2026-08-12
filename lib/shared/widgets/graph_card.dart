@@ -7,7 +7,6 @@ import '../../models/chart_type.dart';
 import '../../models/data_point.dart';
 import '../../models/graph_card_model.dart';
 import '../../models/interpolation_mode.dart';
-import '../../theme/app_colors.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 
 /// A reusable card widget that renders a live-updating line or bar chart
@@ -99,8 +98,8 @@ class _Header extends StatelessWidget {
               constraints: const BoxConstraints(),
               iconSize: 16,
               itemBuilder: (_) => [
-                if (onEdit != null) PopupMenuItem(value: 'edit', child: _menuItem(Icons.edit_rounded, 'Edit')),
-                if (onRemove != null) ...[const PopupMenuDivider(), PopupMenuItem(value: 'remove', child: _menuItem(Icons.delete_outline_rounded, 'Remove', isDestructive: true))],
+                if (onEdit != null) PopupMenuItem(value: 'edit', child: _menuItem(tokens, Icons.edit_rounded, 'Edit')),
+                if (onRemove != null) ...[const PopupMenuDivider(), PopupMenuItem(value: 'remove', child: _menuItem(tokens, Icons.delete_outline_rounded, 'Remove', isDestructive: true))],
               ],
               onSelected: (action) {
                 switch (action) {
@@ -116,8 +115,8 @@ class _Header extends StatelessWidget {
     );
   }
 
-  Widget _menuItem(IconData icon, String label, {bool isDestructive = false}) {
-    final color = isDestructive ? AppColors.error500 : null;
+  Widget _menuItem(AppTokens tokens, IconData icon, String label, {bool isDestructive = false}) {
+    final color = isDestructive ? tokens.error : null;
     return Row(
       children: [
         Icon(icon, size: 16, color: color),

@@ -11,22 +11,13 @@ import 'package:mqtt_monitor/core/publishing/shortcut_repository.dart';
 import 'package:mqtt_monitor/core/publishing/template_resolver.dart';
 import 'package:mqtt_monitor/core/publishing/variable_repository.dart';
 import 'package:mqtt_monitor/core/storage/shared_preferences_store.dart';
+import 'package:mqtt_monitor/core/ui/ui_preferences_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Builds isolated application dependencies for persistence-aware tests.
 class TestDependencies {
   /// Creates a test dependency bundle from initialized owners.
-  const TestDependencies({
-    required this.state,
-    required this.brokers,
-    required this.preferences,
-    required this.mqttSession,
-    required this.publisher,
-    required this.shortcuts,
-    required this.variables,
-    required this.templateResolver,
-    required this.qosPreferences,
-  });
+  const TestDependencies({required this.state, required this.brokers, required this.preferences, required this.mqttSession, required this.publisher, required this.shortcuts, required this.variables, required this.templateResolver, required this.qosPreferences, required this.uiPreferences});
 
   final AppStateManager state;
   final BrokerRepository brokers;
@@ -37,6 +28,7 @@ class TestDependencies {
   final VariableRepository variables;
   final TemplateResolver templateResolver;
   final QosPreferencesRepository qosPreferences;
+  final UiPreferencesRepository uiPreferences;
 
   /// Resets mock preferences and initializes app and broker state.
   static Future<TestDependencies> create() async {
@@ -45,46 +37,21 @@ class TestDependencies {
     final state = AppStateManager.instance;
     await state.initialize(preferences: preferences);
     await state.resetAll();
-    final brokers = BrokerRepository(
-      preferences,
-      credentials: _MemoryCredentialStore(),
-      certificates: _MemoryCertificateStorage(),
-    );
+    final uiPreferences = UiPreferencesRepository(preferences);
+    await uiPreferences.initialize();
+    final brokers = BrokerRepository(preferences, credentials: _MemoryCredentialStore(), certificates: _MemoryCertificateStorage());
     await brokers.initialize();
     const templateResolver = TemplateResolver();
-    final mqttSession = MqttSessionController(
-      state,
-      brokers,
-      MqttConnectionIntentStore(preferences),
-    );
+    final mqttSession = MqttSessionController(state, brokers, MqttConnectionIntentStore(preferences));
     final publisher = PublishCommandService(mqttSession, templateResolver);
     const jsonValidator = JsonPayloadValidator();
     final qosPreferences = QosPreferencesRepository(preferences);
-    final variables = VariableRepository(
-      preferences,
-      brokers,
-      templateResolver,
-    );
-    final shortcuts = ShortcutRepository(
-      preferences,
-      brokers,
-      templateResolver,
-      jsonValidator,
-    );
+    final variables = VariableRepository(preferences, brokers, templateResolver);
+    final shortcuts = ShortcutRepository(preferences, brokers, templateResolver, jsonValidator);
     await qosPreferences.initialize();
     await variables.initialize();
     await shortcuts.initialize();
-    return TestDependencies(
-      state: state,
-      brokers: brokers,
-      preferences: preferences,
-      mqttSession: mqttSession,
-      publisher: publisher,
-      shortcuts: shortcuts,
-      variables: variables,
-      templateResolver: templateResolver,
-      qosPreferences: qosPreferences,
-    );
+    return TestDependencies(state: state, brokers: brokers, preferences: preferences, mqttSession: mqttSession, publisher: publisher, shortcuts: shortcuts, variables: variables, templateResolver: templateResolver, qosPreferences: qosPreferences, uiPreferences: uiPreferences);
   }
 }
 
@@ -98,8 +65,7 @@ class _MemoryCredentialStore implements CredentialStore {
 
   /// Stores [value] under [reference].
   @override
-  Future<void> write(String reference, String value) async =>
-      _values[reference] = value;
+  Future<void> write(String reference, String value) async => _values[reference] = value;
 
   /// Deletes the secret stored under [reference].
   @override

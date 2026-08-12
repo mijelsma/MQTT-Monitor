@@ -35,6 +35,11 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m5(count) =>
       "${count} ${Intl.plural(count, one: 'second', other: 'seconds')}";
 
+  static String m6(count, rate) => "${count} msgs · ${rate}/s";
+
+  static String m7(count) =>
+      "${count} ${Intl.plural(count, one: 'option', other: 'options')}";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "aboutPanelAuthor": MessageLookupByLibrary.simpleMessage("Author"),
@@ -184,6 +189,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "brokerDialogValidateName": MessageLookupByLibrary.simpleMessage(
       "Enter a name",
     ),
+    "brokerProfilesUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Broker profiles unavailable",
+    ),
     "brokersPanelAddBroker": MessageLookupByLibrary.simpleMessage("Add Broker"),
     "brokersPanelDescription": MessageLookupByLibrary.simpleMessage(
       "Configure MQTT brokers.",
@@ -201,6 +209,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
     "clearAllTopics": MessageLookupByLibrary.simpleMessage("Clear all topics"),
     "collapseAll": MessageLookupByLibrary.simpleMessage("Collapse all"),
+    "copy": MessageLookupByLibrary.simpleMessage("Copy"),
     "dashboardDialogEditTitle": MessageLookupByLibrary.simpleMessage(
       "Edit Dashboard",
     ),
@@ -289,6 +298,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "detailYes": MessageLookupByLibrary.simpleMessage("Yes"),
     "disconnect": MessageLookupByLibrary.simpleMessage("Disconnect"),
+    "dismiss": MessageLookupByLibrary.simpleMessage("Dismiss"),
     "durationHours": m3,
     "durationLessThanSecond": MessageLookupByLibrary.simpleMessage(
       "< 1 second",
@@ -302,6 +312,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "filterNoMatchingTopicsSubtitle": MessageLookupByLibrary.simpleMessage(
       "Try adjusting or clearing the filter.",
     ),
+    "hideDetails": MessageLookupByLibrary.simpleMessage("Hide details"),
     "historyPanelClear": MessageLookupByLibrary.simpleMessage("Clear"),
     "historyPanelDisabled": MessageLookupByLibrary.simpleMessage(
       "History disabled",
@@ -401,6 +412,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "publishTopicHint": MessageLookupByLibrary.simpleMessage("example/topic"),
     "reconnect": MessageLookupByLibrary.simpleMessage("Reconnect"),
     "remove": MessageLookupByLibrary.simpleMessage("Remove"),
+    "retry": MessageLookupByLibrary.simpleMessage("Retry"),
     "save": MessageLookupByLibrary.simpleMessage("Save"),
     "scopeGlobal": MessageLookupByLibrary.simpleMessage("Global"),
     "scopeSelectedBrokers": MessageLookupByLibrary.simpleMessage(
@@ -470,6 +482,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "No shortcuts yet",
     ),
     "shortcutsPanelTitle": MessageLookupByLibrary.simpleMessage("Shortcuts"),
+    "showDetails": MessageLookupByLibrary.simpleMessage("Show details"),
     "sidebarHistory": MessageLookupByLibrary.simpleMessage("HISTORY"),
     "sidebarMessageDetail": MessageLookupByLibrary.simpleMessage(
       "MESSAGE DETAIL",
@@ -505,6 +518,31 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "sidebarShortcutsManage": MessageLookupByLibrary.simpleMessage(
       "Manage Shortcuts",
+    ),
+    "statusConnected": MessageLookupByLibrary.simpleMessage("Connected"),
+    "statusConnecting": MessageLookupByLibrary.simpleMessage("Connecting"),
+    "statusConnectionRefused": MessageLookupByLibrary.simpleMessage(
+      "Connection refused",
+    ),
+    "statusDisconnected": MessageLookupByLibrary.simpleMessage("Disconnected"),
+    "statusError": MessageLookupByLibrary.simpleMessage("Error"),
+    "statusHostNotFound": MessageLookupByLibrary.simpleMessage(
+      "Host not found",
+    ),
+    "statusMessages": m6,
+    "statusMqtt311Detail": MessageLookupByLibrary.simpleMessage(
+      "MQTT 3.1.1 — broker does not return delivery reasons",
+    ),
+    "statusMqtt5Detail": MessageLookupByLibrary.simpleMessage(
+      "MQTT 5.0 — reason codes and properties available",
+    ),
+    "statusNotPermitted": MessageLookupByLibrary.simpleMessage("Not permitted"),
+    "statusOpenUpdateSettings": MessageLookupByLibrary.simpleMessage(
+      "Open update settings",
+    ),
+    "statusTlsFailed": MessageLookupByLibrary.simpleMessage("TLS failed"),
+    "statusUpdateAvailable": MessageLookupByLibrary.simpleMessage(
+      "Update available",
     ),
     "subscriptionDialogAddTitle": MessageLookupByLibrary.simpleMessage(
       "Add Subscription",
@@ -741,6 +779,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "variablesPanelNoVariablesTitle": MessageLookupByLibrary.simpleMessage(
       "No variables yet",
     ),
+    "variablesPanelOptionsCount": m7,
     "variablesPanelTitle": MessageLookupByLibrary.simpleMessage("Variables"),
   };
 }
