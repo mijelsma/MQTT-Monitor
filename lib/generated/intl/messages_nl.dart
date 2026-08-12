@@ -58,17 +58,71 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "aboutPanelVersionDetail": MessageLookupByLibrary.simpleMessage("Versie"),
     "add": MessageLookupByLibrary.simpleMessage("Toevoegen"),
+    "advancedPanelAffectedBuffers": MessageLookupByLibrary.simpleMessage(
+      "Actieve topicbuffers",
+    ),
+    "advancedPanelAffectedDefault": MessageLookupByLibrary.simpleMessage(
+      "Standaard voor nieuwe abonnementen",
+    ),
+    "advancedPanelAffectedSubscriptions": MessageLookupByLibrary.simpleMessage(
+      "Opgeslagen abonnementsbeleidsregels",
+    ),
+    "advancedPanelDefaultRetention": MessageLookupByLibrary.simpleMessage(
+      "Standaard bewaarlimiet",
+    ),
+    "advancedPanelDefaultRetentionHint": MessageLookupByLibrary.simpleMessage(
+      "Berichten die door elk nieuw abonnement worden bewaard",
+    ),
     "advancedPanelDescription": MessageLookupByLibrary.simpleMessage(
       "Het aanpassen van deze instellingen kan de prestaties aanzienlijk beïnvloeden. Wijzig ze voorzichtig.",
     ),
     "advancedPanelHistoryBuffer": MessageLookupByLibrary.simpleMessage(
       "Geschiedenisbuffer",
     ),
-    "advancedPanelMessagesPerTopic": MessageLookupByLibrary.simpleMessage(
-      "Berichten per onderwerp opslaan",
+    "advancedPanelMaximumConfirmBody": MessageLookupByLibrary.simpleMessage(
+      "Getroffen beleidsregels en actieve buffers worden begrensd. Bestaande berichten boven de nieuwe limiet worden verwijderd.",
     ),
-    "advancedPanelMessagesPerTopicHint": MessageLookupByLibrary.simpleMessage(
-      "Maximum aantal berichten dat per onderwerp in de geschiedenis wordt bewaard; oudere berichten worden verwijderd. Lagere waarden gebruiken minder geheugen.",
+    "advancedPanelMaximumConfirmTitle": MessageLookupByLibrary.simpleMessage(
+      "Maximum voor geschiedenis verlagen?",
+    ),
+    "advancedPanelMaximumRetention": MessageLookupByLibrary.simpleMessage(
+      "Maximale bewaarlimiet",
+    ),
+    "advancedPanelMaximumRetentionHint": MessageLookupByLibrary.simpleMessage(
+      "Bovengrens voor elk abonnement en elke actieve geschiedenisbuffer",
+    ),
+    "advancedPanelNewSubscriptionHistory": MessageLookupByLibrary.simpleMessage(
+      "Geschiedenis voor nieuwe abonnementen",
+    ),
+    "advancedPanelNewSubscriptionHistoryHint": MessageLookupByLibrary.simpleMessage(
+      "Verzamel begrensde geschiedenis voor abonnementen die vanaf nu worden gemaakt",
+    ),
+    "advancedPanelResetAction": MessageLookupByLibrary.simpleMessage(
+      "Alles herstellen",
+    ),
+    "advancedPanelResetCleanupWarning": MessageLookupByLibrary.simpleMessage(
+      "Instellingen zijn hersteld, maar sommige brokerbestanden of inloggegevens konden niet worden verwijderd.",
+    ),
+    "advancedPanelResetConfirmBody": MessageLookupByLibrary.simpleMessage(
+      "Dit verwijdert alle lokale instellingen en brokerprofielen, inclusief opgeslagen inloggegevens en geimporteerde certificaten. Dit kan niet ongedaan worden gemaakt.",
+    ),
+    "advancedPanelResetConfirmTitle": MessageLookupByLibrary.simpleMessage(
+      "Alle instellingen herstellen?",
+    ),
+    "advancedPanelResetFailed": MessageLookupByLibrary.simpleMessage(
+      "Instellingen konden niet worden hersteld. Er zijn geen brokerbronnen verwijderd.",
+    ),
+    "advancedPanelResetHint": MessageLookupByLibrary.simpleMessage(
+      "Verwijder alle lokale instellingen, brokers, lay-outs, variabelen en snelkoppelingen",
+    ),
+    "advancedPanelResetSection": MessageLookupByLibrary.simpleMessage(
+      "Opnieuw instellen",
+    ),
+    "advancedPanelResetSuccess": MessageLookupByLibrary.simpleMessage(
+      "Alle instellingen zijn hersteld naar de standaardwaarden.",
+    ),
+    "advancedPanelResetTitle": MessageLookupByLibrary.simpleMessage(
+      "Instellingen herstellen",
     ),
     "advancedPanelTitle": MessageLookupByLibrary.simpleMessage("Geavanceerd"),
     "back": MessageLookupByLibrary.simpleMessage("Terug"),
@@ -96,6 +150,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "brokerDialogFieldPort": MessageLookupByLibrary.simpleMessage("Poort"),
     "brokerDialogFieldUsername": MessageLookupByLibrary.simpleMessage(
       "Gebruikersnaam",
+    ),
+    "brokerDialogHistoryDisabled": MessageLookupByLibrary.simpleMessage(
+      "Geschiedenis uit",
+    ),
+    "brokerDialogHistoryMessages": MessageLookupByLibrary.simpleMessage(
+      "geschiedenisberichten",
     ),
     "brokerDialogRandomSuffix": MessageLookupByLibrary.simpleMessage(
       "Willekeurig achtervoegsel",
@@ -260,6 +320,29 @@ class MessageLookup extends MessageLookupByLibrary {
     "filterNoMatchingTopicsSubtitle": MessageLookupByLibrary.simpleMessage(
       "Probeer het filter aan te passen of te wissen.",
     ),
+    "historyPanelClear": MessageLookupByLibrary.simpleMessage("Wissen"),
+    "historyPanelDisabled": MessageLookupByLibrary.simpleMessage(
+      "Geschiedenis uitgeschakeld",
+    ),
+    "historyPanelDisabledHint": MessageLookupByLibrary.simpleMessage(
+      "Live waarden blijven binnenkomen, maar nieuwe geschiedenis wordt niet opgeslagen",
+    ),
+    "historyPanelNoHistory": MessageLookupByLibrary.simpleMessage(
+      "Nog geen geschiedenis",
+    ),
+    "historyPanelNoHistoryHint": MessageLookupByLibrary.simpleMessage(
+      "Berichten verschijnen hier zodra ze binnenkomen",
+    ),
+    "historyPanelNotSubscribed": MessageLookupByLibrary.simpleMessage(
+      "Geen passend abonnement",
+    ),
+    "historyPanelNotSubscribedHint": MessageLookupByLibrary.simpleMessage(
+      "Dit topic valt niet onder de abonnementen van de actieve broker",
+    ),
+    "historyPanelRetainingUpTo": MessageLookupByLibrary.simpleMessage(
+      "Maximaal bewaren",
+    ),
+    "historyPanelStored": MessageLookupByLibrary.simpleMessage("opgeslagen"),
     "languageNameDe": MessageLookupByLibrary.simpleMessage("Duits"),
     "languageNameEn": MessageLookupByLibrary.simpleMessage("Engels"),
     "languageNameEs": MessageLookupByLibrary.simpleMessage("Spaans"),
@@ -279,7 +362,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Alles wissen",
     ),
     "monitoringPanelDescription": MessageLookupByLibrary.simpleMessage(
-      "Configureer berichtgeschiedenis per topic.",
+      "Configureer live bemonstering van de berichtfrequentie.",
     ),
     "monitoringPanelIncreasedBufferHint": MessageLookupByLibrary.simpleMessage(
       "Berichten voor gemonitorde topics",
@@ -408,6 +491,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "subscriptionDialogAddTitle": MessageLookupByLibrary.simpleMessage(
       "Abonnement toevoegen",
     ),
+    "subscriptionDialogDuplicateTopicFilter":
+        MessageLookupByLibrary.simpleMessage(
+          "Deze broker heeft dit topicfilter al",
+        ),
     "subscriptionDialogEditTitle": MessageLookupByLibrary.simpleMessage(
       "Abonnement bewerken",
     ),
@@ -420,6 +507,29 @@ class MessageLookup extends MessageLookupByLibrary {
     "subscriptionDialogHintDisplayName": MessageLookupByLibrary.simpleMessage(
       "Optionele vriendelijke naam",
     ),
+    "subscriptionDialogHistoryEnabled": MessageLookupByLibrary.simpleMessage(
+      "Berichtgeschiedenis opslaan",
+    ),
+    "subscriptionDialogHistoryEnabledHint":
+        MessageLookupByLibrary.simpleMessage(
+          "Live berichten blijven beschikbaar wanneer geschiedenis uit staat",
+        ),
+    "subscriptionDialogHistoryLabel": MessageLookupByLibrary.simpleMessage(
+      "Geschiedenis",
+    ),
+    "subscriptionDialogHistoryOverlapHint": MessageLookupByLibrary.simpleMessage(
+      "Wanneer ingeschakelde filters overlappen, wordt de grootste passende bewaarlimiet gebruikt.",
+    ),
+    "subscriptionDialogHistoryRetention": MessageLookupByLibrary.simpleMessage(
+      "Bewaarlimiet",
+    ),
+    "subscriptionDialogHistoryRetentionHint": MessageLookupByLibrary.simpleMessage(
+      "Berichten die worden bewaard voor topics die bij dit abonnement passen",
+    ),
+    "subscriptionDialogInvalidTopicFilter":
+        MessageLookupByLibrary.simpleMessage(
+          "Voer een geldig MQTT-topicfilter in",
+        ),
     "subscriptionDialogQoS0Description": MessageLookupByLibrary.simpleMessage(
       "Maximaal één keer",
     ),

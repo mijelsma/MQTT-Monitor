@@ -819,10 +819,10 @@ class S {
     );
   }
 
-  /// `Configure message history retention for topics.`
+  /// `Configure live message-rate sampling.`
   String get monitoringPanelDescription {
     return Intl.message(
-      'Configure message history retention for topics.',
+      'Configure live message-rate sampling.',
       name: 'monitoringPanelDescription',
       desc: '',
       args: [],
@@ -939,21 +939,201 @@ class S {
     );
   }
 
-  /// `Messages stored per topic`
-  String get advancedPanelMessagesPerTopic {
+  /// `New subscription history`
+  String get advancedPanelNewSubscriptionHistory {
     return Intl.message(
-      'Messages stored per topic',
-      name: 'advancedPanelMessagesPerTopic',
+      'New subscription history',
+      name: 'advancedPanelNewSubscriptionHistory',
       desc: '',
       args: [],
     );
   }
 
-  /// `Maximum messages kept in history per topic; older messages are pruned. Lower values use less memory.`
-  String get advancedPanelMessagesPerTopicHint {
+  /// `Collect bounded history for subscriptions created from now on`
+  String get advancedPanelNewSubscriptionHistoryHint {
     return Intl.message(
-      'Maximum messages kept in history per topic; older messages are pruned. Lower values use less memory.',
-      name: 'advancedPanelMessagesPerTopicHint',
+      'Collect bounded history for subscriptions created from now on',
+      name: 'advancedPanelNewSubscriptionHistoryHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Default retention`
+  String get advancedPanelDefaultRetention {
+    return Intl.message(
+      'Default retention',
+      name: 'advancedPanelDefaultRetention',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Messages retained by each new subscription`
+  String get advancedPanelDefaultRetentionHint {
+    return Intl.message(
+      'Messages retained by each new subscription',
+      name: 'advancedPanelDefaultRetentionHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Maximum retention`
+  String get advancedPanelMaximumRetention {
+    return Intl.message(
+      'Maximum retention',
+      name: 'advancedPanelMaximumRetention',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Upper bound enforced for every subscription and live history buffer`
+  String get advancedPanelMaximumRetentionHint {
+    return Intl.message(
+      'Upper bound enforced for every subscription and live history buffer',
+      name: 'advancedPanelMaximumRetentionHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reduce history maximum?`
+  String get advancedPanelMaximumConfirmTitle {
+    return Intl.message(
+      'Reduce history maximum?',
+      name: 'advancedPanelMaximumConfirmTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Affected policies and live buffers will be clamped. Existing messages beyond the new limit will be removed.`
+  String get advancedPanelMaximumConfirmBody {
+    return Intl.message(
+      'Affected policies and live buffers will be clamped. Existing messages beyond the new limit will be removed.',
+      name: 'advancedPanelMaximumConfirmBody',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Saved subscription policies`
+  String get advancedPanelAffectedSubscriptions {
+    return Intl.message(
+      'Saved subscription policies',
+      name: 'advancedPanelAffectedSubscriptions',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `New-subscription default`
+  String get advancedPanelAffectedDefault {
+    return Intl.message(
+      'New-subscription default',
+      name: 'advancedPanelAffectedDefault',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Live topic buffers`
+  String get advancedPanelAffectedBuffers {
+    return Intl.message(
+      'Live topic buffers',
+      name: 'advancedPanelAffectedBuffers',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reset`
+  String get advancedPanelResetSection {
+    return Intl.message(
+      'Reset',
+      name: 'advancedPanelResetSection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reset settings to defaults`
+  String get advancedPanelResetTitle {
+    return Intl.message(
+      'Reset settings to defaults',
+      name: 'advancedPanelResetTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Remove all local settings, brokers, layouts, variables, and shortcuts`
+  String get advancedPanelResetHint {
+    return Intl.message(
+      'Remove all local settings, brokers, layouts, variables, and shortcuts',
+      name: 'advancedPanelResetHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reset everything`
+  String get advancedPanelResetAction {
+    return Intl.message(
+      'Reset everything',
+      name: 'advancedPanelResetAction',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reset all settings?`
+  String get advancedPanelResetConfirmTitle {
+    return Intl.message(
+      'Reset all settings?',
+      name: 'advancedPanelResetConfirmTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This removes all local settings and broker profiles, including stored credentials and imported certificates. This cannot be undone.`
+  String get advancedPanelResetConfirmBody {
+    return Intl.message(
+      'This removes all local settings and broker profiles, including stored credentials and imported certificates. This cannot be undone.',
+      name: 'advancedPanelResetConfirmBody',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `All settings were reset to defaults.`
+  String get advancedPanelResetSuccess {
+    return Intl.message(
+      'All settings were reset to defaults.',
+      name: 'advancedPanelResetSuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Settings could not be reset. No broker resources were removed.`
+  String get advancedPanelResetFailed {
+    return Intl.message(
+      'Settings could not be reset. No broker resources were removed.',
+      name: 'advancedPanelResetFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Settings were reset, but some broker files or credentials could not be removed.`
+  String get advancedPanelResetCleanupWarning {
+    return Intl.message(
+      'Settings were reset, but some broker files or credentials could not be removed.',
+      name: 'advancedPanelResetCleanupWarning',
       desc: '',
       args: [],
     );
@@ -1794,6 +1974,26 @@ class S {
     );
   }
 
+  /// `History off`
+  String get brokerDialogHistoryDisabled {
+    return Intl.message(
+      'History off',
+      name: 'brokerDialogHistoryDisabled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `history messages`
+  String get brokerDialogHistoryMessages {
+    return Intl.message(
+      'history messages',
+      name: 'brokerDialogHistoryMessages',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Edit Subscription`
   String get subscriptionDialogEditTitle {
     return Intl.message(
@@ -1922,6 +2122,171 @@ class S {
       desc: '',
       args: [],
     );
+  }
+
+  /// `History`
+  String get subscriptionDialogHistoryLabel {
+    return Intl.message(
+      'History',
+      name: 'subscriptionDialogHistoryLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Store message history`
+  String get subscriptionDialogHistoryEnabled {
+    return Intl.message(
+      'Store message history',
+      name: 'subscriptionDialogHistoryEnabled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Live messages remain available when history is off`
+  String get subscriptionDialogHistoryEnabledHint {
+    return Intl.message(
+      'Live messages remain available when history is off',
+      name: 'subscriptionDialogHistoryEnabledHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Retention`
+  String get subscriptionDialogHistoryRetention {
+    return Intl.message(
+      'Retention',
+      name: 'subscriptionDialogHistoryRetention',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Messages kept for topics matched by this subscription`
+  String get subscriptionDialogHistoryRetentionHint {
+    return Intl.message(
+      'Messages kept for topics matched by this subscription',
+      name: 'subscriptionDialogHistoryRetentionHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `When enabled filters overlap, the largest matching retention is used.`
+  String get subscriptionDialogHistoryOverlapHint {
+    return Intl.message(
+      'When enabled filters overlap, the largest matching retention is used.',
+      name: 'subscriptionDialogHistoryOverlapHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter a valid MQTT topic filter`
+  String get subscriptionDialogInvalidTopicFilter {
+    return Intl.message(
+      'Enter a valid MQTT topic filter',
+      name: 'subscriptionDialogInvalidTopicFilter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This broker already has that topic filter`
+  String get subscriptionDialogDuplicateTopicFilter {
+    return Intl.message(
+      'This broker already has that topic filter',
+      name: 'subscriptionDialogDuplicateTopicFilter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No history yet`
+  String get historyPanelNoHistory {
+    return Intl.message(
+      'No history yet',
+      name: 'historyPanelNoHistory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Messages will appear here as they arrive`
+  String get historyPanelNoHistoryHint {
+    return Intl.message(
+      'Messages will appear here as they arrive',
+      name: 'historyPanelNoHistoryHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `History disabled`
+  String get historyPanelDisabled {
+    return Intl.message(
+      'History disabled',
+      name: 'historyPanelDisabled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Live values continue, but new history is not stored`
+  String get historyPanelDisabledHint {
+    return Intl.message(
+      'Live values continue, but new history is not stored',
+      name: 'historyPanelDisabledHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No matching subscription`
+  String get historyPanelNotSubscribed {
+    return Intl.message(
+      'No matching subscription',
+      name: 'historyPanelNotSubscribed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This topic is not covered by the active broker subscriptions`
+  String get historyPanelNotSubscribedHint {
+    return Intl.message(
+      'This topic is not covered by the active broker subscriptions',
+      name: 'historyPanelNotSubscribedHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Retaining up to`
+  String get historyPanelRetainingUpTo {
+    return Intl.message(
+      'Retaining up to',
+      name: 'historyPanelRetainingUpTo',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `stored`
+  String get historyPanelStored {
+    return Intl.message(
+      'stored',
+      name: 'historyPanelStored',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear`
+  String get historyPanelClear {
+    return Intl.message('Clear', name: 'historyPanelClear', desc: '', args: []);
   }
 
   /// `Waiting for messages`

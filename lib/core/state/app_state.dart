@@ -55,10 +55,10 @@ class AppStateManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Wipes everything — in-memory and on disk.
-  Future<void> resetAll() async {
+  /// Wipes in-memory state and, by default, all persisted preferences.
+  Future<void> resetAll({bool clearPreferences = true}) async {
     _store.clear();
-    await _preferences.clear();
+    if (clearPreferences) await _preferences.clear();
     notifyListeners();
   }
 

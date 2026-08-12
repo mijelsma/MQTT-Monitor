@@ -14,6 +14,8 @@ import 'package:mqtt_monitor/core/state/keys/settings_keys.dart';
 import 'package:mqtt_monitor/models/broker_entry.dart';
 import 'package:mqtt_monitor/models/mqtt_protocol_version.dart';
 import 'package:mqtt_monitor/models/startup_connection.dart';
+import 'package:mqtt_monitor/models/subscription_entry.dart';
+import 'package:mqtt_monitor/models/subscription_history_policy.dart';
 
 import '../../support/test_dependencies.dart';
 
@@ -31,6 +33,8 @@ class _ControllableAdapter implements MqttProtocolAdapter {
 
   int connectCalls = 0;
   int disposeCalls = 0;
+  final List<({String topic, int qos})> subscriptions = [];
+  final List<String> unsubscriptions = [];
   bool _connected = false;
 
   /// Returns controllable lifecycle events.
@@ -62,11 +66,19 @@ class _ControllableAdapter implements MqttProtocolAdapter {
 
   /// Accepts a subscription only while connected.
   @override
-  bool subscribe(String topic, {int qos = 0}) => _connected;
+  bool subscribe(String topic, {int qos = 0}) {
+    if (!_connected) return false;
+    subscriptions.add((topic: topic, qos: qos));
+    return true;
+  }
 
   /// Accepts an unsubscription only while connected.
   @override
-  bool unsubscribe(String topic) => _connected;
+  bool unsubscribe(String topic) {
+    if (!_connected) return false;
+    unsubscriptions.add(topic);
+    return true;
+  }
 
   /// Records teardown without closing streams so stale emissions can be tested.
   @override
@@ -178,6 +190,56 @@ void main() {
     expect(adapters, hasLength(1));
     expect(adapters.single.disposeCalls, 0);
     expect(controller.connectionStatus, ConnectionStatus.connected);
+  });
+
+  test('subscription and policy edits reconcile without replacing session', () async {
+    const original = SubscriptionEntry(id: 'stable', topic: 'sensors/#', qos: 1);
+    const broker = BrokerEntry(id: 'broker', name: 'Broker', host: 'one.invalid', subscriptions: [original]);
+    await brokers.add(broker);
+    final adapters = <_ControllableAdapter>[];
+    final controller = MqttSessionController(
+      appState,
+      brokers,
+      intent,
+      adapterFactory: (profile) {
+        final adapter = _ControllableAdapter(profile.protocolVersion);
+        adapters.add(adapter);
+        return adapter;
+      },
+    );
+    addTearDown(controller.dispose);
+    addTearDown(() async {
+      for (final adapter in adapters) {
+        await adapter.close();
+      }
+    });
+    controller.initialize();
+    await settle();
+
+    final adapter = adapters.single;
+    expect(adapter.subscriptions, [(topic: 'sensors/#', qos: 1)]);
+
+    await brokers.update(
+      broker.copyWith(
+        subscriptions: [original.copyWith(name: 'Renamed', history: const SubscriptionHistoryPolicy(enabled: false, retention: 200))],
+      ),
+    );
+    await settle();
+
+    expect(adapters, hasLength(1));
+    expect(adapter.subscriptions, hasLength(1));
+    expect(adapter.unsubscriptions, isEmpty);
+
+    await brokers.update(
+      broker.copyWith(
+        subscriptions: const [SubscriptionEntry(id: 'stable', topic: 'devices/#', qos: 2)],
+      ),
+    );
+    await settle();
+
+    expect(adapters, hasLength(1));
+    expect(adapter.unsubscriptions, ['sensors/#']);
+    expect(adapter.subscriptions.last, (topic: 'devices/#', qos: 2));
   });
 
   test('stale adapter completions and callbacks cannot overwrite a new session', () async {

@@ -11,6 +11,7 @@ import '../../../core/mqtt/app_private_certificate_storage.dart';
 import '../../../core/mqtt/certificate_validation_exception.dart';
 import '../../../core/mqtt/client_certificate_kind.dart';
 import '../../../core/mqtt/client_certificate_service.dart';
+import '../../../core/history/history_policy_rules.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/state/keys/settings_keys.dart';
 import '../../../generated/l10n.dart';
@@ -18,7 +19,9 @@ import '../../../models/broker_entry.dart';
 import '../../../models/client_certificate_config.dart';
 import '../../../models/mqtt_protocol_version.dart';
 import '../../../models/mqtt_qos_default.dart';
+import '../../../models/subscription_history_policy.dart';
 import '../../../models/subscription_entry.dart';
+import '../../../shared/widgets/badge_tag.dart';
 import '../../../shared/widgets/qos_tag.dart';
 import '../../../shared/widgets/spacers.dart';
 import '../../../shared/widgets/color_picker_field.dart';
@@ -123,9 +126,21 @@ class _BrokerDialogState extends State<BrokerDialog> {
       final state = context.read<AppStateManager>();
       state.load(SettingsKeys.defaultSubscribeQos);
       state.load(SettingsKeys.lastUsedQos);
+      state.load(SettingsKeys.newSubscriptionHistoryEnabled);
+      state.load(SettingsKeys.newSubscriptionHistoryRetention);
+      state.load(SettingsKeys.maximumHistoryRetention);
       final strategy = state.read<MqttQosDefault>(SettingsKeys.defaultSubscribeQos);
       final defaultQos = strategy.resolve(state.read(SettingsKeys.lastUsedQos));
-      _subscriptions.add(SubscriptionEntry(topic: '#', qos: defaultQos, name: S.of(context).brokerDialogDefaultSubscriptionName));
+      final maximum = state.read<int>(SettingsKeys.maximumHistoryRetention);
+      final retention = state.read<int>(SettingsKeys.newSubscriptionHistoryRetention).clamp(HistoryPolicyRules.minimumRetention, maximum);
+      _subscriptions.add(
+        SubscriptionEntry.create(
+          topic: '#',
+          qos: defaultQos,
+          name: S.of(context).brokerDialogDefaultSubscriptionName,
+          history: SubscriptionHistoryPolicy(enabled: state.read(SettingsKeys.newSubscriptionHistoryEnabled), retention: retention),
+        ),
+      );
     }
   }
 
@@ -299,16 +314,37 @@ class _BrokerDialogState extends State<BrokerDialog> {
     final state = context.read<AppStateManager>();
     state.load(SettingsKeys.defaultSubscribeQos);
     state.load(SettingsKeys.lastUsedQos);
+    state.load(SettingsKeys.newSubscriptionHistoryEnabled);
+    state.load(SettingsKeys.newSubscriptionHistoryRetention);
+    state.load(SettingsKeys.maximumHistoryRetention);
     final strategy = state.read<MqttQosDefault>(SettingsKeys.defaultSubscribeQos);
     final defaultQos = strategy.resolve(state.read(SettingsKeys.lastUsedQos));
-    final sub = await showSubscriptionDialog(context, defaultQos: defaultQos);
+    final maximum = state.read<int>(SettingsKeys.maximumHistoryRetention);
+    final sub = await showSubscriptionDialog(
+      context,
+      defaultQos: defaultQos,
+      defaultHistoryEnabled: state.read(SettingsKeys.newSubscriptionHistoryEnabled),
+      defaultHistoryRetention: state.read<int>(SettingsKeys.newSubscriptionHistoryRetention).clamp(HistoryPolicyRules.minimumRetention, maximum),
+      maximumHistoryRetention: maximum,
+      existingTopicFilters: _subscriptions.map((entry) => entry.topic).toSet(),
+    );
     if (sub == null) return;
     setState(() => _subscriptions.add(sub));
   }
 
   /// Replaces the subscription at [index] when the editor returns a value.
   Future<void> _editSubscription(int index) async {
-    final sub = await showSubscriptionDialog(context, entry: _subscriptions[index]);
+    final state = context.read<AppStateManager>();
+    state.load(SettingsKeys.maximumHistoryRetention);
+    final sub = await showSubscriptionDialog(
+      context,
+      entry: _subscriptions[index],
+      maximumHistoryRetention: state.read(SettingsKeys.maximumHistoryRetention),
+      existingTopicFilters: {
+        for (var i = 0; i < _subscriptions.length; i++)
+          if (i != index) _subscriptions[i].topic,
+      },
+    );
     if (sub == null) return;
     setState(() => _subscriptions[index] = sub);
   }
@@ -457,12 +493,14 @@ class _BrokerDialogState extends State<BrokerDialog> {
             children: List.generate(_subscriptions.length, (i) {
               final sub = _subscriptions[i];
               final hasName = sub.name != null && sub.name!.isNotEmpty;
+              final historyLabel = sub.history.enabled ? '${sub.history.retention} ${s.brokerDialogHistoryMessages}' : s.brokerDialogHistoryDisabled;
               return UiSortableRow(
-                key: ValueKey('${sub.topic}_$i'),
+                key: ValueKey(sub.id),
                 index: i,
                 leading: QosTag(qos: sub.qos),
                 title: hasName ? sub.name! : sub.topic,
                 subtitle: hasName ? sub.topic : null,
+                trailing: [BadgeTag(label: historyLabel, color: sub.history.enabled ? AppColors.success500 : context.tokens.textTertiary)],
                 onTap: () => _editSubscription(i),
                 onDelete: () => _removeSubscription(i),
               );

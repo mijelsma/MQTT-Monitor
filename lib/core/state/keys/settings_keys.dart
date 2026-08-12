@@ -6,6 +6,7 @@ import '../../../models/language.dart';
 import '../../../models/mqtt_qos_default.dart';
 import '../../../models/sidebar_panel_default.dart';
 import '../../../models/startup_connection.dart';
+import '../../history/history_policy_rules.dart';
 import '../state_key.dart';
 import '../../../models/environment_variable.dart';
 import '../../../models/publish_shortcut.dart';
@@ -54,10 +55,10 @@ abstract final class SettingsKeys {
   // Language panel
   static final language = StateKey.forEnum('settings.language', AppLanguage.values, defaultValue: AppLanguage.en);
 
-  // History & monitoring
-  static final defaultHistorySize = StateKey.integer('settings.defaultHistorySize', defaultValue: 10);
-  static final increasedHistorySize = StateKey.integer('settings.increasedHistorySize', defaultValue: 500);
-  static final increasedMonitoringTopics = StateKey.fromJson<List<String>>('settings.increasedMonitoringTopics', defaultValue: const [], toJson: (list) => list, fromJson: (raw) => (raw as List).cast<String>());
+  // Subscription history
+  static final newSubscriptionHistoryEnabled = StateKey.boolean('settings.newSubscriptionHistoryEnabled', defaultValue: HistoryPolicyRules.defaultEnabled);
+  static final newSubscriptionHistoryRetention = StateKey.integer('settings.newSubscriptionHistoryRetention', defaultValue: HistoryPolicyRules.defaultRetention);
+  static final maximumHistoryRetention = StateKey.integer('settings.maximumHistoryRetention', defaultValue: HistoryPolicyRules.defaultMaximumRetention);
   static final messageRateSampleSize = StateKey.integer('settings.messageRateSampleSize', defaultValue: 10);
 
   // Default QoS levels for new entries. The `default*Qos` settings pick
@@ -96,9 +97,9 @@ abstract final class SettingsKeys {
     language,
     environmentVariables,
     environmentVariableValues,
-    defaultHistorySize,
-    increasedHistorySize,
-    increasedMonitoringTopics,
+    newSubscriptionHistoryEnabled,
+    newSubscriptionHistoryRetention,
+    maximumHistoryRetention,
     messageRateSampleSize,
     shortcuts,
     defaultPublishQos,

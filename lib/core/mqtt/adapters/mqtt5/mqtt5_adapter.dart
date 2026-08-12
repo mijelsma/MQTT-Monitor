@@ -68,6 +68,7 @@ class Mqtt5Adapter implements MqttProtocolAdapter {
     client.secure = _broker.useSSL || !_broker.clientCertificates.isEmpty;
     client.keepAlivePeriod = 30;
     client.autoReconnect = true;
+    client.resubscribeOnAutoReconnect = false;
     client.socketTimeout = _socketTimeoutMs;
     client.logging(on: false);
     try {
@@ -108,9 +109,6 @@ class Mqtt5Adapter implements MqttProtocolAdapter {
       _events.add(MqttProtocolEvent.notice(notice.message, detail: notice.reasonString));
     }
     _protocolSubscription = client.protocolEvents.listen(_onProtocolMessage);
-    for (final subscription in _broker.subscriptions) {
-      client.subscribe(subscription.topic, _qos(subscription.qos));
-    }
     _updatesSubscription = client.updates?.listen(_onUpdates);
   }
 

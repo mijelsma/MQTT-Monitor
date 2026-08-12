@@ -40,7 +40,6 @@ class DashboardViewModel extends ChangeNotifier {
     _state.load(SettingsKeys.environmentVariableValues);
 
     _loadCards();
-    _enableMonitoringForAllCards();
     _backfillFromHistory();
 
     _state.addListener(_onStateChanged);
@@ -112,15 +111,6 @@ class DashboardViewModel extends ChangeNotifier {
     _saveTimer = Timer(const Duration(seconds: 2), _saveCards);
   }
 
-  /// Tells the history service to keep detailed history for each card's topic.
-  void _enableMonitoringForAllCards() {
-    final varValues = _currentVariableValues;
-    for (final card in _cards) {
-      final resolved = _resolveTopic(card.topic, varValues);
-      _historyService.enableIncreased(resolved);
-    }
-  }
-
   /// Backfills card data from the global history service when the dashboard
   /// is opened, so charts show data collected while the user was elsewhere.
   ///
@@ -166,7 +156,6 @@ class DashboardViewModel extends ChangeNotifier {
       card.topic = result.topic!;
       card.dataPoints.clear();
       _dataPointCache.remove(card.id);
-      _historyService.enableIncreased(_resolveTopic(result.topic!, _currentVariableValues));
     }
 
     card.displayName = result.displayName;
@@ -434,7 +423,6 @@ class DashboardViewModel extends ChangeNotifier {
       _clearDataPointCaches();
       _cards = layout.cards.map((c) => GraphCardModel.fromJson(c.toJson())).toList();
       _cards.sort((a, b) => a.position.compareTo(b.position));
-      _enableMonitoringForAllCards();
       _backfillFromHistory();
       await _saveCards();
     }

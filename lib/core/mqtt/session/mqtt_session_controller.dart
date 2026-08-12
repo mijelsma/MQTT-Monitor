@@ -18,6 +18,7 @@ import '../publish_result.dart';
 import 'mqtt_connection_intent_store.dart';
 import 'mqtt_session_state.dart';
 import 'mqtt_session_target.dart';
+import 'mqtt_subscription_reconciler.dart';
 
 const _unchanged = Object();
 
@@ -38,6 +39,7 @@ class MqttSessionController extends ChangeNotifier {
   final MqttConnectionIntentStore _intentStore;
   final MqttProtocolAdapterFactory _adapterFactory;
   final StreamController<MQTTMessage> _messages = StreamController<MQTTMessage>.broadcast();
+  final MqttSubscriptionReconciler _subscriptions = MqttSubscriptionReconciler();
 
   MqttSessionState _state = const MqttSessionState();
   MqttSessionTarget? _target;
@@ -92,12 +94,6 @@ class MqttSessionController extends ChangeNotifier {
     return _adapter?.publish(topic, payload, qos: qos, retain: retain);
   }
 
-  /// Subscribes through the active protocol adapter when connected.
-  bool subscribe(String topic, {int qos = 0}) => _adapter?.subscribe(topic, qos: qos) ?? false;
-
-  /// Unsubscribes through the active protocol adapter when connected.
-  bool unsubscribe(String topic) => _adapter?.unsubscribe(topic) ?? false;
-
   /// Persists disconnected intent and tears down the current session.
   void disconnect() {
     _connectionRequested = false;
@@ -145,7 +141,10 @@ class MqttSessionController extends ChangeNotifier {
       return;
     }
     final target = MqttSessionTarget(broker);
-    if (!force && target == _target) return;
+    if (!force && target == _target) {
+      _subscriptions.update(broker.subscriptions);
+      return;
+    }
     _target = target;
     final generation = ++_generation;
     unawaited(_startSession(target, generation));
@@ -159,12 +158,14 @@ class MqttSessionController extends ChangeNotifier {
 
     final adapter = _adapterFactory(target.broker);
     _adapter = adapter;
+    _subscriptions.attach(adapter, target.broker.subscriptions);
     _eventSubscription = adapter.events.listen((event) => _onProtocolEvent(adapter, generation, event));
     _messageSubscription = adapter.messages.listen((message) => _onMessage(adapter, generation, message));
     try {
       await adapter.connect();
       if (!_isCurrentAdapter(adapter, generation)) return;
       if (adapter.isConnected) {
+        _subscriptions.onConnected();
         _emit(status: ConnectionStatus.connected, error: null, detail: null);
       }
     } on MqttConnectionFailure catch (failure) {
@@ -183,10 +184,13 @@ class MqttSessionController extends ChangeNotifier {
     if (!_isCurrentAdapter(adapter, generation)) return;
     switch (event.type) {
       case MqttProtocolEventType.connected:
+        _subscriptions.onConnected();
         _emit(status: ConnectionStatus.connected, error: null, detail: null);
       case MqttProtocolEventType.reconnecting:
+        _subscriptions.onDisconnected();
         _emit(status: ConnectionStatus.connecting);
       case MqttProtocolEventType.disconnected:
+        _subscriptions.onDisconnected();
         _emit(status: ConnectionStatus.disconnected, error: event.message, detail: event.detail);
       case MqttProtocolEventType.notice:
         _emit(error: event.message, detail: event.detail);
@@ -214,6 +218,7 @@ class MqttSessionController extends ChangeNotifier {
   Future<void> _releaseAdapter() async {
     final adapter = _adapter;
     _adapter = null;
+    _subscriptions.detach();
     await _eventSubscription?.cancel();
     await _messageSubscription?.cancel();
     _eventSubscription = null;

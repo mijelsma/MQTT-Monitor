@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/broker/broker_repository.dart';
+import '../../../core/history/history_policy_resolution.dart';
 import '../../../core/history/message_history_service.dart';
+import '../../../generated/l10n.dart';
 import '../../../models/topic_node.dart';
 import '../../../models/topic_node_value.dart';
 import '../../../shared/format_helpers.dart';
@@ -69,63 +72,57 @@ class _HistoryPanelState extends State<HistoryPanel> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    context.watch<BrokerRepository>();
     final historyService = context.read<MessageHistoryService>();
-    final isExtended = historyService.isIncreased(widget.node.fullPath);
+    final resolution = historyService.resolutionFor(widget.node.fullPath);
 
     return ValueListenableBuilder<TopicNodeValue?>(
       valueListenable: widget.node.valueNotifier,
       builder: (context, currentValue, _) {
         final history = historyService.getHistory(widget.node.fullPath);
 
-        if (history.isEmpty) {
-          return const _EmptyHistory();
+        if (history.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToTopIfNeeded());
         }
-
-        // Keep newest on top when user hasn't scrolled away.
-        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToTopIfNeeded());
 
         return Column(
           children: [
-            // Monitoring status bar
             _MonitoringBar(
-              topic: widget.node.fullPath,
-              isExtended: isExtended,
+              resolution: resolution,
               historyCount: history.length,
-              onToggle: () {
-                historyService.toggleIncreased(widget.node.fullPath);
-                setState(() {});
-              },
-              onClear: () {
-                historyService.clearTopics([widget.node.fullPath]);
-                widget.onSelect?.call(null);
-                setState(() {});
-              },
-            ),
-            // History list — newest first
-            Expanded(
-              child: ListView.separated(
-                controller: _scrollController,
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                itemCount: history.length,
-                separatorBuilder: (_, _) => Divider(height: 0.5, thickness: 0.5, color: tokens.border, indent: 12, endIndent: 12),
-                itemBuilder: (context, index) {
-                  // Reverse: index 0 = newest.
-                  final reverseIndex = history.length - 1 - index;
-                  final value = history[reverseIndex];
-                  final isSelected = widget.selectedValue?.seq == value.seq;
-                  final isLatest = reverseIndex == history.length - 1;
-
-                  return _HistoryRow(
-                    value: value,
-                    isSelected: isSelected,
-                    isLatest: isLatest,
-                    tokens: tokens,
-                    onTap: () {
-                      widget.onSelect?.call(isSelected ? null : value);
+              onClear: history.isEmpty
+                  ? null
+                  : () {
+                      historyService.clearTopics([widget.node.fullPath]);
+                      widget.onSelect?.call(null);
+                      setState(() {});
                     },
-                  );
-                },
-              ),
+            ),
+            Expanded(
+              child: history.isEmpty
+                  ? _EmptyHistory(resolution: resolution)
+                  : ListView.separated(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      itemCount: history.length,
+                      separatorBuilder: (_, _) => Divider(height: 0.5, thickness: 0.5, color: tokens.border, indent: 12, endIndent: 12),
+                      itemBuilder: (context, index) {
+                        final reverseIndex = history.length - 1 - index;
+                        final value = history[reverseIndex];
+                        final isSelected = widget.selectedValue?.seq == value.seq;
+                        final isLatest = reverseIndex == history.length - 1;
+
+                        return _HistoryRow(
+                          value: value,
+                          isSelected: isSelected,
+                          isLatest: isLatest,
+                          tokens: tokens,
+                          onTap: () {
+                            widget.onSelect?.call(isSelected ? null : value);
+                          },
+                        );
+                      },
+                    ),
             ),
           ],
         );
@@ -137,41 +134,52 @@ class _HistoryPanelState extends State<HistoryPanel> {
 // ── Empty state ─────────────────────────────────────────────────────────
 
 class _EmptyHistory extends StatelessWidget {
-  const _EmptyHistory();
+  const _EmptyHistory({required this.resolution});
+
+  final HistoryPolicyResolution resolution;
 
   @override
   Widget build(BuildContext context) {
-    return const UiEmptyState.compact(icon: Icons.history_rounded, title: 'No history yet', message: 'Messages will appear here\nas they arrive');
+    final strings = S.of(context);
+    if (!resolution.matchesSubscription) {
+      return UiEmptyState.compact(icon: Icons.link_off_rounded, title: strings.historyPanelNotSubscribed, message: strings.historyPanelNotSubscribedHint);
+    }
+    if (!resolution.enabled) {
+      return UiEmptyState.compact(icon: Icons.history_toggle_off_rounded, title: strings.historyPanelDisabled, message: strings.historyPanelDisabledHint);
+    }
+    return UiEmptyState.compact(icon: Icons.history_rounded, title: strings.historyPanelNoHistory, message: strings.historyPanelNoHistoryHint);
   }
 }
 
 // ── Monitoring status bar ───────────────────────────────────────────────
 
 class _MonitoringBar extends StatefulWidget {
-  const _MonitoringBar({required this.topic, required this.isExtended, required this.historyCount, required this.onToggle, required this.onClear});
+  const _MonitoringBar({required this.resolution, required this.historyCount, required this.onClear});
 
-  final String topic;
-  final bool isExtended;
+  final HistoryPolicyResolution resolution;
   final int historyCount;
-  final VoidCallback onToggle;
-  final VoidCallback onClear;
+  final VoidCallback? onClear;
 
   @override
   State<_MonitoringBar> createState() => _MonitoringBarState();
 }
 
 class _MonitoringBarState extends State<_MonitoringBar> {
-  bool _hovering = false;
-
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final color = widget.isExtended ? AppColors.success500 : tokens.textTertiary;
+    final strings = S.of(context);
+    final color = widget.resolution.enabled ? AppColors.success500 : tokens.textTertiary;
+    final status = widget.resolution.enabled
+        ? '${strings.historyPanelRetainingUpTo} ${widget.resolution.retention}'
+        : widget.resolution.matchesSubscription
+        ? strings.historyPanelDisabled
+        : strings.historyPanelNotSubscribed;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: widget.isExtended ? AppColors.success500.withValues(alpha: 0.06) : tokens.surface,
+        color: widget.resolution.enabled ? AppColors.success500.withValues(alpha: 0.06) : tokens.surface,
         border: Border(bottom: BorderSide(color: tokens.border, width: 0.5)),
       ),
       child: Row(
@@ -183,36 +191,19 @@ class _MonitoringBarState extends State<_MonitoringBar> {
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: tokens.textSecondary, fontFeatures: const [FontFeature.tabularFigures()]),
           ),
           const SizedBox(width: 4),
-          Text('stored', style: TextStyle(fontSize: 11, color: tokens.textTertiary)),
-          const SizedBox(width: 8),
-          _ClearButton(onTap: widget.onClear),
+          Text(strings.historyPanelStored, style: TextStyle(fontSize: 11, color: tokens.textTertiary)),
+          if (widget.onClear != null) ...[const SizedBox(width: 8), _ClearButton(onTap: widget.onClear!)],
           const Spacer(),
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            onEnter: (_) => setState(() => _hovering = true),
-            onExit: (_) => setState(() => _hovering = false),
-            child: GestureDetector(
-              onTap: widget.onToggle,
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: widget.isExtended ? AppColors.success500.withValues(alpha: _hovering ? 0.18 : 0.1) : (_hovering ? tokens.elevated : Colors.transparent),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: widget.isExtended ? AppColors.success500.withValues(alpha: 0.3) : tokens.border, width: 0.5),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(widget.isExtended ? Icons.trending_up_rounded : Icons.trending_flat_rounded, size: 12, color: color),
-                    const SizedBox(width: 4),
-                    Text(
-                      widget.isExtended ? 'Increased' : 'Standard',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color, letterSpacing: 0.3),
-                    ),
-                  ],
-                ),
-              ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: widget.resolution.enabled ? AppColors.success500.withValues(alpha: 0.1) : Colors.transparent,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: widget.resolution.enabled ? AppColors.success500.withValues(alpha: 0.3) : tokens.border, width: 0.5),
+            ),
+            child: Text(
+              status,
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color, letterSpacing: 0.2),
             ),
           ),
         ],
@@ -258,7 +249,7 @@ class _ClearButtonState extends State<_ClearButton> {
               Icon(Icons.delete_sweep_rounded, size: 12, color: _hovering ? AppColors.error500 : tokens.textTertiary),
               const SizedBox(width: 4),
               Text(
-                'Clear',
+                S.of(context).historyPanelClear,
                 style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: _hovering ? AppColors.error500 : tokens.textTertiary, letterSpacing: 0.3),
               ),
             ],

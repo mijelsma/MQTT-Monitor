@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import '../../models/broker_entry.dart';
+import '../history/history_policy_rules.dart';
 import '../storage/preferences_store.dart';
 import 'broker_profile_codec.dart';
 import 'broker_repository_failure.dart';
@@ -161,6 +162,67 @@ class BrokerRepository extends ChangeNotifier {
       _setSaveFailure(error);
       return false;
     }
+  }
+
+  /// Clamps every saved subscription policy to a confirmed global maximum.
+  Future<bool> clampSubscriptionHistory(int maximum) async {
+    HistoryPolicyRules.validateMaximum(maximum);
+    if (_failure != null) return false;
+    var changed = false;
+    final updated = _brokers
+        .map(
+          (broker) => broker.copyWith(
+            subscriptions: broker.subscriptions
+                .map((subscription) {
+                  if (subscription.history.retention <= maximum) {
+                    return subscription;
+                  }
+                  changed = true;
+                  return subscription.copyWith(history: subscription.history.copyWith(retention: maximum));
+                })
+                .toList(growable: false),
+          ),
+        )
+        .toList(growable: false);
+    if (!changed) return true;
+    return _commit(updated, _activeBrokerId, const _CleanupPlan());
+  }
+
+  /// Clears all preferences and removes broker-owned secrets and certificates.
+  ///
+  /// Resource references are collected leniently so reset remains available
+  /// when strict broker decoding has failed. Cleanup failures are reported as a
+  /// count because preferences have already been reset successfully.
+  Future<({bool succeeded, int cleanupFailures})> resetForApplicationDefaults() async {
+    final cleanup = _resetCleanupPlan();
+    try {
+      await _store.clear();
+    } on Object catch (error) {
+      _setSaveFailure(error);
+      return (succeeded: false, cleanupFailures: 0);
+    }
+
+    _brokers = const [];
+    _activeBrokerId = null;
+    _failure = null;
+
+    var cleanupFailures = 0;
+    for (final reference in cleanup.credentialReferences) {
+      try {
+        await _credentials.delete(reference);
+      } on Object {
+        cleanupFailures++;
+      }
+    }
+    for (final filePath in cleanup.certificatePaths) {
+      try {
+        await _certificates.delete(filePath);
+      } on Object {
+        cleanupFailures++;
+      }
+    }
+    notifyListeners();
+    return (succeeded: true, cleanupFailures: cleanupFailures);
   }
 
   /// Verifies and atomically commits [brokers], [activeId], and [cleanup].
@@ -333,6 +395,56 @@ class BrokerRepository extends ChangeNotifier {
     if (broker.clientCertificates.clientPrivateKeyPath != null) broker.clientCertificates.clientPrivateKeyPath!,
     if (broker.clientCertificates.clientCertificatePath != null) broker.clientCertificates.clientCertificatePath!,
   };
+
+  /// Finds every broker-owned resource, including references in invalid JSON.
+  _CleanupPlan _resetCleanupPlan() {
+    final credentialReferences = <String>{};
+    final certificatePaths = <String>{};
+
+    for (final broker in _brokers) {
+      final cleanup = _cleanupFor(broker);
+      credentialReferences.addAll(cleanup.credentialReferences);
+      certificatePaths.addAll(cleanup.certificatePaths);
+    }
+
+    final rawProfiles = _store.get(BrokerStorageKeys.profiles);
+    if (rawProfiles is String) {
+      try {
+        final decoded = jsonDecode(rawProfiles);
+        if (decoded is List) {
+          for (final rawBroker in decoded.whereType<Map>()) {
+            final reference = rawBroker['passwordReference'];
+            if (reference is String && reference.isNotEmpty) {
+              credentialReferences.add(reference);
+            }
+            final certificates = rawBroker['clientCertificates'];
+            if (certificates is Map) {
+              for (final key in const ['rootCaPath', 'clientPrivateKeyPath', 'clientCertificatePath']) {
+                final filePath = certificates[key];
+                if (filePath is String && filePath.isNotEmpty) {
+                  certificatePaths.add(filePath);
+                }
+              }
+            }
+          }
+        }
+      } on Object {
+        // Reset must remain available for malformed development data.
+      }
+    }
+
+    final pending = _store.get(BrokerStorageKeys.pendingResourceCleanup);
+    if (pending != null) {
+      try {
+        final cleanup = _CleanupPlan.decode(pending);
+        credentialReferences.addAll(cleanup.credentialReferences);
+        certificatePaths.addAll(cleanup.certificatePaths);
+      } on Object {
+        // A malformed cleanup record must not prevent a full reset.
+      }
+    }
+    return _CleanupPlan(credentialReferences: credentialReferences, certificatePaths: certificatePaths);
+  }
 
   /// Creates an opaque protected-storage reference from [brokerId].
   String _passwordReference(String brokerId) => 'mqtt-monitor.broker.${base64Url.encode(utf8.encode(brokerId))}.password';

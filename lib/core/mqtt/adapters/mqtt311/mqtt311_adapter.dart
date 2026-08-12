@@ -68,6 +68,7 @@ class Mqtt311Adapter implements MqttProtocolAdapter {
     client.secure = _broker.useSSL || !_broker.clientCertificates.isEmpty;
     client.keepAlivePeriod = 30;
     client.autoReconnect = true;
+    client.resubscribeOnAutoReconnect = false;
     client.socketTimeout = _socketTimeoutMs;
     client.logging(on: false);
     try {
@@ -105,9 +106,6 @@ class Mqtt311Adapter implements MqttProtocolAdapter {
       throw MqttConnectionFailure(ConnectionStatus.error, _returnCodeMessage(client.connectionStatus?.returnCode) ?? MqttConnectionErrorMapper.brokerRejected(_broker));
     }
 
-    for (final subscription in _broker.subscriptions) {
-      client.subscribe(subscription.topic, _qos(subscription.qos));
-    }
     _updatesSubscription = client.updates?.listen(_onUpdates);
     _publishedSubscription = client.published?.listen(_onPublished);
   }

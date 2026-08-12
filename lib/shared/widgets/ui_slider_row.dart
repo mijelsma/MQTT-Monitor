@@ -3,7 +3,7 @@ import '../../theme/app_tokens/app_tokens.dart';
 import 'spacers.dart';
 
 class UiSliderRow extends StatelessWidget {
-  const UiSliderRow({super.key, this.margin, required this.label, this.subtitle, required this.value, required this.min, required this.max, required this.divisions, required this.displayValue, required this.onChanged, this.accent});
+  const UiSliderRow({super.key, this.margin, required this.label, this.subtitle, required this.value, required this.min, required this.max, required this.divisions, required this.displayValue, required this.onChanged, this.onChangeEnd, this.accent});
 
   final EdgeInsetsGeometry? margin;
   final String label;
@@ -13,7 +13,8 @@ class UiSliderRow extends StatelessWidget {
   final double max;
   final int divisions;
   final String displayValue;
-  final ValueChanged<double> onChanged;
+  final ValueChanged<double>? onChanged;
+  final ValueChanged<double>? onChangeEnd;
   final Color? accent;
 
   @override
@@ -55,7 +56,7 @@ class UiSliderRow extends StatelessWidget {
             data: SliderTheme.of(
               context,
             ).copyWith(activeTrackColor: resolvedAccent, inactiveTrackColor: resolvedAccent.withValues(alpha: 0.15), thumbColor: resolvedAccent, overlayColor: resolvedAccent.withValues(alpha: 0.1), trackHeight: 3, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6), overlayShape: const RoundSliderOverlayShape(overlayRadius: 14)),
-            child: Slider(value: value, min: min, max: max, divisions: divisions, onChanged: onChanged),
+            child: Slider(value: value, min: min, max: max, divisions: divisions, onChanged: onChanged, onChangeEnd: onChangeEnd),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),

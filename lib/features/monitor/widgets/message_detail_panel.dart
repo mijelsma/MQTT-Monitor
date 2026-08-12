@@ -649,11 +649,6 @@ void _onPin(BuildContext context, String topic, String? keyPath, String? default
   cards.add(GraphCardModel(id: id, topic: topic, jsonKeyPath: keyPath, displayName: defaultName ?? keyPath ?? topic.split('/').last, unit: unit, color: color, chartType: chartType, interpolation: interpolation, dotSize: dotSize, maxDataPoints: maxSamples, position: cards.length));
   await state.write(key, cards);
 
-  // Auto-enable increased monitoring for pinned topics.
-  if (context.mounted) {
-    context.read<MessageHistoryService>().enableIncreased(topic);
-  }
-
   if (!context.mounted) return;
   final messenger = ScaffoldMessenger.of(context);
   messenger.clearSnackBars();
@@ -670,12 +665,6 @@ class _HistoricalBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return UiInlineNotice(
-      kind: UiNoticeKind.warning,
-      title: S.of(context).detailViewingMessage(seq),
-      actionLabel: onShowLatest == null ? null : S.of(context).detailShowLatest,
-      onAction: onShowLatest,
-      radius: 10,
-    );
+    return UiInlineNotice(kind: UiNoticeKind.warning, title: S.of(context).detailViewingMessage(seq), actionLabel: onShowLatest == null ? null : S.of(context).detailShowLatest, onAction: onShowLatest, radius: 10);
   }
 }

@@ -7,6 +7,8 @@ import 'package:mqtt_monitor/core/mqtt/mqtt_message.dart';
 import 'package:mqtt_monitor/core/state/app_state.dart';
 import 'package:mqtt_monitor/core/state/keys/settings_keys.dart';
 import 'package:mqtt_monitor/models/broker_entry.dart';
+import 'package:mqtt_monitor/models/subscription_entry.dart';
+import 'package:mqtt_monitor/models/subscription_history_policy.dart';
 
 import '../../support/test_dependencies.dart';
 
@@ -24,16 +26,31 @@ void main() {
   });
 
   tearDown(() async {
-    history.dispose();
+    await history.dispose();
     await messages.close();
   });
 
   MQTTMessage message(String topic, String payload, int second) => MQTTMessage(topic: topic, payload: payload, receivedAt: DateTime(2026, 1, 1, 0, 0, second));
 
+  SubscriptionEntry subscription(String id, String filter, {bool enabled = true, int retention = 10}) => SubscriptionEntry(
+    id: id,
+    topic: filter,
+    history: SubscriptionHistoryPolicy(enabled: enabled, retention: retention),
+  );
+
+  Future<void> addBroker(String id, List<SubscriptionEntry> subscriptions, {bool makeActive = true}) {
+    return brokers
+        .add(
+          BrokerEntry(id: id, name: id, host: '$id.invalid', subscriptions: subscriptions),
+          makeActive: makeActive,
+        )
+        .then((_) {});
+  }
+
   Future<void> settle() => Future<void>.delayed(Duration.zero);
 
-  test('trims normal history while preserving monotonic sequence numbers', () async {
-    await state.write(SettingsKeys.defaultHistorySize, 2);
+  test('bounds matching history while preserving sequence numbers', () async {
+    await addBroker('broker', [subscription('all', '#', retention: 2)]);
 
     messages
       ..add(message('sensor/value', 'one', 1))
@@ -46,20 +63,58 @@ void main() {
     expect(values.map((value) => value.seq), [2, 3]);
   });
 
-  test('increased monitoring uses the larger per-topic buffer', () async {
-    await state.write(SettingsKeys.defaultHistorySize, 1);
-    await state.write(SettingsKeys.increasedHistorySize, 3);
-    history.enableIncreased('sensor/value');
+  test('disabled history skips sequence, value, and buffer allocation', () async {
+    await addBroker('broker', [subscription('all', '#', enabled: false)]);
 
-    for (var i = 1; i <= 4; i++) {
-      messages.add(message('sensor/value', '$i', i));
+    messages.add(message('sensor/value', 'ignored', 1));
+    await settle();
+
+    expect(history.bufferCount, 0);
+    expect(history.getHistory('sensor/value'), isEmpty);
+    expect(history.resolutionFor('sensor/value').enabled, isFalse);
+  });
+
+  test('overlapping enabled filters use the greatest retention', () async {
+    await addBroker('broker', [subscription('all', 'sensors/#', retention: 2), subscription('specific', 'sensors/+/value', retention: 4), subscription('disabled', 'sensors/device/#', enabled: false)]);
+
+    for (var index = 1; index <= 5; index++) {
+      messages.add(message('sensors/device/value', '$index', index));
     }
     await settle();
 
-    expect(history.getHistory('sensor/value').map((value) => value.payload), ['2', '3', '4']);
+    expect(history.getHistory('sensors/device/value').map((value) => value.payload), ['2', '3', '4', '5']);
+  });
+
+  test('disabling history preserves existing values and skips new work', () async {
+    await addBroker('broker', [subscription('all', '#', retention: 3)]);
+    messages.add(message('sensor/value', 'kept', 1));
+    await settle();
+
+    final broker = brokers.activeBroker!;
+    await brokers.update(broker.copyWith(subscriptions: [broker.subscriptions.single.copyWith(history: const SubscriptionHistoryPolicy(enabled: false, retention: 3))]));
+    messages.add(message('sensor/value', 'ignored', 2));
+    await settle();
+
+    expect(history.getHistory('sensor/value').single.payload, 'kept');
+  });
+
+  test('confirmed global maximum trims existing live buffers', () async {
+    await state.write(SettingsKeys.maximumHistoryRetention, 100);
+    await addBroker('broker', [subscription('all', '#', retention: 100)]);
+    for (var index = 1; index <= 60; index++) {
+      messages.add(message('sensor/value', '$index', index % 60));
+    }
+    await settle();
+
+    expect(history.countBuffersAbove(50), 1);
+    history.trimToMaximum(50);
+
+    expect(history.getHistory('sensor/value'), hasLength(50));
+    expect(history.getHistory('sensor/value').first.payload, '11');
   });
 
   test('clearTopics resets only the selected topic and its sequence', () async {
+    await addBroker('broker', [subscription('all', '#')]);
     messages
       ..add(message('one', 'a', 1))
       ..add(message('two', 'b', 1));
@@ -73,15 +128,18 @@ void main() {
     expect(history.getHistory('two').single.payload, 'b');
   });
 
-  test('switching brokers clears all session history', () async {
-    await brokers.add(const BrokerEntry(id: 'first', name: 'First', host: 'first.invalid'));
-    await brokers.add(const BrokerEntry(id: 'second', name: 'Second', host: 'second.invalid'), makeActive: false);
-    await brokers.select('first');
-    messages.add(message('sensor/value', 'old session', 1));
+  test('same topic on different brokers has independent policy', () async {
+    await addBroker('first', [subscription('shared', 'sensor/value', enabled: false)]);
+    await addBroker('second', [subscription('shared', 'sensor/value', retention: 2)], makeActive: false);
+
+    messages.add(message('sensor/value', 'first', 1));
     await settle();
+    expect(history.bufferCount, 0);
 
     await brokers.select('second');
+    messages.add(message('sensor/value', 'second', 2));
+    await settle();
 
-    expect(history.getHistory('sensor/value'), isEmpty);
+    expect(history.getHistory('sensor/value').single.payload, 'second');
   });
 }

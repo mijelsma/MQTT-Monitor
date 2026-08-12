@@ -7,6 +7,9 @@ import 'package:mqtt_monitor/core/state/keys/settings_keys.dart';
 import 'package:mqtt_monitor/features/settings/panels/advanced_panel.dart';
 import 'package:mqtt_monitor/features/settings/settings_viewmodel.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
+import 'package:mqtt_monitor/models/broker_entry.dart';
+import 'package:mqtt_monitor/models/subscription_entry.dart';
+import 'package:mqtt_monitor/models/subscription_history_policy.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
@@ -21,73 +24,162 @@ void main() {
     brokers = dependencies.brokers;
   });
 
-  Future<void> pumpPanel(WidgetTester tester) async {
-    final vm = SettingsViewModel(state: state, brokerRepository: brokers);
-    addTearDown(vm.dispose);
+  Future<SettingsViewModel> pumpPanel(WidgetTester tester) async {
+    final viewModel = SettingsViewModel(
+      state: state,
+      brokerRepository: brokers,
+    );
+    addTearDown(viewModel.dispose);
     await tester.pumpWidget(
       ChangeNotifierProvider<SettingsViewModel>.value(
-        value: vm,
+        value: viewModel,
         child: MaterialApp(
           theme: themeLight,
-          localizationsDelegates: const [S.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
+          localizationsDelegates: const [
+            S.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           supportedLocales: S.delegate.supportedLocales,
-          home: const Scaffold(body: SizedBox(width: 700, height: 900, child: AdvancedPanel())),
+          home: const Scaffold(
+            body: SizedBox(width: 700, height: 900, child: AdvancedPanel()),
+          ),
         ),
       ),
     );
     await tester.pumpAndSettle();
+    return viewModel;
   }
 
-  testWidgets('advanced panel shows messages-per-topic slider defaulting to 10', (tester) async {
+  testWidgets('shows validated defaults for new subscription history', (
+    tester,
+  ) async {
     await pumpPanel(tester);
 
-    expect(state.read(SettingsKeys.defaultHistorySize), 10, reason: 'the default history per topic is 10 messages');
-    expect(find.text('Messages stored per topic'), findsOneWidget);
-    expect(find.text('10'), findsWidgets, reason: 'the current value is shown');
+    expect(state.read(SettingsKeys.newSubscriptionHistoryEnabled), isTrue);
+    expect(state.read(SettingsKeys.newSubscriptionHistoryRetention), 10);
+    expect(state.read(SettingsKeys.maximumHistoryRetention), 50);
+    expect(find.text('New subscription history'), findsOneWidget);
+    expect(find.text('Default retention'), findsOneWidget);
+    expect(find.text('Maximum retention'), findsOneWidget);
   });
 
-  testWidgets('history sliders cover the configured ranges', (tester) async {
+  testWidgets('history controls expose domain-supported ranges', (
+    tester,
+  ) async {
     await pumpPanel(tester);
 
     final sliders = tester.widgetList<Slider>(find.byType(Slider)).toList();
-    expect(sliders, hasLength(2), reason: 'per-topic and increased monitoring buffers');
-
-    final perTopic = sliders.first;
-    expect(perTopic.min, 1);
-    expect(perTopic.max, 500);
-    expect(perTopic.value, 10);
-
-    final increased = sliders.last;
-    expect(increased.min, 50);
-    expect(increased.max, 5000);
-    expect(increased.divisions, 99, reason: 'increased buffer steps by exactly 50');
+    expect(sliders, hasLength(2));
+    expect(sliders.first.min, 1);
+    expect(sliders.first.max, 50);
+    expect(sliders.first.value, 10);
+    expect(sliders.last.min, 50);
+    expect(sliders.last.max, 1000);
+    expect(sliders.last.value, 50);
+    expect(sliders.last.divisions, 19);
   });
 
-  testWidgets('advanced panel warns in the themed error color', (tester) async {
+  testWidgets('turning off the new policy disables its retention slider', (
+    tester,
+  ) async {
     await pumpPanel(tester);
 
-    final warning = tester.widget<Text>(find.textContaining('affect performance'));
-    expect(warning.style?.fontWeight, FontWeight.w600, reason: 'the warning is emphasised in bold');
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    final defaultRetention = tester
+        .widgetList<Slider>(find.byType(Slider))
+        .first;
+    expect(defaultRetention.onChanged, isNull);
+    expect(state.read(SettingsKeys.newSubscriptionHistoryEnabled), isFalse);
+  });
+
+  testWidgets('maximum reduction can be cancelled or explicitly confirmed', (
+    tester,
+  ) async {
+    await state.write(SettingsKeys.maximumHistoryRetention, 500);
+    await brokers.add(
+      const BrokerEntry(
+        id: 'broker',
+        name: 'Broker',
+        host: 'broker.invalid',
+        subscriptions: [
+          SubscriptionEntry(
+            id: 'subscription',
+            topic: '#',
+            history: SubscriptionHistoryPolicy(retention: 100),
+          ),
+        ],
+      ),
+    );
+    await pumpPanel(tester);
+
+    Slider maximumSlider() =>
+        tester.widgetList<Slider>(find.byType(Slider)).last;
+
+    maximumSlider().onChanged!(50);
+    await tester.pump();
+    maximumSlider().onChangeEnd!(50);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reduce history maximum?'), findsOneWidget);
+    expect(find.text('Saved subscription policies: 1'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(state.read(SettingsKeys.maximumHistoryRetention), 500);
+    expect(brokers.activeBroker!.subscriptions.single.history.retention, 100);
+
+    maximumSlider().onChanged!(50);
+    await tester.pump();
+    maximumSlider().onChangeEnd!(50);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(state.read(SettingsKeys.maximumHistoryRetention), 50);
+    expect(brokers.activeBroker!.subscriptions.single.history.retention, 50);
+  });
+
+  testWidgets('advanced warning retains emphasized themed styling', (
+    tester,
+  ) async {
+    await pumpPanel(tester);
+
+    final warning = tester.widget<Text>(
+      find.textContaining('affect performance'),
+    );
+    expect(warning.style?.fontWeight, FontWeight.w600);
     expect(warning.style?.color, isNotNull);
   });
 
-  group('snapPerTopicHistory', () {
-    test('returns 1 for any position below 5', () {
-      expect(snapPerTopicHistory(0), 1);
-      expect(snapPerTopicHistory(1), 1);
-      expect(snapPerTopicHistory(3), 1);
-    });
+  testWidgets('reset requires confirmation and restores defaults', (
+    tester,
+  ) async {
+    await state.write(SettingsKeys.showStatusBar, false);
+    await brokers.add(
+      const BrokerEntry(id: 'broker', name: 'Broker', host: 'broker.invalid'),
+    );
+    await pumpPanel(tester);
+    final resetButton = find.text('Reset everything');
+    await tester.ensureVisible(resetButton);
 
-    test('snaps to multiples of 5 from 5 upward', () {
-      expect(snapPerTopicHistory(4), 5);
-      expect(snapPerTopicHistory(5), 5);
-      expect(snapPerTopicHistory(6), 5);
-      expect(snapPerTopicHistory(8), 10);
-      expect(snapPerTopicHistory(10), 10);
-      expect(snapPerTopicHistory(12), 10);
-      expect(snapPerTopicHistory(497), 495);
-      expect(snapPerTopicHistory(498), 500);
-      expect(snapPerTopicHistory(500), 500);
-    });
+    await tester.tap(resetButton);
+    await tester.pumpAndSettle();
+    expect(find.text('Reset all settings?'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(state.read(SettingsKeys.showStatusBar), isFalse);
+    expect(brokers.brokers, hasLength(1));
+
+    await tester.tap(resetButton);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Reset everything').last);
+    await tester.pumpAndSettle();
+
+    expect(state.read(SettingsKeys.showStatusBar), isTrue);
+    expect(brokers.brokers, isEmpty);
+    expect(find.text('All settings were reset to defaults.'), findsOneWidget);
   });
 }

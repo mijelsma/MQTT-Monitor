@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/broker/broker_repository.dart';
 import '../../core/broker/broker_repository_failure.dart';
+import '../../core/history/history_policy_rules.dart';
+import '../../core/history/message_history_service.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
 import '../../core/state/keys/dashboard_keys.dart';
@@ -21,7 +23,7 @@ import '../../models/publish_shortcut.dart';
 /// Coordinates settings navigation and delegates data to its owning stores.
 class SettingsViewModel extends ChangeNotifier {
   /// Creates the settings controller and observes app and broker state.
-  SettingsViewModel({required AppStateManager state, required BrokerRepository brokerRepository}) : _state = state, _brokers = brokerRepository {
+  SettingsViewModel({required AppStateManager state, required BrokerRepository brokerRepository, MessageHistoryService? historyService}) : _state = state, _brokers = brokerRepository, _historyService = historyService {
     _state.load(DashboardKeys.layouts);
     _state.addListener(_onStateChanged);
     _brokers.addListener(_onStateChanged);
@@ -29,6 +31,7 @@ class SettingsViewModel extends ChangeNotifier {
 
   final AppStateManager _state;
   final BrokerRepository _brokers;
+  final MessageHistoryService? _historyService;
 
   /// Notifies settings consumers after either observed owner changes.
   void _onStateChanged() => notifyListeners();
@@ -76,19 +79,64 @@ class SettingsViewModel extends ChangeNotifier {
   int get defaultMaxSamples => _state.read(SettingsKeys.defaultMaxSamples);
   void setDefaultMaxSamples(int value) => _state.write(SettingsKeys.defaultMaxSamples, value);
 
-  // History & monitoring
+  // Subscription history
 
-  int get defaultHistorySize => _state.read(SettingsKeys.defaultHistorySize);
-  void setDefaultHistorySize(int value) => _state.write(SettingsKeys.defaultHistorySize, value);
+  bool get newSubscriptionHistoryEnabled => _state.read(SettingsKeys.newSubscriptionHistoryEnabled);
 
-  int get increasedHistorySize => _state.read(SettingsKeys.increasedHistorySize);
-  void setIncreasedHistorySize(int value) => _state.write(SettingsKeys.increasedHistorySize, value);
+  Future<void> setNewSubscriptionHistoryEnabled(bool value) {
+    return _state.write(SettingsKeys.newSubscriptionHistoryEnabled, value);
+  }
 
-  List<String> get increasedMonitoringTopics => _state.read(SettingsKeys.increasedMonitoringTopics);
-  void clearIncreasedMonitoringTopics() => _state.write(SettingsKeys.increasedMonitoringTopics, <String>[]);
-  void removeIncreasedMonitoringTopic(String topic) {
-    final list = increasedMonitoringTopics.where((t) => t != topic).toList();
-    _state.write(SettingsKeys.increasedMonitoringTopics, list);
+  int get maximumHistoryRetention {
+    final value = _state.read(SettingsKeys.maximumHistoryRetention);
+    return HistoryPolicyRules.isValidMaximum(value) ? value : HistoryPolicyRules.defaultMaximumRetention;
+  }
+
+  int get newSubscriptionHistoryRetention {
+    final value = _state.read(SettingsKeys.newSubscriptionHistoryRetention);
+    return HistoryPolicyRules.isValidRetention(value, maximum: maximumHistoryRetention) ? value : HistoryPolicyRules.defaultRetention;
+  }
+
+  Future<void> setNewSubscriptionHistoryRetention(int value) {
+    HistoryPolicyRules.validateRetention(value, maximum: maximumHistoryRetention);
+    return _state.write(SettingsKeys.newSubscriptionHistoryRetention, value);
+  }
+
+  /// Reports values that would be destructively clamped by [maximum].
+  ({int subscriptions, int defaultPolicy, int liveBuffers}) previewMaximumHistoryRetention(int maximum) {
+    HistoryPolicyRules.validateMaximum(maximum);
+    final subscriptions = _brokers.brokers.expand((broker) => broker.subscriptions).where((subscription) => subscription.history.retention > maximum).length;
+    return (subscriptions: subscriptions, defaultPolicy: newSubscriptionHistoryRetention > maximum ? 1 : 0, liveBuffers: _historyService?.countBuffersAbove(maximum) ?? 0);
+  }
+
+  /// Applies a confirmed maximum after clamping broker-owned policies first.
+  Future<bool> applyMaximumHistoryRetention(int maximum) async {
+    HistoryPolicyRules.validateMaximum(maximum);
+    if (!await _brokers.clampSubscriptionHistory(maximum)) return false;
+    if (newSubscriptionHistoryRetention > maximum) {
+      await _state.write(SettingsKeys.newSubscriptionHistoryRetention, maximum);
+    }
+    await _state.write(SettingsKeys.maximumHistoryRetention, maximum);
+    _historyService?.trimToMaximum(maximum);
+    return true;
+  }
+
+  /// Restores every persisted setting and broker profile to app defaults.
+  Future<({bool succeeded, int cleanupFailures})> resetSettingsToDefaults() async {
+    final selectedSection = activeSection;
+    final brokerReset = await _brokers.resetForApplicationDefaults();
+    if (!brokerReset.succeeded) return brokerReset;
+
+    try {
+      // The broker repository already cleared the shared preference store.
+      await _state.resetAll(clearPreferences: false);
+      await _state.write(AppKeys.activeSettingsSection, selectedSection);
+      _historyService?.clear();
+      await _brokers.initialize();
+      return brokerReset;
+    } on Object {
+      return (succeeded: false, cleanupFailures: brokerReset.cleanupFailures);
+    }
   }
 
   int get messageRateSampleSize => _state.read(SettingsKeys.messageRateSampleSize);

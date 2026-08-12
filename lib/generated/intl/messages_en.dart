@@ -58,17 +58,70 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "aboutPanelVersionDetail": MessageLookupByLibrary.simpleMessage("Version"),
     "add": MessageLookupByLibrary.simpleMessage("Add"),
+    "advancedPanelAffectedBuffers": MessageLookupByLibrary.simpleMessage(
+      "Live topic buffers",
+    ),
+    "advancedPanelAffectedDefault": MessageLookupByLibrary.simpleMessage(
+      "New-subscription default",
+    ),
+    "advancedPanelAffectedSubscriptions": MessageLookupByLibrary.simpleMessage(
+      "Saved subscription policies",
+    ),
+    "advancedPanelDefaultRetention": MessageLookupByLibrary.simpleMessage(
+      "Default retention",
+    ),
+    "advancedPanelDefaultRetentionHint": MessageLookupByLibrary.simpleMessage(
+      "Messages retained by each new subscription",
+    ),
     "advancedPanelDescription": MessageLookupByLibrary.simpleMessage(
       "Adjusting these settings may significantly affect performance. Change them with care.",
     ),
     "advancedPanelHistoryBuffer": MessageLookupByLibrary.simpleMessage(
       "History buffer",
     ),
-    "advancedPanelMessagesPerTopic": MessageLookupByLibrary.simpleMessage(
-      "Messages stored per topic",
+    "advancedPanelMaximumConfirmBody": MessageLookupByLibrary.simpleMessage(
+      "Affected policies and live buffers will be clamped. Existing messages beyond the new limit will be removed.",
     ),
-    "advancedPanelMessagesPerTopicHint": MessageLookupByLibrary.simpleMessage(
-      "Maximum messages kept in history per topic; older messages are pruned. Lower values use less memory.",
+    "advancedPanelMaximumConfirmTitle": MessageLookupByLibrary.simpleMessage(
+      "Reduce history maximum?",
+    ),
+    "advancedPanelMaximumRetention": MessageLookupByLibrary.simpleMessage(
+      "Maximum retention",
+    ),
+    "advancedPanelMaximumRetentionHint": MessageLookupByLibrary.simpleMessage(
+      "Upper bound enforced for every subscription and live history buffer",
+    ),
+    "advancedPanelNewSubscriptionHistory": MessageLookupByLibrary.simpleMessage(
+      "New subscription history",
+    ),
+    "advancedPanelNewSubscriptionHistoryHint":
+        MessageLookupByLibrary.simpleMessage(
+          "Collect bounded history for subscriptions created from now on",
+        ),
+    "advancedPanelResetAction": MessageLookupByLibrary.simpleMessage(
+      "Reset everything",
+    ),
+    "advancedPanelResetCleanupWarning": MessageLookupByLibrary.simpleMessage(
+      "Settings were reset, but some broker files or credentials could not be removed.",
+    ),
+    "advancedPanelResetConfirmBody": MessageLookupByLibrary.simpleMessage(
+      "This removes all local settings and broker profiles, including stored credentials and imported certificates. This cannot be undone.",
+    ),
+    "advancedPanelResetConfirmTitle": MessageLookupByLibrary.simpleMessage(
+      "Reset all settings?",
+    ),
+    "advancedPanelResetFailed": MessageLookupByLibrary.simpleMessage(
+      "Settings could not be reset. No broker resources were removed.",
+    ),
+    "advancedPanelResetHint": MessageLookupByLibrary.simpleMessage(
+      "Remove all local settings, brokers, layouts, variables, and shortcuts",
+    ),
+    "advancedPanelResetSection": MessageLookupByLibrary.simpleMessage("Reset"),
+    "advancedPanelResetSuccess": MessageLookupByLibrary.simpleMessage(
+      "All settings were reset to defaults.",
+    ),
+    "advancedPanelResetTitle": MessageLookupByLibrary.simpleMessage(
+      "Reset settings to defaults",
     ),
     "advancedPanelTitle": MessageLookupByLibrary.simpleMessage("Advanced"),
     "back": MessageLookupByLibrary.simpleMessage("Back"),
@@ -94,6 +147,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "brokerDialogFieldPort": MessageLookupByLibrary.simpleMessage("Port"),
     "brokerDialogFieldUsername": MessageLookupByLibrary.simpleMessage(
       "Username",
+    ),
+    "brokerDialogHistoryDisabled": MessageLookupByLibrary.simpleMessage(
+      "History off",
+    ),
+    "brokerDialogHistoryMessages": MessageLookupByLibrary.simpleMessage(
+      "history messages",
     ),
     "brokerDialogRandomSuffix": MessageLookupByLibrary.simpleMessage(
       "Random Suffix",
@@ -240,6 +299,29 @@ class MessageLookup extends MessageLookupByLibrary {
     "filterNoMatchingTopicsSubtitle": MessageLookupByLibrary.simpleMessage(
       "Try adjusting or clearing the filter.",
     ),
+    "historyPanelClear": MessageLookupByLibrary.simpleMessage("Clear"),
+    "historyPanelDisabled": MessageLookupByLibrary.simpleMessage(
+      "History disabled",
+    ),
+    "historyPanelDisabledHint": MessageLookupByLibrary.simpleMessage(
+      "Live values continue, but new history is not stored",
+    ),
+    "historyPanelNoHistory": MessageLookupByLibrary.simpleMessage(
+      "No history yet",
+    ),
+    "historyPanelNoHistoryHint": MessageLookupByLibrary.simpleMessage(
+      "Messages will appear here as they arrive",
+    ),
+    "historyPanelNotSubscribed": MessageLookupByLibrary.simpleMessage(
+      "No matching subscription",
+    ),
+    "historyPanelNotSubscribedHint": MessageLookupByLibrary.simpleMessage(
+      "This topic is not covered by the active broker subscriptions",
+    ),
+    "historyPanelRetainingUpTo": MessageLookupByLibrary.simpleMessage(
+      "Retaining up to",
+    ),
+    "historyPanelStored": MessageLookupByLibrary.simpleMessage("stored"),
     "languageNameDe": MessageLookupByLibrary.simpleMessage("German"),
     "languageNameEn": MessageLookupByLibrary.simpleMessage("English"),
     "languageNameEs": MessageLookupByLibrary.simpleMessage("Spanish"),
@@ -259,7 +341,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Clear all",
     ),
     "monitoringPanelDescription": MessageLookupByLibrary.simpleMessage(
-      "Configure message history retention for topics.",
+      "Configure live message-rate sampling.",
     ),
     "monitoringPanelIncreasedBufferHint": MessageLookupByLibrary.simpleMessage(
       "Messages for monitored topics",
@@ -388,6 +470,10 @@ class MessageLookup extends MessageLookupByLibrary {
     "subscriptionDialogAddTitle": MessageLookupByLibrary.simpleMessage(
       "Add Subscription",
     ),
+    "subscriptionDialogDuplicateTopicFilter":
+        MessageLookupByLibrary.simpleMessage(
+          "This broker already has that topic filter",
+        ),
     "subscriptionDialogEditTitle": MessageLookupByLibrary.simpleMessage(
       "Edit Subscription",
     ),
@@ -400,6 +486,28 @@ class MessageLookup extends MessageLookupByLibrary {
     "subscriptionDialogHintDisplayName": MessageLookupByLibrary.simpleMessage(
       "Optional friendly name",
     ),
+    "subscriptionDialogHistoryEnabled": MessageLookupByLibrary.simpleMessage(
+      "Store message history",
+    ),
+    "subscriptionDialogHistoryEnabledHint":
+        MessageLookupByLibrary.simpleMessage(
+          "Live messages remain available when history is off",
+        ),
+    "subscriptionDialogHistoryLabel": MessageLookupByLibrary.simpleMessage(
+      "History",
+    ),
+    "subscriptionDialogHistoryOverlapHint": MessageLookupByLibrary.simpleMessage(
+      "When enabled filters overlap, the largest matching retention is used.",
+    ),
+    "subscriptionDialogHistoryRetention": MessageLookupByLibrary.simpleMessage(
+      "Retention",
+    ),
+    "subscriptionDialogHistoryRetentionHint":
+        MessageLookupByLibrary.simpleMessage(
+          "Messages kept for topics matched by this subscription",
+        ),
+    "subscriptionDialogInvalidTopicFilter":
+        MessageLookupByLibrary.simpleMessage("Enter a valid MQTT topic filter"),
     "subscriptionDialogQoS0Description": MessageLookupByLibrary.simpleMessage(
       "At most once",
     ),

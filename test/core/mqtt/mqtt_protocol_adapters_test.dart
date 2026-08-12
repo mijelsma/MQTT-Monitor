@@ -348,8 +348,8 @@ void main() {
       username: 'user',
       password: 'secret',
       subscriptions: [
-        SubscriptionEntry(topic: 'sensors/+', qos: 1),
-        SubscriptionEntry(topic: 'alerts/#', qos: 2),
+        SubscriptionEntry(id: 'sensors', topic: 'sensors/+', qos: 1),
+        SubscriptionEntry(id: 'alerts', topic: 'alerts/#', qos: 2),
       ],
     );
     final fake = _FakeMqtt3Client();
@@ -382,8 +382,25 @@ void main() {
     expect(fake.publications.map((value) => value.qos), [mqtt3.MqttQos.atMostOnce, mqtt3.MqttQos.atLeastOnce, mqtt3.MqttQos.exactlyOnce]);
     expect(fake.publications[1].retain, isTrue);
 
-    expect(service.subscribe('dynamic/topic', qos: 2), isTrue);
-    expect(service.unsubscribe('dynamic/topic'), isTrue);
+    await brokers.update(
+      brokers.brokers.single.copyWith(
+        subscriptions: const [
+          SubscriptionEntry(id: 'sensors', topic: 'sensors/+', qos: 1),
+          SubscriptionEntry(id: 'alerts', topic: 'alerts/#', qos: 2),
+          SubscriptionEntry(id: 'dynamic', topic: 'dynamic/topic', qos: 2),
+        ],
+      ),
+    );
+    await settle();
+    await brokers.update(
+      brokers.brokers.single.copyWith(
+        subscriptions: const [
+          SubscriptionEntry(id: 'sensors', topic: 'sensors/+', qos: 1),
+          SubscriptionEntry(id: 'alerts', topic: 'alerts/#', qos: 2),
+        ],
+      ),
+    );
+    await settle();
     expect(fake.subscriptions.last, (topic: 'dynamic/topic', qos: mqtt3.MqttQos.exactlyOnce));
     expect(fake.unsubscriptions, ['dynamic/topic']);
   });
@@ -446,7 +463,7 @@ void main() {
     await brokers.update(
       broker.copyWith(
         host: 'second.invalid',
-        subscriptions: const [SubscriptionEntry(topic: 'new/#', qos: 1)],
+        subscriptions: const [SubscriptionEntry(id: 'new', topic: 'new/#', qos: 1)],
       ),
     );
     await settle();
