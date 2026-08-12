@@ -6,12 +6,16 @@ import '../../core/broker/broker_repository.dart';
 import '../../core/history/message_history_service.dart';
 import '../../core/monitor/topic_projection.dart';
 import '../../core/mqtt/session/mqtt_session_controller.dart';
+import '../../core/publishing/publish_command_service.dart';
+import '../../core/publishing/json_payload_validator.dart';
+import '../../core/publishing/qos_preferences_repository.dart';
+import '../../core/publishing/shortcut_repository.dart';
+import '../../core/publishing/template_resolver.dart';
+import '../../core/publishing/variable_repository.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
 import '../../core/state/keys/layout_keys.dart';
-import '../../core/state/keys/settings_keys.dart';
 import '../../core/update/app_update_service.dart';
-import '../../models/mqtt_qos_default.dart';
 import '../../shared/widgets/resizable_split.dart';
 import '../settings/settings_screen.dart';
 import '../settings/settings_section.dart';
@@ -36,26 +40,33 @@ class MonitorScreen extends StatelessWidget {
   /// Builds the providers and monitor workspace.
   @override
   Widget build(BuildContext context) {
-    final state = context.read<AppStateManager>();
-    state.load(SettingsKeys.defaultPublishQos);
-    state.load(SettingsKeys.lastUsedQos);
-    final initialPublishQos = state.read<MqttQosDefault>(SettingsKeys.defaultPublishQos).resolve(state.read(SettingsKeys.lastUsedQos));
+    final qosPreferences = context.read<QosPreferencesRepository>();
+    final initialPublishQos = qosPreferences.resolve(qosPreferences.defaultPublish);
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (ctx) => MonitorViewModel(mqttSession: ctx.read<MqttSessionController>(), state: ctx.read<AppStateManager>(), brokerRepository: ctx.read<BrokerRepository>()),
+          create: (ctx) => MonitorViewModel(
+            mqttSession: ctx.read<MqttSessionController>(),
+            state: ctx.read<AppStateManager>(),
+            brokerRepository: ctx.read<BrokerRepository>(),
+            shortcutRepository: ctx.read<ShortcutRepository>(),
+            variableRepository: ctx.read<VariableRepository>(),
+            publisher: ctx.read<PublishCommandService>(),
+            templateResolver: ctx.read<TemplateResolver>(),
+          ),
         ),
         ChangeNotifierProvider(
           create: (ctx) => MonitorWorkspaceController(projection: ctx.read<TopicProjection>(), history: ctx.read<MessageHistoryService>(), state: ctx.read<AppStateManager>()),
         ),
         ChangeNotifierProvider(create: (ctx) => DetailSidebarController(ctx.read<AppStateManager>())),
         ChangeNotifierProvider(
-          create: (_) => PublishDraftController(
+          create: (ctx) => PublishDraftController(
             initialQos: initialPublishQos,
+            jsonValidator: ctx.read<JsonPayloadValidator>(),
             onQosChanged: (qos) {
               // Record the pick so any "last used" default strategy
               // resolves to it next time.
-              state.write(SettingsKeys.lastUsedQos, qos);
+              qosPreferences.record(qos);
             },
           ),
         ),

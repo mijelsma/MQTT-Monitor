@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/mqtt/publish_result.dart';
+import '../../../core/publishing/publish_command.dart';
+import '../../../core/publishing/publish_command_result.dart';
 import '../../../generated/l10n.dart';
 import '../../../shared/widgets/feedback_badge.dart';
 import '../../../shared/widgets/payload_editor.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../monitor_viewmodel.dart';
+import '../publish_command_feedback.dart';
 import '../publish_draft_controller.dart';
 
 /// A panel for publishing MQTT messages to a topic.
@@ -22,44 +25,28 @@ class _PublishPanelState extends State<PublishPanel> with FeedbackMixin<PublishP
   // Handles the Publish button tap: validates input and attempts to publish via the ViewModel.
   Future<void> _publish() async {
     final draft = context.read<PublishDraftController>();
-    final topic = draft.topicController.text.trim();
-    if (topic.isEmpty) {
-      showFeedback(PublishFeedbackKind.emptyTopic);
-      return;
-    }
-
-    if (draft.format == PayloadFormat.json && draft.validationError != null) {
-      showFeedback(PublishFeedbackKind.invalidJson);
-      return;
-    }
-
     final vm = context.read<MonitorViewModel>();
-    if (!vm.isConnected) {
-      showFeedback(PublishFeedbackKind.offline);
-      return;
-    }
-
-    // Optimistically flip to "sending" so the user never sees a confident
-    // checkmark before the broker has had a chance to respond.
-    showFeedback(PublishFeedbackKind.sending, autoDismiss: const Duration(minutes: 1));
-
-    final future = vm.publish(topic, draft.payloadController.text, qos: draft.qos, retain: draft.retain);
-    if (future == null) {
-      showFeedback(PublishFeedbackKind.failed, detail: 'Client not connected.');
-      return;
-    }
-    final result = await future;
+    final result = await vm.execute(
+      PublishCommand(topicTemplate: draft.topicController.text, payload: draft.payloadController.text, payloadIsJson: draft.format == PayloadFormat.json, qos: draft.qos, retain: draft.retain),
+      onDispatch: () => showFeedback(PublishFeedbackKind.sending, autoDismiss: const Duration(minutes: 1)),
+    );
     if (!mounted) return;
-    _applyResult(result);
+    _applyCommandResult(result);
+  }
+
+  void _applyCommandResult(PublishCommandResult result) {
+    final transport = result.transportResult;
+    if (transport != null) {
+      _applyResult(transport);
+      return;
+    }
+    final feedback = feedbackForCommandFailure(context, result.failure!, result.detail);
+    showFeedback(feedback.kind, detail: feedback.detail);
   }
 
   void _applyResult(PublishResult result) {
     final info = feedbackForResult(context, result);
-    showFeedback(
-      info.kind,
-      detail: info.detail,
-      autoDismiss: result.isUnconfirmed ? const Duration(minutes: 1) : const Duration(seconds: 4),
-    );
+    showFeedback(info.kind, detail: info.detail, autoDismiss: result.isUnconfirmed ? const Duration(minutes: 1) : const Duration(seconds: 4));
   }
 
   @override
@@ -86,16 +73,7 @@ class _PublishPanelState extends State<PublishPanel> with FeedbackMixin<PublishP
           const SizedBox(height: 8),
 
           // ── Options bar: QoS · Retain · Publish ─────────────────────
-          _OptionsBar(
-            qos: draft.qos,
-            retain: draft.retain,
-            connected: connected,
-            feedback: feedback,
-            feedbackDetail: feedbackDetail,
-            onQosChanged: draft.setQos,
-            onRetainChanged: draft.setRetain,
-            onPublish: _publish,
-          ),
+          _OptionsBar(qos: draft.qos, retain: draft.retain, connected: connected, feedback: feedback, feedbackDetail: feedbackDetail, onQosChanged: draft.setQos, onRetainChanged: draft.setRetain, onPublish: _publish),
         ],
       ),
     );
@@ -170,10 +148,7 @@ class _OptionsBar extends StatelessWidget {
         const SizedBox(width: 8),
 
         // Feedback badge (overlays between options and button)
-        if (feedback != null) ...[
-          Flexible(child: _buildFeedbackBadge(context)),
-          const SizedBox(width: 8),
-        ],
+        if (feedback != null) ...[Flexible(child: _buildFeedbackBadge(context)), const SizedBox(width: 8)],
 
         const Spacer(),
 
@@ -334,14 +309,7 @@ class _PublishChipState extends State<_PublishChip> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (_busy)
-                SizedBox(
-                  width: 12,
-                  height: 12,
-                  child: CircularProgressIndicator(strokeWidth: 1.6, valueColor: AlwaysStoppedAnimation<Color>(fg)),
-                )
-              else
-                Icon(Icons.send_rounded, size: 13, color: fg),
+              if (_busy) SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 1.6, valueColor: AlwaysStoppedAnimation<Color>(fg))) else Icon(Icons.send_rounded, size: 13, color: fg),
               const SizedBox(width: 6),
               Text(
                 'Publish',

@@ -6,8 +6,8 @@ import 'package:mqtt_monitor/core/dashboard/dashboard_repository.dart';
 import 'package:mqtt_monitor/core/dashboard/dashboard_series_store.dart';
 import 'package:mqtt_monitor/core/dashboard/dashboard_value_extractor.dart';
 import 'package:mqtt_monitor/core/ingestion/ingested_message.dart';
-import 'package:mqtt_monitor/core/state/keys/settings_keys.dart';
 import 'package:mqtt_monitor/models/broker_entry.dart';
+import 'package:mqtt_monitor/models/environment_variable.dart';
 import 'package:mqtt_monitor/models/graph_card_model.dart';
 import 'package:mqtt_monitor/models/topic_node_value.dart';
 
@@ -31,7 +31,8 @@ void main() {
     series = DashboardSeriesStore(
       messages: messages.stream,
       repository: repository,
-      state: dependencies.state,
+      variables: dependencies.variables,
+      templateResolver: dependencies.templateResolver,
       extractor: DashboardValueExtractor(
         decoder: (source) {
           decodeCount++;
@@ -82,12 +83,13 @@ void main() {
   });
 
   test('variable changes clear only rerouted series and reject the old topic', () async {
-    await dependencies.state.write(SettingsKeys.environmentVariableValues, {'ID': 'one'});
+    await dependencies.variables.add(EnvironmentVariable(name: 'ID'));
+    await dependencies.variables.setValue('ID', 'one');
     await repository.setCards('a', [_card('variable', topic: r'sensor/${ID}')]);
     messages.add(_message('a', 'sensor/one', '1'));
     expect(series.currentSeries('a', 'variable'), hasLength(1));
 
-    await dependencies.state.write(SettingsKeys.environmentVariableValues, {'ID': 'two'});
+    await dependencies.variables.setValue('ID', 'two');
     expect(series.currentSeries('a', 'variable'), isEmpty);
     messages
       ..add(_message('a', 'sensor/one', '2'))

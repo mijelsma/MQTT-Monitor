@@ -8,8 +8,8 @@ import '../../core/dashboard/dashboard_repository.dart';
 import '../../core/dashboard/dashboard_series_policy.dart';
 import '../../core/dashboard/dashboard_series_store.dart';
 import '../../core/history/message_history_service.dart';
-import '../../core/state/app_state.dart';
-import '../../core/state/keys/settings_keys.dart';
+import '../../core/publishing/template_resolver.dart';
+import '../../core/publishing/variable_repository.dart';
 import '../../models/broker_entry.dart';
 import '../../models/dashboard_layout.dart';
 import '../../models/data_point.dart';
@@ -19,20 +19,22 @@ import 'dialogs/edit_graph_dialog.dart';
 
 /// Coordinates one dashboard route while repositories own its actual state.
 class DashboardViewModel extends ChangeNotifier {
-  DashboardViewModel({required DashboardRepository repository, required DashboardSeriesStore seriesStore, required AppStateManager state, required this.brokerId, required MessageHistoryService historyService, required BrokerRepository brokerRepository})
+  DashboardViewModel({required DashboardRepository repository, required DashboardSeriesStore seriesStore, required VariableRepository variableRepository, required TemplateResolver templateResolver, required this.brokerId, required MessageHistoryService historyService, required BrokerRepository brokerRepository})
     : _repository = repository,
       _seriesStore = seriesStore,
-      _state = state,
+      _variables = variableRepository,
+      _templateResolver = templateResolver,
       _historyService = historyService,
       _brokers = brokerRepository {
     _repository.addListener(_onConfigurationChanged);
-    _state.addListener(_onStateChanged);
+    _variables.addListener(_onStateChanged);
     _brokers.addListener(_onConfigurationChanged);
   }
 
   final DashboardRepository _repository;
   final DashboardSeriesStore _seriesStore;
-  final AppStateManager _state;
+  final VariableRepository _variables;
+  final TemplateResolver _templateResolver;
   final MessageHistoryService _historyService;
   final BrokerRepository _brokers;
   final String brokerId;
@@ -45,7 +47,7 @@ class DashboardViewModel extends ChangeNotifier {
 
   ValueListenable<List<DataPoint>> seriesFor(String cardId) => _seriesStore.seriesFor(brokerId, cardId);
 
-  Map<String, String> get variableValues => _state.read(SettingsKeys.environmentVariableValues);
+  Map<String, String> get variableValues => _variables.valuesForBroker(brokerId);
 
   List<DashboardLayout> get layouts => _repository.layouts.where((layout) => layout.isGlobal || layout.brokerIds.contains(brokerId)).toList(growable: false);
 
@@ -59,8 +61,7 @@ class DashboardViewModel extends ChangeNotifier {
   List<BrokerEntry> get brokers => _brokers.brokers;
 
   List<EnvironmentVariable> get environmentVariables {
-    final all = _state.read(SettingsKeys.environmentVariables);
-    return all.where((variable) => variable.isGlobal || variable.brokerIds.contains(brokerId)).toList(growable: false);
+    return _variables.variablesForBroker(brokerId);
   }
 
   void removeCard(String cardId) {
@@ -111,7 +112,7 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   void clearDashboardHistory() {
-    final topics = cards.map((card) => resolveDashboardTopic(card.topic, variableValues)).toSet();
+    final topics = cards.map((card) => _templateResolver.resolve(card.topic, variableValues)).where((resolution) => resolution.isComplete).map((resolution) => resolution.value).toSet();
     _historyService.clearTopics(topics);
     _seriesStore.clearCards(brokerId, cards.map((card) => card.id));
   }
@@ -169,8 +170,7 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   void setVariableValue(String name, String value) {
-    final values = {...variableValues, name: value};
-    unawaited(_state.write(SettingsKeys.environmentVariableValues, values));
+    unawaited(_variables.setValue(name, value));
   }
 
   void _onConfigurationChanged() => notifyListeners();
@@ -180,7 +180,7 @@ class DashboardViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _repository.removeListener(_onConfigurationChanged);
-    _state.removeListener(_onStateChanged);
+    _variables.removeListener(_onStateChanged);
     _brokers.removeListener(_onConfigurationChanged);
     super.dispose();
   }

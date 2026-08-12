@@ -13,8 +13,9 @@ import '../../support/test_dependencies.dart';
 
 void main() {
   final state = AppStateManager.instance;
+  late TestDependencies dependencies;
 
-  setUp(() async => TestDependencies.create());
+  setUp(() async => dependencies = await TestDependencies.create());
 
   Future<SubscriptionEntry?> openDialog(
     WidgetTester tester, {
@@ -26,8 +27,11 @@ void main() {
   }) async {
     SubscriptionEntry? result;
     await tester.pumpWidget(
-      ChangeNotifierProvider<AppStateManager>.value(
-        value: state,
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<AppStateManager>.value(value: state),
+          ChangeNotifierProvider.value(value: dependencies.qosPreferences),
+        ],
         child: MaterialApp(
           theme: themeLight,
           localizationsDelegates: const [
@@ -68,8 +72,11 @@ void main() {
   ) async {
     SubscriptionEntry? result;
     await tester.pumpWidget(
-      ChangeNotifierProvider<AppStateManager>.value(
-        value: state,
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<AppStateManager>.value(value: state),
+          ChangeNotifierProvider.value(value: dependencies.qosPreferences),
+        ],
         child: MaterialApp(
           theme: themeLight,
           localizationsDelegates: const [
@@ -145,8 +152,11 @@ void main() {
     );
     SubscriptionEntry? result;
     await tester.pumpWidget(
-      ChangeNotifierProvider<AppStateManager>.value(
-        value: state,
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<AppStateManager>.value(value: state),
+          ChangeNotifierProvider.value(value: dependencies.qosPreferences),
+        ],
         child: MaterialApp(
           theme: themeLight,
           localizationsDelegates: const [

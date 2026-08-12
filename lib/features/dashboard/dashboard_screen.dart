@@ -5,6 +5,8 @@ import '../../core/broker/broker_repository.dart';
 import '../../core/dashboard/dashboard_repository.dart';
 import '../../core/dashboard/dashboard_series_store.dart';
 import '../../core/history/message_history_service.dart';
+import '../../core/publishing/template_resolver.dart';
+import '../../core/publishing/variable_repository.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
 import '../../models/dashboard_layout.dart';
@@ -33,7 +35,7 @@ class GraphDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (ctx) => DashboardViewModel(repository: ctx.read<DashboardRepository>(), seriesStore: ctx.read<DashboardSeriesStore>(), state: ctx.read<AppStateManager>(), brokerId: brokerId, historyService: ctx.read<MessageHistoryService>(), brokerRepository: ctx.read<BrokerRepository>()),
+      create: (ctx) => DashboardViewModel(repository: ctx.read<DashboardRepository>(), seriesStore: ctx.read<DashboardSeriesStore>(), variableRepository: ctx.read<VariableRepository>(), templateResolver: ctx.read<TemplateResolver>(), brokerId: brokerId, historyService: ctx.read<MessageHistoryService>(), brokerRepository: ctx.read<BrokerRepository>()),
       child: _DashboardScaffold(brokerName: brokerName),
     );
   }

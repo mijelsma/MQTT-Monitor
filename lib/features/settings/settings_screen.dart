@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import '../../core/broker/broker_repository.dart';
 import '../../core/dashboard/dashboard_repository.dart';
 import '../../core/history/message_history_service.dart';
+import '../../core/publishing/shortcut_repository.dart';
+import '../../core/publishing/qos_preferences_repository.dart';
+import '../../core/publishing/variable_repository.dart';
 import '../../core/state/app_state.dart';
 import '../../generated/l10n.dart';
 import '../../theme/app_colors.dart';
@@ -46,7 +49,15 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (ctx) => SettingsViewModel(state: ctx.read<AppStateManager>(), brokerRepository: ctx.read<BrokerRepository>(), dashboardRepository: ctx.read<DashboardRepository>(), historyService: ctx.read<MessageHistoryService>()),
+      create: (ctx) => SettingsViewModel(
+        state: ctx.read<AppStateManager>(),
+        brokerRepository: ctx.read<BrokerRepository>(),
+        shortcutRepository: ctx.read<ShortcutRepository>(),
+        variableRepository: ctx.read<VariableRepository>(),
+        qosPreferences: ctx.read<QosPreferencesRepository>(),
+        dashboardRepository: ctx.read<DashboardRepository>(),
+        historyService: ctx.read<MessageHistoryService>(),
+      ),
       child: Builder(
         builder: (context) {
           final vm = context.watch<SettingsViewModel>();

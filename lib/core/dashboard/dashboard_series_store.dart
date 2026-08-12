@@ -4,33 +4,35 @@ import 'package:flutter/foundation.dart';
 
 import '../../models/data_point.dart';
 import '../ingestion/ingested_message.dart';
-import '../state/app_state.dart';
-import '../state/keys/settings_keys.dart';
+import '../publishing/template_resolver.dart';
+import '../publishing/variable_repository.dart';
 import 'dashboard_repository.dart';
 import 'dashboard_value_extractor.dart';
 
-final _variablePlaceholderPattern = RegExp(r'\$\{([^}]+)\}');
-
 /// Owns all bounded, process-lifetime dashboard series and routes messages.
 class DashboardSeriesStore {
-  DashboardSeriesStore({required Stream<IngestedMessage> messages, required DashboardRepository repository, required AppStateManager state, DashboardValueExtractor? extractor}) : _messages = messages, _repository = repository, _state = state, _extractor = extractor ?? DashboardValueExtractor();
+  DashboardSeriesStore({required Stream<IngestedMessage> messages, required DashboardRepository repository, required VariableRepository variables, required TemplateResolver templateResolver, DashboardValueExtractor? extractor})
+    : _messages = messages,
+      _repository = repository,
+      _variables = variables,
+      _templateResolver = templateResolver,
+      _extractor = extractor ?? DashboardValueExtractor();
 
   final Stream<IngestedMessage> _messages;
   final DashboardRepository _repository;
-  final AppStateManager _state;
+  final VariableRepository _variables;
+  final TemplateResolver _templateResolver;
   final DashboardValueExtractor _extractor;
 
   final Map<_SeriesKey, ValueNotifier<List<DataPoint>>> _signals = {};
   final Map<_TopicKey, List<_Route>> _routes = {};
   final Map<_SeriesKey, _RouteFingerprint> _fingerprints = {};
   StreamSubscription<IngestedMessage>? _subscription;
-  Map<String, String> _variableValues = const {};
 
   void initialize() {
     if (_subscription != null) return;
-    _variableValues = Map.unmodifiable(_state.read(SettingsKeys.environmentVariableValues));
     _repository.addListener(_onConfigurationChanged);
-    _state.addListener(_onStateChanged);
+    _variables.addListener(_onVariablesChanged);
     _rebuildRoutes();
     _subscription = _messages.listen(_onMessage);
   }
@@ -89,12 +91,7 @@ class DashboardSeriesStore {
 
   void _onConfigurationChanged() => _rebuildRoutes();
 
-  void _onStateChanged() {
-    final values = _state.read(SettingsKeys.environmentVariableValues);
-    if (mapEquals(values, _variableValues)) return;
-    _variableValues = Map.unmodifiable(values);
-    _rebuildRoutes();
-  }
+  void _onVariablesChanged() => _rebuildRoutes();
 
   void _rebuildRoutes() {
     final nextRoutes = <_TopicKey, List<_Route>>{};
@@ -102,9 +99,11 @@ class DashboardSeriesStore {
     final liveKeys = <_SeriesKey>{};
 
     for (final broker in _repositoryBrokerIds()) {
+      final variableValues = _variables.valuesForBroker(broker);
       for (final card in _repository.cardsForBroker(broker)) {
         final seriesKey = _SeriesKey(broker, card.id);
-        final topic = resolveDashboardTopic(card.topic, _variableValues);
+        final resolution = _templateResolver.resolve(card.topic, variableValues);
+        final topic = resolution.value;
         final fingerprint = _RouteFingerprint(topic, card.jsonKeyPath, card.maxDataPoints);
         liveKeys.add(seriesKey);
         final signal = _signals.putIfAbsent(seriesKey, () => ValueNotifier<List<DataPoint>>(const []));
@@ -115,7 +114,9 @@ class DashboardSeriesStore {
           signal.value = List.unmodifiable(signal.value.sublist(signal.value.length - card.maxDataPoints));
         }
         nextFingerprints[seriesKey] = fingerprint;
-        nextRoutes.putIfAbsent(_TopicKey(broker, topic), () => []).add(_Route(seriesKey, card.jsonKeyPath, card.maxDataPoints));
+        if (resolution.isComplete) {
+          nextRoutes.putIfAbsent(_TopicKey(broker, topic), () => []).add(_Route(seriesKey, card.jsonKeyPath, card.maxDataPoints));
+        }
       }
     }
 
@@ -138,7 +139,7 @@ class DashboardSeriesStore {
 
   Future<void> dispose() async {
     _repository.removeListener(_onConfigurationChanged);
-    _state.removeListener(_onStateChanged);
+    _variables.removeListener(_onVariablesChanged);
     await _subscription?.cancel();
     _subscription = null;
     for (final signal in _signals.values) {
@@ -146,10 +147,6 @@ class DashboardSeriesStore {
     }
     _signals.clear();
   }
-}
-
-String resolveDashboardTopic(String template, Map<String, String> values) {
-  return template.replaceAllMapped(_variablePlaceholderPattern, (match) => values[match.group(1)!] ?? match.group(0)!);
 }
 
 class _SeriesKey {

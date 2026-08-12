@@ -6,6 +6,9 @@ import '../../core/dashboard/dashboard_repository.dart';
 import '../../core/dashboard/dashboard_series_policy.dart';
 import '../../core/history/history_policy_rules.dart';
 import '../../core/history/message_history_service.dart';
+import '../../core/publishing/shortcut_repository.dart';
+import '../../core/publishing/qos_preferences_repository.dart';
+import '../../core/publishing/variable_repository.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
 import '../../core/state/keys/settings_keys.dart';
@@ -24,14 +27,27 @@ import '../../models/publish_shortcut.dart';
 /// Coordinates settings navigation and delegates data to its owning stores.
 class SettingsViewModel extends ChangeNotifier {
   /// Creates the settings controller and observes app and broker state.
-  SettingsViewModel({required AppStateManager state, required BrokerRepository brokerRepository, DashboardRepository? dashboardRepository, MessageHistoryService? historyService}) : _state = state, _brokers = brokerRepository, _dashboard = dashboardRepository, _historyService = historyService {
+  SettingsViewModel({required AppStateManager state, required BrokerRepository brokerRepository, required ShortcutRepository shortcutRepository, required VariableRepository variableRepository, required QosPreferencesRepository qosPreferences, DashboardRepository? dashboardRepository, MessageHistoryService? historyService})
+    : _state = state,
+      _brokers = brokerRepository,
+      _shortcuts = shortcutRepository,
+      _variables = variableRepository,
+      _qosPreferences = qosPreferences,
+      _dashboard = dashboardRepository,
+      _historyService = historyService {
     _state.addListener(_onStateChanged);
     _brokers.addListener(_onStateChanged);
     _dashboard?.addListener(_onStateChanged);
+    _shortcuts.addListener(_onStateChanged);
+    _variables.addListener(_onStateChanged);
+    _qosPreferences.addListener(_onStateChanged);
   }
 
   final AppStateManager _state;
   final BrokerRepository _brokers;
+  final ShortcutRepository _shortcuts;
+  final VariableRepository _variables;
+  final QosPreferencesRepository _qosPreferences;
   final DashboardRepository? _dashboard;
   final MessageHistoryService? _historyService;
 
@@ -133,10 +149,16 @@ class SettingsViewModel extends ChangeNotifier {
       // The broker repository already cleared the shared preference store.
       await _state.resetAll(clearPreferences: false);
       _dashboard?.resetAfterPreferencesClear();
+      await _shortcuts.resetAfterPreferencesClear();
+      await _variables.resetAfterPreferencesClear();
+      await _qosPreferences.resetAfterPreferencesClear();
       await _state.write(AppKeys.activeSettingsSection, selectedSection);
       _historyService?.clear();
       await _brokers.initialize();
       await _dashboard?.initialize();
+      await _variables.initialize();
+      await _shortcuts.initialize();
+      await _qosPreferences.initialize();
       return brokerReset;
     } on Object {
       return (succeeded: false, cleanupFailures: brokerReset.cleanupFailures);
@@ -148,26 +170,26 @@ class SettingsViewModel extends ChangeNotifier {
 
   // ── Default QoS levels ───────────────────────────────────────────────
 
-  MqttQosDefault get defaultPublishQos => _state.read(SettingsKeys.defaultPublishQos);
-  void setDefaultPublishQos(MqttQosDefault value) => _state.write(SettingsKeys.defaultPublishQos, value);
+  MqttQosDefault get defaultPublishQos => _qosPreferences.defaultPublish;
+  void setDefaultPublishQos(MqttQosDefault value) => _qosPreferences.setDefaultPublish(value);
 
-  MqttQosDefault get defaultShortcutQos => _state.read(SettingsKeys.defaultShortcutQos);
-  void setDefaultShortcutQos(MqttQosDefault value) => _state.write(SettingsKeys.defaultShortcutQos, value);
+  MqttQosDefault get defaultShortcutQos => _qosPreferences.defaultShortcut;
+  void setDefaultShortcutQos(MqttQosDefault value) => _qosPreferences.setDefaultShortcut(value);
 
-  MqttQosDefault get defaultSubscribeQos => _state.read(SettingsKeys.defaultSubscribeQos);
-  void setDefaultSubscribeQos(MqttQosDefault value) => _state.write(SettingsKeys.defaultSubscribeQos, value);
+  MqttQosDefault get defaultSubscribeQos => _qosPreferences.defaultSubscribe;
+  void setDefaultSubscribeQos(MqttQosDefault value) => _qosPreferences.setDefaultSubscribe(value);
 
   /// The shared most-recently-picked QoS. The "last used" option on the
   /// default-QoS pickers resolves to this value.
-  int get lastUsedQos => _state.read(SettingsKeys.lastUsedQos);
+  int get lastUsedQos => _qosPreferences.lastUsed;
 
   /// Records a new QoS value the user just picked, so the next
   /// `defaultXxxQos.lastUsed` resolution picks it up. Clamped to 0–2.
-  void recordQos(int value) => _state.write(SettingsKeys.lastUsedQos, value.clamp(0, 2));
+  void recordQos(int value) => _qosPreferences.record(value);
 
   /// Resolves a [MqttQosDefault] to an actual MQTT QoS value (0, 1, or 2),
   /// honoring the "last used" strategy when applicable.
-  int resolveDefaultQos(MqttQosDefault strategy) => strategy.resolve(lastUsedQos);
+  int resolveDefaultQos(MqttQosDefault strategy) => _qosPreferences.resolve(strategy);
 
   List<DashboardLayout> get layouts => _dashboard?.layouts ?? const [];
 
@@ -197,71 +219,27 @@ class SettingsViewModel extends ChangeNotifier {
 
   // ── Environment variables ─────────────────────────────────────────────
 
-  List<EnvironmentVariable> get environmentVariables => _state.read(SettingsKeys.environmentVariables);
+  List<EnvironmentVariable> get environmentVariables => _variables.variables;
 
-  void addEnvironmentVariable(EnvironmentVariable variable) {
-    _state.write(SettingsKeys.environmentVariables, [...environmentVariables, variable]);
-  }
+  Future<void> addEnvironmentVariable(EnvironmentVariable variable) => _variables.add(variable);
 
-  void updateEnvironmentVariable(String oldName, EnvironmentVariable updated) {
-    final list = [...environmentVariables];
-    final i = list.indexWhere((v) => v.name == oldName);
-    if (i != -1) {
-      list[i] = updated;
-      // If name changed, migrate the stored value.
-      if (oldName != updated.name) {
-        final values = Map<String, String>.from(_state.read(SettingsKeys.environmentVariableValues));
-        if (values.containsKey(oldName)) {
-          values[updated.name] = values.remove(oldName)!;
-          _state.write(SettingsKeys.environmentVariableValues, values);
-        }
-      }
-    }
-    _state.write(SettingsKeys.environmentVariables, list);
-  }
+  Future<void> updateEnvironmentVariable(String oldName, EnvironmentVariable updated) => _variables.update(oldName, updated);
 
-  void deleteEnvironmentVariable(String name) {
-    _state.write(SettingsKeys.environmentVariables, environmentVariables.where((v) => v.name != name).toList());
-    final values = Map<String, String>.from(_state.read(SettingsKeys.environmentVariableValues));
-    values.remove(name);
-    _state.write(SettingsKeys.environmentVariableValues, values);
-  }
+  Future<void> deleteEnvironmentVariable(String name) => _variables.delete(name);
 
-  void reorderEnvironmentVariables(int oldIndex, int newIndex) {
-    final list = [...environmentVariables];
-    if (newIndex > oldIndex) newIndex--;
-    final item = list.removeAt(oldIndex);
-    list.insert(newIndex, item);
-    _state.write(SettingsKeys.environmentVariables, list);
-  }
+  Future<void> reorderEnvironmentVariables(int oldIndex, int newIndex) => _variables.reorder(oldIndex, newIndex);
 
   // ── Shortcuts ─────────────────────────────────────────────────────────
 
-  List<PublishShortcut> get shortcuts => _state.read(SettingsKeys.shortcuts);
+  List<PublishShortcut> get shortcuts => _shortcuts.shortcuts;
 
-  void addShortcut(PublishShortcut shortcut) {
-    _state.write(SettingsKeys.shortcuts, [...shortcuts, shortcut]);
-  }
+  Future<void> addShortcut(PublishShortcut shortcut) => _shortcuts.add(shortcut);
 
-  void updateShortcut(int index, PublishShortcut updated) {
-    final list = [...shortcuts];
-    if (index >= 0 && index < list.length) list[index] = updated;
-    _state.write(SettingsKeys.shortcuts, list);
-  }
+  Future<void> updateShortcut(PublishShortcut updated) => _shortcuts.update(updated);
 
-  void deleteShortcut(int index) {
-    final list = [...shortcuts];
-    if (index >= 0 && index < list.length) list.removeAt(index);
-    _state.write(SettingsKeys.shortcuts, list);
-  }
+  Future<void> deleteShortcut(String id) => _shortcuts.delete(id);
 
-  void reorderShortcuts(int oldIndex, int newIndex) {
-    final list = [...shortcuts];
-    if (newIndex > oldIndex) newIndex--;
-    final item = list.removeAt(oldIndex);
-    list.insert(newIndex, item);
-    _state.write(SettingsKeys.shortcuts, list);
-  }
+  Future<void> reorderShortcuts(int oldIndex, int newIndex) => _shortcuts.reorder(oldIndex, newIndex);
 
   // Theme
 
@@ -328,6 +306,9 @@ class SettingsViewModel extends ChangeNotifier {
     _state.removeListener(_onStateChanged);
     _brokers.removeListener(_onStateChanged);
     _dashboard?.removeListener(_onStateChanged);
+    _shortcuts.removeListener(_onStateChanged);
+    _variables.removeListener(_onStateChanged);
+    _qosPreferences.removeListener(_onStateChanged);
     super.dispose();
   }
 }

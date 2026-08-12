@@ -30,7 +30,8 @@ void main() {
       final series = DashboardSeriesStore(
         messages: messages.stream,
         repository: repository,
-        state: dependencies.state,
+        variables: dependencies.variables,
+        templateResolver: dependencies.templateResolver,
         extractor: DashboardValueExtractor(
           decoder: (source) {
             decodes++;

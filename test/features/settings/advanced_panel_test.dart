@@ -18,9 +18,10 @@ import '../../support/test_dependencies.dart';
 void main() {
   final state = AppStateManager.instance;
   late BrokerRepository brokers;
+  late TestDependencies dependencies;
 
   setUp(() async {
-    final dependencies = await TestDependencies.create();
+    dependencies = await TestDependencies.create();
     brokers = dependencies.brokers;
   });
 
@@ -28,6 +29,9 @@ void main() {
     final viewModel = SettingsViewModel(
       state: state,
       brokerRepository: brokers,
+      shortcutRepository: dependencies.shortcuts,
+      variableRepository: dependencies.variables,
+      qosPreferences: dependencies.qosPreferences,
     );
     addTearDown(viewModel.dispose);
     await tester.pumpWidget(

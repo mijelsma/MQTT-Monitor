@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/state/app_state.dart';
-import '../../../core/state/keys/settings_keys.dart';
+import '../../../core/mqtt/mqtt_topic_name.dart';
+import '../../../core/publishing/json_payload_validator.dart';
+import '../../../core/publishing/qos_preferences_repository.dart';
+import '../../../core/publishing/template_resolver.dart';
 import '../../../generated/l10n.dart';
 import '../../../models/broker_entry.dart';
-import '../../../models/mqtt_qos_default.dart';
 import '../../../models/publish_shortcut.dart';
-import '../../../shared/format_helpers.dart';
 import '../../../shared/widgets/color_picker_field.dart';
 import '../../../shared/widgets/payload_editor.dart';
 import '../../../shared/widgets/scope_picker.dart';
@@ -74,19 +74,17 @@ class _ShortcutDialogState extends State<_ShortcutDialog> {
     } else {
       // Fall back to the user's default-shortcut-QoS setting, honoring
       // the "last used" strategy if selected.
-      final state = context.read<AppStateManager>();
-      state.load(SettingsKeys.defaultShortcutQos);
-      state.load(SettingsKeys.lastUsedQos);
-      final strategy = state.read<MqttQosDefault>(SettingsKeys.defaultShortcutQos);
-      _qos = strategy.resolve(state.read(SettingsKeys.lastUsedQos));
+      final qosPreferences = context.read<QosPreferencesRepository>();
+      _qos = qosPreferences.resolve(qosPreferences.defaultShortcut);
     }
     _retain = widget.shortcut?.retain ?? false;
-    _color = widget.shortcut?.displayColor ?? AppColors.brokerColorOptions.first;
+    _color = widget.shortcut == null ? AppColors.brokerColorOptions.first : Color(widget.shortcut!.colorValue);
     _isGlobal = widget.shortcut?.isGlobal ?? true;
     _selectedBrokerIds = {...?widget.shortcut?.brokerIds};
     _format = (widget.shortcut?.payloadFormatIsJson ?? false) ? PayloadFormat.json : PayloadFormat.text;
     _payloadController.highlightJson = _format == PayloadFormat.json;
     _payloadController.addListener(_onPayloadChanged);
+    _validationError = _format == PayloadFormat.json ? context.read<JsonPayloadValidator>().validate(_payloadController.text) : null;
   }
 
   @override
@@ -99,7 +97,7 @@ class _ShortcutDialogState extends State<_ShortcutDialog> {
 
   void _onPayloadChanged() {
     if (_format == PayloadFormat.json) {
-      final error = validateJson(_payloadController.text);
+      final error = context.read<JsonPayloadValidator>().validate(_payloadController.text);
       if (error != _validationError) setState(() => _validationError = error);
     } else if (_validationError != null) {
       setState(() => _validationError = null);
@@ -108,7 +106,21 @@ class _ShortcutDialogState extends State<_ShortcutDialog> {
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    Navigator.pop(context, PublishShortcut(name: _nameController.text.trim(), topic: _topicController.text.trim(), payload: _payloadController.text, payloadFormatIsJson: _format == PayloadFormat.json, qos: _qos, retain: _retain, color: _color.toARGB32(), brokerIds: _isGlobal ? [] : _selectedBrokerIds.toList()));
+    if (_format == PayloadFormat.json && _validationError != null) return;
+    Navigator.pop(
+      context,
+      PublishShortcut(
+        id: widget.shortcut?.id ?? 'shortcut_${DateTime.now().microsecondsSinceEpoch}',
+        name: _nameController.text.trim(),
+        topic: _topicController.text.trim(),
+        payload: _payloadController.text,
+        payloadFormatIsJson: _format == PayloadFormat.json,
+        qos: _qos,
+        retain: _retain,
+        colorValue: _color.toARGB32(),
+        brokerIds: _isGlobal ? [] : _selectedBrokerIds.toList(),
+      ),
+    );
   }
 
   @override
@@ -134,7 +146,23 @@ class _ShortcutDialogState extends State<_ShortcutDialog> {
           children: [
             UiField(label: s.shortcutDialogFieldName, controller: _nameController, hint: 'e.g. Turn on lights', validator: (v) => (v == null || v.trim().isEmpty) ? s.shortcutDialogValidateName : null),
             const VSpacer(14),
-            UiField(label: s.shortcutDialogFieldTopic, controller: _topicController, hint: 'e.g. home/lights/toggle', validator: (v) => (v == null || v.trim().isEmpty) ? s.shortcutDialogValidateTopic : null),
+            UiField(
+              label: s.shortcutDialogFieldTopic,
+              controller: _topicController,
+              hint: 'e.g. home/lights/toggle',
+              validator: (value) {
+                final topic = value?.trim() ?? '';
+                if (topic.isEmpty) return s.shortcutDialogValidateTopic;
+                final resolver = context.read<TemplateResolver>();
+                if (resolver.validateTemplate(topic) != null) {
+                  return s.shortcutDialogInvalidTemplate;
+                }
+                if (MqttTopicName.validate(resolver.validationTopic(topic)) != null) {
+                  return s.shortcutDialogInvalidTopic;
+                }
+                return null;
+              },
+            ),
             const VSpacer(14),
             SizedBox(
               height: 180,
@@ -164,7 +192,7 @@ class _ShortcutDialogState extends State<_ShortcutDialog> {
                 setState(() => _qos = v);
                 // Record the pick so the "last used" default strategy
                 // picks it up the next time a shortcut is added.
-                context.read<AppStateManager>().write(SettingsKeys.lastUsedQos, v);
+                context.read<QosPreferencesRepository>().record(v);
               },
             ),
             const VSpacer(8),

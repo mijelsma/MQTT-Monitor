@@ -1,12 +1,12 @@
 import 'package:flutter/widgets.dart';
 
-import '../../shared/format_helpers.dart';
+import '../../core/publishing/json_payload_validator.dart';
 import '../../shared/widgets/payload_editor.dart';
 
 /// Monitor-scoped state for the Send Message form. It deliberately lives
 /// above the collapsible sidebar so layout changes cannot dispose the draft.
 class PublishDraftController extends ChangeNotifier {
-  PublishDraftController({int initialQos = 0, this.onQosChanged}) {
+  PublishDraftController({int initialQos = 0, this.onQosChanged, JsonPayloadValidator jsonValidator = const JsonPayloadValidator()}) : _jsonValidator = jsonValidator {
     _qos = initialQos.clamp(0, 2);
     payloadController.addListener(_onPayloadChanged);
   }
@@ -18,6 +18,7 @@ class PublishDraftController extends ChangeNotifier {
   /// settings layer can record it as the most-recently-picked value
   /// (and the "last used" default strategy resolves to it next time).
   final ValueChanged<int>? onQosChanged;
+  final JsonPayloadValidator _jsonValidator;
 
   late int _qos;
   bool _retain = false;
@@ -56,7 +57,7 @@ class PublishDraftController extends ChangeNotifier {
   }
 
   bool _updateValidation() {
-    final next = _format == PayloadFormat.json ? validateJson(payloadController.text) : null;
+    final next = _format == PayloadFormat.json ? _jsonValidator.validate(payloadController.text) : null;
     if (next == _validationError) return false;
     _validationError = next;
     return true;

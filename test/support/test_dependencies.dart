@@ -2,6 +2,14 @@ import 'package:mqtt_monitor/core/broker/broker_repository.dart';
 import 'package:mqtt_monitor/core/broker/certificate_storage.dart';
 import 'package:mqtt_monitor/core/broker/credential_store.dart';
 import 'package:mqtt_monitor/core/state/app_state.dart';
+import 'package:mqtt_monitor/core/mqtt/session/mqtt_connection_intent_store.dart';
+import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
+import 'package:mqtt_monitor/core/publishing/publish_command_service.dart';
+import 'package:mqtt_monitor/core/publishing/json_payload_validator.dart';
+import 'package:mqtt_monitor/core/publishing/qos_preferences_repository.dart';
+import 'package:mqtt_monitor/core/publishing/shortcut_repository.dart';
+import 'package:mqtt_monitor/core/publishing/template_resolver.dart';
+import 'package:mqtt_monitor/core/publishing/variable_repository.dart';
 import 'package:mqtt_monitor/core/storage/shared_preferences_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,11 +20,23 @@ class TestDependencies {
     required this.state,
     required this.brokers,
     required this.preferences,
+    required this.mqttSession,
+    required this.publisher,
+    required this.shortcuts,
+    required this.variables,
+    required this.templateResolver,
+    required this.qosPreferences,
   });
 
   final AppStateManager state;
   final BrokerRepository brokers;
   final SharedPreferencesStore preferences;
+  final MqttSessionController mqttSession;
+  final PublishCommandService publisher;
+  final ShortcutRepository shortcuts;
+  final VariableRepository variables;
+  final TemplateResolver templateResolver;
+  final QosPreferencesRepository qosPreferences;
 
   /// Resets mock preferences and initializes app and broker state.
   static Future<TestDependencies> create() async {
@@ -31,10 +51,39 @@ class TestDependencies {
       certificates: _MemoryCertificateStorage(),
     );
     await brokers.initialize();
+    const templateResolver = TemplateResolver();
+    final mqttSession = MqttSessionController(
+      state,
+      brokers,
+      MqttConnectionIntentStore(preferences),
+    );
+    final publisher = PublishCommandService(mqttSession, templateResolver);
+    const jsonValidator = JsonPayloadValidator();
+    final qosPreferences = QosPreferencesRepository(preferences);
+    final variables = VariableRepository(
+      preferences,
+      brokers,
+      templateResolver,
+    );
+    final shortcuts = ShortcutRepository(
+      preferences,
+      brokers,
+      templateResolver,
+      jsonValidator,
+    );
+    await qosPreferences.initialize();
+    await variables.initialize();
+    await shortcuts.initialize();
     return TestDependencies(
       state: state,
       brokers: brokers,
       preferences: preferences,
+      mqttSession: mqttSession,
+      publisher: publisher,
+      shortcuts: shortcuts,
+      variables: variables,
+      templateResolver: templateResolver,
+      qosPreferences: qosPreferences,
     );
   }
 }

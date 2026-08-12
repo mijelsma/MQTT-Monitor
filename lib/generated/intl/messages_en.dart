@@ -377,6 +377,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "publishBadJson": MessageLookupByLibrary.simpleMessage("Bad JSON"),
     "publishDelivered": MessageLookupByLibrary.simpleMessage("Delivered"),
     "publishFailed": MessageLookupByLibrary.simpleMessage("Failed"),
+    "publishInvalidQos": MessageLookupByLibrary.simpleMessage(
+      "QoS must be 0, 1, or 2",
+    ),
+    "publishInvalidTemplate": MessageLookupByLibrary.simpleMessage(
+      "Put the variable name inside dollar-sign braces",
+    ),
+    "publishInvalidTopic": MessageLookupByLibrary.simpleMessage(
+      "Enter a valid MQTT topic name",
+    ),
+    "publishMissingVariables": MessageLookupByLibrary.simpleMessage(
+      "Set every topic variable before publishing",
+    ),
     "publishNoTopic": MessageLookupByLibrary.simpleMessage("No topic"),
     "publishOffline": MessageLookupByLibrary.simpleMessage("Offline"),
     "publishPrettifyJson": MessageLookupByLibrary.simpleMessage(
@@ -420,6 +432,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "shortcutDialogFieldColor": MessageLookupByLibrary.simpleMessage("Color"),
     "shortcutDialogFieldName": MessageLookupByLibrary.simpleMessage("Name"),
     "shortcutDialogFieldTopic": MessageLookupByLibrary.simpleMessage("Topic"),
+    "shortcutDialogInvalidTemplate": MessageLookupByLibrary.simpleMessage(
+      "Put the variable name inside dollar-sign braces",
+    ),
+    "shortcutDialogInvalidTopic": MessageLookupByLibrary.simpleMessage(
+      "Enter a valid MQTT topic name",
+    ),
     "shortcutDialogRetain": MessageLookupByLibrary.simpleMessage("Retain"),
     "shortcutDialogRetainSubtitle": MessageLookupByLibrary.simpleMessage(
       "Broker stores the message for new subscribers",

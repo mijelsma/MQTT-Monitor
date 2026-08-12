@@ -23,6 +23,9 @@ void main() {
     final viewModel = SettingsViewModel(
       state: dependencies.state,
       brokerRepository: dependencies.brokers,
+      shortcutRepository: dependencies.shortcuts,
+      variableRepository: dependencies.variables,
+      qosPreferences: dependencies.qosPreferences,
       dashboardRepository: dashboard,
     );
 

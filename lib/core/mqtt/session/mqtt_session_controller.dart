@@ -15,6 +15,7 @@ import '../mqtt_message.dart';
 import '../mqtt_protocol_adapter.dart';
 import '../mqtt_protocol_event.dart';
 import '../publish_result.dart';
+import '../../publishing/publish_transport.dart';
 import 'mqtt_connection_intent_store.dart';
 import 'mqtt_session_state.dart';
 import 'mqtt_session_target.dart';
@@ -23,7 +24,7 @@ import 'mqtt_subscription_reconciler.dart';
 const _unchanged = Object();
 
 /// Owns active MQTT session intent, transitions, telemetry, and generation safety.
-class MqttSessionController extends ChangeNotifier {
+class MqttSessionController extends ChangeNotifier implements PublishTransport {
   /// Creates the active-session controller from settings and broker ownership.
   MqttSessionController(this._settings, this._brokers, this._intentStore, {MqttProtocolAdapterFactory? adapterFactory, Timer Function(Duration duration, void Function(Timer timer) callback)? periodicTimerFactory})
     : _adapterFactory =
@@ -93,6 +94,7 @@ class MqttSessionController extends ChangeNotifier {
   }
 
   /// Publishes through the active protocol adapter when connected.
+  @override
   Future<PublishResult>? publish(String topic, String payload, {int qos = 0, bool retain = false}) {
     return _adapter?.publish(topic, payload, qos: qos, retain: retain);
   }

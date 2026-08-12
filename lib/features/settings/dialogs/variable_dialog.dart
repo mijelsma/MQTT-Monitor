@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../../core/publishing/template_resolver.dart';
 import '../../../generated/l10n.dart';
 import '../../../models/broker_entry.dart';
 import '../../../models/environment_variable.dart';
+import '../../../models/environment_variable_option.dart';
 import '../../../shared/widgets/scope_picker.dart';
 import '../../../shared/widgets/spacers.dart';
 import '../../../shared/widgets/ui_field.dart';
@@ -118,8 +121,12 @@ class _VariableDialogState extends State<_VariableDialog> {
               validator: (value) {
                 final trimmed = value?.trim() ?? '';
                 if (trimmed.isEmpty) return s.variableDialogValidateName;
-                if (widget.existingNames.contains(trimmed)) return s.variableDialogNameExists;
-                if (trimmed.contains(RegExp(r'[\s{}\$]'))) return s.variableDialogNameInvalid;
+                if (widget.existingNames.contains(trimmed)) {
+                  return s.variableDialogNameExists;
+                }
+                if (!context.read<TemplateResolver>().isValidVariableName(trimmed)) {
+                  return s.variableDialogNameInvalid;
+                }
                 return null;
               },
             ),

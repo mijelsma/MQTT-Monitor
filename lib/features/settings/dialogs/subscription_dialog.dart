@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/state/app_state.dart';
-import '../../../core/state/keys/settings_keys.dart';
 import '../../../core/history/history_policy_rules.dart';
 import '../../../core/mqtt/mqtt_topic_filter.dart';
+import '../../../core/publishing/qos_preferences_repository.dart';
 import '../../../generated/l10n.dart';
 import '../../../models/subscription_entry.dart';
 import '../../../models/subscription_history_policy.dart';
@@ -126,7 +125,7 @@ class _SubscriptionDialogState extends State<SubscriptionDialog> {
                 setState(() => _qos = v);
                 // Record the pick so the "last used" default strategy
                 // picks it up the next time a subscription is added.
-                context.read<AppStateManager>().write(SettingsKeys.lastUsedQos, v);
+                context.read<QosPreferencesRepository>().record(v);
               },
             ),
             const VSpacer(18),

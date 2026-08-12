@@ -7,24 +7,32 @@ import 'package:mqtt_monitor/generated/l10n.dart';
 import 'package:mqtt_monitor/models/broker_entry.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../support/test_dependencies.dart';
 
 void main() {
   final state = AppStateManager.instance;
+  late TestDependencies dependencies;
 
   setUp(() async {
-    SharedPreferences.setMockInitialValues({});
-    await state.initialize();
-    await state.resetAll();
+    dependencies = await TestDependencies.create();
   });
 
   Future<void> pumpDialog(WidgetTester tester, {BrokerEntry? broker}) async {
     await tester.pumpWidget(
-      ChangeNotifierProvider<AppStateManager>.value(
-        value: state,
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<AppStateManager>.value(value: state),
+          ChangeNotifierProvider.value(value: dependencies.qosPreferences),
+        ],
         child: MaterialApp(
           theme: themeLight,
-          localizationsDelegates: const [S.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
+          localizationsDelegates: const [
+            S.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           supportedLocales: S.delegate.supportedLocales,
           home: Scaffold(
             body: Center(child: BrokerDialog(broker: broker)),
@@ -35,28 +43,56 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('new broker dialog pre-fills a catch-all # subscription named locally', (tester) async {
-    await pumpDialog(tester);
+  testWidgets(
+    'new broker dialog pre-fills a catch-all # subscription named locally',
+    (tester) async {
+      await pumpDialog(tester);
 
-    expect(find.text('Every topic'), findsOneWidget, reason: 'the default subscription is added with the localized name');
-    expect(find.text('#'), findsOneWidget, reason: 'the default subscription covers every topic');
-    expect(find.text('Add Subscription'), findsOneWidget, reason: 'the dialog still allows adding more subscriptions');
-  });
+      expect(
+        find.text('Every topic'),
+        findsOneWidget,
+        reason: 'the default subscription is added with the localized name',
+      );
+      expect(
+        find.text('#'),
+        findsOneWidget,
+        reason: 'the default subscription covers every topic',
+      );
+      expect(
+        find.text('Add Subscription'),
+        findsOneWidget,
+        reason: 'the dialog still allows adding more subscriptions',
+      );
+    },
+  );
 
-  testWidgets('editing an existing broker does not inject a default subscription', (tester) async {
-    await pumpDialog(
-      tester,
-      broker: const BrokerEntry(id: 'b1', name: 'Existing', host: 'broker.invalid'),
-    );
+  testWidgets(
+    'editing an existing broker does not inject a default subscription',
+    (tester) async {
+      await pumpDialog(
+        tester,
+        broker: const BrokerEntry(
+          id: 'b1',
+          name: 'Existing',
+          host: 'broker.invalid',
+        ),
+      );
 
-    expect(find.text('Every topic'), findsNothing);
-    expect(find.text('#'), findsNothing);
-  });
+      expect(find.text('Every topic'), findsNothing);
+      expect(find.text('#'), findsNothing);
+    },
+  );
 
-  testWidgets('new broker dialog renders the default in the configured locale', (tester) async {
-    await pumpDialog(tester);
+  testWidgets(
+    'new broker dialog renders the default in the configured locale',
+    (tester) async {
+      await pumpDialog(tester);
 
-    expect(S.current.brokerDialogDefaultSubscriptionName, 'Every topic');
-    expect(find.text(S.current.brokerDialogDefaultSubscriptionName), findsOneWidget);
-  });
+      expect(S.current.brokerDialogDefaultSubscriptionName, 'Every topic');
+      expect(
+        find.text(S.current.brokerDialogDefaultSubscriptionName),
+        findsOneWidget,
+      );
+    },
+  );
 }

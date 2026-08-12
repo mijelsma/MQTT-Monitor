@@ -3,8 +3,14 @@ import 'package:flutter/foundation.dart';
 import '../../core/broker/broker_repository.dart';
 import '../../core/broker/broker_repository_failure.dart';
 import '../../core/mqtt/connection_status.dart';
-import '../../core/mqtt/publish_result.dart';
 import '../../core/mqtt/session/mqtt_session_controller.dart';
+import '../../core/publishing/publish_command.dart';
+import '../../core/publishing/publish_command_result.dart';
+import '../../core/publishing/publish_command_service.dart';
+import '../../core/publishing/shortcut_repository.dart';
+import '../../core/publishing/template_resolution.dart';
+import '../../core/publishing/template_resolver.dart';
+import '../../core/publishing/variable_repository.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/keys/settings_keys.dart';
 import '../../models/broker_entry.dart';
@@ -12,27 +18,30 @@ import '../../models/environment_variable.dart';
 import '../../models/mqtt_protocol_version.dart';
 import '../../models/publish_shortcut.dart';
 
-final _variablePlaceholderPattern = RegExp(r'\$\{([^}]+)\}');
-
 /// Owns monitor connection, broker, publish, shortcut, and variable commands.
 class MonitorViewModel extends ChangeNotifier {
-  MonitorViewModel({
-    required MqttSessionController mqttSession,
-    required AppStateManager state,
-    required BrokerRepository brokerRepository,
-  }) : _mqtt = mqttSession,
-       _state = state,
-       _brokers = brokerRepository {
-    _state.load(SettingsKeys.environmentVariables);
-    _state.load(SettingsKeys.environmentVariableValues);
+  MonitorViewModel({required MqttSessionController mqttSession, required AppStateManager state, required BrokerRepository brokerRepository, required ShortcutRepository shortcutRepository, required VariableRepository variableRepository, required PublishCommandService publisher, required TemplateResolver templateResolver})
+    : _mqtt = mqttSession,
+      _state = state,
+      _brokers = brokerRepository,
+      _shortcuts = shortcutRepository,
+      _variables = variableRepository,
+      _publisher = publisher,
+      _templateResolver = templateResolver {
     _state.addListener(_onStateChanged);
     _mqtt.addListener(_onStateChanged);
     _brokers.addListener(_onStateChanged);
+    _shortcuts.addListener(_onStateChanged);
+    _variables.addListener(_onStateChanged);
   }
 
   final MqttSessionController _mqtt;
   final AppStateManager _state;
   final BrokerRepository _brokers;
+  final ShortcutRepository _shortcuts;
+  final VariableRepository _variables;
+  final PublishCommandService _publisher;
+  final TemplateResolver _templateResolver;
 
   ConnectionStatus get connectionStatus => _mqtt.connectionStatus;
   String? get connectionError => _mqtt.connectionError;
@@ -51,56 +60,30 @@ class MonitorViewModel extends ChangeNotifier {
   void disconnect() => _mqtt.disconnect();
   void reconnect() => _mqtt.reconnect();
 
-  Future<PublishResult>? publish(
-    String topic,
-    String payload, {
-    int qos = 0,
-    bool retain = false,
-  }) => _mqtt.publish(topic, payload, qos: qos, retain: retain);
-
-  bool clearRetainedMessage(String topic) =>
-      _mqtt.publish(topic, '', qos: 0, retain: true) != null;
+  Future<PublishCommandResult> clearRetainedMessage(String topic) => execute(PublishCommand(topicTemplate: topic, payload: '', qos: 0, retain: true));
 
   List<PublishShortcut> get availableShortcuts {
     final brokerId = activeBroker?.id;
-    return _state
-        .read(SettingsKeys.shortcuts)
-        .where(
-          (shortcut) =>
-              shortcut.isGlobal ||
-              (brokerId != null && shortcut.brokerIds.contains(brokerId)),
-        )
-        .toList();
+    return _shortcuts.shortcuts.where((shortcut) => shortcut.isGlobal || (brokerId != null && shortcut.brokerIds.contains(brokerId))).toList();
   }
 
   List<EnvironmentVariable> get environmentVariables {
     final brokerId = activeBroker?.id;
-    return _state
-        .read(SettingsKeys.environmentVariables)
-        .where(
-          (variable) =>
-              variable.isGlobal ||
-              (brokerId != null && variable.brokerIds.contains(brokerId)),
-        )
-        .toList();
+    return _variables.variables.where((variable) => variable.isGlobal || (brokerId != null && variable.brokerIds.contains(brokerId))).toList();
   }
 
-  Map<String, String> get variableValues =>
-      _state.read(SettingsKeys.environmentVariableValues);
+  Map<String, String> get variableValues => _variables.valuesForBroker(activeBroker?.id);
 
   void setVariableValue(String name, String value) {
-    final updated = Map<String, String>.from(variableValues)..[name] = value;
-    _state.write(SettingsKeys.environmentVariableValues, updated);
+    _variables.setValue(name, value);
   }
 
-  String resolveShortcutTopic(String topic) => topic.replaceAllMapped(
-    _variablePlaceholderPattern,
-    (match) => variableValues[match.group(1)!] ?? match.group(0)!,
-  );
+  TemplateResolution resolveTopic(String topic) => _templateResolver.resolve(topic, variableValues);
+
+  Future<PublishCommandResult> execute(PublishCommand command, {void Function()? onDispatch}) => _publisher.execute(command, variableValues, onDispatch: onDispatch);
 
   Future<void> addBroker(BrokerEntry entry) async => _brokers.add(entry);
-  Future<void> updateBroker(BrokerEntry updated) async =>
-      _brokers.update(updated);
+  Future<void> updateBroker(BrokerEntry updated) async => _brokers.update(updated);
   Future<void> deleteBroker(String id) async => _brokers.delete(id);
 
   void _onStateChanged() => notifyListeners();
@@ -110,6 +93,8 @@ class MonitorViewModel extends ChangeNotifier {
     _state.removeListener(_onStateChanged);
     _mqtt.removeListener(_onStateChanged);
     _brokers.removeListener(_onStateChanged);
+    _shortcuts.removeListener(_onStateChanged);
+    _variables.removeListener(_onStateChanged);
     super.dispose();
   }
 }

@@ -15,14 +15,15 @@ import '../../support/test_dependencies.dart';
 void main() {
   final state = AppStateManager.instance;
   late BrokerRepository brokers;
+  late TestDependencies dependencies;
 
   setUp(() async {
-    final dependencies = await TestDependencies.create();
+    dependencies = await TestDependencies.create();
     brokers = dependencies.brokers;
   });
 
   testWidgets('UI settings control sidebar animation and speed', (tester) async {
-    final vm = SettingsViewModel(state: state, brokerRepository: brokers);
+    final vm = SettingsViewModel(state: state, brokerRepository: brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, qosPreferences: dependencies.qosPreferences);
     addTearDown(vm.dispose);
 
     await tester.pumpWidget(

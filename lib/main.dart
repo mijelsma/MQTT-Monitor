@@ -11,6 +11,12 @@ import 'core/monitor/topic_projection.dart';
 import 'core/mqtt/app_private_certificate_storage.dart';
 import 'core/mqtt/session/mqtt_connection_intent_store.dart';
 import 'core/mqtt/session/mqtt_session_controller.dart';
+import 'core/publishing/publish_command_service.dart';
+import 'core/publishing/json_payload_validator.dart';
+import 'core/publishing/qos_preferences_repository.dart';
+import 'core/publishing/shortcut_repository.dart';
+import 'core/publishing/template_resolver.dart';
+import 'core/publishing/variable_repository.dart';
 import 'core/state/app_state.dart';
 import 'core/storage/app_data_directory.dart';
 import 'core/storage/shared_preferences_store.dart';
@@ -33,10 +39,19 @@ void main() async {
   // Create process-lifetime ingestion and broker-scoped projections before
   // starting the active session so no decoded message can outrun a consumer.
   final mqttSession = MqttSessionController(AppStateManager.instance, brokerRepository, MqttConnectionIntentStore(preferences));
+  const templateResolver = TemplateResolver();
+  const jsonValidator = JsonPayloadValidator();
+  final publisher = PublishCommandService(mqttSession, templateResolver, jsonValidator: jsonValidator);
+  final qosPreferences = QosPreferencesRepository(preferences);
+  final variableRepository = VariableRepository(preferences, brokerRepository, templateResolver);
+  final shortcutRepository = ShortcutRepository(preferences, brokerRepository, templateResolver, jsonValidator);
+  await qosPreferences.initialize();
+  await variableRepository.initialize();
+  await shortcutRepository.initialize();
   final ingestion = MessageIngestionCoordinator(mqttSession, brokerRepository);
   final topicProjection = TopicProjection(ingestion, brokerRepository);
   final historyService = MessageHistoryService(ingestion, AppStateManager.instance, brokerRepository);
-  final dashboardSeriesStore = DashboardSeriesStore(messages: ingestion.messages, repository: dashboardRepository, state: AppStateManager.instance);
+  final dashboardSeriesStore = DashboardSeriesStore(messages: ingestion.messages, repository: dashboardRepository, variables: variableRepository, templateResolver: templateResolver);
   ingestion.initialize();
   topicProjection.initialize();
   historyService.initialize();
@@ -48,7 +63,24 @@ void main() async {
   final updater = AppUpdateService(state: AppStateManager.instance);
 
   // Run the app.
-  runApp(App(mqttSession: mqttSession, ingestion: ingestion, topicProjection: topicProjection, historyService: historyService, updater: updater, brokerRepository: brokerRepository, dashboardRepository: dashboardRepository, dashboardSeriesStore: dashboardSeriesStore));
+  runApp(
+    App(
+      mqttSession: mqttSession,
+      ingestion: ingestion,
+      topicProjection: topicProjection,
+      historyService: historyService,
+      updater: updater,
+      brokerRepository: brokerRepository,
+      dashboardRepository: dashboardRepository,
+      dashboardSeriesStore: dashboardSeriesStore,
+      publisher: publisher,
+      shortcutRepository: shortcutRepository,
+      variableRepository: variableRepository,
+      templateResolver: templateResolver,
+      jsonValidator: jsonValidator,
+      qosPreferences: qosPreferences,
+    ),
+  );
 
   updater.checkForUpdatesOnStartup();
 }

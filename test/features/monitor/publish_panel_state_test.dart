@@ -7,6 +7,7 @@ import 'package:mqtt_monitor/core/ingestion/message_ingestion_coordinator.dart';
 import 'package:mqtt_monitor/core/monitor/topic_projection.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_connection_intent_store.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
+import 'package:mqtt_monitor/core/publishing/publish_command_service.dart';
 import 'package:mqtt_monitor/core/state/app_state.dart';
 import 'package:mqtt_monitor/core/state/keys/layout_keys.dart';
 import 'package:mqtt_monitor/core/state/keys/settings_keys.dart';
@@ -32,9 +33,10 @@ void main() {
   final state = AppStateManager.instance;
   late BrokerRepository brokers;
   late MqttConnectionIntentStore connectionIntent;
+  late TestDependencies dependencies;
 
   setUp(() async {
-    final dependencies = await TestDependencies.create();
+    dependencies = await TestDependencies.create();
     brokers = dependencies.brokers;
     connectionIntent = MqttConnectionIntentStore(dependencies.preferences);
   });
@@ -82,6 +84,10 @@ void main() {
       mqttSession: mqtt,
       state: state,
       brokerRepository: brokers,
+      shortcutRepository: dependencies.shortcuts,
+      variableRepository: dependencies.variables,
+      publisher: PublishCommandService(mqtt, dependencies.templateResolver),
+      templateResolver: dependencies.templateResolver,
     );
     final workspace = MonitorWorkspaceController(
       projection: projection,

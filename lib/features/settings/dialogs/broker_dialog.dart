@@ -12,13 +12,13 @@ import '../../../core/mqtt/certificate_validation_exception.dart';
 import '../../../core/mqtt/client_certificate_kind.dart';
 import '../../../core/mqtt/client_certificate_service.dart';
 import '../../../core/history/history_policy_rules.dart';
+import '../../../core/publishing/qos_preferences_repository.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/state/keys/settings_keys.dart';
 import '../../../generated/l10n.dart';
 import '../../../models/broker_entry.dart';
 import '../../../models/client_certificate_config.dart';
 import '../../../models/mqtt_protocol_version.dart';
-import '../../../models/mqtt_qos_default.dart';
 import '../../../models/subscription_history_policy.dart';
 import '../../../models/subscription_entry.dart';
 import '../../../shared/widgets/badge_tag.dart';
@@ -124,13 +124,11 @@ class _BrokerDialogState extends State<BrokerDialog> {
     if (widget.broker == null && !_defaultSubscriptionApplied) {
       _defaultSubscriptionApplied = true;
       final state = context.read<AppStateManager>();
-      state.load(SettingsKeys.defaultSubscribeQos);
-      state.load(SettingsKeys.lastUsedQos);
       state.load(SettingsKeys.newSubscriptionHistoryEnabled);
       state.load(SettingsKeys.newSubscriptionHistoryRetention);
       state.load(SettingsKeys.maximumHistoryRetention);
-      final strategy = state.read<MqttQosDefault>(SettingsKeys.defaultSubscribeQos);
-      final defaultQos = strategy.resolve(state.read(SettingsKeys.lastUsedQos));
+      final qosPreferences = context.read<QosPreferencesRepository>();
+      final defaultQos = qosPreferences.resolve(qosPreferences.defaultSubscribe);
       final maximum = state.read<int>(SettingsKeys.maximumHistoryRetention);
       final retention = state.read<int>(SettingsKeys.newSubscriptionHistoryRetention).clamp(HistoryPolicyRules.minimumRetention, maximum);
       _subscriptions.add(
@@ -312,13 +310,11 @@ class _BrokerDialogState extends State<BrokerDialog> {
   /// Adds a subscription using the configured default QoS policy.
   Future<void> _addSubscription() async {
     final state = context.read<AppStateManager>();
-    state.load(SettingsKeys.defaultSubscribeQos);
-    state.load(SettingsKeys.lastUsedQos);
     state.load(SettingsKeys.newSubscriptionHistoryEnabled);
     state.load(SettingsKeys.newSubscriptionHistoryRetention);
     state.load(SettingsKeys.maximumHistoryRetention);
-    final strategy = state.read<MqttQosDefault>(SettingsKeys.defaultSubscribeQos);
-    final defaultQos = strategy.resolve(state.read(SettingsKeys.lastUsedQos));
+    final qosPreferences = context.read<QosPreferencesRepository>();
+    final defaultQos = qosPreferences.resolve(qosPreferences.defaultSubscribe);
     final maximum = state.read<int>(SettingsKeys.maximumHistoryRetention);
     final sub = await showSubscriptionDialog(
       context,

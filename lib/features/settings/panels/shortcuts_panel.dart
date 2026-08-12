@@ -26,11 +26,11 @@ class ShortcutsPanel extends StatelessWidget {
     vm.addShortcut(result);
   }
 
-  void _editShortcut(BuildContext context, int index, PublishShortcut shortcut) async {
+  void _editShortcut(BuildContext context, PublishShortcut shortcut) async {
     final vm = context.read<SettingsViewModel>();
-    final result = await showShortcutDialog(context, shortcut: shortcut, brokers: vm.brokers, onDelete: () => vm.deleteShortcut(index));
+    final result = await showShortcutDialog(context, shortcut: shortcut, brokers: vm.brokers, onDelete: () => vm.deleteShortcut(shortcut.id));
     if (result == null) return;
-    vm.updateShortcut(index, result);
+    vm.updateShortcut(result);
   }
 
   @override
@@ -53,12 +53,12 @@ class ShortcutsPanel extends StatelessWidget {
             children: [
               for (int i = 0; i < shortcuts.length; i++)
                 UiSortableRow(
-                  key: ValueKey(i),
+                  key: ValueKey(shortcuts[i].id),
                   index: i,
                   leading: Container(
                     width: 36,
                     height: 36,
-                    decoration: BoxDecoration(color: shortcuts[i].displayColor, borderRadius: BorderRadius.circular(9)),
+                    decoration: BoxDecoration(color: Color(shortcuts[i].colorValue), borderRadius: BorderRadius.circular(9)),
                     child: const Icon(Icons.bolt_rounded, size: 18, color: Colors.white),
                   ),
                   title: shortcuts[i].name,
@@ -68,8 +68,8 @@ class ShortcutsPanel extends StatelessWidget {
                     QosTag(qos: shortcuts[i].qos),
                     if (shortcuts[i].retain) BadgeTag(label: 'RET', color: AppColors.warning500),
                   ],
-                  onTap: () => _editShortcut(context, i, shortcuts[i]),
-                  onDelete: () => vm.deleteShortcut(i),
+                  onTap: () => _editShortcut(context, shortcuts[i]),
+                  onDelete: () => vm.deleteShortcut(shortcuts[i].id),
                 ),
             ],
           ),

@@ -122,12 +122,13 @@ class _DetailContent extends StatelessWidget {
             isHistorical: isHistorical,
             onClearRetained: isHistorical
                 ? null
-                : () {
+                : () async {
                     final vm = context.read<MonitorViewModel>();
-                    final ok = vm.clearRetainedMessage(node.fullPath);
+                    final result = await vm.clearRetainedMessage(node.fullPath);
+                    if (!context.mounted) return;
                     final messenger = ScaffoldMessenger.of(context);
                     messenger.clearSnackBars();
-                    messenger.showSnackBar(SnackBar(content: Text(ok ? S.of(context).detailRetainedCleared : S.of(context).detailRetainedClearFailed), behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 2)));
+                    messenger.showSnackBar(SnackBar(content: Text(result.wasSent ? S.of(context).detailRetainedCleared : S.of(context).detailRetainedClearFailed), behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 2)));
                   },
           ),
           const SizedBox(height: 16),

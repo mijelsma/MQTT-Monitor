@@ -9,6 +9,12 @@ import 'core/history/message_history_service.dart';
 import 'core/ingestion/message_ingestion_coordinator.dart';
 import 'core/monitor/topic_projection.dart';
 import 'core/mqtt/session/mqtt_session_controller.dart';
+import 'core/publishing/publish_command_service.dart';
+import 'core/publishing/json_payload_validator.dart';
+import 'core/publishing/qos_preferences_repository.dart';
+import 'core/publishing/shortcut_repository.dart';
+import 'core/publishing/template_resolver.dart';
+import 'core/publishing/variable_repository.dart';
 import 'core/platform/window_chrome.dart';
 import 'core/state/app_state.dart';
 import 'core/state/keys/settings_keys.dart';
@@ -22,7 +28,23 @@ import 'theme/app_tokens/app_tokens.dart';
 /// Provides application-wide services and builds the themed MQTT Monitor app.
 class App extends StatelessWidget {
   /// Creates the application root with its process-lifetime dependencies.
-  const App({super.key, required this.mqttSession, required this.ingestion, required this.topicProjection, required this.historyService, required this.updater, required this.brokerRepository, required this.dashboardRepository, required this.dashboardSeriesStore});
+  const App({
+    super.key,
+    required this.mqttSession,
+    required this.ingestion,
+    required this.topicProjection,
+    required this.historyService,
+    required this.updater,
+    required this.brokerRepository,
+    required this.dashboardRepository,
+    required this.dashboardSeriesStore,
+    required this.publisher,
+    required this.shortcutRepository,
+    required this.variableRepository,
+    required this.templateResolver,
+    required this.jsonValidator,
+    required this.qosPreferences,
+  });
 
   final MqttSessionController mqttSession;
   final MessageIngestionCoordinator ingestion;
@@ -32,6 +54,12 @@ class App extends StatelessWidget {
   final BrokerRepository brokerRepository;
   final DashboardRepository dashboardRepository;
   final DashboardSeriesStore dashboardSeriesStore;
+  final PublishCommandService publisher;
+  final ShortcutRepository shortcutRepository;
+  final VariableRepository variableRepository;
+  final TemplateResolver templateResolver;
+  final JsonPayloadValidator jsonValidator;
+  final QosPreferencesRepository qosPreferences;
 
   /// Exposes root dependencies before building the visual application shell.
   @override
@@ -42,6 +70,12 @@ class App extends StatelessWidget {
         ChangeNotifierProvider<BrokerRepository>.value(value: brokerRepository),
         ChangeNotifierProvider<DashboardRepository>.value(value: dashboardRepository),
         Provider<DashboardSeriesStore>.value(value: dashboardSeriesStore),
+        Provider<PublishCommandService>.value(value: publisher),
+        ChangeNotifierProvider<ShortcutRepository>.value(value: shortcutRepository),
+        ChangeNotifierProvider<VariableRepository>.value(value: variableRepository),
+        Provider<TemplateResolver>.value(value: templateResolver),
+        Provider<JsonPayloadValidator>.value(value: jsonValidator),
+        ChangeNotifierProvider<QosPreferencesRepository>.value(value: qosPreferences),
         ChangeNotifierProvider<MqttSessionController>.value(value: mqttSession),
         Provider<MessageIngestionCoordinator>.value(value: ingestion),
         ChangeNotifierProvider<TopicProjection>.value(value: topicProjection),

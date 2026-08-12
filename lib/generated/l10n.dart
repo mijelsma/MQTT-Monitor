@@ -769,6 +769,26 @@ class S {
     );
   }
 
+  /// `Enter a valid MQTT topic name`
+  String get shortcutDialogInvalidTopic {
+    return Intl.message(
+      'Enter a valid MQTT topic name',
+      name: 'shortcutDialogInvalidTopic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Put the variable name inside dollar-sign braces`
+  String get shortcutDialogInvalidTemplate {
+    return Intl.message(
+      'Put the variable name inside dollar-sign braces',
+      name: 'shortcutDialogInvalidTemplate',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Color`
   String get shortcutDialogFieldColor {
     return Intl.message(
@@ -2612,6 +2632,46 @@ class S {
   /// `Bad JSON`
   String get publishBadJson {
     return Intl.message('Bad JSON', name: 'publishBadJson', desc: '', args: []);
+  }
+
+  /// `Enter a valid MQTT topic name`
+  String get publishInvalidTopic {
+    return Intl.message(
+      'Enter a valid MQTT topic name',
+      name: 'publishInvalidTopic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Put the variable name inside dollar-sign braces`
+  String get publishInvalidTemplate {
+    return Intl.message(
+      'Put the variable name inside dollar-sign braces',
+      name: 'publishInvalidTemplate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Set every topic variable before publishing`
+  String get publishMissingVariables {
+    return Intl.message(
+      'Set every topic variable before publishing',
+      name: 'publishMissingVariables',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `QoS must be 0, 1, or 2`
+  String get publishInvalidQos {
+    return Intl.message(
+      'QoS must be 0, 1, or 2',
+      name: 'publishInvalidQos',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `MESSAGE DETAIL`

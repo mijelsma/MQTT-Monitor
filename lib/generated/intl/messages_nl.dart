@@ -398,6 +398,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "publishBadJson": MessageLookupByLibrary.simpleMessage("Ongeldige JSON"),
     "publishDelivered": MessageLookupByLibrary.simpleMessage("Bezorgd"),
     "publishFailed": MessageLookupByLibrary.simpleMessage("Mislukt"),
+    "publishInvalidQos": MessageLookupByLibrary.simpleMessage(
+      "QoS moet 0, 1 of 2 zijn",
+    ),
+    "publishInvalidTemplate": MessageLookupByLibrary.simpleMessage(
+      "Zet de variabelenaam tussen accolades na een dollarteken",
+    ),
+    "publishInvalidTopic": MessageLookupByLibrary.simpleMessage(
+      "Voer een geldige MQTT-topicnaam in",
+    ),
+    "publishMissingVariables": MessageLookupByLibrary.simpleMessage(
+      "Stel elke topicvariabele in voordat je publiceert",
+    ),
     "publishNoTopic": MessageLookupByLibrary.simpleMessage("Geen topic"),
     "publishOffline": MessageLookupByLibrary.simpleMessage("Offline"),
     "publishPrettifyJson": MessageLookupByLibrary.simpleMessage("JSON opmaken"),
@@ -439,6 +451,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "shortcutDialogFieldColor": MessageLookupByLibrary.simpleMessage("Kleur"),
     "shortcutDialogFieldName": MessageLookupByLibrary.simpleMessage("Naam"),
     "shortcutDialogFieldTopic": MessageLookupByLibrary.simpleMessage("Topic"),
+    "shortcutDialogInvalidTemplate": MessageLookupByLibrary.simpleMessage(
+      "Zet de variabelenaam tussen accolades na een dollarteken",
+    ),
+    "shortcutDialogInvalidTopic": MessageLookupByLibrary.simpleMessage(
+      "Voer een geldige MQTT-topicnaam in",
+    ),
     "shortcutDialogRetain": MessageLookupByLibrary.simpleMessage("Retain"),
     "shortcutDialogRetainSubtitle": MessageLookupByLibrary.simpleMessage(
       "Broker slaat het bericht op voor nieuwe abonnees",
