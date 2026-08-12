@@ -326,7 +326,10 @@
     "sidebarNoSelectionTitle": "Select a topic to inspect",
     "sidebarNoSelectionSubtitle": "Choose a topic from the tree\nto view message details",
     "sidebarResizeDetailHistory": "Resize Message Detail and History",
+    "sidebarResizeDetailPublish": "Resize Message Detail and Publish",
+    "sidebarResizeDetailShortcuts": "Resize Message Detail and Shortcuts",
     "sidebarResizeHistoryPublish": "Resize History and Publish",
+    "sidebarResizeHistoryShortcuts": "Resize History and Shortcuts",
     "sidebarResizePublishShortcuts": "Resize Publish and Shortcuts",
 
     "durationLessThanSecond": "< 1 second",

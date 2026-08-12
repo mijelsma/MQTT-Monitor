@@ -3,7 +3,13 @@ import 'package:flutter/widgets.dart';
 /// Describes one header and body in a collapsible panel workspace.
 class WorkspacePanelSection {
   /// Creates a panel section.
-  const WorkspacePanelSection({required this.title, required this.icon, required this.body, required this.toggleKey, required this.contentKey, this.dividerSemanticLabel});
+  const WorkspacePanelSection({
+    required this.title,
+    required this.icon,
+    required this.body,
+    required this.toggleKey,
+    required this.contentKey,
+  });
 
   /// User-facing panel title.
   final String title;
@@ -19,7 +25,4 @@ class WorkspacePanelSection {
 
   /// Stable key for the visible content clip.
   final Key contentKey;
-
-  /// Accessibility label for the divider following this section.
-  final String? dividerSemanticLabel;
 }

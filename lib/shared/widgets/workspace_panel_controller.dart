@@ -3,7 +3,13 @@ import 'package:flutter/foundation.dart';
 /// Owns collapsed and relative-size state for a collapsible panel workspace.
 class WorkspacePanelController extends ChangeNotifier {
   /// Creates panel state with one collapsed value per panel.
-  WorkspacePanelController({required List<bool> initialCollapsed, void Function(int index, bool collapsed)? onCollapsedChanged}) : assert(initialCollapsed.isNotEmpty), _collapsed = List<bool>.of(initialCollapsed), _ratios = List<double>.filled(initialCollapsed.length, 1), _onCollapsedChanged = onCollapsedChanged;
+  WorkspacePanelController({
+    required List<bool> initialCollapsed,
+    void Function(int index, bool collapsed)? onCollapsedChanged,
+  }) : assert(initialCollapsed.isNotEmpty),
+       _collapsed = List<bool>.of(initialCollapsed),
+       _ratios = List<double>.filled(initialCollapsed.length, 1),
+       _onCollapsedChanged = onCollapsedChanged;
 
   final List<bool> _collapsed;
   final List<double> _ratios;
@@ -39,18 +45,24 @@ class WorkspacePanelController extends ChangeNotifier {
         for (var other = 0; other < length; other++)
           if (other != index && !_collapsed[other]) _ratios[other],
       ];
-      _ratios[index] = otherRatios.isEmpty ? 1 : otherRatios.reduce((left, right) => left + right) / otherRatios.length;
+      _ratios[index] = otherRatios.isEmpty
+          ? 1
+          : otherRatios.reduce((left, right) => left + right) /
+                otherRatios.length;
     }
     _collapsed[index] = collapsed;
     _onCollapsedChanged?.call(index, collapsed);
     notifyListeners();
   }
 
-  /// Adjusts two adjacent expanded panels by a relative ratio delta.
+  /// Adjusts two consecutive expanded panels by a relative ratio delta.
   void resizePair(int first, int second, double deltaRatio) {
     assert(!_collapsed[first] && !_collapsed[second]);
     final pairTotal = _ratios[first] + _ratios[second];
-    final firstRatio = (_ratios[first] + deltaRatio).clamp(pairTotal * 0.15, pairTotal * 0.85);
+    final firstRatio = (_ratios[first] + deltaRatio).clamp(
+      pairTotal * 0.15,
+      pairTotal * 0.85,
+    );
     if (firstRatio == _ratios[first]) return;
     _ratios[first] = firstRatio;
     _ratios[second] = pairTotal - firstRatio;

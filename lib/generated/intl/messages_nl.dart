@@ -484,8 +484,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "sidebarResizeDetailHistory": MessageLookupByLibrary.simpleMessage(
       "Formaat van Berichtdetails en Geschiedenis wijzigen",
     ),
+    "sidebarResizeDetailPublish": MessageLookupByLibrary.simpleMessage(
+      "Formaat van Berichtdetails en Publiceren wijzigen",
+    ),
+    "sidebarResizeDetailShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Formaat van Berichtdetails en Snelkoppelingen wijzigen",
+    ),
     "sidebarResizeHistoryPublish": MessageLookupByLibrary.simpleMessage(
       "Formaat van Geschiedenis en Publiceren wijzigen",
+    ),
+    "sidebarResizeHistoryShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Formaat van Geschiedenis en Snelkoppelingen wijzigen",
     ),
     "sidebarResizePublishShortcuts": MessageLookupByLibrary.simpleMessage(
       "Formaat van Publiceren en Snelkoppelingen wijzigen",

@@ -463,8 +463,17 @@ class MessageLookup extends MessageLookupByLibrary {
     "sidebarResizeDetailHistory": MessageLookupByLibrary.simpleMessage(
       "Resize Message Detail and History",
     ),
+    "sidebarResizeDetailPublish": MessageLookupByLibrary.simpleMessage(
+      "Resize Message Detail and Publish",
+    ),
+    "sidebarResizeDetailShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Resize Message Detail and Shortcuts",
+    ),
     "sidebarResizeHistoryPublish": MessageLookupByLibrary.simpleMessage(
       "Resize History and Publish",
+    ),
+    "sidebarResizeHistoryShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Resize History and Shortcuts",
     ),
     "sidebarResizePublishShortcuts": MessageLookupByLibrary.simpleMessage(
       "Resize Publish and Shortcuts",

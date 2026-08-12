@@ -238,6 +238,41 @@ void main() {
     );
   });
 
+  testWidgets('detail and publish resize across collapsed history', (
+    tester,
+  ) async {
+    await state.write(SettingsKeys.sidebarAnimationsEnabled, false);
+    await pumpSidebar(
+      tester,
+      expandedSibling: const Key('detail-section-toggle'),
+    );
+
+    final divider = find.byKey(const Key('workspace-panel-divider-0-2'));
+    expect(divider, findsOneWidget);
+    final detailBefore = tester
+        .getSize(find.byKey(const Key('detail-content-clip')))
+        .height;
+    final publishBefore = tester
+        .getSize(find.byKey(const Key('publish-content-clip')))
+        .height;
+
+    await tester.drag(divider, const Offset(0, 50));
+    await tester.pump();
+
+    expect(
+      tester.getSize(find.byKey(const Key('detail-content-clip'))).height,
+      greaterThan(detailBefore),
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('publish-content-clip'))).height,
+      lessThan(publishBefore),
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('history-content-clip'))).height,
+      0,
+    );
+  });
+
   for (final sibling in <({Key key, String name})>[
     (key: const Key('detail-section-toggle'), name: 'message detail'),
     (key: const Key('history-section-toggle'), name: 'history'),

@@ -2684,11 +2684,41 @@ class S {
     );
   }
 
+  /// `Resize Message Detail and Publish`
+  String get sidebarResizeDetailPublish {
+    return Intl.message(
+      'Resize Message Detail and Publish',
+      name: 'sidebarResizeDetailPublish',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Resize Message Detail and Shortcuts`
+  String get sidebarResizeDetailShortcuts {
+    return Intl.message(
+      'Resize Message Detail and Shortcuts',
+      name: 'sidebarResizeDetailShortcuts',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Resize History and Publish`
   String get sidebarResizeHistoryPublish {
     return Intl.message(
       'Resize History and Publish',
       name: 'sidebarResizeHistoryPublish',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Resize History and Shortcuts`
+  String get sidebarResizeHistoryShortcuts {
+    return Intl.message(
+      'Resize History and Shortcuts',
+      name: 'sidebarResizeHistoryShortcuts',
       desc: '',
       args: [],
     );

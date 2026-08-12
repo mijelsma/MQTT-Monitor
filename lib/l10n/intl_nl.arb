@@ -326,7 +326,10 @@
     "sidebarNoSelectionTitle": "Selecteer een topic om te bekijken",
     "sidebarNoSelectionSubtitle": "Kies een topic uit de boom\nom berichtdetails te bekijken",
     "sidebarResizeDetailHistory": "Formaat van Berichtdetails en Geschiedenis wijzigen",
+    "sidebarResizeDetailPublish": "Formaat van Berichtdetails en Publiceren wijzigen",
+    "sidebarResizeDetailShortcuts": "Formaat van Berichtdetails en Snelkoppelingen wijzigen",
     "sidebarResizeHistoryPublish": "Formaat van Geschiedenis en Publiceren wijzigen",
+    "sidebarResizeHistoryShortcuts": "Formaat van Geschiedenis en Snelkoppelingen wijzigen",
     "sidebarResizePublishShortcuts": "Formaat van Publiceren en Snelkoppelingen wijzigen",
 
     "durationLessThanSecond": "< 1 seconde",
