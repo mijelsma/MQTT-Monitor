@@ -644,7 +644,7 @@ void _onPin(BuildContext context, String topic, String? keyPath, String? default
   final dotSize = state.read(SettingsKeys.defaultDotSize);
   final chartType = state.read(SettingsKeys.defaultChartType);
   final interpolation = state.read(SettingsKeys.defaultInterpolation);
-  final maxSamples = DashboardSeriesPolicy.normalize(state.read(SettingsKeys.defaultMaxSamples));
+  final maxSamples = DashboardSeriesPolicy.normalizeSetting(state.read(SettingsKeys.defaultMaxSamples));
 
   final id = '${DateTime.now().millisecondsSinceEpoch}_${cards.length}';
   await dashboard.addCard(brokerId, GraphCardModel(id: id, topic: topic, jsonKeyPath: keyPath, displayName: defaultName ?? keyPath ?? topic.split('/').last, unit: unit, colorValue: colorValue, chartType: chartType, interpolation: interpolation, dotSize: dotSize, maxDataPoints: maxSamples, position: cards.length));

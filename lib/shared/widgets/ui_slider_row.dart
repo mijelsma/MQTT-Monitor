@@ -3,7 +3,7 @@ import '../../theme/app_tokens/app_tokens.dart';
 import 'spacers.dart';
 
 class UiSliderRow extends StatelessWidget {
-  const UiSliderRow({super.key, this.margin, required this.label, this.subtitle, required this.value, required this.min, required this.max, required this.divisions, required this.displayValue, required this.onChanged, this.onChangeEnd, this.accent});
+  const UiSliderRow({super.key, this.margin, required this.label, this.subtitle, required this.value, required this.min, required this.max, required this.divisions, required this.displayValue, required this.onChanged, this.onChangeEnd, this.accent, this.minimumLabel, this.maximumLabel, this.semanticFormatterCallback});
 
   final EdgeInsetsGeometry? margin;
   final String label;
@@ -16,6 +16,9 @@ class UiSliderRow extends StatelessWidget {
   final ValueChanged<double>? onChanged;
   final ValueChanged<double>? onChangeEnd;
   final Color? accent;
+  final String? minimumLabel;
+  final String? maximumLabel;
+  final SemanticFormatterCallback? semanticFormatterCallback;
 
   @override
   Widget build(BuildContext context) {
@@ -56,15 +59,15 @@ class UiSliderRow extends StatelessWidget {
             data: SliderTheme.of(
               context,
             ).copyWith(activeTrackColor: resolvedAccent, inactiveTrackColor: resolvedAccent.withValues(alpha: 0.15), thumbColor: resolvedAccent, overlayColor: resolvedAccent.withValues(alpha: 0.1), trackHeight: 3, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6), overlayShape: const RoundSliderOverlayShape(overlayRadius: 14)),
-            child: Slider(value: value, min: min, max: max, divisions: divisions, onChanged: onChanged, onChangeEnd: onChangeEnd),
+            child: Slider(value: value, min: min, max: max, divisions: divisions, onChanged: onChanged, onChangeEnd: onChangeEnd, semanticFormatterCallback: semanticFormatterCallback),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(_format(min), style: TextStyle(fontSize: 10.5, color: tokens.textTertiary)),
-                Text(_format(max), style: TextStyle(fontSize: 10.5, color: tokens.textTertiary)),
+                Text(minimumLabel ?? _format(min), style: TextStyle(fontSize: 10.5, color: tokens.textTertiary)),
+                Text(maximumLabel ?? _format(max), style: TextStyle(fontSize: 10.5, color: tokens.textTertiary)),
               ],
             ),
           ),

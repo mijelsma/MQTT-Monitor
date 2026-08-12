@@ -299,6 +299,16 @@ class S {
     );
   }
 
+  /// `Marker size for data points in new line graphs. Choose 0 to hide markers.`
+  String get dashboardPanelDotSizeHint {
+    return Intl.message(
+      'Marker size for data points in new line graphs. Choose 0 to hide markers.',
+      name: 'dashboardPanelDotSizeHint',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Samples`
   String get dashboardPanelMaxSamples {
     return Intl.message(
@@ -309,10 +319,10 @@ class S {
     );
   }
 
-  /// `0 = unlimited`
+  /// `Maximum number of recent values retained by each new graph.`
   String get dashboardPanelMaxSamplesHint {
     return Intl.message(
-      '0 = unlimited',
+      'Maximum number of recent values retained by each new graph.',
       name: 'dashboardPanelMaxSamplesHint',
       desc: '',
       args: [],

@@ -256,6 +256,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "dashboardPanelDotSize": MessageLookupByLibrary.simpleMessage(
       "Puntgrootte",
     ),
+    "dashboardPanelDotSizeHint": MessageLookupByLibrary.simpleMessage(
+      "Puntgrootte voor nieuwe lijngrafieken. Kies 0 om punten te verbergen.",
+    ),
     "dashboardPanelInterpolation": MessageLookupByLibrary.simpleMessage(
       "Interpolatie",
     ),
@@ -263,7 +266,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Meetpunten",
     ),
     "dashboardPanelMaxSamplesHint": MessageLookupByLibrary.simpleMessage(
-      "1-5000 meetpunten (standaard 500)",
+      "Maximumaantal recente waarden dat per nieuwe grafiek wordt bewaard.",
     ),
     "dashboardPanelNoDashboardsMessage": MessageLookupByLibrary.simpleMessage(
       "Maak een dashboard of sla op vanuit de dashboardweergave",

@@ -241,12 +241,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "Manage saved dashboard layouts.",
     ),
     "dashboardPanelDotSize": MessageLookupByLibrary.simpleMessage("Dot size"),
+    "dashboardPanelDotSizeHint": MessageLookupByLibrary.simpleMessage(
+      "Marker size for data points in new line graphs. Choose 0 to hide markers.",
+    ),
     "dashboardPanelInterpolation": MessageLookupByLibrary.simpleMessage(
       "Interpolation",
     ),
     "dashboardPanelMaxSamples": MessageLookupByLibrary.simpleMessage("Samples"),
     "dashboardPanelMaxSamplesHint": MessageLookupByLibrary.simpleMessage(
-      "1-5000 samples (default 500)",
+      "Maximum number of recent values retained by each new graph.",
     ),
     "dashboardPanelNoDashboardsMessage": MessageLookupByLibrary.simpleMessage(
       "Create dashboard or save from dashboard view",

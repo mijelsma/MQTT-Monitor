@@ -78,8 +78,8 @@ class SettingsViewModel extends ChangeNotifier {
   InterpolationMode get defaultInterpolation => _state.read(SettingsKeys.defaultInterpolation);
   void setDefaultInterpolation(InterpolationMode value) => _state.write(SettingsKeys.defaultInterpolation, value);
 
-  int get defaultMaxSamples => DashboardSeriesPolicy.normalize(_state.read(SettingsKeys.defaultMaxSamples));
-  void setDefaultMaxSamples(int value) => _state.write(SettingsKeys.defaultMaxSamples, DashboardSeriesPolicy.normalize(value));
+  int get defaultMaxSamples => DashboardSeriesPolicy.normalizeSetting(_state.read(SettingsKeys.defaultMaxSamples));
+  void setDefaultMaxSamples(int value) => _state.write(SettingsKeys.defaultMaxSamples, DashboardSeriesPolicy.normalizeSetting(value));
 
   // Subscription history
 
