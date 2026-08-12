@@ -12,7 +12,7 @@ import '../../../models/sidebar_panel_default.dart';
 import '../../../models/topic_node_value.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../monitor_viewmodel.dart';
+import '../monitor_workspace_controller.dart';
 import 'history_panel.dart';
 import 'message_detail_panel.dart';
 import 'publish_panel.dart';
@@ -162,7 +162,7 @@ class _DetailSidebarState extends State<DetailSidebar> with TickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final vm = context.watch<MonitorViewModel>();
+    final vm = context.watch<MonitorWorkspaceController>();
     final animationsEnabled = context.select<AppStateManager, bool>((state) => state.read(SettingsKeys.sidebarAnimationsEnabled));
     final animationSpeed = context.select<AppStateManager, int>((state) => state.read(SettingsKeys.sidebarAnimationSpeed));
     final duration = sidebarAnimationDurationForSpeed(animationSpeed);

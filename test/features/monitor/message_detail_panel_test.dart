@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/broker/broker_repository.dart';
 import 'package:mqtt_monitor/core/history/message_history_service.dart';
+import 'package:mqtt_monitor/core/ingestion/message_ingestion_coordinator.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_connection_intent_store.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
 import 'package:mqtt_monitor/core/state/app_state.dart';
@@ -33,7 +34,8 @@ void main() {
   Widget buildHarness(String payload) {
     final mqtt = MqttSessionController(state, brokers, connectionIntent);
     addTearDown(mqtt.dispose);
-    final history = MessageHistoryService(mqtt, state, brokers);
+    final ingestion = MessageIngestionCoordinator(mqtt, brokers);
+    final history = MessageHistoryService(ingestion, state, brokers);
     final node = TopicTreeNode(segment: 'temperature', fullPath: 'home/temperature');
     node.valueNotifier.value = TopicNodeValue(payload: payload, seq: 1, receivedAt: DateTime(2026));
 

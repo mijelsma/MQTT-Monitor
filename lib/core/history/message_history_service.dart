@@ -3,8 +3,9 @@ import 'dart:collection';
 
 import '../../models/topic_node_value.dart';
 import '../broker/broker_repository.dart';
+import '../ingestion/ingested_message.dart';
+import '../ingestion/message_ingestion_coordinator.dart';
 import '../mqtt/mqtt_message.dart';
-import '../mqtt/session/mqtt_session_controller.dart';
 import '../state/app_state.dart';
 import '../state/keys/settings_keys.dart';
 import 'history_policy_resolution.dart';
@@ -14,29 +15,46 @@ import 'history_policy_rules.dart';
 /// Owns bounded, broker-scoped, in-memory message history.
 class MessageHistoryService {
   MessageHistoryService(
-    MqttSessionController mqtt,
+    MessageIngestionCoordinator ingestion,
     this._state,
     this._brokers, {
     HistoryPolicyResolver resolver = const HistoryPolicyResolver(),
-  }) : _messages = mqtt.messageStream,
+  }) : _messages = ingestion.messages,
+       _ownedIngestion = null,
        _resolver = resolver;
 
-  MessageHistoryService.fromStream(
+  factory MessageHistoryService.fromStream(
     Stream<MQTTMessage> messages,
+    AppStateManager state,
+    BrokerRepository brokers, {
+    HistoryPolicyResolver resolver = const HistoryPolicyResolver(),
+  }) {
+    final ingestion = MessageIngestionCoordinator.fromStream(messages, brokers);
+    return MessageHistoryService._owned(
+      ingestion,
+      state,
+      brokers,
+      resolver: resolver,
+    );
+  }
+
+  MessageHistoryService._owned(
+    MessageIngestionCoordinator ingestion,
     this._state,
     this._brokers, {
-    HistoryPolicyResolver resolver = const HistoryPolicyResolver(),
-  }) : _messages = messages,
+    required HistoryPolicyResolver resolver,
+  }) : _messages = ingestion.messages,
+       _ownedIngestion = ingestion,
        _resolver = resolver;
 
-  final Stream<MQTTMessage> _messages;
+  final Stream<IngestedMessage> _messages;
+  final MessageIngestionCoordinator? _ownedIngestion;
   final AppStateManager _state;
   final BrokerRepository _brokers;
   final HistoryPolicyResolver _resolver;
   final Map<String, ListQueue<TopicNodeValue>> _history = {};
-  final Map<String, int> _seqCounters = {};
 
-  StreamSubscription<MQTTMessage>? _subscription;
+  StreamSubscription<IngestedMessage>? _subscription;
   String? _activeBrokerId;
 
   /// Starts app-level collection once.
@@ -45,6 +63,7 @@ class MessageHistoryService {
     _activeBrokerId = _brokers.activeBrokerId;
     _subscription = _messages.listen(_onMessage);
     _brokers.addListener(_onBrokerChanged);
+    _ownedIngestion?.initialize();
   }
 
   /// Returns the effective active-broker policy for a concrete [topic].
@@ -87,14 +106,12 @@ class MessageHistoryService {
   void clearTopics(Iterable<String> topics) {
     for (final topic in topics) {
       _history.remove(topic);
-      _seqCounters.remove(topic);
     }
   }
 
   /// Clears all history owned by the current broker session.
   void clear() {
     _history.clear();
-    _seqCounters.clear();
   }
 
   int get _maximumRetention {
@@ -104,23 +121,14 @@ class MessageHistoryService {
         : HistoryPolicyRules.defaultMaximumRetention;
   }
 
-  /// Resolves policy before allocating sequence, value, or buffer objects.
-  void _onMessage(MQTTMessage message) {
+  /// Resolves policy before allocating or looking up a history buffer.
+  void _onMessage(IngestedMessage message) {
+    if (message.brokerId != _brokers.activeBrokerId) return;
     final resolution = resolutionFor(message.topic);
     if (!resolution.enabled) return;
 
-    final sequence = (_seqCounters[message.topic] ?? 0) + 1;
-    _seqCounters[message.topic] = sequence;
     final values = _history.putIfAbsent(message.topic, ListQueue.new);
-    values.addLast(
-      TopicNodeValue(
-        payload: message.payload,
-        seq: sequence,
-        receivedAt: message.receivedAt,
-        retain: message.retain,
-        qos: message.qos,
-      ),
-    );
+    values.addLast(message.value);
     _trim(values, resolution.retention);
   }
 
@@ -155,5 +163,6 @@ class MessageHistoryService {
     _subscription = null;
     _brokers.removeListener(_onBrokerChanged);
     await subscription?.cancel();
+    await _ownedIngestion?.dispose();
   }
 }

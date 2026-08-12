@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/broker/broker_repository.dart';
 import '../../core/history/message_history_service.dart';
+import '../../core/monitor/topic_projection.dart';
 import '../../core/mqtt/session/mqtt_session_controller.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/keys/app_keys.dart';
@@ -15,6 +16,7 @@ import '../../shared/widgets/resizable_split.dart';
 import '../settings/settings_screen.dart';
 import '../settings/settings_section.dart';
 import 'monitor_viewmodel.dart';
+import 'monitor_workspace_controller.dart';
 import 'publish_draft_controller.dart';
 import 'widgets/broker_load_failure_state.dart';
 import 'widgets/connection_notice.dart';
@@ -40,7 +42,10 @@ class MonitorScreen extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (ctx) => MonitorViewModel(mqttSession: ctx.read<MqttSessionController>(), state: ctx.read<AppStateManager>(), historyService: ctx.read<MessageHistoryService>(), brokerRepository: ctx.read<BrokerRepository>()),
+          create: (ctx) => MonitorViewModel(mqttSession: ctx.read<MqttSessionController>(), state: ctx.read<AppStateManager>(), brokerRepository: ctx.read<BrokerRepository>()),
+        ),
+        ChangeNotifierProvider(
+          create: (ctx) => MonitorWorkspaceController(projection: ctx.read<TopicProjection>(), history: ctx.read<MessageHistoryService>(), state: ctx.read<AppStateManager>()),
         ),
         ChangeNotifierProvider(
           create: (_) => PublishDraftController(
@@ -75,7 +80,7 @@ class _MonitorViewState extends State<_MonitorView> {
     super.initState();
     _splitRatio = context.read<AppStateManager>().read(LayoutKeys.monitorSplitRatio);
     _filterController.addListener(() {
-      context.read<MonitorViewModel>().setFilter(_filterController.text);
+      context.read<MonitorWorkspaceController>().setFilter(_filterController.text);
     });
   }
 
@@ -83,10 +88,6 @@ class _MonitorViewState extends State<_MonitorView> {
   void dispose() {
     _filterController.dispose();
     super.dispose();
-  }
-
-  void _onScopeChanged(SearchScope s) {
-    context.read<MonitorViewModel>().setScope(s);
   }
 
   /// Builds the topic workspace or the applicable recoverable empty state.
@@ -134,7 +135,7 @@ class _MonitorViewState extends State<_MonitorView> {
     }
 
     return Scaffold(
-      appBar: MonitorAppBar(filterController: _filterController, scope: vm.scope, onScopeChanged: _onScopeChanged),
+      appBar: MonitorAppBar(filterController: _filterController),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: LayoutBuilder(
         builder: (context, constraints) {

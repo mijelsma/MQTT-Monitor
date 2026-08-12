@@ -20,6 +20,7 @@ import '../../../shared/widgets/ui_inline_notice.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../monitor_viewmodel.dart';
+import '../monitor_workspace_controller.dart';
 import 'comparison_section.dart';
 
 /// Shows the details of the currently selected MQTT message.
@@ -107,8 +108,7 @@ class _DetailContent extends StatelessWidget {
             onDelete: isHistorical
                 ? null
                 : () {
-                    final vm = context.read<MonitorViewModel>();
-                    vm.deleteTopic(node);
+                    context.read<MonitorWorkspaceController>().deleteTopic(node);
                     final messenger = ScaffoldMessenger.of(context);
                     messenger.clearSnackBars();
                     messenger.showSnackBar(SnackBar(content: Text(S.of(context).detailTopicDeleted), behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 2)));

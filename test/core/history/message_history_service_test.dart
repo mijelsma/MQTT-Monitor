@@ -63,7 +63,7 @@ void main() {
     expect(values.map((value) => value.seq), [2, 3]);
   });
 
-  test('disabled history skips sequence, value, and buffer allocation', () async {
+  test('disabled history skips history buffer allocation', () async {
     await addBroker('broker', [subscription('all', '#', enabled: false)]);
 
     messages.add(message('sensor/value', 'ignored', 1));
@@ -113,7 +113,7 @@ void main() {
     expect(history.getHistory('sensor/value').first.payload, '11');
   });
 
-  test('clearTopics resets only the selected topic and its sequence', () async {
+  test('clearTopics removes only selected history without resetting ingestion sequence', () async {
     await addBroker('broker', [subscription('all', '#')]);
     messages
       ..add(message('one', 'a', 1))
@@ -124,7 +124,7 @@ void main() {
     messages.add(message('one', 'new', 2));
     await settle();
 
-    expect(history.getHistory('one').single.seq, 1);
+    expect(history.getHistory('one').single.seq, 2);
     expect(history.getHistory('two').single.payload, 'b');
   });
 

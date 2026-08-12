@@ -25,19 +25,21 @@ const _unchanged = Object();
 /// Owns active MQTT session intent, transitions, telemetry, and generation safety.
 class MqttSessionController extends ChangeNotifier {
   /// Creates the active-session controller from settings and broker ownership.
-  MqttSessionController(this._settings, this._brokers, this._intentStore, {MqttProtocolAdapterFactory? adapterFactory})
+  MqttSessionController(this._settings, this._brokers, this._intentStore, {MqttProtocolAdapterFactory? adapterFactory, Timer Function(Duration duration, void Function(Timer timer) callback)? periodicTimerFactory})
     : _adapterFactory =
           adapterFactory ??
           ((broker) => switch (broker.protocolVersion) {
             MqttProtocolVersion.v311 => Mqtt311Adapter(broker),
             MqttProtocolVersion.v5 => Mqtt5Adapter(broker),
           }),
-      _connectionRequested = _intentStore.connectionRequested;
+      _connectionRequested = _intentStore.connectionRequested,
+      _periodicTimerFactory = periodicTimerFactory ?? Timer.periodic;
 
   final AppStateManager _settings;
   final BrokerRepository _brokers;
   final MqttConnectionIntentStore _intentStore;
   final MqttProtocolAdapterFactory _adapterFactory;
+  final Timer Function(Duration duration, void Function(Timer timer) callback) _periodicTimerFactory;
   final StreamController<MQTTMessage> _messages = StreamController<MQTTMessage>.broadcast();
   final MqttSubscriptionReconciler _subscriptions = MqttSubscriptionReconciler();
 
@@ -48,6 +50,7 @@ class MqttSessionController extends ChangeNotifier {
   StreamSubscription<MQTTMessage>? _messageSubscription;
   Timer? _rateTimer;
   int _generation = 0;
+  int _messageCount = 0;
   int _rateCounter = 0;
   int _rateIntervalMs = 0;
   bool _connectionRequested;
@@ -68,7 +71,7 @@ class MqttSessionController extends ChangeNotifier {
   String? get connectionErrorDetail => _state.errorDetail;
 
   /// Returns the number of messages received by the current session.
-  int get messageCount => _state.messageCount;
+  int get messageCount => _messageCount;
 
   /// Returns the sampled current-session message rate.
   int get messageRate => _state.messageRate;
@@ -203,8 +206,8 @@ class MqttSessionController extends ChangeNotifier {
   void _onMessage(MqttProtocolAdapter adapter, int generation, MQTTMessage message) {
     if (!_isCurrentAdapter(adapter, generation)) return;
     _messages.add(message);
+    _messageCount++;
     _rateCounter++;
-    _emit(messageCount: _state.messageCount + 1);
   }
 
   /// Tears down the current generation and reports a clean disconnected state.
@@ -242,16 +245,17 @@ class MqttSessionController extends ChangeNotifier {
     _rateTimer?.cancel();
     _rateIntervalMs = intervalMs;
     _rateCounter = 0;
-    _rateTimer = Timer.periodic(Duration(milliseconds: intervalMs), (_) {
+    _rateTimer = _periodicTimerFactory(Duration(milliseconds: intervalMs), (_) {
       if (_disposed) return;
       final rate = (_rateCounter * 1000 / intervalMs).round();
       _rateCounter = 0;
-      _emit(messageRate: rate);
+      _emit(messageCount: _messageCount, messageRate: rate);
     });
   }
 
   /// Clears counters while applying a lifecycle [status] and [protocol].
   void _resetCounters({required ConnectionStatus status, required MqttProtocolVersion? protocol}) {
+    _messageCount = 0;
     _rateCounter = 0;
     _emit(status: status, error: null, detail: null, messageCount: 0, messageRate: 0, protocol: protocol);
   }

@@ -100,6 +100,19 @@ class _ControllableAdapter implements MqttProtocolAdapter {
   }
 }
 
+class _ManualTimer implements Timer {
+  bool _active = true;
+
+  @override
+  bool get isActive => _active;
+
+  @override
+  int get tick => 0;
+
+  @override
+  void cancel() => _active = false;
+}
+
 void main() {
   final appState = AppStateManager.instance;
   late BrokerRepository brokers;
@@ -321,5 +334,47 @@ void main() {
     await settle();
 
     expect(adapter.disposeCalls, 1);
+  });
+
+  test('message telemetry notifies only when the sampling timer flushes', () async {
+    await brokers.add(const BrokerEntry(id: 'broker', name: 'Broker', host: 'one.invalid'));
+    late void Function(Timer) sample;
+    final adapters = <_ControllableAdapter>[];
+    final controller = MqttSessionController(
+      appState,
+      brokers,
+      intent,
+      adapterFactory: (broker) {
+        final adapter = _ControllableAdapter(broker.protocolVersion);
+        adapters.add(adapter);
+        return adapter;
+      },
+      periodicTimerFactory: (_, callback) {
+        sample = callback;
+        return _ManualTimer();
+      },
+    );
+    addTearDown(controller.dispose);
+    addTearDown(() async {
+      for (final adapter in adapters) {
+        await adapter.close();
+      }
+    });
+    controller.initialize();
+    await settle();
+    var notifications = 0;
+    controller.addListener(() => notifications++);
+
+    adapters.single.emitMessage(MQTTMessage(topic: 'live/topic', payload: 'value', receivedAt: DateTime(2026)));
+    await settle();
+
+    expect(controller.messageCount, 1);
+    expect(controller.state.messageCount, 0);
+    expect(notifications, 0);
+
+    sample(_ManualTimer());
+    expect(controller.state.messageCount, 1);
+    expect(controller.messageRate, 1);
+    expect(notifications, 1);
   });
 }

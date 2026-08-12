@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/broker/broker_repository.dart';
 import '../../core/history/message_history_service.dart';
-import '../../core/mqtt/mqtt_message.dart';
-import '../../core/mqtt/session/mqtt_session_controller.dart';
+import '../../core/ingestion/ingested_message.dart';
+import '../../core/ingestion/message_ingestion_coordinator.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/keys/dashboard_keys.dart';
 import '../../core/state/keys/settings_keys.dart';
@@ -32,7 +32,7 @@ final _arrayIndexPattern = RegExp(r'^\[(\d+)\]$');
 /// messages to feed data into the correct cards, and persists layout to state.
 class DashboardViewModel extends ChangeNotifier {
   /// Creates a broker-scoped dashboard controller and starts its listeners.
-  DashboardViewModel({required MqttSessionController mqttSession, required AppStateManager state, required this.brokerId, required MessageHistoryService historyService, required BrokerRepository brokerRepository}) : _mqtt = mqttSession, _state = state, _historyService = historyService, _brokers = brokerRepository {
+  DashboardViewModel({required MessageIngestionCoordinator ingestion, required AppStateManager state, required this.brokerId, required MessageHistoryService historyService, required BrokerRepository brokerRepository}) : _ingestion = ingestion, _state = state, _historyService = historyService, _brokers = brokerRepository {
     // Pre-load all keys needed by this screen.
     _state.load(DashboardKeys.layouts);
     _state.load(DashboardKeys.activeLayoutForBroker(brokerId));
@@ -44,16 +44,16 @@ class DashboardViewModel extends ChangeNotifier {
 
     _state.addListener(_onStateChanged);
     _brokers.addListener(_onBrokersChanged);
-    _subscription = _mqtt.messageStream.listen(_onMessage);
+    _subscription = _ingestion.messages.listen(_onMessage);
   }
 
-  final MqttSessionController _mqtt;
+  final MessageIngestionCoordinator _ingestion;
   final AppStateManager _state;
   final MessageHistoryService _historyService;
   final BrokerRepository _brokers;
   final String brokerId;
 
-  StreamSubscription<MQTTMessage>? _subscription;
+  StreamSubscription<IngestedMessage>? _subscription;
   Timer? _saveTimer;
 
   /// Static cache that keeps data points alive across screen navigations
@@ -272,7 +272,8 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   /// Handles incoming MQTT messages by routing them to matching cards.
-  void _onMessage(MQTTMessage msg) {
+  void _onMessage(IngestedMessage msg) {
+    if (msg.brokerId != brokerId) return;
     var matched = false;
     final varValues = _currentVariableValues;
 
@@ -280,10 +281,10 @@ class DashboardViewModel extends ChangeNotifier {
       final resolvedTopic = _resolveTopic(card.topic, varValues);
       if (resolvedTopic != msg.topic) continue;
 
-      final value = _extractNumericValue(msg.payload, card.jsonKeyPath);
+      final value = _extractNumericValue(msg.value.payload, card.jsonKeyPath);
       if (value == null) continue;
 
-      card.addDataPoint(DataPoint(timestamp: msg.receivedAt, value: value));
+      card.addDataPoint(DataPoint(timestamp: msg.value.receivedAt, value: value));
       matched = true;
     }
 

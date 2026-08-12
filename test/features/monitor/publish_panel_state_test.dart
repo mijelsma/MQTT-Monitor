@@ -3,12 +3,15 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/broker/broker_repository.dart';
 import 'package:mqtt_monitor/core/history/message_history_service.dart';
+import 'package:mqtt_monitor/core/ingestion/message_ingestion_coordinator.dart';
+import 'package:mqtt_monitor/core/monitor/topic_projection.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_connection_intent_store.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
 import 'package:mqtt_monitor/core/state/app_state.dart';
 import 'package:mqtt_monitor/core/state/keys/layout_keys.dart';
 import 'package:mqtt_monitor/core/state/keys/settings_keys.dart';
 import 'package:mqtt_monitor/features/monitor/monitor_viewmodel.dart';
+import 'package:mqtt_monitor/features/monitor/monitor_workspace_controller.dart';
 import 'package:mqtt_monitor/features/monitor/publish_draft_controller.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/detail_sidebar.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
@@ -44,10 +47,15 @@ void main() {
     await state.write(LayoutKeys.sidebarShortcutsCollapsed, expandedSibling != const Key('shortcuts-section-toggle'));
 
     final mqtt = MqttSessionController(state, brokers, connectionIntent);
-    final history = MessageHistoryService(mqtt, state, brokers);
-    final vm = MonitorViewModel(mqttSession: mqtt, state: state, historyService: history, brokerRepository: brokers);
+    final ingestion = MessageIngestionCoordinator(mqtt, brokers);
+    final projection = TopicProjection(ingestion, brokers);
+    final history = MessageHistoryService(ingestion, state, brokers);
+    final vm = MonitorViewModel(mqttSession: mqtt, state: state, brokerRepository: brokers);
+    final workspace = MonitorWorkspaceController(projection: projection, history: history, state: state);
     final draft = PublishDraftController();
     addTearDown(vm.dispose);
+    addTearDown(workspace.dispose);
+    addTearDown(projection.dispose);
     addTearDown(mqtt.dispose);
     addTearDown(draft.dispose);
 
@@ -56,6 +64,7 @@ void main() {
         providers: [
           ChangeNotifierProvider<AppStateManager>.value(value: state),
           ChangeNotifierProvider<MonitorViewModel>.value(value: vm),
+          ChangeNotifierProvider<MonitorWorkspaceController>.value(value: workspace),
           ChangeNotifierProvider<PublishDraftController>.value(value: draft),
           Provider<MessageHistoryService>.value(value: history),
         ],

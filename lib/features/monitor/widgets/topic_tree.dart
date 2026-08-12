@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../monitor_viewmodel.dart';
+import '../monitor_workspace_controller.dart';
 import 'topic_tree_empty_state.dart';
 import 'topic_tree_row.dart';
 
 /// The main MQTT topic tree panel.
 ///
-/// Reads the flat list from the [MonitorViewModel] and renders
+/// Reads the cached flat list from the [MonitorWorkspaceController] and renders
 /// [TopicTreeRow] items with indent-aware separators.
 class TopicTree extends StatelessWidget {
   const TopicTree({super.key, required this.filterController});
@@ -17,8 +17,8 @@ class TopicTree extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<MonitorViewModel>();
-    final rows = vm.buildFlatList();
+    final vm = context.watch<MonitorWorkspaceController>();
+    final rows = vm.visibleRows;
     final tokens = context.tokens;
     final hasFilter = vm.filter.isNotEmpty;
 
@@ -31,7 +31,7 @@ class TopicTree extends StatelessWidget {
       itemBuilder: (context, i) {
         final row = rows[i];
         final isSelected = vm.selectedNode?.fullPath == row.node.fullPath;
-        return TopicTreeRow(key: ValueKey(row.node.fullPath), node: row.node, depth: row.depth, topicCount: row.topicCount, messageCount: row.messageCount, selected: isSelected, onToggle: () => vm.toggleExpand(row.node), onSelect: () => vm.selectNode(row.node));
+        return TopicTreeRow(key: ValueKey(row.node.fullPath), node: row.node, depth: row.depth, metrics: row.metrics, selected: isSelected, onToggle: () => vm.toggleExpand(row.node), onSelect: () => vm.selectNode(row.node));
       },
     );
   }

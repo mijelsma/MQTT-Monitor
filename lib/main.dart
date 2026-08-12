@@ -4,6 +4,8 @@ import 'app.dart';
 import 'core/broker/broker_repository.dart';
 import 'core/broker/flutter_secure_credential_store.dart';
 import 'core/history/message_history_service.dart';
+import 'core/ingestion/message_ingestion_coordinator.dart';
+import 'core/monitor/topic_projection.dart';
 import 'core/mqtt/app_private_certificate_storage.dart';
 import 'core/mqtt/session/mqtt_connection_intent_store.dart';
 import 'core/mqtt/session/mqtt_session_controller.dart';
@@ -24,20 +26,23 @@ void main() async {
   final brokerRepository = BrokerRepository(preferences, credentials: const FlutterSecureCredentialStore(), certificates: AppPrivateCertificateStorage.standard());
   await brokerRepository.initialize();
 
-  // Create and initialize the active MQTT session.
+  // Create process-lifetime ingestion and broker-scoped projections before
+  // starting the active session so no decoded message can outrun a consumer.
   final mqttSession = MqttSessionController(AppStateManager.instance, brokerRepository, MqttConnectionIntentStore(preferences));
-  mqttSession.initialize();
-
-  // Create and initialize the global history service.
-  final historyService = MessageHistoryService(mqttSession, AppStateManager.instance, brokerRepository);
+  final ingestion = MessageIngestionCoordinator(mqttSession, brokerRepository);
+  final topicProjection = TopicProjection(ingestion, brokerRepository);
+  final historyService = MessageHistoryService(ingestion, AppStateManager.instance, brokerRepository);
+  ingestion.initialize();
+  topicProjection.initialize();
   historyService.initialize();
+  mqttSession.initialize();
 
   // The update service is global so update state survives navigation to
   // Settings › About.
   final updater = AppUpdateService(state: AppStateManager.instance);
 
   // Run the app.
-  runApp(App(mqttSession: mqttSession, historyService: historyService, updater: updater, brokerRepository: brokerRepository));
+  runApp(App(mqttSession: mqttSession, ingestion: ingestion, topicProjection: topicProjection, historyService: historyService, updater: updater, brokerRepository: brokerRepository));
 
   updater.checkForUpdatesOnStartup();
 }
