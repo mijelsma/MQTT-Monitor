@@ -10,14 +10,18 @@ import 'topic_tree_index.dart';
 
 /// Maintains the latest broker-scoped topic tree with granular node signals.
 class TopicProjection extends ChangeNotifier {
-  TopicProjection(this._ingestion, this._brokers);
+  TopicProjection(this._ingestion, this._brokers, {bool coalesceStructureUpdates = false}) : _coalesceStructureUpdates = coalesceStructureUpdates;
 
   final MessageIngestionCoordinator _ingestion;
   final BrokerRepository _brokers;
+  final bool _coalesceStructureUpdates;
   final TopicTreeIndex _index = TopicTreeIndex();
   final ValueNotifier<({IngestedMessage message, List<TopicTreeNode> path, bool structureChanged, bool topicCreated})?> updates = ValueNotifier(null);
 
+  static const Duration _structurePublicationInterval = Duration(milliseconds: 16);
+
   StreamSubscription<IngestedMessage>? _subscription;
+  Timer? _structureTimer;
   Future<void>? _shutdown;
   bool _notifierDisposed = false;
   String? _activeBrokerId;
@@ -43,6 +47,7 @@ class TopicProjection extends ChangeNotifier {
   List<String> delete(TopicTreeNode node) {
     final removed = _index.delete(node);
     if (removed.isNotEmpty) {
+      _cancelStructurePublication();
       final brokerId = _activeBrokerId;
       if (brokerId != null) _ingestion.resetTopics(brokerId, removed);
       notifyListeners();
@@ -53,6 +58,7 @@ class TopicProjection extends ChangeNotifier {
   /// Clears all projected topics for the active broker.
   void clear() {
     if (_index.isEmpty) return;
+    _cancelStructurePublication();
     _index.clear();
     _ingestion.resetActiveBroker();
     notifyListeners();
@@ -62,7 +68,16 @@ class TopicProjection extends ChangeNotifier {
     if (message.brokerId != _brokers.activeBrokerId) return;
     final result = _index.insert(message);
     if (result.path.isEmpty) return;
-    if (result.structureChanged) notifyListeners();
+    if (result.structureChanged) {
+      if (_coalesceStructureUpdates) {
+        _structureTimer ??= Timer(_structurePublicationInterval, () {
+          _structureTimer = null;
+          if (!_notifierDisposed) notifyListeners();
+        });
+      } else {
+        notifyListeners();
+      }
+    }
     updates.value = (message: message, path: result.path, structureChanged: result.structureChanged, topicCreated: result.topicCreated);
   }
 
@@ -80,7 +95,13 @@ class TopicProjection extends ChangeNotifier {
     _brokers.removeListener(_onBrokerChanged);
     final subscription = _subscription;
     _subscription = null;
+    _cancelStructurePublication();
     await subscription?.cancel();
+  }
+
+  void _cancelStructurePublication() {
+    _structureTimer?.cancel();
+    _structureTimer = null;
   }
 
   /// Releases projection listeners and signals.

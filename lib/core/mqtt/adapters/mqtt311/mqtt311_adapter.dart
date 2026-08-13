@@ -17,6 +17,7 @@ import '../../mqtt_reason.dart';
 import '../../publish_result.dart';
 import '../shared/mqtt_connection_error_mapper.dart';
 import '../shared/mqtt_tls_configurator.dart';
+import 'mqtt311_event_client.dart';
 
 /// Creates the MQTT 3.1.1 package client used for [broker].
 typedef Mqtt311ClientFactory = mqtt3_server.MqttServerClient Function(BrokerEntry broker);
@@ -28,7 +29,7 @@ class Mqtt311Adapter implements MqttProtocolAdapter {
   /// Creates an MQTT 3.1.1 adapter for [broker].
   Mqtt311Adapter(this._broker, {MqttTlsConfigurator? tlsConfigurator, Mqtt311ClientFactory? clientFactory, Duration publishAckTimeout = const Duration(seconds: 5)})
     : _tlsConfigurator = tlsConfigurator ?? MqttTlsConfigurator(),
-      _clientFactory = clientFactory ?? ((profile) => mqtt3_server.MqttServerClient.withPort(profile.host, profile.effectiveClientId, profile.port, maxConnectionAttempts: 1)),
+      _clientFactory = clientFactory ?? ((profile) => Mqtt311EventClient.withPort(profile.host, profile.effectiveClientId, profile.port, maxConnectionAttempts: 1)),
       _publishAckTimeout = publishAckTimeout;
 
   final BrokerEntry _broker;

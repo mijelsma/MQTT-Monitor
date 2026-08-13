@@ -72,4 +72,14 @@ void main() {
     expect(find.byKey(const Key('payload-selection-area')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  for (final payload in ['42', '"23.5"', '32.69 °C']) {
+    testWidgets('selection display lays out pinnable payload $payload', (tester) async {
+      await tester.pumpWidget(buildHarness(payload));
+      await tester.pump();
+
+      expect(find.byKey(const Key('payload-selection-area')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }

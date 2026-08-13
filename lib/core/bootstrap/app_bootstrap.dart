@@ -193,7 +193,7 @@ class _ProductionLifetimeBuilder {
     final session = MqttSessionController(connectionPreferences!, brokers!, MqttConnectionIntentStore(store!), logger: logger);
     final commandService = PublishCommandService(session, templateResolver!, jsonValidator: jsonValidator!);
     final coordinator = MessageIngestionCoordinator(session, brokers!);
-    final topicProjection = TopicProjection(coordinator, brokers!);
+    final topicProjection = TopicProjection(coordinator, brokers!, coalesceStructureUpdates: true);
     final historyService = MessageHistoryService(coordinator, historyPreferences!, brokers!);
     final seriesStore = DashboardSeriesStore(messages: coordinator.messages, repository: dashboards!, variables: variables!, templateResolver: templateResolver!);
     mqtt = session;

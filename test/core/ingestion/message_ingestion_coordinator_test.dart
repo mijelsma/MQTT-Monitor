@@ -37,6 +37,35 @@ void main() {
     await ingestion.dispose();
     await source.close();
   });
+
+  test('queued traffic from a replaced broker is discarded before the next session', () async {
+    final dependencies = await TestDependencies.create();
+    final brokers = dependencies.brokers;
+    await brokers.add(const BrokerEntry(id: 'first', name: 'First', host: 'first.invalid'));
+    await brokers.add(const BrokerEntry(id: 'second', name: 'Second', host: 'second.invalid'), makeActive: false);
+    final source = StreamController<MQTTMessage>.broadcast(sync: true);
+    final ingestion = MessageIngestionCoordinator.fromStream(source.stream, brokers, timeSliced: true)..initialize();
+    final received = <IngestedMessage>[];
+    final subscription = ingestion.messages.listen(received.add);
+
+    for (var index = 0; index < 1000; index++) {
+      source.add(_message('first/$index', '$index', 1));
+    }
+    expect(received, isEmpty);
+
+    await brokers.select('second');
+    source.add(_message('second/live', 'new', 2));
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+
+    expect(received.where((message) => message.brokerId == 'first'), isEmpty);
+    expect(received.last.brokerId, 'second');
+    expect(received.last.topic, 'second/live');
+    expect(received.last.value.seq, 1);
+
+    await subscription.cancel();
+    await ingestion.dispose();
+    await source.close();
+  });
 }
 
 MQTTMessage _message(String topic, String payload, int second) => MQTTMessage(topic: topic, payload: payload, receivedAt: DateTime(2026, 1, 1, 0, 0, second));
