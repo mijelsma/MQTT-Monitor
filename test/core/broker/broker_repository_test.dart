@@ -66,6 +66,16 @@ void main() {
     expect(store.values, {BrokerStorageKeys.schemaVersion: BrokerStorageKeys.currentSchemaVersion + 1, BrokerStorageKeys.profiles: '[]'});
   });
 
+  test('an unsupported development schema is rejected without migration', () async {
+    final store = _MemoryPreferencesStore({BrokerStorageKeys.schemaVersion: 0, BrokerStorageKeys.profiles: '[]'});
+    final repository = _repository(store);
+
+    await repository.initialize();
+
+    expect(repository.failure?.details, contains('not supported'));
+    expect(store.values, {BrokerStorageKeys.schemaVersion: 0, BrokerStorageKeys.profiles: '[]'});
+  });
+
   test('invalid active ID falls back to the first profile and persists the repair', () async {
     final store = _MemoryPreferencesStore({BrokerStorageKeys.schemaVersion: BrokerStorageKeys.currentSchemaVersion, BrokerStorageKeys.profiles: '[{"id":"first","name":"First","host":"first.invalid","subscriptions":[]}]', BrokerStorageKeys.activeProfileId: 'missing'});
     final repository = _repository(store);

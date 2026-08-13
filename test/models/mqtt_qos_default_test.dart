@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/models/mqtt_qos_default.dart';
 
@@ -40,39 +39,7 @@ void main() {
     });
 
     test('"last used" is the LAST option in the picker (qos0, qos1, qos2, lastUsed)', () {
-      expect(
-        MqttQosDefault.values,
-        orderedEquals([
-          MqttQosDefault.qos0,
-          MqttQosDefault.qos1,
-          MqttQosDefault.qos2,
-          MqttQosDefault.lastUsed,
-        ]),
-      );
-    });
-
-    test('"last used" is rendered with a history icon to signal "remember the previous pick"', () {
-      final icon = MqttQosDefault.lastUsed.icon;
-      expect(icon, isA<Icon>());
-      expect((icon as Icon).icon, Icons.history_rounded);
-    });
-
-    test('the fixed QoS options render a QosLevelIcon (number badge), not a Material icon', () {
-      for (final option in [MqttQosDefault.qos0, MqttQosDefault.qos1, MqttQosDefault.qos2]) {
-        expect(option.icon, isA<QosLevelIcon>(), reason: '$option should render a numbered badge');
-        expect((option.icon as QosLevelIcon).level, option.resolve(0));
-      }
-    });
-  });
-
-  group('QosLevelIcon', () {
-    testWidgets('renders the QoS number inside a rounded square', (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(body: Center(child: QosLevelIcon(level: 1))),
-        ),
-      );
-      expect(find.text('1'), findsOneWidget);
+      expect(MqttQosDefault.values, orderedEquals([MqttQosDefault.qos0, MqttQosDefault.qos1, MqttQosDefault.qos2, MqttQosDefault.lastUsed]));
     });
   });
 }

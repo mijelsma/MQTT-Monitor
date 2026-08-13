@@ -8,20 +8,18 @@ import '../storage/preferences_store.dart';
 import 'broker_profile_codec.dart';
 import 'broker_repository_failure.dart';
 import 'broker_storage_keys.dart';
-import 'broker_storage_migrator.dart';
 import 'certificate_storage.dart';
 import 'credential_store.dart';
 
 /// Owns broker profiles, active selection, schema checks, and atomic writes.
 class BrokerRepository extends ChangeNotifier {
   /// Creates a repository backed by profile, credential, and certificate stores.
-  BrokerRepository(PreferencesStore store, {required CredentialStore credentials, required CertificateStorage certificates, BrokerProfileCodec codec = const BrokerProfileCodec()}) : _store = store, _credentials = credentials, _certificates = certificates, _codec = codec, _migrator = BrokerStorageMigrator(store);
+  BrokerRepository(PreferencesStore store, {required CredentialStore credentials, required CertificateStorage certificates, BrokerProfileCodec codec = const BrokerProfileCodec()}) : _store = store, _credentials = credentials, _certificates = certificates, _codec = codec;
 
   final PreferencesStore _store;
   final CredentialStore _credentials;
   final CertificateStorage _certificates;
   final BrokerProfileCodec _codec;
-  final BrokerStorageMigrator _migrator;
 
   List<BrokerEntry> _brokers = const [];
   String? _activeBrokerId;
@@ -47,7 +45,7 @@ class BrokerRepository extends ChangeNotifier {
   /// Initializes schema metadata and loads the persisted broker state.
   Future<void> initialize() async {
     try {
-      await _migrator.migrate();
+      await _ensureSchema();
       await _runPendingCleanup();
       final loaded = _codec.decode(_store.get(BrokerStorageKeys.profiles));
       final hydrated = await _hydrateCredentials(loaded);
@@ -71,6 +69,24 @@ class BrokerRepository extends ChangeNotifier {
 
   /// Retries initialization after a recoverable persistence failure.
   Future<void> retry() => initialize();
+
+  Future<void> _ensureSchema() async {
+    final rawVersion = _store.get(BrokerStorageKeys.schemaVersion);
+    if (rawVersion != null && rawVersion is! int) {
+      throw const FormatException('The storage schema version is invalid.');
+    }
+    if (rawVersion == null) {
+      await _store.setInt(BrokerStorageKeys.schemaVersion, BrokerStorageKeys.currentSchemaVersion);
+      return;
+    }
+    final version = rawVersion as int;
+    if (version > BrokerStorageKeys.currentSchemaVersion) {
+      throw FormatException('Storage schema version $version is newer than this app supports.');
+    }
+    if (version < BrokerStorageKeys.currentSchemaVersion) {
+      throw FormatException('Storage schema version $version is not supported by this pre-release schema.');
+    }
+  }
 
   /// Adds [broker] and optionally makes it active after a verified write.
   Future<bool> add(BrokerEntry broker, {bool makeActive = true}) async {
