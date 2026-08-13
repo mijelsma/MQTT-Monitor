@@ -9,7 +9,10 @@ abstract interface class WindowChromeController {
 
 /// Updates supported native title bars and records recoverable channel misses.
 class PlatformWindowChromeController implements WindowChromeController {
-  PlatformWindowChromeController(this._logger, {MethodChannel channel = const MethodChannel('mqtt_monitor/window_chrome')}) : _channel = channel;
+  PlatformWindowChromeController(this._logger, {MethodChannel channel = const MethodChannel(channelName)}) : _channel = channel;
+
+  static const channelName = 'mqtt_monitor/window_chrome';
+  static const setAppearanceMethod = 'setAppearance';
 
   final AppLogger _logger;
   final MethodChannel _channel;
@@ -20,7 +23,7 @@ class PlatformWindowChromeController implements WindowChromeController {
       return;
     }
     try {
-      await _channel.invokeMethod<void>('setAppearance', brightness.name);
+      await _channel.invokeMethod<void>(setAppearanceMethod, brightness.name);
     } on PlatformException catch (error) {
       _logger.log(AppLogLevel.warning, 'window.chrome', 'Native window appearance could not be updated.', error: error);
     } on MissingPluginException catch (error) {

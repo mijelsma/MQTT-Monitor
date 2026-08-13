@@ -6,6 +6,19 @@ updates:
   baseUrl: https://github.com/OWNER/REPOSITORY/releases/download/v0.2.0
   channel: stable
 
+# Windows releases use a per-user Inno Setup installer. Set INNO_COMPILER,
+# MQTT_MONITOR_PROJECT_ROOT, MQTT_MONITOR_RELEASE_VERSION, and
+# MQTT_MONITOR_INSTALLER_FILE_VERSION before publishing.
+windows:
+  installer:
+    kind: inno
+    mode: script
+    script: windows/installer/mqtt_monitor.iss
+    isccPath: 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+    outputBaseName: MQTT-Monitor-Setup
+    privilegesRequired: lowest
+    requiresElevation: never
+
 # Production macOS releases must use a Developer ID certificate and a
 # notarytool keychain profile. GitHub Actions creates this block from its
 # signing secrets.

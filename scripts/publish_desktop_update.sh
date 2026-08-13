@@ -28,11 +28,23 @@ if [[ "$platform" == "macos" ]]; then
   done
 fi
 
+if [[ "$platform" == "windows" ]]; then
+  if [[ -z "${INNO_COMPILER:-}" || ! -f "$INNO_COMPILER" ]]; then
+    echo "INNO_COMPILER must point to the Inno Setup ISCC.exe compiler." >&2
+    exit 64
+  fi
+fi
+
+# Reject malformed or mismatched tags before a build mutates pubspec metadata.
+release_tag="$(git describe --tags --exact-match HEAD)"
+python scripts/desktop_release_contract.py \
+  --tag "$release_tag" \
+  --expect-channel "$channel"
+
 # Capture clean Git metadata before the release helper writes the numeric
 # native version required by macOS. Public labels keep the original tag so
 # SemVer prereleases remain distinguishable.
 python scripts/generate_git_info.py --prepare-release-version
-release_tag="$(git describe --tags --exact-match HEAD)"
 release_version="${release_tag#v}"
 release_build_number="$(git rev-list --count HEAD)"
 release_download_base="https://github.com/${GITHUB_REPOSITORY}/releases/download/${release_tag}"
@@ -52,6 +64,29 @@ updates:
   baseUrl: "$release_download_base"
   channel: "$channel"
 EOF
+
+if [[ "$platform" == "windows" ]]; then
+  if [[ -n "${GITHUB_WORKSPACE:-}" ]]; then
+    windows_project_root="$GITHUB_WORKSPACE"
+  else
+    windows_project_root="$(pwd -W)"
+  fi
+  export MQTT_MONITOR_PROJECT_ROOT="$windows_project_root"
+  export MQTT_MONITOR_RELEASE_VERSION="$release_version"
+  export MQTT_MONITOR_INSTALLER_FILE_VERSION="${release_version%%-*}.$release_build_number"
+
+  cat >> "$config_file" <<EOF
+windows:
+  installer:
+    kind: inno
+    mode: script
+    script: windows/installer/mqtt_monitor.iss
+    isccPath: '$INNO_COMPILER'
+    outputBaseName: MQTT-Monitor-Setup
+    privilegesRequired: lowest
+    requiresElevation: never
+EOF
+fi
 
 if [[ "$platform" == "macos" ]]; then
   cat >> "$config_file" <<EOF
