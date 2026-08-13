@@ -12,7 +12,15 @@ import 'search_scope.dart';
 
 /// Owns monitor selection, filtering, expansion, pulses, and cached rows.
 class MonitorWorkspaceController extends ChangeNotifier {
-  MonitorWorkspaceController({required TopicProjection projection, required MessageHistoryService history, required UiPreferencesRepository uiPreferences, TopicPulseController? pulses}) : _projection = projection, _history = history, _uiPreferences = uiPreferences, _pulses = pulses ?? TopicPulseController() {
+  MonitorWorkspaceController({
+    required TopicProjection projection,
+    required MessageHistoryService history,
+    required UiPreferencesRepository uiPreferences,
+    TopicPulseController? pulses,
+  }) : _projection = projection,
+       _history = history,
+       _uiPreferences = uiPreferences,
+       _pulses = pulses ?? TopicPulseController() {
     _projection.addListener(_onStructureChanged);
     _projection.updates.addListener(_onProjectionUpdate);
     _rebuildRows();
@@ -22,10 +30,13 @@ class MonitorWorkspaceController extends ChangeNotifier {
   final MessageHistoryService _history;
   final UiPreferencesRepository _uiPreferences;
   final TopicPulseController _pulses;
-  final Map<TopicTreeNode, ValueNotifier<TopicNodeMetrics>> _filteredMetrics = {};
+  final Map<TopicTreeNode, ValueNotifier<TopicNodeMetrics>> _filteredMetrics =
+      {};
+  final Map<TopicTreeNode, TopicNodeMetrics> _filteredContributions = {};
 
   TopicTreeNode? _selectedNode;
   String _filter = '';
+  String _normalizedFilter = '';
   SearchScope _scope = SearchScope.all;
   List<FlatTreeRow> _visibleRows = const [];
   int _visibleRowDerivationCount = 0;
@@ -37,7 +48,9 @@ class MonitorWorkspaceController extends ChangeNotifier {
   List<FlatTreeRow> get visibleRows => _visibleRows;
   int get visibleRowDerivationCount => _visibleRowDerivationCount;
 
-  bool get anyExpanded => _allNodes(_projection.roots).any((node) => node.isBranch && node.isExpanded);
+  bool get anyExpanded => _allNodes(
+    _projection.roots,
+  ).any((node) => node.isBranch && node.isExpanded);
 
   /// Selects a node for the detail and history panels.
   void selectNode(TopicTreeNode? node) {
@@ -51,10 +64,12 @@ class MonitorWorkspaceController extends ChangeNotifier {
     if (_filter == value) return;
     final wasEmpty = _normalizedFilter.isEmpty;
     _filter = value;
+    _normalizedFilter = value.toLowerCase().trim();
+    _refreshFilteredIndex();
     if (_normalizedFilter.isNotEmpty && wasEmpty) {
-      _expandMatchingBranches(_normalizedFilter);
+      _expandFilteredBranches();
     }
-    _rebuildRows();
+    _deriveVisibleRows();
     notifyListeners();
   }
 
@@ -69,7 +84,7 @@ class MonitorWorkspaceController extends ChangeNotifier {
   /// Toggles one branch and refreshes the cached visible row list.
   void toggleExpand(TopicTreeNode node) {
     node.isExpanded = !node.isExpanded;
-    _rebuildRows();
+    _deriveVisibleRows();
     notifyListeners();
   }
 
@@ -78,7 +93,7 @@ class MonitorWorkspaceController extends ChangeNotifier {
     for (final node in _allNodes(_projection.roots)) {
       node.isExpanded = false;
     }
-    _rebuildRows();
+    _deriveVisibleRows();
     notifyListeners();
   }
 
@@ -87,7 +102,7 @@ class MonitorWorkspaceController extends ChangeNotifier {
     for (final node in _allNodes(_projection.roots)) {
       node.isExpanded = true;
     }
-    _rebuildRows();
+    _deriveVisibleRows();
     notifyListeners();
   }
 
@@ -126,46 +141,101 @@ class MonitorWorkspaceController extends ChangeNotifier {
   void _onProjectionUpdate() {
     final update = _projection.updates.value;
     if (update == null) return;
-    final filter = _normalizedFilter;
-    if (filter.isEmpty || _subtreeMatchesFilter(update.path.last, filter)) {
+    if (_normalizedFilter.isEmpty) {
       _pulses.schedule(update.path, _uiPreferences.pulseRatePps);
+      return;
     }
-    if (filter.isEmpty || update.structureChanged) return;
 
-    final topicMatches = update.path.last.fullPath.toLowerCase().contains(filter);
-    if (_scope == SearchScope.topic || (_scope == SearchScope.all && topicMatches)) {
-      if (!topicMatches) return;
-      for (final node in update.path) {
-        final metrics = _filteredMetrics[node];
-        if (metrics != null) {
-          metrics.value = metrics.value.add(topics: update.topicCreated ? 1 : 0, messages: 1);
-        }
+    if (update.structureChanged) {
+      if (_isVisibleInFilter(update.path.last)) {
+        _pulses.schedule(update.path, _uiPreferences.pulseRatePps);
       }
       return;
     }
 
-    _rebuildRows();
-    notifyListeners();
-  }
+    final updatedNode = update.path.last;
+    final previous =
+        _filteredContributions[updatedNode] ?? const TopicNodeMetrics();
+    final next = _filteredContributionFor(updatedNode);
+    _filteredContributions[updatedNode] = next;
 
-  void _rebuildRows() {
-    _visibleRowDerivationCount++;
-    final filter = _normalizedFilter;
-    final rows = <FlatTreeRow>[];
-    Map<TopicTreeNode, TopicBadgeCounts>? filteredCounts;
-    if (filter.isNotEmpty) {
-      filteredCounts = deriveTopicBadgeCounts(_projection.roots, includesTopic: (node) => _nodeMatchesFilter(node, filter));
-      for (final entry in filteredCounts.entries) {
-        final notifier = _filteredMetrics.putIfAbsent(entry.key, () => ValueNotifier(const TopicNodeMetrics()));
-        notifier.value = TopicNodeMetrics(topicCount: entry.value.topicCount, messageCount: entry.value.messageCount);
+    final delta = next.subtract(previous);
+    if (delta != const TopicNodeMetrics()) {
+      for (final node in update.path) {
+        final metrics = _filteredMetrics.putIfAbsent(
+          node,
+          () => ValueNotifier(const TopicNodeMetrics()),
+        );
+        metrics.value = metrics.value.add(
+          topics: delta.topicCount,
+          messages: delta.messageCount,
+        );
       }
     }
 
+    if (_isVisibleInFilter(updatedNode)) {
+      _pulses.schedule(update.path, _uiPreferences.pulseRatePps);
+    }
+    if (previous.topicCount != next.topicCount) {
+      _deriveVisibleRows();
+      notifyListeners();
+    }
+  }
+
+  void _rebuildRows() {
+    _refreshFilteredIndex();
+    _deriveVisibleRows();
+  }
+
+  void _refreshFilteredIndex() {
+    _filteredContributions.clear();
+    if (_normalizedFilter.isEmpty) return;
+
+    final filteredCounts = deriveTopicBadgeCounts(
+      _projection.roots,
+      includesTopic: (node) {
+        final value = node.valueNotifier.value;
+        if (value != null) {
+          final contribution = _filteredContributionFor(node);
+          _filteredContributions[node] = contribution;
+          return contribution.topicCount == 1;
+        }
+        return false;
+      },
+    );
+    for (final entry in filteredCounts.entries) {
+      final notifier = _filteredMetrics.putIfAbsent(
+        entry.key,
+        () => ValueNotifier(const TopicNodeMetrics()),
+      );
+      notifier.value = TopicNodeMetrics(
+        topicCount: entry.value.topicCount,
+        messageCount: entry.value.messageCount,
+      );
+    }
+  }
+
+  void _deriveVisibleRows() {
+    _visibleRowDerivationCount++;
+    final rows = <FlatTreeRow>[];
+    final filterActive = _normalizedFilter.isNotEmpty;
+
     void visit(TopicTreeNode node, int depth) {
-      if (filteredCounts != null && filteredCounts[node]!.topicCount == 0) {
+      if (filterActive && !_isVisibleInFilter(node)) {
         return;
       }
-      rows.add(FlatTreeRow(node: node, depth: depth, metrics: filteredCounts == null ? node.metricsNotifier : _filteredMetrics[node]!));
+      rows.add(
+        FlatTreeRow(
+          node: node,
+          depth: depth,
+          metrics: filterActive
+              ? _filteredMetrics.putIfAbsent(
+                  node,
+                  () => ValueNotifier(const TopicNodeMetrics()),
+                )
+              : node.metricsNotifier,
+        ),
+      );
       if (!node.isExpanded) return;
       for (final child in node.children.values) {
         visit(child, depth + 1);
@@ -178,9 +248,9 @@ class MonitorWorkspaceController extends ChangeNotifier {
     _visibleRows = List.unmodifiable(rows);
   }
 
-  void _expandMatchingBranches(String filter) {
+  void _expandFilteredBranches() {
     void visit(TopicTreeNode node) {
-      if (node.isBranch && _subtreeMatchesFilter(node, filter)) {
+      if (node.isBranch && _isVisibleInFilter(node)) {
         node.isExpanded = true;
       }
       for (final child in node.children.values) {
@@ -193,22 +263,31 @@ class MonitorWorkspaceController extends ChangeNotifier {
     }
   }
 
-  String get _normalizedFilter => _filter.toLowerCase().trim();
+  bool _isVisibleInFilter(TopicTreeNode node) =>
+      (_filteredMetrics[node]?.value.topicCount ?? 0) > 0;
 
-  bool _subtreeMatchesFilter(TopicTreeNode node, String filter) {
-    if (_nodeMatchesFilter(node, filter)) return true;
-    return node.children.values.any((child) => _subtreeMatchesFilter(child, filter));
+  TopicNodeMetrics _filteredContributionFor(TopicTreeNode node) {
+    final value = node.valueNotifier.value;
+    if (value == null || !_nodeMatchesFilter(node, _normalizedFilter)) {
+      return const TopicNodeMetrics();
+    }
+    return TopicNodeMetrics(topicCount: 1, messageCount: value.seq);
   }
 
   bool _nodeMatchesFilter(TopicTreeNode node, String filter) {
-    if (_scope != SearchScope.value && node.fullPath.toLowerCase().contains(filter)) {
+    if (_scope != SearchScope.value &&
+        node.fullPath.toLowerCase().contains(filter)) {
       return true;
     }
     final payload = node.valueNotifier.value?.payload;
-    return _scope != SearchScope.topic && payload != null && payload.toLowerCase().contains(filter);
+    return _scope != SearchScope.topic &&
+        payload != null &&
+        payload.toLowerCase().contains(filter);
   }
 
-  bool _isWithin(String? candidate, String root) => candidate != null && (candidate == root || candidate.startsWith('$root/'));
+  bool _isWithin(String? candidate, String root) =>
+      candidate != null &&
+      (candidate == root || candidate.startsWith('$root/'));
 
   Iterable<TopicTreeNode> _allNodes(Iterable<TopicTreeNode> nodes) sync* {
     for (final node in nodes) {
