@@ -9,6 +9,13 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  # intl_utils owns these files and currently emits untyped message helpers.
+  # Compilation and widget tests still exercise them; exclude only their
+  # generator-specific diagnostics so handwritten code remains fully strict.
+  exclude:
+    - lib/generated/intl/**
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

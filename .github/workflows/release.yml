@@ -46,10 +46,9 @@ jobs:
           channel: ${{ env.FLUTTER_CHANNEL }}
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-      - name: Install Linux test dependencies
-        run: sudo apt-get update && sudo apt-get install --yes libgtk-3-dev libsecret-1-0 libsecret-1-dev ninja-build
       - name: Validate source and release contracts
         run: |
+          python3 scripts/generate_git_info.py
           flutter pub get
           flutter analyze
           flutter test

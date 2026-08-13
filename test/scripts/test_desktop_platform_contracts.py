@@ -87,14 +87,37 @@ class DesktopPlatformContractsTest(unittest.TestCase):
         self.assertIn("PrivacyInfo.xcprivacy", podfile)
         self.assertIn("target.resources_build_phase.add_file_reference", podfile)
 
-    def test_ci_builds_every_supported_desktop_target(self) -> None:
+    def test_normal_ci_is_scoped_to_main_and_develop_quality_checks(self) -> None:
         workflow = _read(".github/workflows/desktop-ci.yml")
+        analysis_options = _read("analysis_options.yaml")
 
-        for platform in ("windows", "macos", "linux"):
-            self.assertIn(f"platform: {platform}", workflow)
+        self.assertIn("branches: [main, develop]", workflow)
+        self.assertNotIn("improvement/refactor", workflow)
+        self.assertNotIn("desktop-build:", workflow)
+        self.assertNotIn("runs-on: windows", workflow)
+        self.assertNotIn("runs-on: macos", workflow)
+        self.assertNotIn("apt-get", workflow)
+        self.assertIn("cancel-in-progress: true", workflow)
+        self.assertIn("python3 scripts/generate_git_info.py", workflow)
+        self.assertLess(
+            workflow.index("python3 scripts/generate_git_info.py"),
+            workflow.index("flutter analyze"),
+        )
         self.assertIn("flutter analyze", workflow)
+        self.assertNotIn("--no-fatal", workflow)
         self.assertIn("flutter test", workflow)
         self.assertIn("test_*.py", workflow)
+        self.assertIn("lib/generated/intl/**", analysis_options)
+
+    def test_tagged_release_builds_every_supported_desktop_target(self) -> None:
+        workflow = _read(".github/workflows/release.yml")
+
+        self.assertIn("tags:", workflow)
+        self.assertIn("- 'v*'", workflow)
+        for platform in ("windows", "macos", "linux"):
+            self.assertIn(f"  {platform}:", workflow)
+        self.assertIn("needs: [windows, macos, linux]", workflow)
+        self.assertIn("python3 scripts/generate_git_info.py", workflow)
 
     def test_mobile_and_web_scaffolds_are_explicitly_dormant(self) -> None:
         support_policy = _read("docs/platform-support.md")
