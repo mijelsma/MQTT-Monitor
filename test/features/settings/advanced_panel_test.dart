@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/broker/broker_repository.dart';
+import 'package:mqtt_monitor/core/dashboard/dashboard_preferences_repository.dart';
+import 'package:mqtt_monitor/core/dashboard/dashboard_repository.dart';
 import 'package:mqtt_monitor/features/settings/panels/advanced_panel.dart';
 import 'package:mqtt_monitor/features/settings/settings_viewmodel.dart';
+import 'package:mqtt_monitor/features/settings/settings_reset_section.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
 import 'package:mqtt_monitor/models/broker_entry.dart';
+import 'package:mqtt_monitor/models/dashboard_layout.dart';
 import 'package:mqtt_monitor/models/subscription_entry.dart';
 import 'package:mqtt_monitor/models/subscription_history_policy.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
@@ -121,17 +125,19 @@ void main() {
     expect(warning.style?.color, isNotNull);
   });
 
-  testWidgets('reset requires confirmation and restores defaults', (tester) async {
+  testWidgets('reset checklist keeps unchecked sections and resets selected ones', (tester) async {
     await dependencies.uiPreferences.setShowStatusBar(false);
     await dependencies.updatePreferences.setTracksBetaReleases(true);
     await brokers.add(const BrokerEntry(id: 'broker', name: 'Broker', host: 'broker.invalid'));
     await pumpPanel(tester);
-    final resetButton = find.text('Reset everything');
+    final resetButton = find.text('Select data to reset');
     await tester.ensureVisible(resetButton);
 
     await tester.tap(resetButton);
     await tester.pumpAndSettle();
-    expect(find.text('Reset all settings?'), findsOneWidget);
+    expect(find.text('Choose what to reset'), findsOneWidget);
+    expect(find.text('Select all'), findsOneWidget);
+    expect(find.text('User interface'), findsOneWidget);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(dependencies.uiPreferences.showStatusBar, isFalse);
@@ -140,12 +146,82 @@ void main() {
 
     await tester.tap(resetButton);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Reset everything').last);
+    final userInterface = find.text('User interface');
+    await tester.ensureVisible(userInterface);
+    await tester.tap(userInterface);
+    await tester.pump();
+    await tester.tap(find.text('Reset selected'));
+    await tester.pumpAndSettle();
+
+    expect(dependencies.uiPreferences.showStatusBar, isTrue);
+    expect(dependencies.updatePreferences.tracksBetaReleases, isTrue);
+    expect(brokers.brokers, hasLength(1));
+    expect(find.text('The selected data was reset.'), findsOneWidget);
+  });
+
+  testWidgets('select all resets every section', (tester) async {
+    await dependencies.uiPreferences.setShowStatusBar(false);
+    await dependencies.updatePreferences.setTracksBetaReleases(true);
+    await brokers.add(const BrokerEntry(id: 'broker', name: 'Broker', host: 'broker.invalid'));
+    await pumpPanel(tester);
+
+    await tester.ensureVisible(find.text('Select data to reset'));
+    await tester.tap(find.text('Select data to reset'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Select all'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Reset selected'));
     await tester.pumpAndSettle();
 
     expect(dependencies.uiPreferences.showStatusBar, isTrue);
     expect(dependencies.updatePreferences.tracksBetaReleases, isFalse);
     expect(brokers.brokers, isEmpty);
-    expect(find.text('All settings were reset to defaults.'), findsOneWidget);
+  });
+
+  test('view model resets only requested repository groups', () async {
+    await dependencies.uiPreferences.setShowStatusBar(false);
+    await dependencies.updatePreferences.setTracksBetaReleases(true);
+    await brokers.add(const BrokerEntry(id: 'broker', name: 'Broker', host: 'broker.invalid'));
+    final viewModel = dependencies.createSettingsViewModel();
+    addTearDown(viewModel.dispose);
+
+    final result = await viewModel.resetSettingsToDefaults({SettingsResetSection.updates});
+
+    expect(result.succeeded, isTrue);
+    expect(dependencies.updatePreferences.tracksBetaReleases, isFalse);
+    expect(dependencies.uiPreferences.showStatusBar, isFalse);
+    expect(brokers.brokers, hasLength(1));
+  });
+
+  test('section reset removes only its owned preference namespace', () async {
+    await dependencies.uiPreferences.setShowStatusBar(false);
+    await dependencies.workspaceLayout.setMonitorSplitRatio(0.7);
+    await dependencies.updatePreferences.setTracksBetaReleases(true);
+    final viewModel = dependencies.createSettingsViewModel();
+    addTearDown(viewModel.dispose);
+
+    expect(dependencies.preferences.get('settings.showStatusBar'), isFalse);
+    expect(dependencies.preferences.get('settings.trackBetaReleases'), isTrue);
+
+    await viewModel.resetSettingsToDefaults({SettingsResetSection.userInterface});
+
+    expect(dependencies.preferences.get('settings.showStatusBar'), isNull);
+    expect(dependencies.workspaceLayout.monitorSplitRatio, 0.5);
+    expect(dependencies.preferences.get('settings.trackBetaReleases'), isTrue);
+  });
+
+  test('dashboard group resets saved dashboards and dashboard defaults', () async {
+    final dashboards = DashboardRepository(dependencies.preferences, dependencies.brokers);
+    await dashboards.initialize();
+    addTearDown(dashboards.dispose);
+    await dashboards.setLayouts([DashboardLayout(id: 'saved', title: 'Saved')]);
+    await dependencies.dashboardPreferences.setDotSize(8);
+    final viewModel = dependencies.createSettingsViewModel(dashboardRepository: dashboards);
+    addTearDown(viewModel.dispose);
+
+    await viewModel.resetSettingsToDefaults({SettingsResetSection.dashboards});
+
+    expect(dashboards.layouts, isEmpty);
+    expect(dependencies.dashboardPreferences.dotSize, DashboardPreferencesRepository.defaultDotSize);
   });
 }

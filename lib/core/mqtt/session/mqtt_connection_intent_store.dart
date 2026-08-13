@@ -16,4 +16,7 @@ class MqttConnectionIntentStore {
 
   /// Persists whether a connection is requested.
   Future<void> setConnectionRequested(bool value) => _preferences.setBool(_key, value);
+
+  /// Removes the remembered intent so the default connected state applies.
+  Future<void> resetToDefaults() => _preferences.remove(_key);
 }

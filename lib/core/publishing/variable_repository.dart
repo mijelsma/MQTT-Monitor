@@ -127,9 +127,8 @@ class VariableRepository extends ChangeNotifier {
     }
   }
 
-  Future<void> resetAfterPreferencesClear() async {
+  Future<void> resetToDefaults() async {
     await _store.remove(snapshotKey);
-    await _store.remove(schemaVersionKey);
     _variables = const [];
     _values = const {};
     _knownBrokerIds = const {};

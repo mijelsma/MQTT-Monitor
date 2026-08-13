@@ -204,16 +204,22 @@ class BrokerRepository extends ChangeNotifier {
     return _commit(updated, _activeBrokerId, const _CleanupPlan());
   }
 
-  /// Clears all preferences and removes broker-owned secrets and certificates.
+  /// Removes broker profiles and their owned secrets and certificates.
   ///
   /// Resource references are collected leniently so reset remains available
   /// when strict broker decoding has failed. Cleanup failures are reported as a
   /// count because preferences have already been reset successfully.
-  Future<({bool succeeded, int cleanupFailures})> resetForApplicationDefaults() async {
+  Future<({bool succeeded, int cleanupFailures})> resetToDefaults() async {
     final cleanup = _resetCleanupPlan();
+    const keys = [BrokerStorageKeys.profiles, BrokerStorageKeys.activeProfileId, BrokerStorageKeys.pendingResourceCleanup];
+    final previous = {for (final key in keys) key: _store.get(key)};
     try {
-      await _store.clear();
+      for (final key in keys) {
+        await _store.remove(key);
+      }
+      await _store.setInt(BrokerStorageKeys.schemaVersion, BrokerStorageKeys.currentSchemaVersion);
     } on Object catch (error) {
+      await _restoreResetSnapshot(previous);
       _setSaveFailure(error);
       return (succeeded: false, cleanupFailures: 0);
     }
@@ -239,6 +245,23 @@ class BrokerRepository extends ChangeNotifier {
     }
     notifyListeners();
     return (succeeded: true, cleanupFailures: cleanupFailures);
+  }
+
+  Future<void> _restoreResetSnapshot(Map<String, Object?> snapshot) async {
+    for (final entry in snapshot.entries) {
+      try {
+        final value = entry.value;
+        if (value is int) {
+          await _store.setInt(entry.key, value);
+        } else if (value is String) {
+          await _store.setString(entry.key, value);
+        } else {
+          await _store.remove(entry.key);
+        }
+      } on Object {
+        // The original reset failure remains the actionable error.
+      }
+    }
   }
 
   /// Verifies and atomically commits [brokers], [activeId], and [cleanup].

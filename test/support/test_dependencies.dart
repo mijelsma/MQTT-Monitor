@@ -66,10 +66,7 @@ class TestDependencies {
   final AppNavigation navigation;
 
   /// Creates a settings view model wired to this isolated dependency graph.
-  SettingsViewModel createSettingsViewModel({
-    DashboardRepository? dashboardRepository,
-    MessageHistoryService? historyService,
-  }) => SettingsViewModel(
+  SettingsViewModel createSettingsViewModel({DashboardRepository? dashboardRepository, MessageHistoryService? historyService}) => SettingsViewModel(
     navigation: settingsNavigation,
     connectionPreferences: connectionPreferences,
     dashboardPreferences: dashboardPreferences,
@@ -82,6 +79,7 @@ class TestDependencies {
     qosPreferences: qosPreferences,
     uiPreferences: uiPreferences,
     updatePreferences: updatePreferences,
+    mqttSession: mqttSession,
     dashboardRepository: dashboardRepository,
     historyService: historyService,
   );
@@ -101,38 +99,17 @@ class TestDependencies {
     await connectionPreferences.initialize();
     await dashboardPreferences.initialize();
     await historyPreferences.initialize();
-    final workspaceLayout = WorkspaceLayoutRepository(
-      preferences,
-      persistLayout: uiPreferences.persistLayout,
-    );
+    final workspaceLayout = WorkspaceLayoutRepository(preferences, persistLayout: uiPreferences.persistLayout);
     await workspaceLayout.initialize();
-    final brokers = BrokerRepository(
-      preferences,
-      credentials: _MemoryCredentialStore(),
-      certificates: _MemoryCertificateStorage(),
-    );
+    final brokers = BrokerRepository(preferences, credentials: _MemoryCredentialStore(), certificates: _MemoryCertificateStorage());
     await brokers.initialize();
     const templateResolver = TemplateResolver();
-    final mqttSession = MqttSessionController(
-      connectionPreferences,
-      brokers,
-      MqttConnectionIntentStore(preferences),
-      logger: logger,
-    );
+    final mqttSession = MqttSessionController(connectionPreferences, brokers, MqttConnectionIntentStore(preferences), logger: logger);
     final publisher = PublishCommandService(mqttSession, templateResolver);
     const jsonValidator = JsonPayloadValidator();
     final qosPreferences = QosPreferencesRepository(preferences);
-    final variables = VariableRepository(
-      preferences,
-      brokers,
-      templateResolver,
-    );
-    final shortcuts = ShortcutRepository(
-      preferences,
-      brokers,
-      templateResolver,
-      jsonValidator,
-    );
+    final variables = VariableRepository(preferences, brokers, templateResolver);
+    final shortcuts = ShortcutRepository(preferences, brokers, templateResolver, jsonValidator);
     await qosPreferences.initialize();
     await variables.initialize();
     await shortcuts.initialize();
@@ -169,8 +146,7 @@ class _MemoryCredentialStore implements CredentialStore {
 
   /// Stores [value] under [reference].
   @override
-  Future<void> write(String reference, String value) async =>
-      _values[reference] = value;
+  Future<void> write(String reference, String value) async => _values[reference] = value;
 
   /// Deletes the secret stored under [reference].
   @override

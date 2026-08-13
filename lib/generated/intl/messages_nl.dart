@@ -103,31 +103,64 @@ class MessageLookup extends MessageLookupByLibrary {
       "Verzamel begrensde geschiedenis voor abonnementen die vanaf nu worden gemaakt",
     ),
     "advancedPanelResetAction": MessageLookupByLibrary.simpleMessage(
-      "Alles herstellen",
+      "Gegevens selecteren",
+    ),
+    "advancedPanelResetBrokers": MessageLookupByLibrary.simpleMessage(
+      "Brokerprofielen",
     ),
     "advancedPanelResetCleanupWarning": MessageLookupByLibrary.simpleMessage(
-      "Instellingen zijn hersteld, maar sommige brokerbestanden of inloggegevens konden niet worden verwijderd.",
+      "De geselecteerde gegevens zijn hersteld, maar sommige brokerbestanden of inloggegevens konden niet worden verwijderd.",
     ),
     "advancedPanelResetConfirmBody": MessageLookupByLibrary.simpleMessage(
-      "Dit verwijdert alle lokale instellingen en brokerprofielen, inclusief opgeslagen inloggegevens en geimporteerde certificaten. Dit kan niet ongedaan worden gemaakt.",
+      "Geselecteerde gegevens worden permanent verwijderd of hersteld naar de standaardwaarden. Niet-geselecteerde gegevens blijven behouden.",
     ),
     "advancedPanelResetConfirmTitle": MessageLookupByLibrary.simpleMessage(
-      "Alle instellingen herstellen?",
+      "Kies wat je wilt herstellen",
+    ),
+    "advancedPanelResetConnection": MessageLookupByLibrary.simpleMessage(
+      "Verbindingsvoorkeuren",
+    ),
+    "advancedPanelResetDashboards": MessageLookupByLibrary.simpleMessage(
+      "Dashboards",
     ),
     "advancedPanelResetFailed": MessageLookupByLibrary.simpleMessage(
       "Instellingen konden niet worden hersteld. Er zijn geen brokerbronnen verwijderd.",
     ),
     "advancedPanelResetHint": MessageLookupByLibrary.simpleMessage(
-      "Verwijder alle lokale instellingen, brokers, lay-outs, variabelen en snelkoppelingen",
+      "Kies welke instellingen en opgeslagen gegevens je wilt herstellen, of herstel alles",
+    ),
+    "advancedPanelResetHistory": MessageLookupByLibrary.simpleMessage(
+      "Geschiedenisvoorkeuren",
+    ),
+    "advancedPanelResetPublishing": MessageLookupByLibrary.simpleMessage(
+      "Publicatievoorkeuren",
     ),
     "advancedPanelResetSection": MessageLookupByLibrary.simpleMessage(
       "Opnieuw instellen",
     ),
+    "advancedPanelResetSelectAll": MessageLookupByLibrary.simpleMessage(
+      "Alles selecteren",
+    ),
+    "advancedPanelResetSelectedAction": MessageLookupByLibrary.simpleMessage(
+      "Selectie herstellen",
+    ),
+    "advancedPanelResetShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Snelkoppelingen",
+    ),
     "advancedPanelResetSuccess": MessageLookupByLibrary.simpleMessage(
-      "Alle instellingen zijn hersteld naar de standaardwaarden.",
+      "De geselecteerde gegevens zijn hersteld.",
     ),
     "advancedPanelResetTitle": MessageLookupByLibrary.simpleMessage(
-      "Instellingen herstellen",
+      "Applicatiegegevens herstellen",
+    ),
+    "advancedPanelResetUpdates": MessageLookupByLibrary.simpleMessage(
+      "Updatevoorkeuren",
+    ),
+    "advancedPanelResetUserInterface": MessageLookupByLibrary.simpleMessage(
+      "Gebruikersinterface",
+    ),
+    "advancedPanelResetVariables": MessageLookupByLibrary.simpleMessage(
+      "Variabelen",
     ),
     "advancedPanelTitle": MessageLookupByLibrary.simpleMessage("Geavanceerd"),
     "back": MessageLookupByLibrary.simpleMessage("Terug"),

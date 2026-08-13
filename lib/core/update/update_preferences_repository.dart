@@ -22,9 +22,7 @@ class UpdatePreferencesRepository extends ChangeNotifier {
     if (version == null) {
       await _store.setInt(schemaVersionKey, currentSchemaVersion);
     } else if (version != currentSchemaVersion) {
-      throw StateError(
-        'Unsupported update preferences schema version: $version',
-      );
+      throw StateError('Unsupported update preferences schema version: $version');
     }
 
     final storedPreference = _store.get(trackBetaReleasesKey);
@@ -42,8 +40,7 @@ class UpdatePreferencesRepository extends ChangeNotifier {
     await _store.setBool(trackBetaReleasesKey, value);
   }
 
-  Future<void> resetAfterPreferencesClear() async {
-    await _store.remove(schemaVersionKey);
+  Future<void> resetToDefaults() async {
     await _store.remove(trackBetaReleasesKey);
     _tracksBetaReleases = defaultTrackBetaReleases;
     notifyListeners();

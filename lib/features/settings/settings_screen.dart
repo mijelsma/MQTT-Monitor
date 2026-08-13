@@ -8,6 +8,7 @@ import '../../core/history/message_history_service.dart';
 import '../../core/history/history_preferences_repository.dart';
 import '../../core/logging/app_logger.dart';
 import '../../core/mqtt/connection_preferences_repository.dart';
+import '../../core/mqtt/session/mqtt_session_controller.dart';
 import '../../core/publishing/shortcut_repository.dart';
 import '../../core/publishing/qos_preferences_repository.dart';
 import '../../core/publishing/variable_repository.dart';
@@ -69,6 +70,7 @@ class SettingsScreen extends StatelessWidget {
         qosPreferences: ctx.read<QosPreferencesRepository>(),
         uiPreferences: ctx.read<UiPreferencesRepository>(),
         updatePreferences: ctx.read<UpdatePreferencesRepository>(),
+        mqttSession: ctx.read<MqttSessionController>(),
         dashboardRepository: ctx.read<DashboardRepository>(),
         historyService: ctx.read<MessageHistoryService>(),
       ),

@@ -60,8 +60,7 @@ class QosPreferencesRepository extends ChangeNotifier {
 
   int resolve(MqttQosDefault strategy) => strategy.resolve(_lastUsed);
 
-  Future<void> resetAfterPreferencesClear() async {
-    await _store.remove(schemaVersionKey);
+  Future<void> resetToDefaults() async {
     await _store.remove(defaultPublishKey);
     await _store.remove(defaultShortcutKey);
     await _store.remove(defaultSubscribeKey);

@@ -84,8 +84,7 @@ class DashboardPreferencesRepository extends ChangeNotifier {
     await _store.setInt(maximumSamplesKey, next);
   }
 
-  Future<void> resetAfterPreferencesClear() async {
-    await _store.remove(schemaVersionKey);
+  Future<void> resetToDefaults() async {
     await _store.remove(dotSizeKey);
     await _store.remove(cardColorKey);
     await _store.remove(chartTypeKey);

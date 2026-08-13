@@ -9,6 +9,7 @@ import '../../../shared/widgets/ui_slider_row.dart';
 import '../../../shared/widgets/ui_switch_row.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../settings_viewmodel.dart';
+import '../settings_reset_section.dart';
 
 class AdvancedPanel extends StatefulWidget {
   const AdvancedPanel({super.key});
@@ -22,26 +23,10 @@ class _AdvancedPanelState extends State<AdvancedPanel> {
 
   Future<void> _resetSettings(SettingsViewModel viewModel) async {
     final strings = S.of(context);
-    final confirmed =
-        await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text(strings.advancedPanelResetConfirmTitle),
-            content: Text(strings.advancedPanelResetConfirmBody),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: Text(strings.cancel)),
-              FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: context.tokens.error),
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(strings.advancedPanelResetAction),
-              ),
-            ],
-          ),
-        ) ??
-        false;
-    if (!confirmed) return;
+    final selected = await showDialog<Set<SettingsResetSection>>(context: context, builder: (context) => const _ResetSelectionDialog()) ?? const <SettingsResetSection>{};
+    if (selected.isEmpty) return;
 
-    final result = await viewModel.resetSettingsToDefaults();
+    final result = await viewModel.resetSettingsToDefaults(selected);
     if (!mounted) return;
     final message = !result.succeeded
         ? strings.advancedPanelResetFailed
@@ -164,6 +149,99 @@ class _ResetSettingsRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ResetSelectionDialog extends StatefulWidget {
+  const _ResetSelectionDialog();
+
+  @override
+  State<_ResetSelectionDialog> createState() => _ResetSelectionDialogState();
+}
+
+class _ResetSelectionDialogState extends State<_ResetSelectionDialog> {
+  final Set<SettingsResetSection> _selected = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = S.of(context);
+    final allSelected = _selected.length == SettingsResetSection.values.length;
+    final selection = <(SettingsResetSection, String)>[
+      (SettingsResetSection.brokers, strings.advancedPanelResetBrokers),
+      (SettingsResetSection.dashboards, strings.advancedPanelResetDashboards),
+      (SettingsResetSection.variables, strings.advancedPanelResetVariables),
+      (SettingsResetSection.shortcuts, strings.advancedPanelResetShortcuts),
+      (SettingsResetSection.history, strings.advancedPanelResetHistory),
+      (SettingsResetSection.connection, strings.advancedPanelResetConnection),
+      (SettingsResetSection.publishing, strings.advancedPanelResetPublishing),
+      (SettingsResetSection.userInterface, strings.advancedPanelResetUserInterface),
+      (SettingsResetSection.updates, strings.advancedPanelResetUpdates),
+    ];
+
+    return AlertDialog(
+      title: Text(strings.advancedPanelResetConfirmTitle),
+      content: SizedBox(
+        width: 520,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(strings.advancedPanelResetConfirmBody),
+            const SizedBox(height: 12),
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              tristate: true,
+              value: _selected.isEmpty ? false : (allSelected ? true : null),
+              title: Text(strings.advancedPanelResetSelectAll, style: const TextStyle(fontWeight: FontWeight.w600)),
+              onChanged: (_) {
+                setState(() {
+                  if (allSelected) {
+                    _selected.clear();
+                  } else {
+                    _selected
+                      ..clear()
+                      ..addAll(SettingsResetSection.values);
+                  }
+                });
+              },
+            ),
+            const Divider(height: 1),
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    for (final item in selection)
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        value: _selected.contains(item.$1),
+                        title: Text(item.$2),
+                        onChanged: (checked) {
+                          setState(() {
+                            if (checked ?? false) {
+                              _selected.add(item.$1);
+                            } else {
+                              _selected.remove(item.$1);
+                            }
+                          });
+                        },
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: Text(strings.cancel)),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: context.tokens.error),
+          onPressed: _selected.isEmpty ? null : () => Navigator.pop(context, Set.unmodifiable(_selected)),
+          child: Text(strings.advancedPanelResetSelectedAction),
+        ),
+      ],
     );
   }
 }

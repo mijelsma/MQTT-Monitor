@@ -63,8 +63,7 @@ class WorkspaceLayoutRepository extends ChangeNotifier {
     await _store.setBool(keys[index], value);
   }
 
-  Future<void> resetAfterPreferencesClear() async {
-    await _store.remove(schemaVersionKey);
+  Future<void> resetToDefaults() async {
     await _store.remove(monitorSplitRatioKey);
     await _store.remove(sidebarDetailCollapsedKey);
     await _store.remove(sidebarHistoryCollapsedKey);

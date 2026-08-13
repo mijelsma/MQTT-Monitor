@@ -133,7 +133,10 @@ class UiPreferencesRepository extends ChangeNotifier {
 
   Future<void> setLanguage(AppLanguage value) => _setEnum(languageKey, value, (next) => _language = next);
 
-  Future<void> resetAfterPreferencesClear() async {
+  Future<void> resetToDefaults() async {
+    for (final key in const [themeModeKey, accentColorKey, showStatusBarKey, showActivityKey, disableSelectionHighlightKey, pulseRatePpsKey, pulseFadeMsKey, persistLayoutKey, sidebarAnimationsEnabledKey, sidebarAnimationSpeedKey, defaultSidebarDetailKey, defaultSidebarHistoryKey, defaultSidebarPublishKey, defaultSidebarShortcutsKey, languageKey]) {
+      await _store.remove(key);
+    }
     _themeMode = defaultThemeMode;
     _accentColor = defaultAccentColor;
     _showStatusBar = defaultShowStatusBar;

@@ -78,8 +78,7 @@ class HistoryPreferencesRepository extends ChangeNotifier {
     await _store.setInt(rateSampleSizeKey, next);
   }
 
-  Future<void> resetAfterPreferencesClear() async {
-    await _store.remove(schemaVersionKey);
+  Future<void> resetToDefaults() async {
     await _store.remove(newSubscriptionEnabledKey);
     await _store.remove(newSubscriptionRetentionKey);
     await _store.remove(maximumRetentionKey);

@@ -245,10 +245,10 @@ void main() {
     await repository.initialize();
     expect(repository.failure?.details, contains('invalid or duplicate ID'));
 
-    final result = await repository.resetForApplicationDefaults();
+    final result = await repository.resetToDefaults();
 
     expect(result, (succeeded: true, cleanupFailures: 0));
-    expect(store.values, isEmpty);
+    expect(store.values, {BrokerStorageKeys.schemaVersion: BrokerStorageKeys.currentSchemaVersion});
     expect(repository.failure, isNull);
     expect(repository.brokers, isEmpty);
     expect(credentials.values, isEmpty);
@@ -256,14 +256,15 @@ void main() {
   });
 
   test('failed reset keeps preferences and broker resources intact', () async {
-    final store = _MemoryPreferencesStore()..failNextClear = true;
+    final store = _MemoryPreferencesStore();
     final credentials = _MemoryCredentialStore();
     final repository = _repository(store, credentials: credentials);
     await repository.initialize();
     await repository.add(first.copyWith(password: 'secret'));
     final persisted = Map<String, Object>.from(store.values);
+    store.failNextWriteFor(BrokerStorageKeys.profiles);
 
-    final result = await repository.resetForApplicationDefaults();
+    final result = await repository.resetToDefaults();
 
     expect(result.succeeded, isFalse);
     expect(store.values, persisted);
@@ -330,7 +331,6 @@ class _MemoryPreferencesStore implements PreferencesStore {
   final Map<String, Object> values;
   final Set<String> _failOnce = {};
   int schemaVersionWrites = 0;
-  bool failNextClear = false;
 
   /// Makes the next write or removal for [key] fail.
   void failNextWriteFor(String key) => _failOnce.add(key);
@@ -382,10 +382,6 @@ class _MemoryPreferencesStore implements PreferencesStore {
   /// Removes all values.
   @override
   Future<void> clear() async {
-    if (failNextClear) {
-      failNextClear = false;
-      throw StateError('Injected clear failure');
-    }
     values.clear();
   }
 }

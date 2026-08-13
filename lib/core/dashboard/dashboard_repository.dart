@@ -167,8 +167,11 @@ class DashboardRepository extends ChangeNotifier {
     _activeLayoutByBroker = Map.unmodifiable(active);
   }
 
-  /// Clears the in-memory view after the shared preference store was reset.
-  void resetAfterPreferencesClear() {
+  /// Removes all saved dashboard cards, layouts, and active selections.
+  Future<void> resetToDefaults() async {
+    for (final key in _store.getKeys().where((key) => key == layoutsKey || key.startsWith(cardsKeyPrefix) || key.startsWith(activeLayoutKeyPrefix))) {
+      await _store.remove(key);
+    }
     _cardsByBroker = const {};
     _activeLayoutByBroker = const {};
     _layouts = const [];

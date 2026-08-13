@@ -93,9 +93,8 @@ class ShortcutRepository extends ChangeNotifier {
     if (changed) await _persist(shortcuts);
   }
 
-  Future<void> resetAfterPreferencesClear() async {
+  Future<void> resetToDefaults() async {
     await _store.remove(itemsKey);
-    await _store.remove(schemaVersionKey);
     _shortcuts = const [];
     _knownBrokerIds = const {};
     notifyListeners();

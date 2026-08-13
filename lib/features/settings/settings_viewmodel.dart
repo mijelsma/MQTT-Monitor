@@ -9,6 +9,7 @@ import '../../core/history/history_preferences_repository.dart';
 import '../../core/history/message_history_service.dart';
 import '../../core/logging/app_logger.dart';
 import '../../core/mqtt/connection_preferences_repository.dart';
+import '../../core/mqtt/session/mqtt_session_controller.dart';
 import '../../core/publishing/shortcut_repository.dart';
 import '../../core/publishing/qos_preferences_repository.dart';
 import '../../core/publishing/variable_repository.dart';
@@ -25,6 +26,7 @@ import '../../models/sidebar_panel_default.dart';
 import '../../models/startup_connection.dart';
 import 'settings_section.dart';
 import 'settings_navigation_controller.dart';
+import 'settings_reset_section.dart';
 import '../../models/environment_variable.dart';
 import '../../models/publish_shortcut.dart';
 
@@ -44,6 +46,7 @@ class SettingsViewModel extends ChangeNotifier {
     required QosPreferencesRepository qosPreferences,
     required UiPreferencesRepository uiPreferences,
     required UpdatePreferencesRepository updatePreferences,
+    MqttSessionController? mqttSession,
     DashboardRepository? dashboardRepository,
     MessageHistoryService? historyService,
   }) : _navigation = navigation,
@@ -58,6 +61,7 @@ class SettingsViewModel extends ChangeNotifier {
        _qosPreferences = qosPreferences,
        _uiPreferences = uiPreferences,
        _updatePreferences = updatePreferences,
+       _mqttSession = mqttSession,
        _dashboard = dashboardRepository,
        _historyService = historyService {
     _navigation.addListener(_onStateChanged);
@@ -85,6 +89,7 @@ class SettingsViewModel extends ChangeNotifier {
   final QosPreferencesRepository _qosPreferences;
   final UiPreferencesRepository _uiPreferences;
   final UpdatePreferencesRepository _updatePreferences;
+  final MqttSessionController? _mqttSession;
   final DashboardRepository? _dashboard;
   final MessageHistoryService? _historyService;
 
@@ -171,43 +176,53 @@ class SettingsViewModel extends ChangeNotifier {
     return true;
   }
 
-  /// Restores every persisted setting and broker profile to app defaults.
-  Future<({bool succeeded, int cleanupFailures})> resetSettingsToDefaults() async {
+  /// Restores only the selected application data groups to defaults.
+  Future<({bool succeeded, int cleanupFailures})> resetSettingsToDefaults(Set<SettingsResetSection> sections) async {
+    if (sections.isEmpty) return (succeeded: true, cleanupFailures: 0);
     final selectedSection = activeSection;
-    final brokerReset = await _brokers.resetForApplicationDefaults();
-    if (!brokerReset.succeeded) return brokerReset;
+    var cleanupFailures = 0;
 
     try {
-      // The broker repository already cleared the shared preference store.
-      _dashboard?.resetAfterPreferencesClear();
-      await _shortcuts.resetAfterPreferencesClear();
-      await _variables.resetAfterPreferencesClear();
-      await _qosPreferences.resetAfterPreferencesClear();
-      await _uiPreferences.resetAfterPreferencesClear();
-      await _updatePreferences.resetAfterPreferencesClear();
-      await _connectionPreferences.resetAfterPreferencesClear();
-      await _dashboardPreferences.resetAfterPreferencesClear();
-      await _historyPreferences.resetAfterPreferencesClear();
-      await _workspaceLayout.resetAfterPreferencesClear();
+      if (sections.contains(SettingsResetSection.dashboards)) {
+        await _dashboard?.resetToDefaults();
+        await _dashboardPreferences.resetToDefaults();
+      }
+      if (sections.contains(SettingsResetSection.variables)) {
+        await _variables.resetToDefaults();
+      }
+      if (sections.contains(SettingsResetSection.shortcuts)) {
+        await _shortcuts.resetToDefaults();
+      }
+      if (sections.contains(SettingsResetSection.history)) {
+        await _historyPreferences.resetToDefaults();
+        _historyService?.clear();
+      }
+      if (sections.contains(SettingsResetSection.connection)) {
+        await _connectionPreferences.resetToDefaults();
+        await _mqttSession?.resetConnectionIntentToDefault();
+      }
+      if (sections.contains(SettingsResetSection.publishing)) {
+        await _qosPreferences.resetToDefaults();
+      }
+      if (sections.contains(SettingsResetSection.userInterface)) {
+        await _uiPreferences.resetToDefaults();
+        await _workspaceLayout.resetToDefaults();
+      }
+      if (sections.contains(SettingsResetSection.updates)) {
+        await _updatePreferences.resetToDefaults();
+      }
+      if (sections.contains(SettingsResetSection.brokers)) {
+        final brokerReset = await _brokers.resetToDefaults();
+        if (!brokerReset.succeeded) return brokerReset;
+        cleanupFailures += brokerReset.cleanupFailures;
+      }
+
       _workspaceLayout.setPersistenceEnabled(_uiPreferences.persistLayout);
       _navigation.select(selectedSection);
-      _historyService?.clear();
-      await _brokers.initialize();
-      await _dashboard?.initialize();
-      await _variables.initialize();
-      await _shortcuts.initialize();
-      await _qosPreferences.initialize();
-      await _uiPreferences.initialize();
-      await _updatePreferences.initialize();
-      await _connectionPreferences.initialize();
-      await _dashboardPreferences.initialize();
-      await _historyPreferences.initialize();
-      _workspaceLayout.setPersistenceEnabled(_uiPreferences.persistLayout);
-      await _workspaceLayout.initialize();
-      return brokerReset;
+      return (succeeded: true, cleanupFailures: cleanupFailures);
     } on Object catch (error) {
       _logger.log(AppLogLevel.error, 'settings.reset', 'Resetting application settings failed.', error: error);
-      return (succeeded: false, cleanupFailures: brokerReset.cleanupFailures);
+      return (succeeded: false, cleanupFailures: cleanupFailures);
     }
   }
 

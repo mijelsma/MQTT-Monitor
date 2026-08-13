@@ -17,16 +17,11 @@ void main() {
     final preferences = await SharedPreferences.getInstance();
 
     expect(repository.tracksBetaReleases, isFalse);
-    expect(
-      preferences.getInt(UpdatePreferencesRepository.schemaVersionKey),
-      UpdatePreferencesRepository.currentSchemaVersion,
-    );
+    expect(preferences.getInt(UpdatePreferencesRepository.schemaVersionKey), UpdatePreferencesRepository.currentSchemaVersion);
   });
 
   test('preserves and updates the existing beta preference key', () async {
-    final repository = await create({
-      UpdatePreferencesRepository.trackBetaReleasesKey: true,
-    });
+    final repository = await create({UpdatePreferencesRepository.trackBetaReleasesKey: true});
     final preferences = await SharedPreferences.getInstance();
 
     expect(repository.tracksBetaReleases, isTrue);
@@ -34,40 +29,28 @@ void main() {
     await repository.setTracksBetaReleases(false);
 
     expect(repository.tracksBetaReleases, isFalse);
-    expect(
-      preferences.getBool(UpdatePreferencesRepository.trackBetaReleasesKey),
-      isFalse,
-    );
+    expect(preferences.getBool(UpdatePreferencesRepository.trackBetaReleasesKey), isFalse);
   });
 
   test('rejects unsupported schemas and malformed preferences', () async {
-    SharedPreferences.setMockInitialValues({
-      UpdatePreferencesRepository.schemaVersionKey: 2,
-    });
+    SharedPreferences.setMockInitialValues({UpdatePreferencesRepository.schemaVersionKey: 2});
     var store = await SharedPreferencesStore.load();
     var repository = UpdatePreferencesRepository(store);
     await expectLater(repository.initialize(), throwsStateError);
 
-    SharedPreferences.setMockInitialValues({
-      UpdatePreferencesRepository.trackBetaReleasesKey: 'yes',
-    });
+    SharedPreferences.setMockInitialValues({UpdatePreferencesRepository.trackBetaReleasesKey: 'yes'});
     store = await SharedPreferencesStore.load();
     repository = UpdatePreferencesRepository(store);
     await expectLater(repository.initialize(), throwsFormatException);
   });
 
   test('reset restores stable tracking without retaining old values', () async {
-    final repository = await create({
-      UpdatePreferencesRepository.trackBetaReleasesKey: true,
-    });
+    final repository = await create({UpdatePreferencesRepository.trackBetaReleasesKey: true});
     final preferences = await SharedPreferences.getInstance();
 
-    await repository.resetAfterPreferencesClear();
+    await repository.resetToDefaults();
 
     expect(repository.tracksBetaReleases, isFalse);
-    expect(
-      preferences.containsKey(UpdatePreferencesRepository.trackBetaReleasesKey),
-      isFalse,
-    );
+    expect(preferences.containsKey(UpdatePreferencesRepository.trackBetaReleasesKey), isFalse);
   });
 }

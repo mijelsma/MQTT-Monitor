@@ -45,8 +45,7 @@ class ConnectionPreferencesRepository extends ChangeNotifier {
     await _store.setString(startupConnectionKey, value.name);
   }
 
-  Future<void> resetAfterPreferencesClear() async {
-    await _store.remove(schemaVersionKey);
+  Future<void> resetToDefaults() async {
     await _store.remove(rateIntervalKey);
     await _store.remove(startupConnectionKey);
     _rateIntervalMs = defaultRateIntervalMs;

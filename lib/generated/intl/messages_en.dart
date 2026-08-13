@@ -104,29 +104,62 @@ class MessageLookup extends MessageLookupByLibrary {
           "Collect bounded history for subscriptions created from now on",
         ),
     "advancedPanelResetAction": MessageLookupByLibrary.simpleMessage(
-      "Reset everything",
+      "Select data to reset",
+    ),
+    "advancedPanelResetBrokers": MessageLookupByLibrary.simpleMessage(
+      "Broker profiles",
     ),
     "advancedPanelResetCleanupWarning": MessageLookupByLibrary.simpleMessage(
-      "Settings were reset, but some broker files or credentials could not be removed.",
+      "The selected data was reset, but some broker files or credentials could not be removed.",
     ),
     "advancedPanelResetConfirmBody": MessageLookupByLibrary.simpleMessage(
-      "This removes all local settings and broker profiles, including stored credentials and imported certificates. This cannot be undone.",
+      "Selected data will be permanently removed or restored to its defaults. Unchecked data is kept.",
     ),
     "advancedPanelResetConfirmTitle": MessageLookupByLibrary.simpleMessage(
-      "Reset all settings?",
+      "Choose what to reset",
+    ),
+    "advancedPanelResetConnection": MessageLookupByLibrary.simpleMessage(
+      "Connection preferences",
+    ),
+    "advancedPanelResetDashboards": MessageLookupByLibrary.simpleMessage(
+      "Dashboards",
     ),
     "advancedPanelResetFailed": MessageLookupByLibrary.simpleMessage(
       "Settings could not be reset. No broker resources were removed.",
     ),
     "advancedPanelResetHint": MessageLookupByLibrary.simpleMessage(
-      "Remove all local settings, brokers, layouts, variables, and shortcuts",
+      "Choose which settings and saved data to reset or reset everything",
+    ),
+    "advancedPanelResetHistory": MessageLookupByLibrary.simpleMessage(
+      "History preferences",
+    ),
+    "advancedPanelResetPublishing": MessageLookupByLibrary.simpleMessage(
+      "Publishing preferences",
     ),
     "advancedPanelResetSection": MessageLookupByLibrary.simpleMessage("Reset"),
+    "advancedPanelResetSelectAll": MessageLookupByLibrary.simpleMessage(
+      "Select all",
+    ),
+    "advancedPanelResetSelectedAction": MessageLookupByLibrary.simpleMessage(
+      "Reset selected",
+    ),
+    "advancedPanelResetShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Shortcuts",
+    ),
     "advancedPanelResetSuccess": MessageLookupByLibrary.simpleMessage(
-      "All settings were reset to defaults.",
+      "The selected data was reset.",
     ),
     "advancedPanelResetTitle": MessageLookupByLibrary.simpleMessage(
-      "Reset settings to defaults",
+      "Reset application data",
+    ),
+    "advancedPanelResetUpdates": MessageLookupByLibrary.simpleMessage(
+      "Update preferences",
+    ),
+    "advancedPanelResetUserInterface": MessageLookupByLibrary.simpleMessage(
+      "User interface",
+    ),
+    "advancedPanelResetVariables": MessageLookupByLibrary.simpleMessage(
+      "Variables",
     ),
     "advancedPanelTitle": MessageLookupByLibrary.simpleMessage("Advanced"),
     "back": MessageLookupByLibrary.simpleMessage("Back"),

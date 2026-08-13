@@ -1144,60 +1144,170 @@ class S {
     );
   }
 
-  /// `Reset settings to defaults`
+  /// `Reset application data`
   String get advancedPanelResetTitle {
     return Intl.message(
-      'Reset settings to defaults',
+      'Reset application data',
       name: 'advancedPanelResetTitle',
       desc: '',
       args: [],
     );
   }
 
-  /// `Remove all local settings, brokers, layouts, variables, and shortcuts`
+  /// `Choose which settings and saved data to reset or reset everything`
   String get advancedPanelResetHint {
     return Intl.message(
-      'Remove all local settings, brokers, layouts, variables, and shortcuts',
+      'Choose which settings and saved data to reset or reset everything',
       name: 'advancedPanelResetHint',
       desc: '',
       args: [],
     );
   }
 
-  /// `Reset everything`
+  /// `Select data to reset`
   String get advancedPanelResetAction {
     return Intl.message(
-      'Reset everything',
+      'Select data to reset',
       name: 'advancedPanelResetAction',
       desc: '',
       args: [],
     );
   }
 
-  /// `Reset all settings?`
+  /// `Reset selected`
+  String get advancedPanelResetSelectedAction {
+    return Intl.message(
+      'Reset selected',
+      name: 'advancedPanelResetSelectedAction',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Choose what to reset`
   String get advancedPanelResetConfirmTitle {
     return Intl.message(
-      'Reset all settings?',
+      'Choose what to reset',
       name: 'advancedPanelResetConfirmTitle',
       desc: '',
       args: [],
     );
   }
 
-  /// `This removes all local settings and broker profiles, including stored credentials and imported certificates. This cannot be undone.`
+  /// `Selected data will be permanently removed or restored to its defaults. Unchecked data is kept.`
   String get advancedPanelResetConfirmBody {
     return Intl.message(
-      'This removes all local settings and broker profiles, including stored credentials and imported certificates. This cannot be undone.',
+      'Selected data will be permanently removed or restored to its defaults. Unchecked data is kept.',
       name: 'advancedPanelResetConfirmBody',
       desc: '',
       args: [],
     );
   }
 
-  /// `All settings were reset to defaults.`
+  /// `Select all`
+  String get advancedPanelResetSelectAll {
+    return Intl.message(
+      'Select all',
+      name: 'advancedPanelResetSelectAll',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Broker profiles`
+  String get advancedPanelResetBrokers {
+    return Intl.message(
+      'Broker profiles',
+      name: 'advancedPanelResetBrokers',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Dashboards`
+  String get advancedPanelResetDashboards {
+    return Intl.message(
+      'Dashboards',
+      name: 'advancedPanelResetDashboards',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Variables`
+  String get advancedPanelResetVariables {
+    return Intl.message(
+      'Variables',
+      name: 'advancedPanelResetVariables',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Shortcuts`
+  String get advancedPanelResetShortcuts {
+    return Intl.message(
+      'Shortcuts',
+      name: 'advancedPanelResetShortcuts',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `History preferences`
+  String get advancedPanelResetHistory {
+    return Intl.message(
+      'History preferences',
+      name: 'advancedPanelResetHistory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connection preferences`
+  String get advancedPanelResetConnection {
+    return Intl.message(
+      'Connection preferences',
+      name: 'advancedPanelResetConnection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Publishing preferences`
+  String get advancedPanelResetPublishing {
+    return Intl.message(
+      'Publishing preferences',
+      name: 'advancedPanelResetPublishing',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `User interface`
+  String get advancedPanelResetUserInterface {
+    return Intl.message(
+      'User interface',
+      name: 'advancedPanelResetUserInterface',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Update preferences`
+  String get advancedPanelResetUpdates {
+    return Intl.message(
+      'Update preferences',
+      name: 'advancedPanelResetUpdates',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The selected data was reset.`
   String get advancedPanelResetSuccess {
     return Intl.message(
-      'All settings were reset to defaults.',
+      'The selected data was reset.',
       name: 'advancedPanelResetSuccess',
       desc: '',
       args: [],
@@ -1214,10 +1324,10 @@ class S {
     );
   }
 
-  /// `Settings were reset, but some broker files or credentials could not be removed.`
+  /// `The selected data was reset, but some broker files or credentials could not be removed.`
   String get advancedPanelResetCleanupWarning {
     return Intl.message(
-      'Settings were reset, but some broker files or credentials could not be removed.',
+      'The selected data was reset, but some broker files or credentials could not be removed.',
       name: 'advancedPanelResetCleanupWarning',
       desc: '',
       args: [],
