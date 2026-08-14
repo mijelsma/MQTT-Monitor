@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import '../../models/topic_node.dart';
-import '../broker/broker_repository.dart';
+import '../../core/monitor/models/topic_tree_node_model.dart';
+import '../broker/repositories/broker_repository.dart';
 import '../ingestion/ingested_message.dart';
 import '../ingestion/message_ingestion_coordinator.dart';
 import 'topic_tree_index.dart';
@@ -16,7 +16,7 @@ class TopicProjection extends ChangeNotifier {
   final BrokerRepository _brokers;
   final bool _coalesceStructureUpdates;
   final TopicTreeIndex _index = TopicTreeIndex();
-  final ValueNotifier<({IngestedMessage message, List<TopicTreeNode> path, bool structureChanged, bool topicCreated})?> updates = ValueNotifier(null);
+  final ValueNotifier<({IngestedMessage message, List<TopicTreeNodeModel> path, bool structureChanged, bool topicCreated})?> updates = ValueNotifier(null);
 
   static const Duration _structurePublicationInterval = Duration(milliseconds: 16);
 
@@ -27,7 +27,7 @@ class TopicProjection extends ChangeNotifier {
   String? _activeBrokerId;
 
   /// Returns roots in stable display order.
-  Iterable<TopicTreeNode> get roots => _index.roots;
+  Iterable<TopicTreeNodeModel> get roots => _index.roots;
 
   /// Returns the broker that owns the current projection.
   String? get brokerId => _activeBrokerId;
@@ -41,10 +41,10 @@ class TopicProjection extends ChangeNotifier {
   }
 
   /// Returns the current node path for [topic], or an empty list if absent.
-  List<TopicTreeNode> pathFor(String topic) => _index.pathFor(topic);
+  List<TopicTreeNodeModel> pathFor(String topic) => _index.pathFor(topic);
 
   /// Removes a subtree and returns its concrete topic paths.
-  List<String> delete(TopicTreeNode node) {
+  List<String> delete(TopicTreeNodeModel node) {
     final removed = _index.delete(node);
     if (removed.isNotEmpty) {
       _cancelStructurePublication();

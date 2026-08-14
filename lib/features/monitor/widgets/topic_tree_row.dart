@@ -2,11 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/monitor/topic_node_metrics.dart';
-import '../../../core/ui/ui_preferences_repository.dart';
+import '../../../core/ui/repositories/ui_preferences_repository.dart';
 import 'package:provider/provider.dart';
 import '../../../shared/widgets/count_pill.dart';
-import '../../../models/topic_node.dart';
-import '../../../models/topic_node_value.dart';
+import '../../../core/monitor/models/topic_tree_node_model.dart';
+import '../../../core/monitor/models/topic_node_value_model.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../topic_payload_preview.dart';
 
@@ -20,7 +20,7 @@ import '../topic_payload_preview.dart';
 class TopicTreeRow extends StatefulWidget {
   const TopicTreeRow({super.key, required this.node, required this.depth, required this.metrics, required this.onToggle, this.onSelect, this.selected = false});
 
-  final TopicTreeNode node;
+  final TopicTreeNodeModel node;
   final int depth;
   final ValueListenable<TopicNodeMetrics> metrics;
   final VoidCallback onToggle;
@@ -32,7 +32,7 @@ class TopicTreeRow extends StatefulWidget {
 }
 
 class _TopicTreeRowState extends State<TopicTreeRow> {
-  TopicNodeValue? _currentValue;
+  TopicNodeValueModel? _currentValue;
   String? _payloadPreview;
   late TopicNodeMetrics _currentMetrics;
 
@@ -182,7 +182,7 @@ class _TopicTreeRowState extends State<TopicTreeRow> {
 class _TopicPulseOverlay extends StatefulWidget {
   const _TopicPulseOverlay({required this.node, required this.color}) : super(key: const ValueKey('topic-pulse-overlay'));
 
-  final TopicTreeNode node;
+  final TopicTreeNodeModel node;
   final Color color;
 
   @override

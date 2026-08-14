@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../shared/widgets/empty_state_shell.dart';
 import '../../../theme/app_colors.dart';
 import '../../settings/dialogs/broker_dialog.dart';
-import '../monitor_viewmodel.dart';
+import '../view_models/monitor_view_model.dart';
 
 /// Prompts the user to create a broker when none are configured.
 class NoBrokersState extends StatelessWidget {

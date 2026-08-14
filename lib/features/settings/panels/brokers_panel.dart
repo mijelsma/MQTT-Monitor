@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../generated/l10n.dart';
 import '../../../theme/app_colors.dart';
-import '../../../models/broker_entry.dart';
+import '../../../core/broker/models/broker_entry_model.dart';
 import '../../../shared/widgets/ui_add_button.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../shared/widgets/ui_inline_notice.dart';
@@ -11,7 +11,7 @@ import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
 import '../../../shared/widgets/ui_sortable_row.dart';
 import '../dialogs/broker_dialog.dart';
-import '../settings_viewmodel.dart';
+import '../view_models/settings_view_model.dart';
 
 /// Displays broker CRUD, reorder, and persistence-recovery controls.
 class BrokersPanel extends StatelessWidget {
@@ -27,7 +27,7 @@ class BrokersPanel extends StatelessWidget {
   }
 
   /// Opens the broker dialog and persists edits or deletion.
-  Future<void> _openEdit(BuildContext context, BrokerEntry broker) async {
+  Future<void> _openEdit(BuildContext context, BrokerEntryModel broker) async {
     final vm = context.read<SettingsViewModel>();
     final updated = await showBrokerDialog(context, broker: broker, onDelete: () async => vm.deleteBroker(broker.id));
     if (updated == null) return;

@@ -1,24 +1,24 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/broker/broker_profile_codec.dart';
-import 'package:mqtt_monitor/models/broker_entry.dart';
-import 'package:mqtt_monitor/models/subscription_entry.dart';
-import 'package:mqtt_monitor/models/subscription_history_policy.dart';
+import 'package:mqtt_monitor/core/broker/models/broker_entry_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_entry_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_history_policy_model.dart';
 
 void main() {
   const codec = BrokerProfileCodec();
 
   test('stable subscription ID and history policy round-trip', () {
-    const broker = BrokerEntry(
+    const broker = BrokerEntryModel(
       id: 'broker',
       name: 'Broker',
       host: 'broker.invalid',
-      subscriptions: [SubscriptionEntry(id: 'subscription', topic: 'devices/+/state', qos: 2, history: SubscriptionHistoryPolicy(enabled: false, retention: 250))],
+      subscriptions: [SubscriptionEntryModel(id: 'subscription', topic: 'devices/+/state', qos: 2, history: SubscriptionHistoryPolicyModel(enabled: false, retention: 250))],
     );
 
     final decoded = codec.decode(codec.encode(const [broker]));
 
     expect(decoded.single.subscriptions.single.id, 'subscription');
-    expect(decoded.single.subscriptions.single.history, const SubscriptionHistoryPolicy(enabled: false, retention: 250));
+    expect(decoded.single.subscriptions.single.history, const SubscriptionHistoryPolicyModel(enabled: false, retention: 250));
   });
 
   test('pre-policy development subscriptions are rejected', () {

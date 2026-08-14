@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/models/graph_card_model.dart';
+import 'package:mqtt_monitor/core/dashboard/models/graph_card_model.dart';
 
 import 'pipeline_acceptance_fixture.dart';
 import 'traffic_generator.dart';

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/history/message_history_service.dart';
+import 'package:mqtt_monitor/core/history/services/message_history_service.dart';
 import 'package:mqtt_monitor/core/ingestion/message_ingestion_coordinator.dart';
-import 'package:mqtt_monitor/core/history/history_preferences_repository.dart';
+import 'package:mqtt_monitor/core/history/repositories/history_preferences_repository.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/message_detail_panel.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
-import 'package:mqtt_monitor/models/topic_node.dart';
-import 'package:mqtt_monitor/models/topic_node_value.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_tree_node_model.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_node_value_model.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
@@ -29,8 +29,8 @@ void main() {
     addTearDown(mqtt.dispose);
     final ingestion = MessageIngestionCoordinator(mqtt, dependencies.brokers);
     final history = MessageHistoryService(ingestion, dependencies.historyPreferences, dependencies.brokers);
-    final node = TopicTreeNode(segment: 'temperature', fullPath: 'home/temperature');
-    node.valueNotifier.value = TopicNodeValue(payload: payload, seq: 1, receivedAt: DateTime(2026));
+    final node = TopicTreeNodeModel(segment: 'temperature', fullPath: 'home/temperature');
+    node.valueNotifier.value = TopicNodeValueModel(payload: payload, seq: 1, receivedAt: DateTime(2026));
 
     return MultiProvider(
       providers: [

@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/logging/app_logger.dart';
-import 'package:mqtt_monitor/core/platform/window_chrome.dart';
+import 'package:mqtt_monitor/core/platform/controllers/window_chrome_controller.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

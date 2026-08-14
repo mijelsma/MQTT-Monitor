@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/update/app_update_service.dart';
+import '../../../core/update/services/app_update_service.dart';
 import '../../../generated/git_info.dart';
 import '../../../generated/l10n.dart';
 import '../../../shared/widgets/spacers.dart';

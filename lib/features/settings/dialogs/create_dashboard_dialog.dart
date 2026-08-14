@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../generated/l10n.dart';
-import '../../../models/broker_entry.dart';
-import '../../../models/dashboard_layout.dart';
+import '../../../core/broker/models/broker_entry_model.dart';
+import '../../../core/dashboard/models/dashboard_layout_model.dart';
 import '../../../shared/widgets/color_picker_field.dart';
 import '../../../shared/widgets/scope_picker.dart';
 import '../../../shared/widgets/spacers.dart';
@@ -10,8 +10,8 @@ import '../../../shared/widgets/ui_field.dart';
 import '../../../shared/widgets/ui_modal_scaffold.dart';
 import '../../../theme/app_colors.dart';
 
-Future<DashboardLayout?> showCreateDashboardDialog(BuildContext context, {DashboardLayout? dashboard, required List<BrokerEntry> brokers, VoidCallback? onDelete}) {
-  return showDialog<DashboardLayout>(
+Future<DashboardLayoutModel?> showCreateDashboardDialog(BuildContext context, {DashboardLayoutModel? dashboard, required List<BrokerEntryModel> brokers, VoidCallback? onDelete}) {
+  return showDialog<DashboardLayoutModel>(
     context: context,
     barrierColor: Colors.black54,
     builder: (_) => _CreateDashboardDialog(dashboard: dashboard, brokers: brokers, onDelete: onDelete),
@@ -21,8 +21,8 @@ Future<DashboardLayout?> showCreateDashboardDialog(BuildContext context, {Dashbo
 class _CreateDashboardDialog extends StatefulWidget {
   const _CreateDashboardDialog({this.dashboard, required this.brokers, this.onDelete});
 
-  final DashboardLayout? dashboard;
-  final List<BrokerEntry> brokers;
+  final DashboardLayoutModel? dashboard;
+  final List<BrokerEntryModel> brokers;
   final VoidCallback? onDelete;
 
   @override
@@ -65,7 +65,7 @@ class _CreateDashboardDialogState extends State<_CreateDashboardDialog> {
       Navigator.pop(context, widget.dashboard!.copyWith(title: _title.text.trim(), colorIndex: AppColors.colorIndex(_color), brokerIds: brokerIds));
     } else {
       final id = 'layout_${DateTime.now().millisecondsSinceEpoch}';
-      Navigator.pop(context, DashboardLayout(id: id, title: _title.text.trim(), colorIndex: AppColors.colorIndex(_color), brokerIds: brokerIds));
+      Navigator.pop(context, DashboardLayoutModel(id: id, title: _title.text.trim(), colorIndex: AppColors.colorIndex(_color), brokerIds: brokerIds));
     }
   }
 

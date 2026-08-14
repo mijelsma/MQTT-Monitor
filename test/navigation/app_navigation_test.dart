@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/features/settings/settings_navigation_controller.dart';
+import 'package:mqtt_monitor/features/settings/controllers/settings_navigation_controller.dart';
 import 'package:mqtt_monitor/features/settings/settings_section.dart';
 import 'package:mqtt_monitor/navigation/app_navigation.dart';
 

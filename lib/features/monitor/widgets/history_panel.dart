@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/broker/broker_repository.dart';
+import '../../../core/broker/repositories/broker_repository.dart';
 import '../../../core/history/history_policy_resolution.dart';
-import '../../../core/history/message_history_service.dart';
+import '../../../core/history/services/message_history_service.dart';
 import '../../../generated/l10n.dart';
-import '../../../models/topic_node.dart';
-import '../../../models/topic_node_value.dart';
+import '../../../core/monitor/models/topic_tree_node_model.dart';
+import '../../../core/monitor/models/topic_node_value_model.dart';
 import '../../../shared/format_helpers.dart';
 import '../../../shared/widgets/copy_button.dart';
 import '../../../shared/widgets/qos_tag.dart';
@@ -20,13 +20,13 @@ import '../../../theme/app_tokens/app_tokens.dart';
 class HistoryPanel extends StatefulWidget {
   const HistoryPanel({super.key, required this.node, this.selectedValue, this.onSelect});
 
-  final TopicTreeNode node;
+  final TopicTreeNodeModel node;
 
   /// The currently selected history value (managed by parent).
-  final TopicNodeValue? selectedValue;
+  final TopicNodeValueModel? selectedValue;
 
   /// Called when a history row is tapped. Pass the value, or null to deselect.
-  final ValueChanged<TopicNodeValue?>? onSelect;
+  final ValueChanged<TopicNodeValueModel?>? onSelect;
 
   @override
   State<HistoryPanel> createState() => _HistoryPanelState();
@@ -75,7 +75,7 @@ class _HistoryPanelState extends State<HistoryPanel> {
     final historyService = context.read<MessageHistoryService>();
     final resolution = historyService.resolutionFor(widget.node.fullPath);
 
-    return ValueListenableBuilder<TopicNodeValue?>(
+    return ValueListenableBuilder<TopicNodeValueModel?>(
       valueListenable: widget.node.valueNotifier,
       builder: (context, currentValue, _) {
         final history = historyService.getHistory(widget.node.fullPath);
@@ -264,7 +264,7 @@ class _ClearButtonState extends State<_ClearButton> {
 class _HistoryRow extends StatelessWidget {
   const _HistoryRow({required this.value, required this.isSelected, required this.isLatest, required this.tokens, required this.onTap});
 
-  final TopicNodeValue value;
+  final TopicNodeValueModel value;
   final bool isSelected;
   final bool isLatest;
   final AppTokens tokens;

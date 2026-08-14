@@ -1,4 +1,4 @@
-import '../../models/topic_node_value.dart';
+import '../../core/monitor/models/topic_node_value_model.dart';
 
 /// One broker-scoped message prepared once for every downstream projection.
 class IngestedMessage {
@@ -6,5 +6,5 @@ class IngestedMessage {
 
   final String brokerId;
   final String topic;
-  final TopicNodeValue value;
+  final TopicNodeValueModel value;
 }

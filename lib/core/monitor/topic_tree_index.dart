@@ -1,34 +1,34 @@
 import 'dart:collection';
 
-import '../../models/topic_node.dart';
+import '../../core/monitor/models/topic_tree_node_model.dart';
 import '../ingestion/ingested_message.dart';
 
 /// Owns the sorted topic tree and updates subtree totals incrementally.
 class TopicTreeIndex {
-  final SplayTreeMap<String, TopicTreeNode> _roots = SplayTreeMap(_compareSegments);
+  final SplayTreeMap<String, TopicTreeNodeModel> _roots = SplayTreeMap(_compareSegments);
 
   /// Returns roots in stable case-insensitive display order.
-  Iterable<TopicTreeNode> get roots => _roots.values;
+  Iterable<TopicTreeNodeModel> get roots => _roots.values;
 
   /// Returns whether no topic nodes are indexed.
   bool get isEmpty => _roots.isEmpty;
 
   /// Inserts [message] and returns its node path plus structural-change state.
-  ({List<TopicTreeNode> path, bool structureChanged, bool topicCreated}) insert(IngestedMessage message) {
+  ({List<TopicTreeNodeModel> path, bool structureChanged, bool topicCreated}) insert(IngestedMessage message) {
     final segments = message.topic.split('/').where((segment) => segment.isNotEmpty).toList();
     if (segments.isEmpty) {
       return (path: const [], structureChanged: false, topicCreated: false);
     }
 
-    Map<String, TopicTreeNode> level = _roots;
-    final path = <TopicTreeNode>[];
+    Map<String, TopicTreeNodeModel> level = _roots;
+    final path = <TopicTreeNodeModel>[];
     var fullPath = '';
     var structureChanged = false;
     for (final segment in segments) {
       fullPath = fullPath.isEmpty ? segment : '$fullPath/$segment';
       var node = level[segment];
       if (node == null) {
-        node = TopicTreeNode(segment: segment, fullPath: fullPath);
+        node = TopicTreeNodeModel(segment: segment, fullPath: fullPath);
         level[segment] = node;
         structureChanged = true;
       }
@@ -46,10 +46,10 @@ class TopicTreeIndex {
   }
 
   /// Returns the existing node path for a concrete topic.
-  List<TopicTreeNode> pathFor(String topic) {
+  List<TopicTreeNodeModel> pathFor(String topic) {
     final segments = topic.split('/').where((segment) => segment.isNotEmpty);
-    Map<String, TopicTreeNode> level = _roots;
-    final path = <TopicTreeNode>[];
+    Map<String, TopicTreeNodeModel> level = _roots;
+    final path = <TopicTreeNodeModel>[];
     for (final segment in segments) {
       final node = level[segment];
       if (node == null) return const [];
@@ -60,7 +60,7 @@ class TopicTreeIndex {
   }
 
   /// Removes [node], prunes empty ancestors, and returns concrete topic paths.
-  List<String> delete(TopicTreeNode node) {
+  List<String> delete(TopicTreeNodeModel node) {
     final segments = node.fullPath.split('/').where((segment) => segment.isNotEmpty).toList();
     if (segments.isEmpty) return const [];
 
@@ -72,7 +72,7 @@ class TopicTreeIndex {
     final removedTopics = <String>[];
     _collectConcreteTopics(node, removedTopics);
 
-    Map<String, TopicTreeNode> level = _roots;
+    Map<String, TopicTreeNodeModel> level = _roots;
     for (var index = 0; index < segments.length - 1; index++) {
       level = level[segments[index]]!.children;
     }
@@ -88,7 +88,7 @@ class TopicTreeIndex {
   /// Clears all indexed topics.
   void clear() => _roots.clear();
 
-  void _collectConcreteTopics(TopicTreeNode node, List<String> target) {
+  void _collectConcreteTopics(TopicTreeNodeModel node, List<String> target) {
     if (node.valueNotifier.value != null) target.add(node.fullPath);
     for (final child in node.children.values) {
       _collectConcreteTopics(child, target);
@@ -97,7 +97,7 @@ class TopicTreeIndex {
 
   void _pruneEmptyAncestors(List<String> segments) {
     for (var depth = segments.length - 2; depth >= 0; depth--) {
-      Map<String, TopicTreeNode> level = _roots;
+      Map<String, TopicTreeNodeModel> level = _roots;
       for (var index = 0; index < depth; index++) {
         final parent = level[segments[index]];
         if (parent == null) return;

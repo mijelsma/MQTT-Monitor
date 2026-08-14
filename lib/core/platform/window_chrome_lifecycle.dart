@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../ui/ui_preferences_repository.dart';
-import 'window_chrome.dart';
+import '../ui/repositories/ui_preferences_repository.dart';
+import 'controllers/window_chrome_controller.dart';
 
 /// Synchronizes native chrome and owns the platform brightness callback.
 class WindowChromeLifecycle extends StatefulWidget {

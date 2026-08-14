@@ -5,12 +5,12 @@ import 'dart:typed_data';
 
 import 'package:mqtt5_client/mqtt5_client.dart' as mqtt5;
 
-import '../../../../models/broker_entry.dart';
-import '../../../../models/mqtt_protocol_version.dart';
+import '../../../../core/broker/models/broker_entry_model.dart';
+import '../../../../core/mqtt/models/mqtt_protocol_version_model.dart';
 import '../../connection_status.dart';
 import '../../mqtt_connection_failure.dart';
 import '../../mqtt_message.dart';
-import '../../mqtt_protocol_adapter.dart';
+import '../../interfaces/mqtt_protocol_adapter_interface.dart';
 import '../../mqtt_protocol_event.dart';
 import '../../mqtt_reason.dart';
 import '../../publish_result.dart';
@@ -19,19 +19,19 @@ import '../shared/mqtt_tls_configurator.dart';
 import 'mqtt5_event_client.dart';
 
 /// Creates the observable MQTT 5 package client used for [broker].
-typedef Mqtt5ClientFactory = Mqtt5EventClient Function(BrokerEntry broker);
+typedef Mqtt5ClientFactory = Mqtt5EventClient Function(BrokerEntryModel broker);
 
 const _socketTimeoutMs = 5000;
 
 /// Adapts the mqtt5_client package to the application MQTT session contract.
-class Mqtt5Adapter implements MqttProtocolAdapter {
+class Mqtt5Adapter implements MqttProtocolAdapterInterface {
   /// Creates an MQTT 5 adapter for [broker].
   Mqtt5Adapter(this._broker, {MqttTlsConfigurator? tlsConfigurator, Mqtt5ClientFactory? clientFactory, Duration publishAckTimeout = const Duration(seconds: 5)})
     : _tlsConfigurator = tlsConfigurator ?? MqttTlsConfigurator(),
       _clientFactory = clientFactory ?? ((profile) => Mqtt5EventClient.withPort(profile.host, profile.effectiveClientId, profile.port, maxConnectionAttempts: 1)),
       _publishAckTimeout = publishAckTimeout;
 
-  final BrokerEntry _broker;
+  final BrokerEntryModel _broker;
   final MqttTlsConfigurator _tlsConfigurator;
   final Mqtt5ClientFactory _clientFactory;
   final Duration _publishAckTimeout;
@@ -46,7 +46,7 @@ class Mqtt5Adapter implements MqttProtocolAdapter {
 
   /// Returns MQTT 5 as the implemented protocol.
   @override
-  MqttProtocolVersion get protocolVersion => MqttProtocolVersion.v5;
+  MqttProtocolVersionModel get protocolVersion => MqttProtocolVersionModel.v5;
 
   /// Returns lifecycle and diagnostic events.
   @override

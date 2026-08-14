@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import '../../models/data_point.dart';
+import '../../core/dashboard/models/data_point_model.dart';
 import '../ingestion/ingested_message.dart';
 import '../publishing/template_resolver.dart';
-import '../publishing/variable_repository.dart';
-import 'dashboard_repository.dart';
+import '../publishing/repositories/variable_repository.dart';
+import 'repositories/dashboard_repository.dart';
 import 'dashboard_value_extractor.dart';
 
 /// Owns all bounded, process-lifetime dashboard series and routes messages.
@@ -24,7 +24,7 @@ class DashboardSeriesStore {
   final TemplateResolver _templateResolver;
   final DashboardValueExtractor _extractor;
 
-  final Map<_SeriesKey, ValueNotifier<List<DataPoint>>> _signals = {};
+  final Map<_SeriesKey, ValueNotifier<List<DataPointModel>>> _signals = {};
   final Map<_TopicKey, List<_Route>> _routes = {};
   final Map<_SeriesKey, _RouteFingerprint> _fingerprints = {};
   StreamSubscription<IngestedMessage>? _subscription;
@@ -37,11 +37,11 @@ class DashboardSeriesStore {
     _subscription = _messages.listen(_onMessage);
   }
 
-  ValueListenable<List<DataPoint>> seriesFor(String brokerId, String cardId) {
-    return _signals.putIfAbsent(_SeriesKey(brokerId, cardId), () => ValueNotifier<List<DataPoint>>(const []));
+  ValueListenable<List<DataPointModel>> seriesFor(String brokerId, String cardId) {
+    return _signals.putIfAbsent(_SeriesKey(brokerId, cardId), () => ValueNotifier<List<DataPointModel>>(const []));
   }
 
-  List<DataPoint> currentSeries(String brokerId, String cardId) {
+  List<DataPointModel> currentSeries(String brokerId, String cardId) {
     return _signals[_SeriesKey(brokerId, cardId)]?.value ?? const [];
   }
 
@@ -83,7 +83,7 @@ class DashboardSeriesStore {
       if (value == null) continue;
 
       final signal = _signals[route.seriesKey]!;
-      final next = [...signal.value, DataPoint(timestamp: message.value.receivedAt, value: value)];
+      final next = [...signal.value, DataPointModel(timestamp: message.value.receivedAt, value: value)];
       final excess = next.length - route.maximumSamples;
       signal.value = List.unmodifiable(excess > 0 ? next.sublist(excess) : next);
     }
@@ -106,7 +106,7 @@ class DashboardSeriesStore {
         final topic = resolution.value;
         final fingerprint = _RouteFingerprint(topic, card.jsonKeyPath, card.maxDataPoints);
         liveKeys.add(seriesKey);
-        final signal = _signals.putIfAbsent(seriesKey, () => ValueNotifier<List<DataPoint>>(const []));
+        final signal = _signals.putIfAbsent(seriesKey, () => ValueNotifier<List<DataPointModel>>(const []));
         final previous = _fingerprints[seriesKey];
         if (previous != null && (previous.topic != topic || previous.jsonKeyPath != card.jsonKeyPath)) {
           signal.value = const [];

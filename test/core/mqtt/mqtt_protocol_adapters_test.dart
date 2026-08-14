@@ -14,12 +14,12 @@ import 'package:mqtt_monitor/core/mqtt/adapters/mqtt5/mqtt5_event_client.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_reason.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_connection_intent_store.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
-import 'package:mqtt_monitor/core/broker/broker_repository.dart';
+import 'package:mqtt_monitor/core/broker/repositories/broker_repository.dart';
 import 'package:typed_data/typed_buffers.dart' show Uint8Buffer;
 import 'package:mqtt_monitor/core/mqtt/publish_result.dart';
-import 'package:mqtt_monitor/models/broker_entry.dart';
-import 'package:mqtt_monitor/models/mqtt_protocol_version.dart';
-import 'package:mqtt_monitor/models/subscription_entry.dart';
+import 'package:mqtt_monitor/core/broker/models/broker_entry_model.dart';
+import 'package:mqtt_monitor/core/mqtt/models/mqtt_protocol_version_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_entry_model.dart';
 
 import '../../support/test_dependencies.dart';
 
@@ -329,8 +329,8 @@ void main() {
       intents,
       logger: dependencies.logger,
       adapterFactory: (broker) => switch (broker.protocolVersion) {
-        MqttProtocolVersion.v311 => Mqtt311Adapter(broker, clientFactory: mqtt311ClientFactory),
-        MqttProtocolVersion.v5 => Mqtt5Adapter(broker, clientFactory: mqtt5ClientFactory),
+        MqttProtocolVersionModel.v311 => Mqtt311Adapter(broker, clientFactory: mqtt311ClientFactory),
+        MqttProtocolVersionModel.v5 => Mqtt5Adapter(broker, clientFactory: mqtt5ClientFactory),
       },
     );
   }
@@ -341,15 +341,15 @@ void main() {
   }
 
   test('connects, subscribes, publishes each QoS, and unsubscribes with a fake client', () async {
-    const broker = BrokerEntry(
+    const broker = BrokerEntryModel(
       id: 'broker-1',
       name: 'Test',
       host: 'broker.invalid',
       username: 'user',
       password: 'secret',
       subscriptions: [
-        SubscriptionEntry(id: 'sensors', topic: 'sensors/+', qos: 1),
-        SubscriptionEntry(id: 'alerts', topic: 'alerts/#', qos: 2),
+        SubscriptionEntryModel(id: 'sensors', topic: 'sensors/+', qos: 1),
+        SubscriptionEntryModel(id: 'alerts', topic: 'alerts/#', qos: 2),
       ],
     );
     final fake = _FakeMqtt3Client();
@@ -385,9 +385,9 @@ void main() {
     await brokers.update(
       brokers.brokers.single.copyWith(
         subscriptions: const [
-          SubscriptionEntry(id: 'sensors', topic: 'sensors/+', qos: 1),
-          SubscriptionEntry(id: 'alerts', topic: 'alerts/#', qos: 2),
-          SubscriptionEntry(id: 'dynamic', topic: 'dynamic/topic', qos: 2),
+          SubscriptionEntryModel(id: 'sensors', topic: 'sensors/+', qos: 1),
+          SubscriptionEntryModel(id: 'alerts', topic: 'alerts/#', qos: 2),
+          SubscriptionEntryModel(id: 'dynamic', topic: 'dynamic/topic', qos: 2),
         ],
       ),
     );
@@ -395,8 +395,8 @@ void main() {
     await brokers.update(
       brokers.brokers.single.copyWith(
         subscriptions: const [
-          SubscriptionEntry(id: 'sensors', topic: 'sensors/+', qos: 1),
-          SubscriptionEntry(id: 'alerts', topic: 'alerts/#', qos: 2),
+          SubscriptionEntryModel(id: 'sensors', topic: 'sensors/+', qos: 1),
+          SubscriptionEntryModel(id: 'alerts', topic: 'alerts/#', qos: 2),
         ],
       ),
     );
@@ -406,7 +406,7 @@ void main() {
   });
 
   test('disconnect and reconnect replace the active session', () async {
-    const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid');
+    const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid');
     final clients = <_FakeMqtt3Client>[];
     await brokers.add(broker);
     final service = createSession(
@@ -441,7 +441,7 @@ void main() {
   });
 
   test('editing a profile reconnects and applies its new subscriptions', () async {
-    const broker = BrokerEntry(id: 'same-id', name: 'Test', host: 'first.invalid');
+    const broker = BrokerEntryModel(id: 'same-id', name: 'Test', host: 'first.invalid');
     final clients = <_FakeMqtt3Client>[];
     await brokers.add(broker);
     final service = createSession(
@@ -463,7 +463,7 @@ void main() {
     await brokers.update(
       broker.copyWith(
         host: 'second.invalid',
-        subscriptions: const [SubscriptionEntry(id: 'new', topic: 'new/#', qos: 1)],
+        subscriptions: const [SubscriptionEntryModel(id: 'new', topic: 'new/#', qos: 1)],
       ),
     );
     await settle();
@@ -474,7 +474,7 @@ void main() {
   });
 
   test('broker disconnect explains MQTT 3.1.1 limitation', () async {
-    const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid');
+    const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid');
     final fake = _FakeMqtt3Client();
     await brokers.add(broker);
     final service = createSession(mqtt311ClientFactory: (_) => fake);
@@ -491,7 +491,7 @@ void main() {
   });
 
   test('MQTT 3.1.1 auto-reconnect preserves its disconnect limitation', () async {
-    const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid');
+    const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid');
     final fake = _FakeMqtt3Client();
     await brokers.add(broker);
     final service = createSession(mqtt311ClientFactory: (_) => fake);
@@ -512,7 +512,7 @@ void main() {
   });
 
   test('MQTT 5 auto-reconnect reports connecting then connected', () async {
-    const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersion.v5);
+    const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersionModel.v5);
     final fake = _FakeMqtt5Client();
     await brokers.add(broker);
     final service = createSession(mqtt5ClientFactory: (_) => fake);
@@ -532,7 +532,7 @@ void main() {
   });
 
   test('malformed updates are reported and invalid UTF-8 is decoded safely', () async {
-    const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid');
+    const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid');
     final fake = _FakeMqtt3Client();
     await brokers.add(broker);
     final service = createSession(mqtt311ClientFactory: (_) => fake);
@@ -557,7 +557,7 @@ void main() {
 
   group('honest publish feedback', () {
     test('MQTT 5 QoS 1 PUBACK with reason 0 resolves to delivered (green path)', () async {
-      const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersion.v5);
+      const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersionModel.v5);
       final fake = _FakeMqtt5Client();
       await brokers.add(broker);
       final service = createSession(mqtt5ClientFactory: (_) => fake);
@@ -566,7 +566,7 @@ void main() {
 
       service.initialize();
       await settle();
-      expect(service.activeProtocol, MqttProtocolVersion.v5);
+      expect(service.activeProtocol, MqttProtocolVersionModel.v5);
 
       fake.nextPubackReason = mqtt5.MqttPublishReasonCode.success;
       final result = await service.publish('test/hello', 'hi', qos: 1)!;
@@ -576,7 +576,7 @@ void main() {
     });
 
     test('MQTT 5 QoS 1 PUBACK with reason 0x87 (Not authorized) resolves to failed with parsed reason', () async {
-      const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersion.v5);
+      const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersionModel.v5);
       final fake = _FakeMqtt5Client();
       await brokers.add(broker);
       final service = createSession(mqtt5ClientFactory: (_) => fake);
@@ -601,7 +601,7 @@ void main() {
     });
 
     test('MQTT 5 QoS 2 PUBREC with Quota Exceeded resolves to failed with parsed reason', () async {
-      const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersion.v5);
+      const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersionModel.v5);
       final fake = _FakeMqtt5Client();
       await brokers.add(broker);
       final service = createSession(mqtt5ClientFactory: (_) => fake);
@@ -619,7 +619,7 @@ void main() {
     });
 
     test('MQTT 5 QoS 0 resolves immediately to noConfirmation (no ack possible)', () async {
-      const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersion.v5);
+      const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersionModel.v5);
       final fake = _FakeMqtt5Client();
       await brokers.add(broker);
       final service = createSession(mqtt5ClientFactory: (_) => fake);
@@ -641,7 +641,7 @@ void main() {
     });
 
     test('MQTT 3.1.1 QoS 1 with successful PUBACK still resolves to noConfirmation (3.1.1 cannot tell)', () async {
-      const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid');
+      const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid');
       final fake = _FakeMqtt3Client();
       await brokers.add(broker);
       final service = createSession(mqtt311ClientFactory: (_) => fake);
@@ -663,7 +663,7 @@ void main() {
     });
 
     test('publish times out when no PUBACK arrives and resolves to timedOut', () async {
-      const broker = BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersion.v5);
+      const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersionModel.v5);
       final fake = _FakeMqtt5Client();
       await brokers.add(broker);
       final service = createSession(mqtt5ClientFactory: (_) => fake);
@@ -676,12 +676,12 @@ void main() {
       // Suppress PUBACK so the future times out. A 5s timeout is
       // baked into the service, so we use a short test wrapper:
       fake.nextPubackReason = null;
-      final result = await service.publish('test/timeout', 'hi', qos: 1)!.timeout(const Duration(seconds: 8), onTimeout: () => PublishResult.timedOut(MqttProtocolVersion.v5, 1));
+      final result = await service.publish('test/timeout', 'hi', qos: 1)!.timeout(const Duration(seconds: 8), onTimeout: () => PublishResult.timedOut(MqttProtocolVersionModel.v5, 1));
       expect(result.kind, PublishResultKind.timedOut);
     });
 
     test('publish returns null when the local client is not connected', () async {
-      await brokers.add(const BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid'));
+      await brokers.add(const BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid'));
       final service = createSession(mqtt311ClientFactory: (_) => _FakeMqtt3Client());
       addTearDown(service.dispose);
       service.initialize();
@@ -698,7 +698,7 @@ void main() {
     /// CONNACK reason code 0x86 (badUsernameOrPassword) and counts the
     /// CONNECT packets it receives. Returns the broker to connect to and
     /// the running count of accepted connect attempts.
-    Future<(BrokerEntry, List<bool>)> startRejectingBroker() async {
+    Future<(BrokerEntryModel, List<bool>)> startRejectingBroker() async {
       final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
       final connectPackets = <bool>[];
       addTearDown(() async {
@@ -717,12 +717,12 @@ void main() {
           socket.add([0x20, 0x03, 0x00, 0x86, 0x00]);
         }
       }());
-      return (BrokerEntry(id: 'broker-1', name: 'Rejector', host: '127.0.0.1', port: server.port, protocolVersion: MqttProtocolVersion.v5, username: 'user', password: 'wrong-password'), connectPackets);
+      return (BrokerEntryModel(id: 'broker-1', name: 'Rejector', host: '127.0.0.1', port: server.port, protocolVersion: MqttProtocolVersionModel.v5, username: 'user', password: 'wrong-password'), connectPackets);
     }
 
     /// Like [startRejectingBroker] but speaking MQTT 3.1.1: every CONNECT
     /// is answered with CONNACK return code 0x04 (badUsernameOrPassword).
-    Future<(BrokerEntry, List<bool>)> startRejectingBroker311() async {
+    Future<(BrokerEntryModel, List<bool>)> startRejectingBroker311() async {
       final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
       final connectPackets = <bool>[];
       addTearDown(() async {
@@ -735,7 +735,7 @@ void main() {
           socket.add([0x20, 0x02, 0x00, 0x04]);
         }
       }());
-      return (BrokerEntry(id: 'broker-1', name: 'Rejector', host: '127.0.0.1', port: server.port, protocolVersion: MqttProtocolVersion.v311, username: 'user', password: 'wrong-password'), connectPackets);
+      return (BrokerEntryModel(id: 'broker-1', name: 'Rejector', host: '127.0.0.1', port: server.port, protocolVersion: MqttProtocolVersionModel.v311, username: 'user', password: 'wrong-password'), connectPackets);
     }
 
     /// Waits until the connection status is reported as an error, or the

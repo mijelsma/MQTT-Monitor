@@ -1,26 +1,26 @@
-import 'package:mqtt_monitor/core/broker/broker_repository.dart';
-import 'package:mqtt_monitor/core/broker/certificate_storage.dart';
-import 'package:mqtt_monitor/core/broker/credential_store.dart';
-import 'package:mqtt_monitor/core/dashboard/dashboard_preferences_repository.dart';
-import 'package:mqtt_monitor/core/dashboard/dashboard_repository.dart';
-import 'package:mqtt_monitor/core/history/history_preferences_repository.dart';
-import 'package:mqtt_monitor/core/history/message_history_service.dart';
+import 'package:mqtt_monitor/core/broker/repositories/broker_repository.dart';
+import 'package:mqtt_monitor/core/broker/interfaces/certificate_storage_interface.dart';
+import 'package:mqtt_monitor/core/broker/interfaces/credential_store_interface.dart';
+import 'package:mqtt_monitor/core/dashboard/repositories/dashboard_preferences_repository.dart';
+import 'package:mqtt_monitor/core/dashboard/repositories/dashboard_repository.dart';
+import 'package:mqtt_monitor/core/history/repositories/history_preferences_repository.dart';
+import 'package:mqtt_monitor/core/history/services/message_history_service.dart';
 import 'package:mqtt_monitor/core/logging/app_logger.dart';
-import 'package:mqtt_monitor/core/mqtt/connection_preferences_repository.dart';
+import 'package:mqtt_monitor/core/mqtt/repositories/connection_preferences_repository.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_connection_intent_store.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
-import 'package:mqtt_monitor/core/publishing/publish_command_service.dart';
+import 'package:mqtt_monitor/core/publishing/services/publish_command_service.dart';
 import 'package:mqtt_monitor/core/publishing/json_payload_validator.dart';
-import 'package:mqtt_monitor/core/publishing/qos_preferences_repository.dart';
-import 'package:mqtt_monitor/core/publishing/shortcut_repository.dart';
+import 'package:mqtt_monitor/core/publishing/repositories/qos_preferences_repository.dart';
+import 'package:mqtt_monitor/core/publishing/repositories/shortcut_repository.dart';
 import 'package:mqtt_monitor/core/publishing/template_resolver.dart';
-import 'package:mqtt_monitor/core/publishing/variable_repository.dart';
+import 'package:mqtt_monitor/core/publishing/repositories/variable_repository.dart';
 import 'package:mqtt_monitor/core/storage/shared_preferences_store.dart';
-import 'package:mqtt_monitor/core/ui/ui_preferences_repository.dart';
-import 'package:mqtt_monitor/core/ui/workspace_layout_repository.dart';
-import 'package:mqtt_monitor/core/update/update_preferences_repository.dart';
-import 'package:mqtt_monitor/features/settings/settings_navigation_controller.dart';
-import 'package:mqtt_monitor/features/settings/settings_viewmodel.dart';
+import 'package:mqtt_monitor/core/ui/repositories/ui_preferences_repository.dart';
+import 'package:mqtt_monitor/core/ui/repositories/workspace_layout_repository.dart';
+import 'package:mqtt_monitor/core/update/repositories/update_preferences_repository.dart';
+import 'package:mqtt_monitor/features/settings/controllers/settings_navigation_controller.dart';
+import 'package:mqtt_monitor/features/settings/view_models/settings_view_model.dart';
 import 'package:mqtt_monitor/navigation/app_navigation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -137,7 +137,7 @@ class TestDependencies {
 }
 
 /// Keeps test secrets in memory without invoking a platform plugin.
-class _MemoryCredentialStore implements CredentialStore {
+class _MemoryCredentialStore implements CredentialStoreInterface {
   final Map<String, String> _values = {};
 
   /// Returns the secret stored for [reference].
@@ -154,7 +154,7 @@ class _MemoryCredentialStore implements CredentialStore {
 }
 
 /// Discards certificate cleanup requests made by test repositories.
-class _MemoryCertificateStorage implements CertificateStorage {
+class _MemoryCertificateStorage implements CertificateStorageInterface {
   /// Accepts deletion because test profiles do not own real files.
   @override
   Future<void> delete(String filePath) async {}

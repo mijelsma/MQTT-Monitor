@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/ui/ui_preferences_repository.dart';
+import '../../../core/ui/repositories/ui_preferences_repository.dart';
 import '../../../generated/l10n.dart';
-import '../../../models/topic_node_value.dart';
+import '../../../core/monitor/models/topic_node_value_model.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../shared/widgets/workspace_panel_layout.dart';
 import '../../../shared/widgets/workspace_panel_section.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../detail_sidebar_controller.dart';
-import '../monitor_workspace_controller.dart';
+import '../controllers/detail_sidebar_controller.dart';
+import '../controllers/monitor_workspace_controller.dart';
 import 'history_panel.dart';
 import 'message_detail_panel.dart';
 import 'publish_panel.dart';
@@ -25,7 +25,7 @@ class DetailSidebar extends StatefulWidget {
 }
 
 class _DetailSidebarState extends State<DetailSidebar> {
-  TopicNodeValue? _selectedHistoryValue;
+  TopicNodeValueModel? _selectedHistoryValue;
   String? _lastTopicPath;
 
   @override

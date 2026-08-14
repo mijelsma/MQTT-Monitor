@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:mqtt_monitor/theme/app_theme_builder.dart';
 import 'package:mqtt_monitor/theme/app_tokens/app_tokens.dart';
-import 'package:mqtt_monitor/core/ui/ui_preferences_repository.dart';
+import 'package:mqtt_monitor/core/ui/repositories/ui_preferences_repository.dart';
 import 'package:provider/provider.dart';
 
 import '../support/test_dependencies.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import 'app_update_service.dart';
+import 'services/app_update_service.dart';
 
 /// Starts quiet update discovery after the first application frame.
 ///

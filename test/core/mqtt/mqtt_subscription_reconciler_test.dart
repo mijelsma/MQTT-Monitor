@@ -2,15 +2,15 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_message.dart';
-import 'package:mqtt_monitor/core/mqtt/mqtt_protocol_adapter.dart';
+import 'package:mqtt_monitor/core/mqtt/interfaces/mqtt_protocol_adapter_interface.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_protocol_event.dart';
 import 'package:mqtt_monitor/core/mqtt/publish_result.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_subscription_reconciler.dart';
-import 'package:mqtt_monitor/models/mqtt_protocol_version.dart';
-import 'package:mqtt_monitor/models/subscription_entry.dart';
-import 'package:mqtt_monitor/models/subscription_history_policy.dart';
+import 'package:mqtt_monitor/core/mqtt/models/mqtt_protocol_version_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_entry_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_history_policy_model.dart';
 
-class _RecordingAdapter implements MqttProtocolAdapter {
+class _RecordingAdapter implements MqttProtocolAdapterInterface {
   final StreamController<MqttProtocolEvent> _events = StreamController<MqttProtocolEvent>.broadcast();
   final StreamController<MQTTMessage> _messages = StreamController<MQTTMessage>.broadcast();
   final List<({String topic, int qos})> subscriptions = [];
@@ -20,7 +20,7 @@ class _RecordingAdapter implements MqttProtocolAdapter {
   bool failNextUnsubscribe = false;
 
   @override
-  MqttProtocolVersion get protocolVersion => MqttProtocolVersion.v311;
+  MqttProtocolVersionModel get protocolVersion => MqttProtocolVersionModel.v311;
 
   @override
   Stream<MqttProtocolEvent> get events => _events.stream;
@@ -61,7 +61,7 @@ class _RecordingAdapter implements MqttProtocolAdapter {
 }
 
 void main() {
-  const original = SubscriptionEntry(id: 'stable', topic: 'sensors/#', qos: 1);
+  const original = SubscriptionEntryModel(id: 'stable', topic: 'sensors/#', qos: 1);
 
   test('adds, changes, and removes protocol subscriptions by stable ID', () {
     final adapter = _RecordingAdapter();
@@ -71,7 +71,7 @@ void main() {
 
     expect(adapter.subscriptions, [(topic: 'sensors/#', qos: 1)]);
 
-    reconciler.update(const [SubscriptionEntry(id: 'stable', topic: 'devices/#', qos: 2)]);
+    reconciler.update(const [SubscriptionEntryModel(id: 'stable', topic: 'devices/#', qos: 2)]);
     expect(adapter.unsubscriptions, ['sensors/#']);
     expect(adapter.subscriptions.last, (topic: 'devices/#', qos: 2));
 
@@ -86,7 +86,7 @@ void main() {
       ..onConnected();
     adapter.subscriptions.clear();
 
-    reconciler.update([original.copyWith(name: 'Renamed', history: const SubscriptionHistoryPolicy(enabled: false, retention: 250))]);
+    reconciler.update([original.copyWith(name: 'Renamed', history: const SubscriptionHistoryPolicyModel(enabled: false, retention: 250))]);
 
     expect(adapter.subscriptions, isEmpty);
     expect(adapter.unsubscriptions, isEmpty);
@@ -99,7 +99,7 @@ void main() {
       ..onConnected();
     adapter.subscriptions.clear();
 
-    const replacement = SubscriptionEntry(id: 'stable', topic: 'devices/#', qos: 2);
+    const replacement = SubscriptionEntryModel(id: 'stable', topic: 'devices/#', qos: 2);
     reconciler.update(const [replacement]);
 
     expect(adapter.unsubscriptions, ['sensors/#']);

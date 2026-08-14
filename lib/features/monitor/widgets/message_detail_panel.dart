@@ -3,14 +3,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/history/message_history_service.dart';
-import '../../../core/history/history_preferences_repository.dart';
-import '../../../core/dashboard/dashboard_preferences_repository.dart';
-import '../../../core/dashboard/dashboard_repository.dart';
+import '../../../core/history/services/message_history_service.dart';
+import '../../../core/history/repositories/history_preferences_repository.dart';
+import '../../../core/dashboard/repositories/dashboard_preferences_repository.dart';
+import '../../../core/dashboard/repositories/dashboard_repository.dart';
 import '../../../generated/l10n.dart';
-import '../../../models/graph_card_model.dart';
-import '../../../models/topic_node.dart';
-import '../../../models/topic_node_value.dart';
+import '../../../core/dashboard/models/graph_card_model.dart';
+import '../../../core/monitor/models/topic_tree_node_model.dart';
+import '../../../core/monitor/models/topic_node_value_model.dart';
 import '../../../shared/format_helpers.dart';
 import '../../../shared/widgets/copy_button.dart';
 import '../../../shared/widgets/json_highlighter.dart';
@@ -18,8 +18,8 @@ import '../../../shared/widgets/qos_tag.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../shared/widgets/ui_inline_notice.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../monitor_viewmodel.dart';
-import '../monitor_workspace_controller.dart';
+import '../view_models/monitor_view_model.dart';
+import '../controllers/monitor_workspace_controller.dart';
 import 'comparison_section.dart';
 
 /// Shows the details of the currently selected MQTT message.
@@ -30,17 +30,17 @@ import 'comparison_section.dart';
 class MessageDetailPanel extends StatelessWidget {
   const MessageDetailPanel({super.key, required this.node, this.selectedHistory, this.onClearSelection});
 
-  final TopicTreeNode node;
+  final TopicTreeNodeModel node;
 
   /// A historical value selected from the history panel, or null for latest.
-  final TopicNodeValue? selectedHistory;
+  final TopicNodeValueModel? selectedHistory;
 
   /// Called when the user wants to return to viewing the latest message.
   final VoidCallback? onClearSelection;
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<TopicNodeValue?>(
+    return ValueListenableBuilder<TopicNodeValueModel?>(
       valueListenable: node.valueNotifier,
       builder: (context, latestValue, _) {
         final displayValue = selectedHistory ?? latestValue;
@@ -79,16 +79,16 @@ class _EmptyDetail extends StatelessWidget {
 class _DetailContent extends StatelessWidget {
   const _DetailContent({required this.node, required this.value, this.latestValue, this.isHistorical = false, this.onClearSelection});
 
-  final TopicTreeNode node;
-  final TopicNodeValue value;
-  final TopicNodeValue? latestValue;
+  final TopicTreeNodeModel node;
+  final TopicNodeValueModel value;
+  final TopicNodeValueModel? latestValue;
   final bool isHistorical;
   final VoidCallback? onClearSelection;
 
   @override
   Widget build(BuildContext context) {
     // Find the message immediately before the selected one in history.
-    TopicNodeValue? previousValue;
+    TopicNodeValueModel? previousValue;
     if (isHistorical) {
       final history = context.read<MessageHistoryService>().getHistory(node.fullPath);
       final idx = history.indexWhere((v) => v.seq == value.seq);
@@ -181,7 +181,7 @@ class _TopicHeader extends StatelessWidget {
 class _PropertiesCard extends StatelessWidget {
   const _PropertiesCard({required this.value, required this.topic, this.isHistorical = false, this.onClearRetained});
 
-  final TopicNodeValue value;
+  final TopicNodeValueModel value;
   final String topic;
   final bool isHistorical;
   final VoidCallback? onClearRetained;

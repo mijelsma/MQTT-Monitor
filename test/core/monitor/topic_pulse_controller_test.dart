@@ -1,38 +1,35 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/monitor/topic_pulse_controller.dart';
-import 'package:mqtt_monitor/models/topic_node.dart';
+import 'package:mqtt_monitor/core/monitor/controllers/topic_pulse_controller.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_tree_node_model.dart';
 
 void main() {
-  test(
-    'throttles repeated leaf pulses and propagates them through the path',
-    () {
-      var now = DateTime(2026);
-      final timers = <_ManualTimer>[];
-      final controller = TopicPulseController(
-        clock: () => now,
-        timerFactory: (_, callback) {
-          final timer = _ManualTimer(callback);
-          timers.add(timer);
-          return timer;
-        },
-      );
-      final root = TopicTreeNode(segment: 'root', fullPath: 'root');
-      final leaf = TopicTreeNode(segment: 'leaf', fullPath: 'root/leaf');
+  test('throttles repeated leaf pulses and propagates them through the path', () {
+    var now = DateTime(2026);
+    final timers = <_ManualTimer>[];
+    final controller = TopicPulseController(
+      clock: () => now,
+      timerFactory: (_, callback) {
+        final timer = _ManualTimer(callback);
+        timers.add(timer);
+        return timer;
+      },
+    );
+    final root = TopicTreeNodeModel(segment: 'root', fullPath: 'root');
+    final leaf = TopicTreeNodeModel(segment: 'leaf', fullPath: 'root/leaf');
 
-      controller.schedule([root, leaf], 2);
-      controller.schedule([root, leaf], 2);
-      expect(root.pulseNotifier.value, 1);
-      expect(leaf.pulseNotifier.value, 1);
+    controller.schedule([root, leaf], 2);
+    controller.schedule([root, leaf], 2);
+    expect(root.pulseNotifier.value, 1);
+    expect(leaf.pulseNotifier.value, 1);
 
-      now = now.add(const Duration(milliseconds: 500));
-      timers.single.fire();
-      expect(root.pulseNotifier.value, 2);
-      expect(leaf.pulseNotifier.value, 2);
-      controller.clear();
-    },
-  );
+    now = now.add(const Duration(milliseconds: 500));
+    timers.single.fire();
+    expect(root.pulseNotifier.value, 2);
+    expect(leaf.pulseNotifier.value, 2);
+    controller.clear();
+  });
 
   test('cancels delayed pulses for an entire deleted subtree', () {
     var now = DateTime(2026);
@@ -45,8 +42,8 @@ void main() {
         return timer;
       },
     );
-    final root = TopicTreeNode(segment: 'root', fullPath: 'root');
-    final leaf = TopicTreeNode(segment: 'leaf', fullPath: 'root/leaf');
+    final root = TopicTreeNodeModel(segment: 'root', fullPath: 'root');
+    final leaf = TopicTreeNodeModel(segment: 'leaf', fullPath: 'root/leaf');
 
     controller.schedule([root, leaf], 1);
     controller.schedule([root, leaf], 1);
@@ -61,7 +58,7 @@ void main() {
   test('one pulse per second does not suppress slower messages', () {
     var now = DateTime(2026);
     final controller = TopicPulseController(clock: () => now);
-    final leaf = TopicTreeNode(segment: 'leaf', fullPath: 'leaf');
+    final leaf = TopicTreeNodeModel(segment: 'leaf', fullPath: 'leaf');
 
     for (var message = 0; message < 5; message++) {
       controller.schedule([leaf], 1);
@@ -75,9 +72,9 @@ void main() {
   test('shared ancestors are throttled across independently firing leaves', () {
     var now = DateTime(2026);
     final controller = TopicPulseController(clock: () => now);
-    final root = TopicTreeNode(segment: 'root', fullPath: 'root');
-    final first = TopicTreeNode(segment: 'first', fullPath: 'root/first');
-    final second = TopicTreeNode(segment: 'second', fullPath: 'root/second');
+    final root = TopicTreeNodeModel(segment: 'root', fullPath: 'root');
+    final first = TopicTreeNodeModel(segment: 'first', fullPath: 'root/first');
+    final second = TopicTreeNodeModel(segment: 'second', fullPath: 'root/second');
 
     controller.schedule([root, first], 1);
     now = now.add(const Duration(milliseconds: 100));

@@ -1,31 +1,31 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/broker/broker_repository.dart';
+import 'package:mqtt_monitor/core/broker/repositories/broker_repository.dart';
 import 'package:mqtt_monitor/core/mqtt/connection_status.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_message.dart';
-import 'package:mqtt_monitor/core/mqtt/mqtt_protocol_adapter.dart';
+import 'package:mqtt_monitor/core/mqtt/interfaces/mqtt_protocol_adapter_interface.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_protocol_event.dart';
 import 'package:mqtt_monitor/core/mqtt/publish_result.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_connection_intent_store.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
-import 'package:mqtt_monitor/core/mqtt/connection_preferences_repository.dart';
+import 'package:mqtt_monitor/core/mqtt/repositories/connection_preferences_repository.dart';
 import 'package:mqtt_monitor/core/logging/app_logger.dart';
-import 'package:mqtt_monitor/models/broker_entry.dart';
-import 'package:mqtt_monitor/models/mqtt_protocol_version.dart';
-import 'package:mqtt_monitor/models/startup_connection.dart';
-import 'package:mqtt_monitor/models/subscription_entry.dart';
-import 'package:mqtt_monitor/models/subscription_history_policy.dart';
+import 'package:mqtt_monitor/core/broker/models/broker_entry_model.dart';
+import 'package:mqtt_monitor/core/mqtt/models/mqtt_protocol_version_model.dart';
+import 'package:mqtt_monitor/core/mqtt/models/startup_connection_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_entry_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_history_policy_model.dart';
 
 import '../../support/test_dependencies.dart';
 
 /// Provides direct control over protocol events for session lifecycle tests.
-class _ControllableAdapter implements MqttProtocolAdapter {
+class _ControllableAdapter implements MqttProtocolAdapterInterface {
   /// Creates an adapter for [protocolVersion] with an optional connect gate.
   _ControllableAdapter(this.protocolVersion, {this.connectGate});
 
   @override
-  final MqttProtocolVersion protocolVersion;
+  final MqttProtocolVersionModel protocolVersion;
 
   final Completer<void>? connectGate;
   final StreamController<MqttProtocolEvent> _events = StreamController<MqttProtocolEvent>.broadcast();
@@ -125,7 +125,7 @@ void main() {
     connectionPreferences = dependencies.connectionPreferences;
     logger = dependencies.logger;
     intent = MqttConnectionIntentStore(dependencies.preferences);
-    await connectionPreferences.setStartupConnection(StartupConnection.alwaysConnect);
+    await connectionPreferences.setStartupConnection(StartupConnectionModel.alwaysConnect);
   });
 
   /// Lets unawaited reconciliation work cross its asynchronous boundaries.
@@ -136,9 +136,9 @@ void main() {
   }
 
   test('last-status startup honors persisted disconnected intent', () async {
-    await connectionPreferences.setStartupConnection(StartupConnection.lastStatus);
+    await connectionPreferences.setStartupConnection(StartupConnectionModel.lastStatus);
     await intent.setConnectionRequested(false);
-    await brokers.add(const BrokerEntry(id: 'broker', name: 'Broker', host: 'one.invalid'));
+    await brokers.add(const BrokerEntryModel(id: 'broker', name: 'Broker', host: 'one.invalid'));
     final adapters = <_ControllableAdapter>[];
     final controller = MqttSessionController(
       connectionPreferences,
@@ -179,7 +179,7 @@ void main() {
   });
 
   test('display-only broker edits do not replace the active session', () async {
-    const broker = BrokerEntry(id: 'broker', name: 'Before', host: 'one.invalid', colorIndex: 0);
+    const broker = BrokerEntryModel(id: 'broker', name: 'Before', host: 'one.invalid', colorIndex: 0);
     await brokers.add(broker);
     final adapters = <_ControllableAdapter>[];
     final controller = MqttSessionController(
@@ -211,8 +211,8 @@ void main() {
   });
 
   test('subscription and policy edits reconcile without replacing session', () async {
-    const original = SubscriptionEntry(id: 'stable', topic: 'sensors/#', qos: 1);
-    const broker = BrokerEntry(id: 'broker', name: 'Broker', host: 'one.invalid', subscriptions: [original]);
+    const original = SubscriptionEntryModel(id: 'stable', topic: 'sensors/#', qos: 1);
+    const broker = BrokerEntryModel(id: 'broker', name: 'Broker', host: 'one.invalid', subscriptions: [original]);
     await brokers.add(broker);
     final adapters = <_ControllableAdapter>[];
     final controller = MqttSessionController(
@@ -240,7 +240,7 @@ void main() {
 
     await brokers.update(
       broker.copyWith(
-        subscriptions: [original.copyWith(name: 'Renamed', history: const SubscriptionHistoryPolicy(enabled: false, retention: 200))],
+        subscriptions: [original.copyWith(name: 'Renamed', history: const SubscriptionHistoryPolicyModel(enabled: false, retention: 200))],
       ),
     );
     await settle();
@@ -251,7 +251,7 @@ void main() {
 
     await brokers.update(
       broker.copyWith(
-        subscriptions: const [SubscriptionEntry(id: 'stable', topic: 'devices/#', qos: 2)],
+        subscriptions: const [SubscriptionEntryModel(id: 'stable', topic: 'devices/#', qos: 2)],
       ),
     );
     await settle();
@@ -262,7 +262,7 @@ void main() {
   });
 
   test('stale adapter completions and callbacks cannot overwrite a new session', () async {
-    const broker = BrokerEntry(id: 'broker', name: 'Broker', host: 'one.invalid');
+    const broker = BrokerEntryModel(id: 'broker', name: 'Broker', host: 'one.invalid');
     await brokers.add(broker);
     final firstConnect = Completer<void>();
     final adapters = <_ControllableAdapter>[];
@@ -305,7 +305,7 @@ void main() {
   });
 
   test('protocol events drive state and disposal releases the adapter', () async {
-    await brokers.add(const BrokerEntry(id: 'broker', name: 'Broker', host: 'one.invalid'));
+    await brokers.add(const BrokerEntryModel(id: 'broker', name: 'Broker', host: 'one.invalid'));
     final adapters = <_ControllableAdapter>[];
     final controller = MqttSessionController(
       connectionPreferences,
@@ -345,7 +345,7 @@ void main() {
   });
 
   test('message telemetry notifies only when the sampling timer flushes', () async {
-    await brokers.add(const BrokerEntry(id: 'broker', name: 'Broker', host: 'one.invalid'));
+    await brokers.add(const BrokerEntryModel(id: 'broker', name: 'Broker', host: 'one.invalid'));
     late void Function(Timer) sample;
     final adapters = <_ControllableAdapter>[];
     final controller = MqttSessionController(

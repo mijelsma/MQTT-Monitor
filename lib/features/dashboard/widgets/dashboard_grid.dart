@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../models/graph_card_model.dart';
+import '../../../core/dashboard/models/graph_card_model.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../dashboard_view_model.dart';
+import '../view_models/dashboard_view_model.dart';
 import '../dialogs/edit_graph_dialog.dart';
 import 'card_tile.dart';
 import 'dotted_border_painter.dart';

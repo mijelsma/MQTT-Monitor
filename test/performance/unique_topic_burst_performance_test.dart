@@ -2,14 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/history/message_history_service.dart';
+import 'package:mqtt_monitor/core/history/services/message_history_service.dart';
 import 'package:mqtt_monitor/core/ingestion/message_ingestion_coordinator.dart';
 import 'package:mqtt_monitor/core/monitor/topic_projection.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_message.dart';
-import 'package:mqtt_monitor/features/monitor/monitor_workspace_controller.dart';
-import 'package:mqtt_monitor/models/broker_entry.dart';
-import 'package:mqtt_monitor/models/subscription_entry.dart';
-import 'package:mqtt_monitor/models/subscription_history_policy.dart';
+import 'package:mqtt_monitor/features/monitor/controllers/monitor_workspace_controller.dart';
+import 'package:mqtt_monitor/core/broker/models/broker_entry_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_entry_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_history_policy_model.dart';
 
 import '../support/test_dependencies.dart';
 import 'traffic_generator.dart';
@@ -19,11 +19,11 @@ void main() {
     const topicCount = 20000;
     final dependencies = await TestDependencies.create();
     await dependencies.brokers.add(
-      const BrokerEntry(
+      const BrokerEntryModel(
         id: 'broker',
         name: 'Broker',
         host: 'broker.invalid',
-        subscriptions: [SubscriptionEntry(id: 'all', topic: '#', history: SubscriptionHistoryPolicy(enabled: false))],
+        subscriptions: [SubscriptionEntryModel(id: 'all', topic: '#', history: SubscriptionHistoryPolicyModel(enabled: false))],
       ),
     );
     final source = StreamController<MQTTMessage>.broadcast(sync: true);

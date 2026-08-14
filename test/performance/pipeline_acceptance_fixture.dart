@@ -1,15 +1,15 @@
 import 'dart:async';
 
-import 'package:mqtt_monitor/core/dashboard/dashboard_repository.dart';
+import 'package:mqtt_monitor/core/dashboard/repositories/dashboard_repository.dart';
 import 'package:mqtt_monitor/core/dashboard/dashboard_series_store.dart';
-import 'package:mqtt_monitor/core/history/message_history_service.dart';
+import 'package:mqtt_monitor/core/history/services/message_history_service.dart';
 import 'package:mqtt_monitor/core/ingestion/message_ingestion_coordinator.dart';
 import 'package:mqtt_monitor/core/monitor/topic_projection.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_message.dart';
-import 'package:mqtt_monitor/models/broker_entry.dart';
-import 'package:mqtt_monitor/models/graph_card_model.dart';
-import 'package:mqtt_monitor/models/subscription_entry.dart';
-import 'package:mqtt_monitor/models/subscription_history_policy.dart';
+import 'package:mqtt_monitor/core/broker/models/broker_entry_model.dart';
+import 'package:mqtt_monitor/core/dashboard/models/graph_card_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_entry_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_history_policy_model.dart';
 
 import '../support/test_dependencies.dart';
 
@@ -43,15 +43,15 @@ class PipelineAcceptanceFixture {
     final dependencies = await TestDependencies.create();
     await dependencies.historyPreferences.setMaximumRetention(maximumRetention);
     await dependencies.brokers.add(
-      BrokerEntry(
+      BrokerEntryModel(
         id: brokerId,
         name: 'Performance broker',
         host: 'performance.invalid',
         subscriptions: [
-          SubscriptionEntry(
+          SubscriptionEntryModel(
             id: 'all-topics',
             topic: '#',
-            history: SubscriptionHistoryPolicy(enabled: historyEnabled, retention: historyRetention),
+            history: SubscriptionHistoryPolicyModel(enabled: historyEnabled, retention: historyRetention),
           ),
         ],
       ),

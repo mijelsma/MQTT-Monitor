@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../models/dashboard_layout.dart';
+import '../../../core/dashboard/models/dashboard_layout_model.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../dashboard_view_model.dart';
+import '../view_models/dashboard_view_model.dart';
 
 /// Dropdown button for selecting and managing saved dashboard layouts.
 ///
@@ -17,7 +17,7 @@ class DashboardSelector extends StatefulWidget {
   final VoidCallback? onUpdateLayout;
   final VoidCallback? onDiscardChanges;
   final VoidCallback? onNewEmpty;
-  final void Function(DashboardLayout layout)? onEditLayout;
+  final void Function(DashboardLayoutModel layout)? onEditLayout;
   final VoidCallback? onManageDashboards;
   final VoidCallback? onManageVariables;
 
@@ -65,7 +65,7 @@ class _DashboardSelectorState extends State<DashboardSelector> {
   }
 
   /// The visible chip that shows the active layout name and status.
-  Widget _buildSelector(DashboardLayout? active, DashboardViewModel vm, ColorScheme cs, BorderRadius borderRadius) {
+  Widget _buildSelector(DashboardLayoutModel? active, DashboardViewModel vm, ColorScheme cs, BorderRadius borderRadius) {
     final hasActive = active != null;
     final gradient = hasActive ? AppColors.brokerGradientFor(active.colorIndex) : AppColors.dashboardGradient;
 
@@ -158,7 +158,7 @@ class _DashboardSelectorState extends State<DashboardSelector> {
   }
 
   /// A single saved-layout row inside the popup menu.
-  PopupMenuItem<String> _layoutItem(DashboardLayout layout, bool isActive, AppTokens tokens) {
+  PopupMenuItem<String> _layoutItem(DashboardLayoutModel layout, bool isActive, AppTokens tokens) {
     return PopupMenuItem<String>(
       value: layout.id,
       height: 40,

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/dashboard/dashboard_series_policy.dart';
-import '../../../models/chart_type.dart';
-import '../../../models/graph_card_model.dart';
-import '../../../models/interpolation_mode.dart';
+import '../../../core/dashboard/models/chart_type_model.dart';
+import '../../../core/dashboard/models/graph_card_model.dart';
+import '../../../core/dashboard/models/interpolation_mode_model.dart';
 import '../../../shared/widgets/chart_type_toggle.dart';
 import '../../../shared/widgets/interpolation_toggle.dart';
 import '../../../shared/widgets/color_picker_field.dart';
@@ -22,8 +22,8 @@ class EditGraphResult {
   final String displayName;
   final String? unit;
   final Color color;
-  final ChartType chartType;
-  final InterpolationMode interpolation;
+  final ChartTypeModel chartType;
+  final InterpolationModeModel interpolation;
   final double dotSize;
   final bool showFill;
   final double fillOpacity;
@@ -61,8 +61,8 @@ class _EditGraphDialogState extends State<_EditGraphDialog> {
   late final TextEditingController _yMaxController;
 
   late Color _color;
-  late ChartType _chartType;
-  late InterpolationMode _interpolation;
+  late ChartTypeModel _chartType;
+  late InterpolationModeModel _interpolation;
   late double _dotSize;
   late bool _showFill;
   late double _fillOpacity;

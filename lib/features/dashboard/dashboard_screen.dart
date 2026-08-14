@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/broker/broker_repository.dart';
-import '../../core/dashboard/dashboard_repository.dart';
+import '../../core/broker/repositories/broker_repository.dart';
+import '../../core/dashboard/repositories/dashboard_repository.dart';
 import '../../core/dashboard/dashboard_series_store.dart';
-import '../../core/history/message_history_service.dart';
+import '../../core/history/services/message_history_service.dart';
 import '../../core/publishing/template_resolver.dart';
-import '../../core/publishing/variable_repository.dart';
+import '../../core/publishing/repositories/variable_repository.dart';
 import '../../navigation/app_navigation.dart';
-import '../../models/dashboard_layout.dart';
+import '../../core/dashboard/models/dashboard_layout_model.dart';
 import '../../shared/widgets/empty_state_shell.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 import '../settings/dialogs/create_dashboard_dialog.dart';
 import '../settings/settings_section.dart';
-import 'dashboard_view_model.dart';
+import 'view_models/dashboard_view_model.dart';
 import 'dialogs/new_empty_dashboard_dialog.dart';
 import 'dialogs/save_dashboard_dialog.dart';
 import 'widgets/dashboard_app_bar.dart';
@@ -90,7 +90,7 @@ class _DashboardScaffold extends StatelessWidget {
     await vm.clearDashboard();
   }
 
-  void _showEditLayoutDialog(BuildContext context, DashboardViewModel vm, DashboardLayout layout) async {
+  void _showEditLayoutDialog(BuildContext context, DashboardViewModel vm, DashboardLayoutModel layout) async {
     final updated = await showCreateDashboardDialog(context, dashboard: layout, brokers: vm.brokers, onDelete: () => vm.deleteLayout(layout.id));
     if (updated == null) return;
     await vm.updateLayoutMetadata(updated);

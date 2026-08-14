@@ -10,18 +10,18 @@ import 'package:provider/provider.dart';
 import '../../../core/mqtt/app_private_certificate_storage.dart';
 import '../../../core/mqtt/certificate_validation_exception.dart';
 import '../../../core/mqtt/client_certificate_kind.dart';
-import '../../../core/mqtt/client_certificate_service.dart';
-import '../../../core/mqtt/connection_preferences_repository.dart';
+import '../../../core/mqtt/services/client_certificate_service.dart';
+import '../../../core/mqtt/repositories/connection_preferences_repository.dart';
 import '../../../core/history/history_policy_rules.dart';
-import '../../../core/history/history_preferences_repository.dart';
+import '../../../core/history/repositories/history_preferences_repository.dart';
 import '../../../core/logging/app_logger.dart';
-import '../../../core/publishing/qos_preferences_repository.dart';
+import '../../../core/publishing/repositories/qos_preferences_repository.dart';
 import '../../../generated/l10n.dart';
-import '../../../models/broker_entry.dart';
-import '../../../models/client_certificate_config.dart';
-import '../../../models/mqtt_protocol_version.dart';
-import '../../../models/subscription_history_policy.dart';
-import '../../../models/subscription_entry.dart';
+import '../../../core/broker/models/broker_entry_model.dart';
+import '../../../core/broker/models/client_certificate_config_model.dart';
+import '../../../core/mqtt/models/mqtt_protocol_version_model.dart';
+import '../../../core/broker/models/subscription_history_policy_model.dart';
+import '../../../core/broker/models/subscription_entry_model.dart';
 import '../../../shared/widgets/badge_tag.dart';
 import '../../../shared/widgets/qos_tag.dart';
 import '../../../shared/widgets/spacers.dart';
@@ -47,8 +47,8 @@ Widget _sectionLabel(BuildContext context, String label) => Padding(
 );
 
 /// Opens a broker editor and returns the submitted profile.
-Future<BrokerEntry?> showBrokerDialog(BuildContext context, {BrokerEntry? broker, VoidCallback? onDelete}) {
-  return showDialog<BrokerEntry>(
+Future<BrokerEntryModel?> showBrokerDialog(BuildContext context, {BrokerEntryModel? broker, VoidCallback? onDelete}) {
+  return showDialog<BrokerEntryModel>(
     context: context,
     barrierDismissible: false,
     barrierColor: Colors.black54,
@@ -61,7 +61,7 @@ class BrokerDialog extends StatefulWidget {
   /// Creates a broker editor for an optional existing [broker].
   const BrokerDialog({super.key, this.broker, this.onDelete});
 
-  final BrokerEntry? broker;
+  final BrokerEntryModel? broker;
   final VoidCallback? onDelete;
 
   /// Creates the mutable dialog state.
@@ -79,8 +79,8 @@ class _BrokerDialogState extends State<BrokerDialog> {
   late final TextEditingController _password;
   late final TextEditingController _clientId;
   late bool _useSSL;
-  late MqttProtocolVersion _protocolVersion;
-  late ClientCertificateConfig _clientCertificates;
+  late MqttProtocolVersionModel _protocolVersion;
+  late ClientCertificateConfigModel _clientCertificates;
   late final String _brokerId;
   final _certificateService = ClientCertificateService();
   final _certificateStorage = AppPrivateCertificateStorage.standard();
@@ -91,7 +91,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
   late bool _randomClientIdSuffix;
   late Color _color;
   bool _obscurePassword = true;
-  late List<SubscriptionEntry> _subscriptions;
+  late List<SubscriptionEntryModel> _subscriptions;
   late AppLogger _logger;
 
   /// Returns whether the dialog edits an existing broker.
@@ -112,8 +112,8 @@ class _BrokerDialogState extends State<BrokerDialog> {
     _password = TextEditingController(text: b?.password ?? '');
     _clientId = TextEditingController(text: b?.clientId ?? '');
     _useSSL = b?.useSSL ?? false;
-    _protocolVersion = b?.protocolVersion ?? MqttProtocolVersion.v5;
-    _clientCertificates = b?.clientCertificates ?? const ClientCertificateConfig();
+    _protocolVersion = b?.protocolVersion ?? MqttProtocolVersionModel.v5;
+    _clientCertificates = b?.clientCertificates ?? const ClientCertificateConfigModel();
     _validateCertificates = b?.validateCertificates ?? false;
     _randomClientIdSuffix = b?.randomClientIdSuffix ?? true;
     _color = AppColors.brokerColorOptions[b?.colorIndex ?? 0];
@@ -137,11 +137,11 @@ class _BrokerDialogState extends State<BrokerDialog> {
       final maximum = history.maximumRetention;
       final retention = history.newSubscriptionRetention.clamp(HistoryPolicyRules.minimumRetention, maximum);
       _subscriptions.add(
-        SubscriptionEntry.create(
+        SubscriptionEntryModel.create(
           topic: '#',
           qos: defaultQos,
           name: S.of(context).brokerDialogDefaultSubscriptionName,
-          history: SubscriptionHistoryPolicy(enabled: history.newSubscriptionEnabled, retention: retention),
+          history: SubscriptionHistoryPolicyModel(enabled: history.newSubscriptionEnabled, retention: retention),
         ),
       );
     }
@@ -178,7 +178,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
     _submitted = true;
     Navigator.pop(
       context,
-      BrokerEntry(
+      BrokerEntryModel(
         id: _brokerId,
         name: _name.text.trim(),
         host: _host.text.trim(),
@@ -388,9 +388,9 @@ class _BrokerDialogState extends State<BrokerDialog> {
             ),
           ],
         ),
-        UiSegmentRow<MqttProtocolVersion>(
+        UiSegmentRow<MqttProtocolVersionModel>(
           label: 'Protocol version',
-          options: MqttProtocolVersion.values.map((version) => UiSegmentOption(value: version, label: version.displayName)).toList(),
+          options: MqttProtocolVersionModel.values.map((version) => UiSegmentOption(value: version, label: version.displayName)).toList(),
           value: _protocolVersion,
           onChanged: (value) => setState(() => _protocolVersion = value),
           accent: accent,

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../models/broker_entry.dart';
+import '../../core/broker/models/broker_entry_model.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 
@@ -67,7 +67,7 @@ class ScopeOption extends StatelessWidget {
 class BrokerCheckboxList extends StatelessWidget {
   const BrokerCheckboxList({super.key, required this.brokers, required this.selectedIds, required this.onToggle});
 
-  final List<BrokerEntry> brokers;
+  final List<BrokerEntryModel> brokers;
   final Set<String> selectedIds;
   final ValueChanged<String> onToggle;
 

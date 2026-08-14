@@ -1,4 +1,4 @@
-import '../../models/mqtt_protocol_version.dart';
+import '../../core/mqtt/models/mqtt_protocol_version_model.dart';
 import 'mqtt_reason.dart';
 
 /// The real outcome of a publish, after the broker had a chance to
@@ -39,12 +39,12 @@ class PublishResult {
 
   /// Builds a "no confirmation" result, optionally enriched with a short
   /// human-readable explanation of *why* delivery is unconfirmed.
-  factory PublishResult.unconfirmed(MqttProtocolVersion version, int qos) {
+  factory PublishResult.unconfirmed(MqttProtocolVersionModel version, int qos) {
     final explanation = switch ((version, qos)) {
-      (MqttProtocolVersion.v311, 0) => 'No ack at QoS 0 (MQTT 3.1.1).',
-      (MqttProtocolVersion.v311, _) => 'No failure reason in MQTT 3.1.1 PUBACK; broker may still drop silently.',
-      (MqttProtocolVersion.v5, 0) => 'No ack at QoS 0.',
-      (MqttProtocolVersion.v5, _) => 'No failure reason available.',
+      (MqttProtocolVersionModel.v311, 0) => 'No ack at QoS 0 (MQTT 3.1.1).',
+      (MqttProtocolVersionModel.v311, _) => 'No failure reason in MQTT 3.1.1 PUBACK; broker may still drop silently.',
+      (MqttProtocolVersionModel.v5, 0) => 'No ack at QoS 0.',
+      (MqttProtocolVersionModel.v5, _) => 'No failure reason available.',
     };
     return PublishResult(kind: PublishResultKind.noConfirmation, reason: explanation);
   }
@@ -67,11 +67,11 @@ class PublishResult {
   factory PublishResult.localFailure(String message) => PublishResult(kind: PublishResultKind.failed, reason: message);
 
   /// Builds a "timed out" result.
-  factory PublishResult.timedOut(MqttProtocolVersion version, int qos) {
+  factory PublishResult.timedOut(MqttProtocolVersionModel version, int qos) {
     return PublishResult(
       kind: PublishResultKind.timedOut,
       reason: switch ((version, qos)) {
-        (MqttProtocolVersion.v5, _) => 'No PUBACK/PUBREC from broker within the timeout.',
+        (MqttProtocolVersionModel.v5, _) => 'No PUBACK/PUBREC from broker within the timeout.',
         (_, 0) => 'No ack at QoS 0.',
         _ => 'No PUBACK from broker within the timeout.',
       },

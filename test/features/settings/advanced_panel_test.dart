@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/broker/broker_repository.dart';
-import 'package:mqtt_monitor/core/dashboard/dashboard_preferences_repository.dart';
-import 'package:mqtt_monitor/core/dashboard/dashboard_repository.dart';
+import 'package:mqtt_monitor/core/broker/repositories/broker_repository.dart';
+import 'package:mqtt_monitor/core/dashboard/repositories/dashboard_preferences_repository.dart';
+import 'package:mqtt_monitor/core/dashboard/repositories/dashboard_repository.dart';
 import 'package:mqtt_monitor/features/settings/panels/advanced_panel.dart';
-import 'package:mqtt_monitor/features/settings/settings_viewmodel.dart';
+import 'package:mqtt_monitor/features/settings/view_models/settings_view_model.dart';
 import 'package:mqtt_monitor/features/settings/settings_reset_section.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
-import 'package:mqtt_monitor/models/broker_entry.dart';
-import 'package:mqtt_monitor/models/dashboard_layout.dart';
-import 'package:mqtt_monitor/models/subscription_entry.dart';
-import 'package:mqtt_monitor/models/subscription_history_policy.dart';
+import 'package:mqtt_monitor/core/broker/models/broker_entry_model.dart';
+import 'package:mqtt_monitor/core/dashboard/models/dashboard_layout_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_entry_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_history_policy_model.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
@@ -83,11 +83,11 @@ void main() {
   testWidgets('maximum reduction can be cancelled or explicitly confirmed', (tester) async {
     await dependencies.historyPreferences.setMaximumRetention(500);
     await brokers.add(
-      const BrokerEntry(
+      const BrokerEntryModel(
         id: 'broker',
         name: 'Broker',
         host: 'broker.invalid',
-        subscriptions: [SubscriptionEntry(id: 'subscription', topic: '#', history: SubscriptionHistoryPolicy(retention: 100))],
+        subscriptions: [SubscriptionEntryModel(id: 'subscription', topic: '#', history: SubscriptionHistoryPolicyModel(retention: 100))],
       ),
     );
     await pumpPanel(tester);
@@ -128,7 +128,7 @@ void main() {
   testWidgets('reset checklist keeps unchecked sections and resets selected ones', (tester) async {
     await dependencies.uiPreferences.setShowStatusBar(false);
     await dependencies.updatePreferences.setTracksBetaReleases(true);
-    await brokers.add(const BrokerEntry(id: 'broker', name: 'Broker', host: 'broker.invalid'));
+    await brokers.add(const BrokerEntryModel(id: 'broker', name: 'Broker', host: 'broker.invalid'));
     await pumpPanel(tester);
     final resetButton = find.text('Select data to reset');
     await tester.ensureVisible(resetButton);
@@ -162,7 +162,7 @@ void main() {
   testWidgets('select all resets every section', (tester) async {
     await dependencies.uiPreferences.setShowStatusBar(false);
     await dependencies.updatePreferences.setTracksBetaReleases(true);
-    await brokers.add(const BrokerEntry(id: 'broker', name: 'Broker', host: 'broker.invalid'));
+    await brokers.add(const BrokerEntryModel(id: 'broker', name: 'Broker', host: 'broker.invalid'));
     await pumpPanel(tester);
 
     await tester.ensureVisible(find.text('Select data to reset'));
@@ -181,7 +181,7 @@ void main() {
   test('view model resets only requested repository groups', () async {
     await dependencies.uiPreferences.setShowStatusBar(false);
     await dependencies.updatePreferences.setTracksBetaReleases(true);
-    await brokers.add(const BrokerEntry(id: 'broker', name: 'Broker', host: 'broker.invalid'));
+    await brokers.add(const BrokerEntryModel(id: 'broker', name: 'Broker', host: 'broker.invalid'));
     final viewModel = dependencies.createSettingsViewModel();
     addTearDown(viewModel.dispose);
 
@@ -214,7 +214,7 @@ void main() {
     final dashboards = DashboardRepository(dependencies.preferences, dependencies.brokers);
     await dashboards.initialize();
     addTearDown(dashboards.dispose);
-    await dashboards.setLayouts([DashboardLayout(id: 'saved', title: 'Saved')]);
+    await dashboards.setLayouts([DashboardLayoutModel(id: 'saved', title: 'Saved')]);
     await dependencies.dashboardPreferences.setDotSize(8);
     final viewModel = dependencies.createSettingsViewModel(dashboardRepository: dashboards);
     addTearDown(viewModel.dispose);

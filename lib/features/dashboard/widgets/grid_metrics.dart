@@ -1,4 +1,4 @@
-import '../../../models/graph_card_model.dart';
+import '../../../core/dashboard/models/graph_card_model.dart';
 
 /// Holds grid layout constants and computed cell dimensions.
 ///

@@ -4,8 +4,8 @@ import 'dart:typed_data';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
-import '../broker/certificate_storage.dart';
-import 'certificate_file_access.dart';
+import '../broker/interfaces/certificate_storage_interface.dart';
+import 'interfaces/certificate_file_access_interface.dart';
 import 'client_certificate_kind.dart';
 import 'io_certificate_file_access.dart';
 
@@ -16,16 +16,16 @@ typedef CertificateDirectoryProvider = Future<String> Function();
 typedef CertificateImportIdProvider = String Function();
 
 /// Stores imported certificates in app-private broker and slot directories.
-class AppPrivateCertificateStorage implements CertificateStorage {
+class AppPrivateCertificateStorage implements CertificateStorageInterface {
   /// Creates certificate storage from explicit file and directory adapters.
-  AppPrivateCertificateStorage({required CertificateFileAccess files, required CertificateDirectoryProvider directoryProvider, CertificateImportIdProvider? importIdProvider}) : _files = files, _directoryProvider = directoryProvider, _importIdProvider = importIdProvider ?? _defaultImportId;
+  AppPrivateCertificateStorage({required CertificateFileAccessInterface files, required CertificateDirectoryProvider directoryProvider, CertificateImportIdProvider? importIdProvider}) : _files = files, _directoryProvider = directoryProvider, _importIdProvider = importIdProvider ?? _defaultImportId;
 
   /// Creates certificate storage backed by the application-support directory.
   factory AppPrivateCertificateStorage.standard() {
     return AppPrivateCertificateStorage(files: const IoCertificateFileAccess(), directoryProvider: () async => (await getApplicationSupportDirectory()).path);
   }
 
-  final CertificateFileAccess _files;
+  final CertificateFileAccessInterface _files;
   final CertificateDirectoryProvider _directoryProvider;
   final CertificateImportIdProvider _importIdProvider;
 

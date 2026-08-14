@@ -5,7 +5,7 @@ import '../../../generated/l10n.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
 import '../../../shared/widgets/ui_slider_row.dart';
-import '../settings_viewmodel.dart';
+import '../view_models/settings_view_model.dart';
 
 class MonitoringPanel extends StatelessWidget {
   const MonitoringPanel({super.key});

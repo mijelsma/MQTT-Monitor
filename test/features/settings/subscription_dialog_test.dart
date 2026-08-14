@@ -3,8 +3,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/features/settings/dialogs/subscription_dialog.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
-import 'package:mqtt_monitor/models/subscription_entry.dart';
-import 'package:mqtt_monitor/models/subscription_history_policy.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_entry_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_history_policy_model.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
@@ -15,8 +15,8 @@ void main() {
 
   setUp(() async => dependencies = await TestDependencies.create());
 
-  Future<SubscriptionEntry?> openDialog(WidgetTester tester, {SubscriptionEntry? entry, bool defaultEnabled = true, int defaultRetention = 10, int maximum = 50, Set<String> existing = const {}}) async {
-    SubscriptionEntry? result;
+  Future<SubscriptionEntryModel?> openDialog(WidgetTester tester, {SubscriptionEntryModel? entry, bool defaultEnabled = true, int defaultRetention = 10, int maximum = 50, Set<String> existing = const {}}) async {
+    SubscriptionEntryModel? result;
     await tester.pumpWidget(
       MultiProvider(
         providers: [ChangeNotifierProvider.value(value: dependencies.qosPreferences)],
@@ -44,7 +44,7 @@ void main() {
   }
 
   testWidgets('new subscriptions use configured history defaults', (tester) async {
-    SubscriptionEntry? result;
+    SubscriptionEntryModel? result;
     await tester.pumpWidget(
       MultiProvider(
         providers: [ChangeNotifierProvider.value(value: dependencies.qosPreferences)],
@@ -77,7 +77,7 @@ void main() {
 
     expect(result, isNotNull);
     expect(result!.id, isNotEmpty);
-    expect(result!.history, const SubscriptionHistoryPolicy(enabled: false, retention: 42));
+    expect(result!.history, const SubscriptionHistoryPolicyModel(enabled: false, retention: 42));
   });
 
   testWidgets('invalid and duplicate topic filters are rejected', (tester) async {
@@ -96,8 +96,8 @@ void main() {
   });
 
   testWidgets('editing preserves stable identity and updates policy', (tester) async {
-    const original = SubscriptionEntry(id: 'stable-id', topic: 'before/#', history: SubscriptionHistoryPolicy(retention: 20));
-    SubscriptionEntry? result;
+    const original = SubscriptionEntryModel(id: 'stable-id', topic: 'before/#', history: SubscriptionHistoryPolicyModel(retention: 20));
+    SubscriptionEntryModel? result;
     await tester.pumpWidget(
       MultiProvider(
         providers: [ChangeNotifierProvider.value(value: dependencies.qosPreferences)],

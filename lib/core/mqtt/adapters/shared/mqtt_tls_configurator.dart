@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import '../../../../models/broker_entry.dart';
-import '../../client_certificate_service.dart';
+import '../../../../core/broker/models/broker_entry_model.dart';
+import '../../services/client_certificate_service.dart';
 
 /// Applies app-owned mTLS credentials and certificate policy to MQTT clients.
 class MqttTlsConfigurator {
@@ -11,7 +11,7 @@ class MqttTlsConfigurator {
   final ClientCertificateService _certificates;
 
   /// Configures [client] when [broker] has an app-owned certificate bundle.
-  Future<void> configure(dynamic client, BrokerEntry broker) async {
+  Future<void> configure(dynamic client, BrokerEntryModel broker) async {
     final config = broker.clientCertificates;
     if (config.isEmpty) return;
     client.securityContext = await _certificates.buildSecurityContext(config);

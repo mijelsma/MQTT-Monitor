@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/dashboard/dashboard_repository.dart';
+import 'package:mqtt_monitor/core/dashboard/repositories/dashboard_repository.dart';
 import 'package:mqtt_monitor/core/dashboard/dashboard_series_store.dart';
 import 'package:mqtt_monitor/core/dashboard/dashboard_value_extractor.dart';
 import 'package:mqtt_monitor/core/ingestion/ingested_message.dart';
-import 'package:mqtt_monitor/models/broker_entry.dart';
-import 'package:mqtt_monitor/models/graph_card_model.dart';
-import 'package:mqtt_monitor/models/topic_node_value.dart';
+import 'package:mqtt_monitor/core/broker/models/broker_entry_model.dart';
+import 'package:mqtt_monitor/core/dashboard/models/graph_card_model.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_node_value_model.dart';
 
 import '../../support/test_dependencies.dart';
 
@@ -20,7 +20,7 @@ void main() {
 
     for (final testCase in cases) {
       final dependencies = await TestDependencies.create();
-      await dependencies.brokers.add(const BrokerEntry(id: 'broker', name: 'Broker', host: 'broker.invalid'));
+      await dependencies.brokers.add(const BrokerEntryModel(id: 'broker', name: 'Broker', host: 'broker.invalid'));
       final repository = DashboardRepository(dependencies.preferences, dependencies.brokers);
       await repository.initialize();
       await repository.setCards('broker', [for (var index = 0; index < testCase.cards; index++) GraphCardModel(id: 'card-$index', topic: 'sensor', jsonKeyPath: 'value', displayName: 'Card $index', colorValue: 0xFF000000, maxDataPoints: 1)]);
@@ -45,7 +45,7 @@ void main() {
           IngestedMessage(
             brokerId: 'broker',
             topic: 'sensor',
-            value: TopicNodeValue(
+            value: TopicNodeValueModel(
               payload: '{"value":$sequence}',
               seq: sequence,
               receivedAt: DateTime(2026, 1, 1).add(Duration(milliseconds: sequence)),
@@ -61,7 +61,7 @@ void main() {
           IngestedMessage(
             brokerId: 'broker',
             topic: 'sensor',
-            value: TopicNodeValue(
+            value: TopicNodeValueModel(
               payload: '{"value":$sequence}',
               seq: sequence,
               receivedAt: DateTime(2026, 1, 1).add(Duration(milliseconds: sequence)),

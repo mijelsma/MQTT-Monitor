@@ -1,0 +1,1 @@
+enum ChartTypeModel { line, bar }

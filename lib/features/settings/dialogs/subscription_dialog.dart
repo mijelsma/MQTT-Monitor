@@ -3,10 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../../../core/history/history_policy_rules.dart';
 import '../../../core/mqtt/mqtt_topic_filter.dart';
-import '../../../core/publishing/qos_preferences_repository.dart';
+import '../../../core/publishing/repositories/qos_preferences_repository.dart';
 import '../../../generated/l10n.dart';
-import '../../../models/subscription_entry.dart';
-import '../../../models/subscription_history_policy.dart';
+import '../../../core/broker/models/subscription_entry_model.dart';
+import '../../../core/broker/models/subscription_history_policy_model.dart';
 import '../../../shared/widgets/spacers.dart';
 import '../../../shared/widgets/ui_field.dart';
 import '../../../shared/widgets/ui_inline_notice.dart';
@@ -15,16 +15,16 @@ import '../../../shared/widgets/ui_segment_row.dart';
 import '../../../shared/widgets/ui_slider_row.dart';
 import '../../../shared/widgets/ui_switch_row.dart';
 
-Future<SubscriptionEntry?> showSubscriptionDialog(
+Future<SubscriptionEntryModel?> showSubscriptionDialog(
   BuildContext context, {
-  SubscriptionEntry? entry,
+  SubscriptionEntryModel? entry,
   int defaultQos = 1,
   bool defaultHistoryEnabled = HistoryPolicyRules.defaultEnabled,
   int defaultHistoryRetention = HistoryPolicyRules.defaultRetention,
   int maximumHistoryRetention = HistoryPolicyRules.defaultMaximumRetention,
   Set<String> existingTopicFilters = const {},
 }) {
-  return showDialog<SubscriptionEntry>(
+  return showDialog<SubscriptionEntryModel>(
     context: context,
     barrierColor: Colors.black54,
     builder: (_) => SubscriptionDialog(entry: entry, defaultQos: defaultQos, defaultHistoryEnabled: defaultHistoryEnabled, defaultHistoryRetention: defaultHistoryRetention, maximumHistoryRetention: maximumHistoryRetention, existingTopicFilters: existingTopicFilters),
@@ -34,7 +34,7 @@ Future<SubscriptionEntry?> showSubscriptionDialog(
 class SubscriptionDialog extends StatefulWidget {
   const SubscriptionDialog({super.key, this.entry, this.defaultQos = 1, this.defaultHistoryEnabled = HistoryPolicyRules.defaultEnabled, this.defaultHistoryRetention = HistoryPolicyRules.defaultRetention, this.maximumHistoryRetention = HistoryPolicyRules.defaultMaximumRetention, this.existingTopicFilters = const {}});
 
-  final SubscriptionEntry? entry;
+  final SubscriptionEntryModel? entry;
 
   /// QoS used when [entry] is null (i.e. creating a new subscription).
   /// Honored from the user-configurable default-subscribe-QoS setting.
@@ -79,9 +79,9 @@ class _SubscriptionDialogState extends State<SubscriptionDialog> {
     if (!_formKey.currentState!.validate()) return;
     final topic = _topic.text.trim();
     final name = _name.text.trim();
-    final history = SubscriptionHistoryPolicy(enabled: _historyEnabled, retention: _historyRetention);
+    final history = SubscriptionHistoryPolicyModel(enabled: _historyEnabled, retention: _historyRetention);
     final entry = widget.entry;
-    Navigator.pop(context, entry == null ? SubscriptionEntry.create(topic: topic, qos: _qos, name: name.isEmpty ? null : name, history: history) : entry.copyWith(topic: topic, qos: _qos, name: name, clearName: name.isEmpty, history: history));
+    Navigator.pop(context, entry == null ? SubscriptionEntryModel.create(topic: topic, qos: _qos, name: name.isEmpty ? null : name, history: history) : entry.copyWith(topic: topic, qos: _qos, name: name, clearName: name.isEmpty, history: history));
   }
 
   String? _validateTopic(String? value) {

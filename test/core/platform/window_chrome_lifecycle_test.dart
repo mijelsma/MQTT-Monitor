@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/platform/window_chrome.dart';
+import 'package:mqtt_monitor/core/platform/controllers/window_chrome_controller.dart';
 import 'package:mqtt_monitor/core/platform/window_chrome_lifecycle.dart';
 
 import '../../support/test_dependencies.dart';

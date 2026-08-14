@@ -4,15 +4,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/mqtt/connection_status.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_message.dart';
-import 'package:mqtt_monitor/core/mqtt/mqtt_protocol_adapter.dart';
+import 'package:mqtt_monitor/core/mqtt/interfaces/mqtt_protocol_adapter_interface.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_protocol_event.dart';
 import 'package:mqtt_monitor/core/mqtt/publish_result.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_connection_intent_store.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
-import 'package:mqtt_monitor/models/broker_entry.dart';
-import 'package:mqtt_monitor/models/mqtt_protocol_version.dart';
-import 'package:mqtt_monitor/models/startup_connection.dart';
-import 'package:mqtt_monitor/models/subscription_entry.dart';
+import 'package:mqtt_monitor/core/broker/models/broker_entry_model.dart';
+import 'package:mqtt_monitor/core/mqtt/models/mqtt_protocol_version_model.dart';
+import 'package:mqtt_monitor/core/mqtt/models/startup_connection_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_entry_model.dart';
 
 import '../support/test_dependencies.dart';
 import 'traffic_generator.dart';
@@ -21,21 +21,21 @@ void main() {
   test('reconnect loops resubscribe once and broker switching rejects stale traffic', () async {
     const reconnectCycles = 250;
     final dependencies = await TestDependencies.create();
-    await dependencies.connectionPreferences.setStartupConnection(StartupConnection.alwaysConnect);
+    await dependencies.connectionPreferences.setStartupConnection(StartupConnectionModel.alwaysConnect);
     await dependencies.brokers.add(
-      const BrokerEntry(
+      const BrokerEntryModel(
         id: 'one',
         name: 'One',
         host: 'one.invalid',
-        subscriptions: [SubscriptionEntry(id: 'one-all', topic: '#')],
+        subscriptions: [SubscriptionEntryModel(id: 'one-all', topic: '#')],
       ),
     );
     await dependencies.brokers.add(
-      const BrokerEntry(
+      const BrokerEntryModel(
         id: 'two',
         name: 'Two',
         host: 'two.invalid',
-        subscriptions: [SubscriptionEntry(id: 'two-all', topic: '#')],
+        subscriptions: [SubscriptionEntryModel(id: 'two-all', topic: '#')],
       ),
       makeActive: false,
     );
@@ -92,11 +92,11 @@ Future<void> _settle() async {
   }
 }
 
-class _AcceptanceAdapter implements MqttProtocolAdapter {
+class _AcceptanceAdapter implements MqttProtocolAdapterInterface {
   _AcceptanceAdapter(this.protocolVersion);
 
   @override
-  final MqttProtocolVersion protocolVersion;
+  final MqttProtocolVersionModel protocolVersion;
   final StreamController<MqttProtocolEvent> _events = StreamController<MqttProtocolEvent>.broadcast(sync: true);
   final StreamController<MQTTMessage> _messages = StreamController<MQTTMessage>.broadcast(sync: true);
   bool _connected = false;

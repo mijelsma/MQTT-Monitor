@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/ingestion/ingested_message.dart';
 import 'package:mqtt_monitor/core/monitor/topic_tree_index.dart';
-import 'package:mqtt_monitor/models/topic_node_value.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_node_value_model.dart';
 
 void main() {
   test('cached projection stays within its topic-scaling budgets', () {
@@ -47,5 +47,5 @@ Duration _profile({required int topicTotal, required int messageTotal}) {
 IngestedMessage _message(String topic, int sequence, DateTime receivedAt) => IngestedMessage(
   brokerId: 'broker',
   topic: topic,
-  value: TopicNodeValue(payload: '$sequence', seq: sequence, receivedAt: receivedAt),
+  value: TopicNodeValueModel(payload: '$sequence', seq: sequence, receivedAt: receivedAt),
 );

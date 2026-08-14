@@ -1,18 +1,15 @@
-import '../../../models/subscription_entry.dart';
-import '../mqtt_protocol_adapter.dart';
+import '../../../core/broker/models/subscription_entry_model.dart';
+import '../interfaces/mqtt_protocol_adapter_interface.dart';
 
 /// Reconciles broker-owned desired subscriptions with one live adapter.
 class MqttSubscriptionReconciler {
-  MqttProtocolAdapter? _adapter;
-  Map<String, SubscriptionEntry> _desired = const {};
-  final Map<String, SubscriptionEntry> _applied = {};
+  MqttProtocolAdapterInterface? _adapter;
+  Map<String, SubscriptionEntryModel> _desired = const {};
+  final Map<String, SubscriptionEntryModel> _applied = {};
   bool _connected = false;
 
   /// Attaches a fresh adapter generation and its initial desired state.
-  void attach(
-    MqttProtocolAdapter adapter,
-    Iterable<SubscriptionEntry> subscriptions,
-  ) {
+  void attach(MqttProtocolAdapterInterface adapter, Iterable<SubscriptionEntryModel> subscriptions) {
     _adapter = adapter;
     _desired = _byId(subscriptions);
     _applied.clear();
@@ -20,7 +17,7 @@ class MqttSubscriptionReconciler {
   }
 
   /// Updates desired state without replacing the active MQTT session.
-  void update(Iterable<SubscriptionEntry> subscriptions) {
+  void update(Iterable<SubscriptionEntryModel> subscriptions) {
     _desired = _byId(subscriptions);
     if (_connected) _reconcile();
   }
@@ -70,15 +67,11 @@ class MqttSubscriptionReconciler {
     }
   }
 
-  Map<String, SubscriptionEntry> _byId(
-    Iterable<SubscriptionEntry> subscriptions,
-  ) {
-    return Map.unmodifiable({
-      for (final subscription in subscriptions) subscription.id: subscription,
-    });
+  Map<String, SubscriptionEntryModel> _byId(Iterable<SubscriptionEntryModel> subscriptions) {
+    return Map.unmodifiable({for (final subscription in subscriptions) subscription.id: subscription});
   }
 
-  bool _sameProtocolState(SubscriptionEntry left, SubscriptionEntry right) {
+  bool _sameProtocolState(SubscriptionEntryModel left, SubscriptionEntryModel right) {
     return left.topic == right.topic && left.qos == right.qos;
   }
 }

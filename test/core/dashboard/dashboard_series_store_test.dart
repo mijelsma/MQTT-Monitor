@@ -2,14 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/dashboard/dashboard_repository.dart';
+import 'package:mqtt_monitor/core/dashboard/repositories/dashboard_repository.dart';
 import 'package:mqtt_monitor/core/dashboard/dashboard_series_store.dart';
 import 'package:mqtt_monitor/core/dashboard/dashboard_value_extractor.dart';
 import 'package:mqtt_monitor/core/ingestion/ingested_message.dart';
-import 'package:mqtt_monitor/models/broker_entry.dart';
-import 'package:mqtt_monitor/models/environment_variable.dart';
-import 'package:mqtt_monitor/models/graph_card_model.dart';
-import 'package:mqtt_monitor/models/topic_node_value.dart';
+import 'package:mqtt_monitor/core/broker/models/broker_entry_model.dart';
+import 'package:mqtt_monitor/core/publishing/models/environment_variable_model.dart';
+import 'package:mqtt_monitor/core/dashboard/models/graph_card_model.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_node_value_model.dart';
 
 import '../../support/test_dependencies.dart';
 
@@ -23,8 +23,8 @@ void main() {
   setUp(() async {
     decodeCount = 0;
     dependencies = await TestDependencies.create();
-    await dependencies.brokers.add(const BrokerEntry(id: 'a', name: 'A', host: 'a.invalid'));
-    await dependencies.brokers.add(const BrokerEntry(id: 'b', name: 'B', host: 'b.invalid'), makeActive: false);
+    await dependencies.brokers.add(const BrokerEntryModel(id: 'a', name: 'A', host: 'a.invalid'));
+    await dependencies.brokers.add(const BrokerEntryModel(id: 'b', name: 'B', host: 'b.invalid'), makeActive: false);
     repository = DashboardRepository(dependencies.preferences, dependencies.brokers);
     await repository.initialize();
     messages = StreamController<IngestedMessage>.broadcast(sync: true);
@@ -83,7 +83,7 @@ void main() {
   });
 
   test('variable changes clear only rerouted series and reject the old topic', () async {
-    await dependencies.variables.add(EnvironmentVariable(name: 'ID'));
+    await dependencies.variables.add(EnvironmentVariableModel(name: 'ID'));
     await dependencies.variables.setValue('ID', 'one');
     await repository.setCards('a', [_card('variable', topic: r'sensor/${ID}')]);
     messages.add(_message('a', 'sensor/one', '1'));
@@ -127,6 +127,6 @@ IngestedMessage _message(String brokerId, String topic, String payload, {int sec
   return IngestedMessage(
     brokerId: brokerId,
     topic: topic,
-    value: TopicNodeValue(payload: payload, seq: 1, receivedAt: DateTime(2026, 1, 1, 0, 0, second)),
+    value: TopicNodeValueModel(payload: payload, seq: 1, receivedAt: DateTime(2026, 1, 1, 0, 0, second)),
   );
 }

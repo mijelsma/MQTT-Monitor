@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'core/bootstrap/app_bootstrap.dart';
-import 'core/bootstrap/app_bootstrap_shell.dart';
+import 'application/bootstrap/app_bootstrap.dart';
+import 'application/bootstrap/app_bootstrap_shell.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

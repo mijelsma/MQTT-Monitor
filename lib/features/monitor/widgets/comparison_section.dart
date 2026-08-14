@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
-import '../../../models/topic_node_value.dart';
+import '../../../core/monitor/models/topic_node_value_model.dart';
 import '../../../shared/format_helpers.dart';
 import '../../../shared/widgets/copy_button.dart';
 import '../../../shared/widgets/json_highlighter.dart';
@@ -13,8 +13,8 @@ import '../../../theme/app_tokens/app_tokens.dart';
 class ComparisonSection extends StatefulWidget {
   const ComparisonSection({super.key, required this.selected, required this.previous});
 
-  final TopicNodeValue selected;
-  final TopicNodeValue previous;
+  final TopicNodeValueModel selected;
+  final TopicNodeValueModel previous;
 
   @override
   State<ComparisonSection> createState() => _ComparisonSectionState();
@@ -168,8 +168,8 @@ class _DiffRow {
 class _DiffView extends StatelessWidget {
   const _DiffView({required this.selected, required this.previous});
 
-  final TopicNodeValue selected;
-  final TopicNodeValue previous;
+  final TopicNodeValueModel selected;
+  final TopicNodeValueModel previous;
 
   @override
   Widget build(BuildContext context) {
@@ -327,7 +327,7 @@ class _ComparePanel extends StatelessWidget {
 
   final String label;
   final DateTime timestamp;
-  final TopicNodeValue value;
+  final TopicNodeValueModel value;
   final Color color;
 
   @override

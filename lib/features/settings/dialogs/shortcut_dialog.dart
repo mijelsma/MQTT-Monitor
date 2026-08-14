@@ -3,11 +3,12 @@ import 'package:provider/provider.dart';
 
 import '../../../core/mqtt/mqtt_topic_name.dart';
 import '../../../core/publishing/json_payload_validator.dart';
-import '../../../core/publishing/qos_preferences_repository.dart';
+import '../../../core/publishing/repositories/qos_preferences_repository.dart';
 import '../../../core/publishing/template_resolver.dart';
 import '../../../generated/l10n.dart';
-import '../../../models/broker_entry.dart';
-import '../../../models/publish_shortcut.dart';
+import '../../../core/broker/models/broker_entry_model.dart';
+import '../../../core/publishing/models/publish_shortcut_model.dart';
+import '../../../shared/controllers/highlighting_controller.dart';
 import '../../../shared/widgets/color_picker_field.dart';
 import '../../../shared/widgets/payload_editor.dart';
 import '../../../shared/widgets/scope_picker.dart';
@@ -20,9 +21,9 @@ import '../../../theme/app_colors.dart';
 
 /// Shows a dialog for creating or editing a publish shortcut.
 ///
-/// Returns the resulting [PublishShortcut] on save, or null if dismissed.
-Future<PublishShortcut?> showShortcutDialog(BuildContext context, {PublishShortcut? shortcut, List<BrokerEntry> brokers = const [], VoidCallback? onDelete, int? defaultQos}) {
-  return showDialog<PublishShortcut>(
+/// Returns the resulting [PublishShortcutModel] on save, or null if dismissed.
+Future<PublishShortcutModel?> showShortcutDialog(BuildContext context, {PublishShortcutModel? shortcut, List<BrokerEntryModel> brokers = const [], VoidCallback? onDelete, int? defaultQos}) {
+  return showDialog<PublishShortcutModel>(
     context: context,
     barrierColor: Colors.black54,
     builder: (_) => _ShortcutDialog(shortcut: shortcut, brokers: brokers, onDelete: onDelete, defaultQos: defaultQos),
@@ -32,8 +33,8 @@ Future<PublishShortcut?> showShortcutDialog(BuildContext context, {PublishShortc
 class _ShortcutDialog extends StatefulWidget {
   const _ShortcutDialog({this.shortcut, required this.brokers, this.onDelete, this.defaultQos});
 
-  final PublishShortcut? shortcut;
-  final List<BrokerEntry> brokers;
+  final PublishShortcutModel? shortcut;
+  final List<BrokerEntryModel> brokers;
   final VoidCallback? onDelete;
 
   /// QoS used when [shortcut] is null (i.e. creating a new shortcut).
@@ -109,7 +110,7 @@ class _ShortcutDialogState extends State<_ShortcutDialog> {
     if (_format == PayloadFormat.json && _validationError != null) return;
     Navigator.pop(
       context,
-      PublishShortcut(
+      PublishShortcutModel(
         id: widget.shortcut?.id ?? 'shortcut_${DateTime.now().microsecondsSinceEpoch}',
         name: _nameController.text.trim(),
         topic: _topicController.text.trim(),

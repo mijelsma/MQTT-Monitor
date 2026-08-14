@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../../../models/data_point.dart';
-import '../../../models/graph_card_model.dart';
+import '../../../core/dashboard/models/data_point_model.dart';
+import '../../../core/dashboard/models/graph_card_model.dart';
 import '../../../shared/widgets/graph_card.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import 'grid_metrics.dart';
@@ -13,7 +13,7 @@ class CardTile extends StatefulWidget {
   const CardTile({super.key, required this.card, required this.series, required this.width, required this.height, required this.metrics, required this.onEdit, required this.onRemove, required this.onResize, required this.onDragStarted, required this.onDragEnd});
 
   final GraphCardModel card;
-  final ValueListenable<List<DataPoint>> series;
+  final ValueListenable<List<DataPointModel>> series;
   final double width;
   final double height;
   final GridMetrics metrics;
@@ -104,7 +104,7 @@ class _CardTileState extends State<CardTile> {
       ),
       childWhenDragging: const SizedBox.shrink(),
       child: RepaintBoundary(
-        child: ValueListenableBuilder<List<DataPoint>>(
+        child: ValueListenableBuilder<List<DataPointModel>>(
           valueListenable: widget.series,
           builder: (context, dataPoints, _) => GraphCard(model: card, dataPoints: dataPoints, onEdit: widget.onEdit, onRemove: widget.onRemove),
         ),

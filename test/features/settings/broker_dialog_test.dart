@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/history/history_preferences_repository.dart';
+import 'package:mqtt_monitor/core/history/repositories/history_preferences_repository.dart';
 import 'package:mqtt_monitor/core/logging/app_logger.dart';
-import 'package:mqtt_monitor/core/mqtt/connection_preferences_repository.dart';
+import 'package:mqtt_monitor/core/mqtt/repositories/connection_preferences_repository.dart';
 import 'package:mqtt_monitor/features/settings/dialogs/broker_dialog.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
-import 'package:mqtt_monitor/models/broker_entry.dart';
-import 'package:mqtt_monitor/models/mqtt_protocol_version.dart';
+import 'package:mqtt_monitor/core/broker/models/broker_entry_model.dart';
+import 'package:mqtt_monitor/core/mqtt/models/mqtt_protocol_version_model.dart';
 import 'package:mqtt_monitor/shared/widgets/ui_segment_row.dart';
 import 'package:mqtt_monitor/shared/widgets/ui_switch_row.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
@@ -22,7 +22,7 @@ void main() {
     dependencies = await TestDependencies.create();
   });
 
-  Future<void> pumpDialog(WidgetTester tester, {BrokerEntry? broker}) async {
+  Future<void> pumpDialog(WidgetTester tester, {BrokerEntryModel? broker}) async {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
@@ -55,7 +55,7 @@ void main() {
   testWidgets('editing an existing broker does not inject a default subscription', (tester) async {
     await pumpDialog(
       tester,
-      broker: const BrokerEntry(id: 'b1', name: 'Existing', host: 'broker.invalid'),
+      broker: const BrokerEntryModel(id: 'b1', name: 'Existing', host: 'broker.invalid'),
     );
 
     expect(find.text('Every topic'), findsNothing);
@@ -70,11 +70,11 @@ void main() {
   });
 
   testWidgets('new brokers use the configured protocol and safe TLS defaults', (tester) async {
-    await dependencies.connectionPreferences.setBrokerProtocol(MqttProtocolVersion.v311);
+    await dependencies.connectionPreferences.setBrokerProtocol(MqttProtocolVersionModel.v311);
     await pumpDialog(tester);
 
-    final protocol = tester.widget<UiSegmentRow<MqttProtocolVersion>>(find.byWidgetPredicate((widget) => widget is UiSegmentRow<MqttProtocolVersion> && widget.label == 'Protocol version'));
-    expect(protocol.value, MqttProtocolVersion.v311);
+    final protocol = tester.widget<UiSegmentRow<MqttProtocolVersionModel>>(find.byWidgetPredicate((widget) => widget is UiSegmentRow<MqttProtocolVersionModel> && widget.label == 'Protocol version'));
+    expect(protocol.value, MqttProtocolVersionModel.v311);
     expect(find.text('Validate Certificates'), findsNothing);
 
     final ssl = tester.widget<UiSwitchRow>(find.byWidgetPredicate((widget) => widget is UiSwitchRow && widget.label == S.current.brokerDialogUseSSL));

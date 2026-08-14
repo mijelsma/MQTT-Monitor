@@ -3,18 +3,14 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/shared/widgets/workspace_panel_controller.dart';
+import 'package:mqtt_monitor/shared/controllers/workspace_panel_controller.dart';
 import 'package:mqtt_monitor/shared/widgets/workspace_panel_divider.dart';
 import 'package:mqtt_monitor/shared/widgets/workspace_panel_layout.dart';
 import 'package:mqtt_monitor/shared/widgets/workspace_panel_section.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 
 void main() {
-  Widget buildLayout(
-    WorkspacePanelController controller, {
-    double height = 500,
-    bool animationsEnabled = false,
-  }) {
+  Widget buildLayout(WorkspacePanelController controller, {double height = 500, bool animationsEnabled = false}) {
     const titles = ['Alpha', 'Beta', 'Gamma', 'Delta'];
     assert(controller.length <= titles.length);
     return MaterialApp(
@@ -27,16 +23,13 @@ void main() {
             controller: controller,
             animationsEnabled: animationsEnabled,
             animationDuration: const Duration(milliseconds: 400),
-            dividerSemanticLabelBuilder: (first, second) =>
-                'Resize ${titles[first]} and ${titles[second]}',
+            dividerSemanticLabelBuilder: (first, second) => 'Resize ${titles[first]} and ${titles[second]}',
             sections: [
               for (var index = 0; index < controller.length; index++)
                 WorkspacePanelSection(
                   title: titles[index],
                   icon: Icons.crop_square,
-                  body: _StatefulBody(
-                    key: Key('${titles[index].toLowerCase()}-body'),
-                  ),
+                  body: _StatefulBody(key: Key('${titles[index].toLowerCase()}-body')),
                   toggleKey: Key('${titles[index].toLowerCase()}-toggle'),
                   contentKey: Key('${titles[index].toLowerCase()}-content'),
                 ),
@@ -48,9 +41,7 @@ void main() {
   }
 
   test('controller supports all-collapsed state and bounded resizing', () {
-    final controller = WorkspacePanelController(
-      initialCollapsed: [false, false],
-    );
+    final controller = WorkspacePanelController(initialCollapsed: [false, false]);
     addTearDown(controller.dispose);
 
     controller.resizePair(0, 1, 100);
@@ -65,24 +56,15 @@ void main() {
     expect(controller.shares, [1, 0]);
   });
 
-  testWidgets('header exposes semantics and toggles with the keyboard', (
-    tester,
-  ) async {
-    final controller = WorkspacePanelController(
-      initialCollapsed: [false, false],
-    );
+  testWidgets('header exposes semantics and toggles with the keyboard', (tester) async {
+    final controller = WorkspacePanelController(initialCollapsed: [false, false]);
     addTearDown(controller.dispose);
     final semantics = tester.ensureSemantics();
     await tester.pumpWidget(buildLayout(controller));
 
-    final alphaSemantics = tester.getSemantics(
-      find.byKey(const Key('alpha-toggle')),
-    );
+    final alphaSemantics = tester.getSemantics(find.byKey(const Key('alpha-toggle')));
     expect(alphaSemantics.label, 'Alpha');
-    expect(
-      alphaSemantics.getSemanticsData().hasAction(SemanticsAction.tap),
-      isTrue,
-    );
+    expect(alphaSemantics.getSemanticsData().hasAction(SemanticsAction.tap), isTrue);
     expect(alphaSemantics.getSemanticsData().flagsCollection.isButton, isTrue);
 
     await tester.sendKeyEvent(LogicalKeyboardKey.tab);
@@ -96,9 +78,7 @@ void main() {
   });
 
   testWidgets('divider resizes by drag and keyboard', (tester) async {
-    final controller = WorkspacePanelController(
-      initialCollapsed: [false, false],
-    );
+    final controller = WorkspacePanelController(initialCollapsed: [false, false]);
     addTearDown(controller.dispose);
     await tester.pumpWidget(buildLayout(controller));
 
@@ -114,14 +94,9 @@ void main() {
     expect(controller.shares[0], lessThan(0.7));
   });
 
-  testWidgets('divider pairs match consecutive expanded panels in all states', (
-    tester,
-  ) async {
+  testWidgets('divider pairs match consecutive expanded panels in all states', (tester) async {
     for (var collapsedMask = 0; collapsedMask < 16; collapsedMask++) {
-      final collapsed = [
-        for (var index = 0; index < 4; index++)
-          collapsedMask & (1 << index) != 0,
-      ];
+      final collapsed = [for (var index = 0; index < 4; index++) collapsedMask & (1 << index) != 0];
       final controller = WorkspacePanelController(initialCollapsed: collapsed);
       await tester.pumpWidget(buildLayout(controller));
 
@@ -129,21 +104,10 @@ void main() {
         for (var index = 0; index < 4; index++)
           if (!collapsed[index]) index,
       ];
-      final expectedPairs = [
-        for (var position = 0; position < expanded.length - 1; position++)
-          '${expanded[position]}-${expanded[position + 1]}',
-      ];
-      expect(
-        find.byType(WorkspacePanelDivider),
-        findsNWidgets(expectedPairs.length),
-        reason: 'Unexpected divider count for collapsed state $collapsed.',
-      );
+      final expectedPairs = [for (var position = 0; position < expanded.length - 1; position++) '${expanded[position]}-${expanded[position + 1]}'];
+      expect(find.byType(WorkspacePanelDivider), findsNWidgets(expectedPairs.length), reason: 'Unexpected divider count for collapsed state $collapsed.');
       for (final pair in expectedPairs) {
-        expect(
-          find.byKey(Key('workspace-panel-divider-$pair')),
-          findsOneWidget,
-          reason: 'Missing divider $pair for collapsed state $collapsed.',
-        );
+        expect(find.byKey(Key('workspace-panel-divider-$pair')), findsOneWidget, reason: 'Missing divider $pair for collapsed state $collapsed.');
       }
 
       await tester.pumpWidget(const SizedBox.shrink());
@@ -151,36 +115,24 @@ void main() {
     }
   });
 
-  testWidgets('non-adjacent drag changes only its expanded panel pair', (
-    tester,
-  ) async {
-    final controller = WorkspacePanelController(
-      initialCollapsed: [false, true, false, false],
-    );
+  testWidgets('non-adjacent drag changes only its expanded panel pair', (tester) async {
+    final controller = WorkspacePanelController(initialCollapsed: [false, true, false, false]);
     addTearDown(controller.dispose);
     await tester.pumpWidget(buildLayout(controller));
 
     final pairTotal = controller.ratioAt(0) + controller.ratioAt(2);
     final unaffectedRatio = controller.ratioAt(3);
-    await tester.drag(
-      find.byKey(const Key('workspace-panel-divider-0-2')),
-      const Offset(0, 50),
-    );
+    await tester.drag(find.byKey(const Key('workspace-panel-divider-0-2')), const Offset(0, 50));
     await tester.pump();
 
     expect(controller.ratioAt(0), greaterThan(1));
     expect(controller.ratioAt(2), lessThan(1));
-    expect(
-      controller.ratioAt(0) + controller.ratioAt(2),
-      closeTo(pairTotal, 0.0001),
-    );
+    expect(controller.ratioAt(0) + controller.ratioAt(2), closeTo(pairTotal, 0.0001));
     expect(controller.ratioAt(3), unaffectedRatio);
     expect(controller.shares[1], 0);
   });
 
-  testWidgets('non-adjacent drag works across two-panel collapse patterns', (
-    tester,
-  ) async {
+  testWidgets('non-adjacent drag works across two-panel collapse patterns', (tester) async {
     final cases = <({List<bool> collapsed, int first, int second})>[
       (collapsed: [false, true, false, true], first: 0, second: 2),
       (collapsed: [false, true, true, false], first: 0, second: 3),
@@ -188,19 +140,12 @@ void main() {
     ];
 
     for (final testCase in cases) {
-      final controller = WorkspacePanelController(
-        initialCollapsed: testCase.collapsed,
-      );
+      final controller = WorkspacePanelController(initialCollapsed: testCase.collapsed);
       await tester.pumpWidget(buildLayout(controller));
       final beforeFirst = controller.shares[testCase.first];
       final beforeSecond = controller.shares[testCase.second];
 
-      await tester.drag(
-        find.byKey(
-          Key('workspace-panel-divider-${testCase.first}-${testCase.second}'),
-        ),
-        const Offset(0, 50),
-      );
+      await tester.drag(find.byKey(Key('workspace-panel-divider-${testCase.first}-${testCase.second}')), const Offset(0, 50));
       await tester.pump();
 
       expect(controller.shares[testCase.first], greaterThan(beforeFirst));
@@ -214,12 +159,8 @@ void main() {
     }
   });
 
-  testWidgets('non-adjacent divider keyboard and semantics use actual pair', (
-    tester,
-  ) async {
-    final controller = WorkspacePanelController(
-      initialCollapsed: [false, true, false, true],
-    );
+  testWidgets('non-adjacent divider keyboard and semantics use actual pair', (tester) async {
+    final controller = WorkspacePanelController(initialCollapsed: [false, true, false, true]);
     addTearDown(controller.dispose);
     final semantics = tester.ensureSemantics();
     await tester.pumpWidget(buildLayout(controller));
@@ -238,54 +179,33 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('animated collapse retargets dividers to expanded neighbors', (
-    tester,
-  ) async {
-    final controller = WorkspacePanelController(
-      initialCollapsed: [false, false, false, false],
-    );
+  testWidgets('animated collapse retargets dividers to expanded neighbors', (tester) async {
+    final controller = WorkspacePanelController(initialCollapsed: [false, false, false, false]);
     addTearDown(controller.dispose);
     await tester.pumpWidget(buildLayout(controller, animationsEnabled: true));
 
     controller.toggle(1);
     await tester.pump();
-    expect(
-      find.byKey(const Key('workspace-panel-divider-0-2')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const Key('workspace-panel-divider-2-3')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('workspace-panel-divider-0-2')), findsOneWidget);
+    expect(find.byKey(const Key('workspace-panel-divider-2-3')), findsOneWidget);
     expect(find.byKey(const Key('workspace-panel-divider-0-1')), findsNothing);
 
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('small height supports a non-adjacent expanded pair', (
-    tester,
-  ) async {
-    final controller = WorkspacePanelController(
-      initialCollapsed: [false, true, false, true],
-    );
+  testWidgets('small height supports a non-adjacent expanded pair', (tester) async {
+    final controller = WorkspacePanelController(initialCollapsed: [false, true, false, true]);
     addTearDown(controller.dispose);
     await tester.pumpWidget(buildLayout(controller, height: 100));
 
     expect(find.byType(SingleChildScrollView), findsOneWidget);
-    expect(
-      find.byKey(const Key('workspace-panel-divider-0-2')),
-      findsOneWidget,
-    );
+    expect(find.byKey(const Key('workspace-panel-divider-0-2')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('collapsed body remains mounted and preserves local state', (
-    tester,
-  ) async {
-    final controller = WorkspacePanelController(
-      initialCollapsed: [false, false],
-    );
+  testWidgets('collapsed body remains mounted and preserves local state', (tester) async {
+    final controller = WorkspacePanelController(initialCollapsed: [false, false]);
     addTearDown(controller.dispose);
     await tester.pumpWidget(buildLayout(controller));
 
@@ -303,9 +223,7 @@ void main() {
     expect(find.text('alpha-body: 1'), findsOneWidget);
   });
 
-  testWidgets('all-collapsed and small-height layouts do not overflow', (
-    tester,
-  ) async {
+  testWidgets('all-collapsed and small-height layouts do not overflow', (tester) async {
     final controller = WorkspacePanelController(initialCollapsed: [true, true]);
     addTearDown(controller.dispose);
     await tester.pumpWidget(buildLayout(controller, height: 50));
@@ -314,12 +232,8 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('rapid animated changes stay local and within a padded budget', (
-    tester,
-  ) async {
-    final controller = WorkspacePanelController(
-      initialCollapsed: [false, false],
-    );
+  testWidgets('rapid animated changes stay local and within a padded budget', (tester) async {
+    final controller = WorkspacePanelController(initialCollapsed: [false, false]);
     addTearDown(controller.dispose);
     var ownerBuilds = 0;
     await tester.pumpWidget(
@@ -343,11 +257,7 @@ void main() {
     );
 
     expect(ownerBuilds, 1);
-    expect(
-      stopwatch.elapsed,
-      lessThan(const Duration(seconds: 2)),
-      reason: '100 rapid animated targets took ${stopwatch.elapsed}.',
-    );
+    expect(stopwatch.elapsed, lessThan(const Duration(seconds: 2)), reason: '100 rapid animated targets took ${stopwatch.elapsed}.');
     expect(tester.takeException(), isNull);
   });
 }
@@ -367,11 +277,7 @@ class _StatefulBodyState extends State<_StatefulBody> {
     final label = (widget.key! as ValueKey<String>).value;
     return Align(
       alignment: Alignment.topLeft,
-      child: TextButton(
-        key: Key('increment-$label'),
-        onPressed: () => setState(() => _count++),
-        child: Text('$label: $_count'),
-      ),
+      child: TextButton(key: Key('increment-$label'), onPressed: () => setState(() => _count++), child: Text('$label: $_count')),
     );
   }
 }

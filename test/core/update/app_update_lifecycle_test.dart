@@ -2,11 +2,11 @@ import 'package:desktop_updater/desktop_updater.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/storage/shared_preferences_store.dart';
-import 'package:mqtt_monitor/core/update/app_update_controller.dart';
+import 'package:mqtt_monitor/core/update/controllers/app_update_controller.dart';
 import 'package:mqtt_monitor/core/update/app_update_lifecycle.dart';
-import 'package:mqtt_monitor/core/update/app_update_service.dart';
+import 'package:mqtt_monitor/core/update/services/app_update_service.dart';
 import 'package:mqtt_monitor/core/update/github_release_source.dart';
-import 'package:mqtt_monitor/core/update/update_preferences_repository.dart';
+import 'package:mqtt_monitor/core/update/repositories/update_preferences_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

@@ -8,7 +8,7 @@ import '../../../shared/widgets/ui_section.dart';
 import '../../../shared/widgets/ui_slider_row.dart';
 import '../../../shared/widgets/ui_switch_row.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../settings_viewmodel.dart';
+import '../view_models/settings_view_model.dart';
 import '../settings_reset_section.dart';
 
 class AdvancedPanel extends StatefulWidget {

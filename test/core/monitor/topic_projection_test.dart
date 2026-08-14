@@ -1,14 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/history/message_history_service.dart';
+import 'package:mqtt_monitor/core/history/services/message_history_service.dart';
 import 'package:mqtt_monitor/core/ingestion/message_ingestion_coordinator.dart';
 import 'package:mqtt_monitor/core/monitor/topic_projection.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_message.dart';
-import 'package:mqtt_monitor/features/monitor/monitor_workspace_controller.dart';
+import 'package:mqtt_monitor/features/monitor/controllers/monitor_workspace_controller.dart';
 import 'package:mqtt_monitor/features/monitor/search_scope.dart';
-import 'package:mqtt_monitor/models/broker_entry.dart';
-import 'package:mqtt_monitor/models/subscription_entry.dart';
+import 'package:mqtt_monitor/core/broker/models/broker_entry_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_entry_model.dart';
 
 import '../../support/test_dependencies.dart';
 
@@ -23,11 +23,11 @@ void main() {
   setUp(() async {
     dependencies = await TestDependencies.create();
     await dependencies.brokers.add(
-      const BrokerEntry(
+      const BrokerEntryModel(
         id: 'first',
         name: 'First',
         host: 'first.invalid',
-        subscriptions: [SubscriptionEntry(id: 'all', topic: '#')],
+        subscriptions: [SubscriptionEntryModel(id: 'all', topic: '#')],
       ),
     );
     source = StreamController<MQTTMessage>.broadcast(sync: true);
@@ -133,11 +133,11 @@ void main() {
   test('broker switches clear projections and restart topic sequences', () async {
     source.add(_message('same/topic', 'first', 1));
     await dependencies.brokers.add(
-      const BrokerEntry(
+      const BrokerEntryModel(
         id: 'second',
         name: 'Second',
         host: 'second.invalid',
-        subscriptions: [SubscriptionEntry(id: 'all', topic: '#')],
+        subscriptions: [SubscriptionEntryModel(id: 'all', topic: '#')],
       ),
     );
 

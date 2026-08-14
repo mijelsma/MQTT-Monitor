@@ -3,10 +3,10 @@ import 'dart:math' as math;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-import '../../models/chart_type.dart';
-import '../../models/data_point.dart';
-import '../../models/graph_card_model.dart';
-import '../../models/interpolation_mode.dart';
+import '../../core/dashboard/models/chart_type_model.dart';
+import '../../core/dashboard/models/data_point_model.dart';
+import '../../core/dashboard/models/graph_card_model.dart';
+import '../../core/dashboard/models/interpolation_mode_model.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 
 /// A reusable card widget that renders a live-updating line or bar chart
@@ -15,7 +15,7 @@ class GraphCard extends StatelessWidget {
   const GraphCard({super.key, required this.model, required this.dataPoints, this.onEdit, this.onRemove});
 
   final GraphCardModel model;
-  final List<DataPoint> dataPoints;
+  final List<DataPointModel> dataPoints;
   final VoidCallback? onEdit;
   final VoidCallback? onRemove;
 
@@ -39,7 +39,7 @@ class GraphCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(4, 0, 8, 4),
               child: dataPoints.isEmpty
                   ? _EmptyChart(tokens: tokens)
-                  : model.chartType == ChartType.line
+                  : model.chartType == ChartTypeModel.line
                   ? _LineChart(model: model, dataPoints: dataPoints, tokens: tokens)
                   : _BarChart(model: model, dataPoints: dataPoints, tokens: tokens),
             ),
@@ -54,7 +54,7 @@ class _Header extends StatelessWidget {
   const _Header({required this.model, required this.dataPoints, this.onEdit, this.onRemove});
 
   final GraphCardModel model;
-  final List<DataPoint> dataPoints;
+  final List<DataPointModel> dataPoints;
   final VoidCallback? onEdit;
   final VoidCallback? onRemove;
 
@@ -154,7 +154,7 @@ class _LineChart extends StatelessWidget {
   const _LineChart({required this.model, required this.dataPoints, required this.tokens});
 
   final GraphCardModel model;
-  final List<DataPoint> dataPoints;
+  final List<DataPointModel> dataPoints;
   final AppTokens tokens;
 
   @override
@@ -190,10 +190,10 @@ class _LineChart extends StatelessWidget {
         lineBarsData: [
           LineChartBarData(
             spots: spots,
-            isCurved: model.interpolation == InterpolationMode.curved,
+            isCurved: model.interpolation == InterpolationModeModel.curved,
             curveSmoothness: 0.2,
             preventCurveOverShooting: true,
-            isStepLineChart: model.interpolation == InterpolationMode.stepped,
+            isStepLineChart: model.interpolation == InterpolationModeModel.stepped,
             color: Color(model.colorValue),
             barWidth: 2,
             isStrokeCapRound: true,
@@ -234,7 +234,7 @@ class _BarChart extends StatelessWidget {
   const _BarChart({required this.model, required this.dataPoints, required this.tokens});
 
   final GraphCardModel model;
-  final List<DataPoint> dataPoints;
+  final List<DataPointModel> dataPoints;
   final AppTokens tokens;
 
   @override
@@ -305,7 +305,7 @@ class _BarChart extends StatelessWidget {
   }
 }
 
-({double minY, double maxY, double yInterval}) _yConfig(GraphCardModel model, List<DataPoint> dataPoints) {
+({double minY, double maxY, double yInterval}) _yConfig(GraphCardModel model, List<DataPointModel> dataPoints) {
   final (autoMin, autoMax) = _yRange(dataPoints);
   final minY = model.yMin ?? autoMin;
   final maxY = model.yMax ?? autoMax;
@@ -333,12 +333,12 @@ AxisTitles _leftAxisTitles(AppTokens tokens, double yInterval) => AxisTitles(
   ),
 );
 
-List<FlSpot> _buildSpots(List<DataPoint> points) {
+List<FlSpot> _buildSpots(List<DataPointModel> points) {
   if (points.isEmpty) return [];
   return points.map((p) => FlSpot(p.timestamp.millisecondsSinceEpoch.toDouble(), p.value)).toList();
 }
 
-(double, double) _yRange(List<DataPoint> points) {
+(double, double) _yRange(List<DataPointModel> points) {
   if (points.isEmpty) return (0, 1);
   var min = points.first.value;
   var max = points.first.value;
@@ -378,7 +378,7 @@ bool _tooCloseToEdge(double value, double min, double max, double interval) {
   return false;
 }
 
-double _xInterval(List<DataPoint> points) {
+double _xInterval(List<DataPointModel> points) {
   if (points.length < 2) return 1;
   final total = points.last.timestamp.millisecondsSinceEpoch - points.first.timestamp.millisecondsSinceEpoch;
   if (total <= 0) return 1;

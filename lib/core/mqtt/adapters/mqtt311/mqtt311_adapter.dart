@@ -6,12 +6,12 @@ import 'dart:typed_data';
 import 'package:mqtt_client/mqtt_client.dart' as mqtt3;
 import 'package:mqtt_client/mqtt_server_client.dart' as mqtt3_server;
 
-import '../../../../models/broker_entry.dart';
-import '../../../../models/mqtt_protocol_version.dart';
+import '../../../../core/broker/models/broker_entry_model.dart';
+import '../../../../core/mqtt/models/mqtt_protocol_version_model.dart';
 import '../../connection_status.dart';
 import '../../mqtt_connection_failure.dart';
 import '../../mqtt_message.dart';
-import '../../mqtt_protocol_adapter.dart';
+import '../../interfaces/mqtt_protocol_adapter_interface.dart';
 import '../../mqtt_protocol_event.dart';
 import '../../mqtt_reason.dart';
 import '../../publish_result.dart';
@@ -20,19 +20,19 @@ import '../shared/mqtt_tls_configurator.dart';
 import 'mqtt311_event_client.dart';
 
 /// Creates the MQTT 3.1.1 package client used for [broker].
-typedef Mqtt311ClientFactory = mqtt3_server.MqttServerClient Function(BrokerEntry broker);
+typedef Mqtt311ClientFactory = mqtt3_server.MqttServerClient Function(BrokerEntryModel broker);
 
 const _socketTimeoutMs = 5000;
 
 /// Adapts the mqtt_client package to the application MQTT session contract.
-class Mqtt311Adapter implements MqttProtocolAdapter {
+class Mqtt311Adapter implements MqttProtocolAdapterInterface {
   /// Creates an MQTT 3.1.1 adapter for [broker].
   Mqtt311Adapter(this._broker, {MqttTlsConfigurator? tlsConfigurator, Mqtt311ClientFactory? clientFactory, Duration publishAckTimeout = const Duration(seconds: 5)})
     : _tlsConfigurator = tlsConfigurator ?? MqttTlsConfigurator(),
       _clientFactory = clientFactory ?? ((profile) => Mqtt311EventClient.withPort(profile.host, profile.effectiveClientId, profile.port, maxConnectionAttempts: 1)),
       _publishAckTimeout = publishAckTimeout;
 
-  final BrokerEntry _broker;
+  final BrokerEntryModel _broker;
   final MqttTlsConfigurator _tlsConfigurator;
   final Mqtt311ClientFactory _clientFactory;
   final Duration _publishAckTimeout;
@@ -47,7 +47,7 @@ class Mqtt311Adapter implements MqttProtocolAdapter {
 
   /// Returns MQTT 3.1.1 as the implemented protocol.
   @override
-  MqttProtocolVersion get protocolVersion => MqttProtocolVersion.v311;
+  MqttProtocolVersionModel get protocolVersion => MqttProtocolVersionModel.v311;
 
   /// Returns lifecycle and diagnostic events.
   @override

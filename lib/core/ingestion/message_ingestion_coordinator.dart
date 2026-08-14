@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:collection';
 
-import '../../models/topic_node_value.dart';
-import '../broker/broker_repository.dart';
+import '../../core/monitor/models/topic_node_value_model.dart';
+import '../broker/repositories/broker_repository.dart';
 import '../mqtt/mqtt_message.dart';
 import '../mqtt/session/mqtt_session_controller.dart';
 import 'ingested_message.dart';
@@ -57,7 +57,7 @@ class MessageIngestionCoordinator {
     final ingested = IngestedMessage(
       brokerId: brokerId,
       topic: message.topic,
-      value: TopicNodeValue(payload: message.payload, seq: sequence, receivedAt: message.receivedAt, retain: message.retain, qos: message.qos),
+      value: TopicNodeValueModel(payload: message.payload, seq: sequence, receivedAt: message.receivedAt, retain: message.retain, qos: message.qos),
     );
     if (!_timeSliced) {
       _messages.add(ingested);

@@ -2,17 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import '../../../models/mqtt_protocol_version.dart';
-import '../../../models/startup_connection.dart';
-import '../../broker/broker_repository.dart';
+import '../../../core/mqtt/models/mqtt_protocol_version_model.dart';
+import '../../../core/mqtt/models/startup_connection_model.dart';
+import '../../broker/repositories/broker_repository.dart';
 import '../../logging/app_logger.dart';
-import '../connection_preferences_repository.dart';
+import '../repositories/connection_preferences_repository.dart';
 import '../adapters/mqtt311/mqtt311_adapter.dart';
 import '../adapters/mqtt5/mqtt5_adapter.dart';
 import '../connection_status.dart';
 import '../mqtt_connection_failure.dart';
 import '../mqtt_message.dart';
-import '../mqtt_protocol_adapter.dart';
+import '../interfaces/mqtt_protocol_adapter_interface.dart';
 import '../mqtt_protocol_event.dart';
 import '../publish_result.dart';
 import '../../publishing/publish_transport.dart';
@@ -30,8 +30,8 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
     : _adapterFactory =
           adapterFactory ??
           ((broker) => switch (broker.protocolVersion) {
-            MqttProtocolVersion.v311 => Mqtt311Adapter(broker),
-            MqttProtocolVersion.v5 => Mqtt5Adapter(broker),
+            MqttProtocolVersionModel.v311 => Mqtt311Adapter(broker),
+            MqttProtocolVersionModel.v5 => Mqtt5Adapter(broker),
           }),
       _connectionRequested = _intentStore.connectionRequested,
       _logger = logger,
@@ -48,7 +48,7 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
 
   MqttSessionState _state = const MqttSessionState();
   MqttSessionTarget? _target;
-  MqttProtocolAdapter? _adapter;
+  MqttProtocolAdapterInterface? _adapter;
   StreamSubscription<MqttProtocolEvent>? _eventSubscription;
   StreamSubscription<MQTTMessage>? _messageSubscription;
   Timer? _rateTimer;
@@ -82,7 +82,7 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
   int get messageRate => _state.messageRate;
 
   /// Returns the protocol selected for the current or most recent session.
-  MqttProtocolVersion? get activeProtocol => _state.activeProtocol;
+  MqttProtocolVersionModel? get activeProtocol => _state.activeProtocol;
 
   /// Returns decoded messages from the active protocol adapter.
   Stream<MQTTMessage> get messageStream => _messages.stream;
@@ -140,13 +140,13 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
     if (_firstSync) {
       _firstSync = false;
       switch (_preferences.startupConnection) {
-        case StartupConnection.alwaysConnect:
+        case StartupConnectionModel.alwaysConnect:
           _connectionRequested = true;
           _persistConnectionIntent(true);
-        case StartupConnection.stayDisconnected:
+        case StartupConnectionModel.stayDisconnected:
           _connectionRequested = false;
           _persistConnectionIntent(false);
-        case StartupConnection.lastStatus:
+        case StartupConnectionModel.lastStatus:
           break;
       }
     }
@@ -196,7 +196,7 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
   }
 
   /// Applies a lifecycle event only when its adapter generation is current.
-  void _onProtocolEvent(MqttProtocolAdapter adapter, int generation, MqttProtocolEvent event) {
+  void _onProtocolEvent(MqttProtocolAdapterInterface adapter, int generation, MqttProtocolEvent event) {
     if (!_isCurrentAdapter(adapter, generation)) return;
     switch (event.type) {
       case MqttProtocolEventType.connected:
@@ -216,7 +216,7 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
   }
 
   /// Forwards a current adapter message and updates session telemetry.
-  void _onMessage(MqttProtocolAdapter adapter, int generation, MQTTMessage message) {
+  void _onMessage(MqttProtocolAdapterInterface adapter, int generation, MQTTMessage message) {
     if (!_isCurrentAdapter(adapter, generation)) return;
     _messages.add(message);
     _messageCount++;
@@ -248,7 +248,7 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
   }
 
   /// Returns whether [adapter] still owns the requested [generation].
-  bool _isCurrentAdapter(MqttProtocolAdapter adapter, int generation) {
+  bool _isCurrentAdapter(MqttProtocolAdapterInterface adapter, int generation) {
     return !_disposed && generation == _generation && identical(adapter, _adapter);
   }
 
@@ -267,7 +267,7 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
   }
 
   /// Clears counters while applying a lifecycle [status] and [protocol].
-  void _resetCounters({required ConnectionStatus status, required MqttProtocolVersion? protocol}) {
+  void _resetCounters({required ConnectionStatus status, required MqttProtocolVersionModel? protocol}) {
     _messageCount = 0;
     _rateCounter = 0;
     _emit(status: status, error: null, detail: null, messageCount: 0, messageRate: 0, protocol: protocol);
@@ -281,7 +281,7 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
       errorDetail: identical(detail, _unchanged) ? _state.errorDetail : detail as String?,
       messageCount: messageCount ?? _state.messageCount,
       messageRate: messageRate ?? _state.messageRate,
-      activeProtocol: identical(protocol, _unchanged) ? _state.activeProtocol : protocol as MqttProtocolVersion?,
+      activeProtocol: identical(protocol, _unchanged) ? _state.activeProtocol : protocol as MqttProtocolVersionModel?,
     );
     if (next == _state) return;
     _state = next;

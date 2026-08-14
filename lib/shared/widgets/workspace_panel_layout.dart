@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import 'workspace_panel_controller.dart';
+import '../controllers/workspace_panel_controller.dart';
 import 'workspace_panel_divider.dart';
 import 'workspace_panel_header.dart';
 import 'workspace_panel_section.dart';
@@ -10,9 +10,7 @@ import 'workspace_panel_section.dart';
 /// Maps a 0 to 100 speed setting to the workspace panel animation duration.
 Duration workspacePanelAnimationDurationForSpeed(int speed) {
   final clamped = speed.clamp(0, 100);
-  final milliseconds = clamped <= 60
-      ? 500 - (340 / 60) * clamped
-      : 340 - 3 * clamped;
+  final milliseconds = clamped <= 60 ? 500 - (340 / 60) * clamped : 340 - 3 * clamped;
   return Duration(milliseconds: milliseconds.round());
 }
 
@@ -22,14 +20,7 @@ const double _dividerHeight = 14;
 /// Lays out collapsible, resizable workspace panels with animated redistribution.
 class WorkspacePanelLayout extends StatefulWidget {
   /// Creates a panel layout.
-  const WorkspacePanelLayout({
-    super.key,
-    required this.controller,
-    required this.sections,
-    required this.animationDuration,
-    required this.animationsEnabled,
-    required this.dividerSemanticLabelBuilder,
-  });
+  const WorkspacePanelLayout({super.key, required this.controller, required this.sections, required this.animationDuration, required this.animationsEnabled, required this.dividerSemanticLabelBuilder});
 
   /// Owns collapsed and relative-size state.
   final WorkspacePanelController controller;
@@ -44,15 +35,13 @@ class WorkspacePanelLayout extends StatefulWidget {
   final bool animationsEnabled;
 
   /// Builds an accessibility label for the two panels a divider resizes.
-  final String Function(int firstIndex, int secondIndex)
-  dividerSemanticLabelBuilder;
+  final String Function(int firstIndex, int secondIndex) dividerSemanticLabelBuilder;
 
   @override
   State<WorkspacePanelLayout> createState() => _WorkspacePanelLayoutState();
 }
 
-class _WorkspacePanelLayoutState extends State<WorkspacePanelLayout>
-    with SingleTickerProviderStateMixin {
+class _WorkspacePanelLayoutState extends State<WorkspacePanelLayout> with SingleTickerProviderStateMixin {
   late final AnimationController _transition;
   late List<double> _oldShares;
   late List<double> _newShares;
@@ -65,11 +54,7 @@ class _WorkspacePanelLayoutState extends State<WorkspacePanelLayout>
     _newShares = widget.controller.shares;
     _oldShares = List<double>.of(_newShares);
     _collapsed = _collapsedSnapshot();
-    _transition = AnimationController(
-      vsync: this,
-      value: 1,
-      duration: widget.animationDuration,
-    );
+    _transition = AnimationController(vsync: this, value: 1, duration: widget.animationDuration);
     widget.controller.addListener(_handleControllerChanged);
   }
 
@@ -94,17 +79,11 @@ class _WorkspacePanelLayoutState extends State<WorkspacePanelLayout>
     super.dispose();
   }
 
-  List<bool> _collapsedSnapshot() => [
-    for (var index = 0; index < widget.controller.length; index++)
-      widget.controller.isCollapsed(index),
-  ];
+  List<bool> _collapsedSnapshot() => [for (var index = 0; index < widget.controller.length; index++) widget.controller.isCollapsed(index)];
 
   List<double> _currentShares() {
     final progress = _transition.value;
-    return [
-      for (var index = 0; index < _newShares.length; index++)
-        _oldShares[index] + (_newShares[index] - _oldShares[index]) * progress,
-    ];
+    return [for (var index = 0; index < _newShares.length; index++) _oldShares[index] + (_newShares[index] - _oldShares[index]) * progress];
   }
 
   void _handleControllerChanged() {
@@ -117,11 +96,7 @@ class _WorkspacePanelLayoutState extends State<WorkspacePanelLayout>
       _oldShares = _currentShares();
       _newShares = target;
       _transition.value = 0;
-      _transition.animateTo(
-        1,
-        duration: widget.animationDuration,
-        curve: Curves.easeOutCubic,
-      );
+      _transition.animateTo(1, duration: widget.animationDuration, curve: Curves.easeOutCubic);
     } else {
       _oldShares = List<double>.of(target);
       _newShares = List<double>.of(target);
@@ -146,20 +121,14 @@ class _WorkspacePanelLayoutState extends State<WorkspacePanelLayout>
       }
     }
     final safeHeight = contentHeight <= 0 ? 1.0 : contentHeight;
-    widget.controller.resizePair(
-      first,
-      second,
-      pixelDelta * expandedRatioTotal / safeHeight,
-    );
+    widget.controller.resizePair(first, second, pixelDelta * expandedRatioTotal / safeHeight);
   }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _transition,
-      builder: (context, _) => LayoutBuilder(
-        builder: (context, constraints) => _buildPanels(constraints),
-      ),
+      builder: (context, _) => LayoutBuilder(builder: (context, constraints) => _buildPanels(constraints)),
     );
   }
 
@@ -169,16 +138,10 @@ class _WorkspacePanelLayoutState extends State<WorkspacePanelLayout>
       for (var index = 0; index < panelCount; index++)
         if (_newShares[index] > 0) index,
     ];
-    final nextExpandedByIndex = <int, int>{
-      for (var position = 0; position < expandedIndices.length - 1; position++)
-        expandedIndices[position]: expandedIndices[position + 1],
-    };
+    final nextExpandedByIndex = <int, int>{for (var position = 0; position < expandedIndices.length - 1; position++) expandedIndices[position]: expandedIndices[position + 1]};
     final dividerCount = math.max(0, expandedIndices.length - 1);
-    final chromeHeight =
-        panelCount * _headerHeight + dividerCount * _dividerHeight;
-    final maxHeight = constraints.maxHeight.isFinite
-        ? constraints.maxHeight
-        : chromeHeight;
+    final chromeHeight = panelCount * _headerHeight + dividerCount * _dividerHeight;
+    final maxHeight = constraints.maxHeight.isFinite ? constraints.maxHeight : chromeHeight;
     final available = math.max(0.0, maxHeight - chromeHeight);
     final shares = _normalizedCurrentShares();
 
@@ -188,16 +151,7 @@ class _WorkspacePanelLayoutState extends State<WorkspacePanelLayout>
       children.add(
         SizedBox(
           height: _headerHeight,
-          child: WorkspacePanelHeader(
-            key: section.toggleKey,
-            title: section.title,
-            icon: section.icon,
-            collapsed: widget.controller.isCollapsed(index),
-            onToggle: () => widget.controller.toggle(index),
-            animationDuration: widget.animationsEnabled
-                ? widget.animationDuration
-                : Duration.zero,
-          ),
+          child: WorkspacePanelHeader(key: section.toggleKey, title: section.title, icon: section.icon, collapsed: widget.controller.isCollapsed(index), onToggle: () => widget.controller.toggle(index), animationDuration: widget.animationsEnabled ? widget.animationDuration : Duration.zero),
         ),
       );
 
@@ -223,10 +177,7 @@ class _WorkspacePanelLayoutState extends State<WorkspacePanelLayout>
                 enabled: willBeVisible,
                 child: ExcludeSemantics(
                   excluding: !willBeVisible,
-                  child: IgnorePointer(
-                    ignoring: !willBeVisible,
-                    child: section.body,
-                  ),
+                  child: IgnorePointer(ignoring: !willBeVisible, child: section.body),
                 ),
               ),
             ),
@@ -241,16 +192,10 @@ class _WorkspacePanelLayoutState extends State<WorkspacePanelLayout>
             height: _dividerHeight,
             child: WorkspacePanelDivider(
               key: ValueKey('workspace-panel-divider-$index-$nextExpanded'),
-              semanticLabel: widget.dividerSemanticLabelBuilder(
-                index,
-                nextExpanded,
-              ),
-              onDragUpdate: (details) =>
-                  _resize(index, nextExpanded, available, details.delta.dy),
-              onIncrease: () =>
-                  _resize(index, nextExpanded, available, available * 0.05),
-              onDecrease: () =>
-                  _resize(index, nextExpanded, available, -available * 0.05),
+              semanticLabel: widget.dividerSemanticLabelBuilder(index, nextExpanded),
+              onDragUpdate: (details) => _resize(index, nextExpanded, available, details.delta.dy),
+              onIncrease: () => _resize(index, nextExpanded, available, available * 0.05),
+              onDecrease: () => _resize(index, nextExpanded, available, -available * 0.05),
             ),
           ),
         );

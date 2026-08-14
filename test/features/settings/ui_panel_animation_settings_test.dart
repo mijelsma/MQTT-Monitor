@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/features/settings/panels/ui_panel.dart';
-import 'package:mqtt_monitor/features/settings/settings_viewmodel.dart';
+import 'package:mqtt_monitor/features/settings/view_models/settings_view_model.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
-import 'package:mqtt_monitor/models/mqtt_protocol_version.dart';
+import 'package:mqtt_monitor/core/mqtt/models/mqtt_protocol_version_model.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
@@ -69,12 +69,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(vm.defaultBrokerProtocol, MqttProtocolVersion.v5);
+    expect(vm.defaultBrokerProtocol, MqttProtocolVersionModel.v5);
     await tester.ensureVisible(find.text('Default protocol for new brokers'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('MQTT 3.1.1'));
     await tester.pumpAndSettle();
 
-    expect(dependencies.connectionPreferences.brokerProtocol, MqttProtocolVersion.v311);
+    expect(dependencies.connectionPreferences.brokerProtocol, MqttProtocolVersionModel.v311);
   });
 }

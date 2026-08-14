@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'certificate_file_access.dart';
+import 'interfaces/certificate_file_access_interface.dart';
 
 /// Performs certificate file operations against the local file system.
-class IoCertificateFileAccess implements CertificateFileAccess {
+class IoCertificateFileAccess implements CertificateFileAccessInterface {
   /// Creates the production certificate file adapter.
   const IoCertificateFileAccess();
 

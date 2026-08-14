@@ -1,4 +1,4 @@
-import '../../../models/mqtt_protocol_version.dart';
+import '../../../core/mqtt/models/mqtt_protocol_version_model.dart';
 import '../connection_status.dart';
 
 /// Represents the complete observable state of the active MQTT session.
@@ -11,7 +11,7 @@ class MqttSessionState {
   final String? errorDetail;
   final int messageCount;
   final int messageRate;
-  final MqttProtocolVersion? activeProtocol;
+  final MqttProtocolVersionModel? activeProtocol;
 
   /// Returns whether the active protocol client can publish messages.
   bool get isConnected => status == ConnectionStatus.connected;

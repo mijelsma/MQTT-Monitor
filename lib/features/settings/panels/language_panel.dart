@@ -3,10 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../../../generated/l10n.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../../../models/language.dart';
+import '../../../core/ui/models/app_language_model.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
-import '../settings_viewmodel.dart';
+import '../view_models/settings_view_model.dart';
 
 class LanguagePanel extends StatelessWidget {
   const LanguagePanel({super.key});
@@ -26,7 +26,7 @@ class LanguagePanel extends StatelessWidget {
         UiSection(
           label: s.languagePanelSectionLabel,
           children: [
-            for (final language in AppLanguage.values)
+            for (final language in AppLanguageModel.values)
               ListTile(
                 key: ValueKey(language),
                 title: Text(language.localizedName(s), style: const TextStyle(fontSize: 14)),

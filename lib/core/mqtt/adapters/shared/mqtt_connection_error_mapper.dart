@@ -1,13 +1,13 @@
 import 'dart:io';
 
-import '../../../../models/broker_entry.dart';
+import '../../../../core/broker/models/broker_entry_model.dart';
 import '../../connection_status.dart';
 import '../../mqtt_connection_failure.dart';
 
 /// Maps transport and TLS failures to stable user-facing diagnostics.
 abstract final class MqttConnectionErrorMapper {
   /// Maps [error] to a network-oriented connection failure.
-  static MqttConnectionFailure socket(SocketException error, BrokerEntry broker) {
+  static MqttConnectionFailure socket(SocketException error, BrokerEntryModel broker) {
     final status = switch (error.osError?.errorCode) {
       1 => ConnectionStatus.errorNotPermitted,
       8 => ConnectionStatus.errorHostNotFound,
@@ -24,7 +24,7 @@ abstract final class MqttConnectionErrorMapper {
   }
 
   /// Maps a TLS handshake [error] for [broker].
-  static MqttConnectionFailure tlsHandshake(Object error, BrokerEntry broker) {
+  static MqttConnectionFailure tlsHandshake(Object error, BrokerEntryModel broker) {
     final hasRootCa = broker.clientCertificates.rootCaPath != null;
     final suggestion = broker.validateCertificates
         ? (hasRootCa
@@ -41,12 +41,12 @@ abstract final class MqttConnectionErrorMapper {
   }
 
   /// Returns the generic message used when a connect call gives no reason.
-  static String genericConnect(BrokerEntry broker) {
+  static String genericConnect(BrokerEntryModel broker) {
     return 'The broker did not answer the connection request.\nCheck the broker address, port, credentials, and TLS settings.';
   }
 
   /// Returns the generic message used for a rejected connection.
-  static String brokerRejected(BrokerEntry broker) {
+  static String brokerRejected(BrokerEntryModel broker) {
     return 'The broker rejected the connection.\nCheck your username, password, Client ID, and TLS settings.';
   }
 }

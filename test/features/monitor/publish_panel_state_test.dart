@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/broker/broker_repository.dart';
-import 'package:mqtt_monitor/core/history/message_history_service.dart';
+import 'package:mqtt_monitor/core/broker/repositories/broker_repository.dart';
+import 'package:mqtt_monitor/core/history/services/message_history_service.dart';
 import 'package:mqtt_monitor/core/ingestion/message_ingestion_coordinator.dart';
 import 'package:mqtt_monitor/core/monitor/topic_projection.dart';
-import 'package:mqtt_monitor/core/publishing/publish_command_service.dart';
-import 'package:mqtt_monitor/features/monitor/detail_sidebar_controller.dart';
-import 'package:mqtt_monitor/features/monitor/monitor_viewmodel.dart';
-import 'package:mqtt_monitor/features/monitor/monitor_workspace_controller.dart';
-import 'package:mqtt_monitor/features/monitor/publish_draft_controller.dart';
+import 'package:mqtt_monitor/core/publishing/services/publish_command_service.dart';
+import 'package:mqtt_monitor/features/monitor/controllers/detail_sidebar_controller.dart';
+import 'package:mqtt_monitor/features/monitor/view_models/monitor_view_model.dart';
+import 'package:mqtt_monitor/features/monitor/controllers/monitor_workspace_controller.dart';
+import 'package:mqtt_monitor/features/monitor/controllers/publish_draft_controller.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/detail_sidebar.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/history_panel.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/message_detail_panel.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
-import 'package:mqtt_monitor/models/sidebar_panel_default.dart';
-import 'package:mqtt_monitor/models/topic_node.dart';
-import 'package:mqtt_monitor/models/topic_node_value.dart';
+import 'package:mqtt_monitor/core/ui/models/sidebar_panel_default_model.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_tree_node_model.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_node_value_model.dart';
 import 'package:mqtt_monitor/shared/widgets/payload_editor.dart';
 import 'package:mqtt_monitor/shared/widgets/workspace_panel_layout.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
@@ -36,10 +36,10 @@ void main() {
   Future<({PublishDraftController draft, MonitorWorkspaceController workspace})> pumpSidebar(WidgetTester tester, {required Key expandedSibling}) async {
     // Use "last status" for every panel so the LayoutKeys written below
     // are honored (otherwise the per-panel default setting would win).
-    await dependencies.uiPreferences.setDefaultSidebarDetail(SidebarPanelDefault.lastStatus);
-    await dependencies.uiPreferences.setDefaultSidebarHistory(SidebarPanelDefault.lastStatus);
-    await dependencies.uiPreferences.setDefaultSidebarPublish(SidebarPanelDefault.lastStatus);
-    await dependencies.uiPreferences.setDefaultSidebarShortcuts(SidebarPanelDefault.lastStatus);
+    await dependencies.uiPreferences.setDefaultSidebarDetail(SidebarPanelDefaultModel.lastStatus);
+    await dependencies.uiPreferences.setDefaultSidebarHistory(SidebarPanelDefaultModel.lastStatus);
+    await dependencies.uiPreferences.setDefaultSidebarPublish(SidebarPanelDefaultModel.lastStatus);
+    await dependencies.uiPreferences.setDefaultSidebarShortcuts(SidebarPanelDefaultModel.lastStatus);
 
     await dependencies.workspaceLayout.setCollapsed(0, expandedSibling != const Key('detail-section-toggle'));
     await dependencies.workspaceLayout.setCollapsed(1, expandedSibling != const Key('history-section-toggle'));
@@ -184,14 +184,14 @@ void main() {
 
   testWidgets('history selection survives collapse and expansion', (tester) async {
     final fixture = await pumpSidebar(tester, expandedSibling: const Key('history-section-toggle'));
-    final node = TopicTreeNode(segment: 'value', fullPath: 'sensor/value')..valueNotifier.value = TopicNodeValue(payload: 'latest', seq: 2, receivedAt: DateTime(2026, 1, 1, 12, 1));
+    final node = TopicTreeNodeModel(segment: 'value', fullPath: 'sensor/value')..valueNotifier.value = TopicNodeValueModel(payload: 'latest', seq: 2, receivedAt: DateTime(2026, 1, 1, 12, 1));
     addTearDown(node.valueNotifier.dispose);
     addTearDown(node.pulseNotifier.dispose);
     addTearDown(node.metricsNotifier.dispose);
     fixture.workspace.selectNode(node);
     await tester.pump();
 
-    final historical = TopicNodeValue(payload: 'historical', seq: 1, receivedAt: DateTime(2026, 1, 1, 12));
+    final historical = TopicNodeValueModel(payload: 'historical', seq: 1, receivedAt: DateTime(2026, 1, 1, 12));
     tester.widget<HistoryPanel>(find.byType(HistoryPanel)).onSelect!(historical);
     await tester.pump();
     expect(tester.widget<MessageDetailPanel>(find.byType(MessageDetailPanel)).selectedHistory, same(historical));

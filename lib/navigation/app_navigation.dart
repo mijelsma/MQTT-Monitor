@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../features/dashboard/dashboard_screen.dart';
-import '../features/settings/settings_navigation_controller.dart';
+import '../features/settings/controllers/settings_navigation_controller.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/settings/settings_section.dart';
 

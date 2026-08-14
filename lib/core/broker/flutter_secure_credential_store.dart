@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import 'credential_store.dart';
+import 'interfaces/credential_store_interface.dart';
 
 /// Persists broker secrets in the operating system's protected credential store.
-class FlutterSecureCredentialStore implements CredentialStore {
+class FlutterSecureCredentialStore implements CredentialStoreInterface {
   /// User-facing Keychain service name for MQTT Monitor credentials.
   static const String keychainServiceName = 'MQTT Monitor';
 

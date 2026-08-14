@@ -4,14 +4,14 @@ import 'package:provider/provider.dart';
 import '../../../core/publishing/publish_command.dart';
 import '../../../navigation/app_navigation.dart';
 import '../../../generated/l10n.dart';
-import '../../../models/publish_shortcut.dart';
+import '../../../core/publishing/models/publish_shortcut_model.dart';
 import '../../../shared/widgets/feedback_badge.dart';
 import '../../../shared/widgets/qos_tag.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../../dashboard/widgets/variable_bar.dart';
 import '../../settings/settings_section.dart';
-import '../monitor_viewmodel.dart';
+import '../view_models/monitor_view_model.dart';
 import '../publish_command_feedback.dart';
 
 /// Panel listing publish shortcuts relevant to the active broker.
@@ -33,18 +33,13 @@ class ShortcutsPanel extends StatelessWidget {
       color: tokens.bg,
       child: Column(
         children: [
-          VariableBar(
-            variables: vm.environmentVariables,
-            values: vm.variableValues,
-            onChanged: vm.setVariableValue,
-          ),
+          VariableBar(variables: vm.environmentVariables, values: vm.variableValues, onChanged: vm.setVariableValue),
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
               itemCount: shortcuts.length,
               separatorBuilder: (context, index) => const SizedBox(height: 6),
-              itemBuilder: (context, index) =>
-                  _ShortcutCard(shortcut: shortcuts[index]),
+              itemBuilder: (context, index) => _ShortcutCard(shortcut: shortcuts[index]),
             ),
           ),
           _SettingsLink(onTap: () => _openSettings(context)),
@@ -54,24 +49,20 @@ class ShortcutsPanel extends StatelessWidget {
   }
 
   void _openSettings(BuildContext context) {
-    context.read<AppNavigation>().openSettings(
-      context,
-      section: SettingsSection.shortcuts,
-    );
+    context.read<AppNavigation>().openSettings(context, section: SettingsSection.shortcuts);
   }
 }
 
 class _ShortcutCard extends StatefulWidget {
   const _ShortcutCard({required this.shortcut});
 
-  final PublishShortcut shortcut;
+  final PublishShortcutModel shortcut;
 
   @override
   State<_ShortcutCard> createState() => _ShortcutCardState();
 }
 
-class _ShortcutCardState extends State<_ShortcutCard>
-    with FeedbackMixin<_ShortcutCard> {
+class _ShortcutCardState extends State<_ShortcutCard> with FeedbackMixin<_ShortcutCard> {
   bool _hovering = false;
 
   Future<void> _execute() async {
@@ -80,37 +71,18 @@ class _ShortcutCardState extends State<_ShortcutCard>
     final shortcut = widget.shortcut;
 
     final result = await vm.execute(
-      PublishCommand(
-        topicTemplate: shortcut.topic,
-        payload: shortcut.payload,
-        payloadIsJson: shortcut.payloadFormatIsJson,
-        qos: shortcut.qos,
-        retain: shortcut.retain,
-      ),
-      onDispatch: () => showFeedback(
-        PublishFeedbackKind.sending,
-        autoDismiss: const Duration(minutes: 1),
-      ),
+      PublishCommand(topicTemplate: shortcut.topic, payload: shortcut.payload, payloadIsJson: shortcut.payloadFormatIsJson, qos: shortcut.qos, retain: shortcut.retain),
+      onDispatch: () => showFeedback(PublishFeedbackKind.sending, autoDismiss: const Duration(minutes: 1)),
     );
     if (!mounted) return;
     if (!result.wasSent) {
-      final feedback = feedbackForCommandFailure(
-        context,
-        result.failure!,
-        result.detail,
-      );
+      final feedback = feedbackForCommandFailure(context, result.failure!, result.detail);
       showFeedback(feedback.kind, detail: feedback.detail);
       return;
     }
     final transport = result.transportResult!;
     final info = feedbackForResult(context, transport);
-    showFeedback(
-      info.kind,
-      detail: info.detail,
-      autoDismiss: transport.isUnconfirmed
-          ? const Duration(minutes: 1)
-          : const Duration(seconds: 4),
-    );
+    showFeedback(info.kind, detail: info.detail, autoDismiss: transport.isUnconfirmed ? const Duration(minutes: 1) : const Duration(seconds: 4));
   }
 
   Widget _feedbackLabel(BuildContext context) {
@@ -134,9 +106,7 @@ class _ShortcutCardState extends State<_ShortcutCard>
     final sc = widget.shortcut;
     final color = Color(sc.colorValue);
     final hasFeedback = feedback != null;
-    final resolvedTopic = context.watch<MonitorViewModel>().resolveTopic(
-      sc.topic,
-    );
+    final resolvedTopic = context.watch<MonitorViewModel>().resolveTopic(sc.topic);
     final topicHasVariables = resolvedTopic.value != sc.topic;
 
     return MouseRegion(
@@ -151,10 +121,7 @@ class _ShortcutCardState extends State<_ShortcutCard>
           decoration: BoxDecoration(
             color: _hovering ? tokens.elevated : tokens.surface,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: _hovering ? color.withValues(alpha: 0.25) : tokens.border,
-              width: 0.5,
-            ),
+            border: Border.all(color: _hovering ? color.withValues(alpha: 0.25) : tokens.border, width: 0.5),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
@@ -164,10 +131,7 @@ class _ShortcutCardState extends State<_ShortcutCard>
                 Container(
                   width: 3.5,
                   height: 28,
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+                  decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2)),
                 ),
                 const SizedBox(width: 10),
 
@@ -180,24 +144,13 @@ class _ShortcutCardState extends State<_ShortcutCard>
                       Text(
                         sc.name,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: tokens.textPrimary,
-                        ),
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: tokens.textPrimary),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         resolvedTopic.value,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: topicHasVariables
-                              ? tokens.primary.withValues(alpha: 0.75)
-                              : tokens.muted,
-                          fontFamily: 'SF Mono, Menlo, monospace',
-                          letterSpacing: -0.2,
-                        ),
+                        style: TextStyle(fontSize: 10, color: topicHasVariables ? tokens.primary.withValues(alpha: 0.75) : tokens.muted, fontFamily: 'SF Mono, Menlo, monospace', letterSpacing: -0.2),
                       ),
                     ],
                   ),
@@ -211,11 +164,7 @@ class _ShortcutCardState extends State<_ShortcutCard>
                   if (sc.retain)
                     Padding(
                       padding: const EdgeInsets.only(right: 4),
-                      child: Icon(
-                        Icons.push_pin_rounded,
-                        size: 10,
-                        color: tokens.warning.withValues(alpha: 0.55),
-                      ),
+                      child: Icon(Icons.push_pin_rounded, size: 10, color: tokens.warning.withValues(alpha: 0.55)),
                     ),
                   QosChip(qos: sc.qos, color: color),
                 ],
@@ -232,10 +181,7 @@ class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
   void _openSettings(BuildContext context) {
-    context.read<AppNavigation>().openSettings(
-      context,
-      section: SettingsSection.shortcuts,
-    );
+    context.read<AppNavigation>().openSettings(context, section: SettingsSection.shortcuts);
   }
 
   @override
@@ -244,12 +190,7 @@ class _EmptyState extends StatelessWidget {
     return Column(
       children: [
         Expanded(
-          child: UiEmptyState.compact(
-            icon: Icons.bolt_rounded,
-            title: S.of(context).sidebarShortcutsEmpty,
-            iconColor: tokens.warning.withValues(alpha: 0.5),
-            iconBackgroundColor: tokens.warning.withValues(alpha: 0.06),
-          ),
+          child: UiEmptyState.compact(icon: Icons.bolt_rounded, title: S.of(context).sidebarShortcutsEmpty, iconColor: tokens.warning.withValues(alpha: 0.5), iconBackgroundColor: tokens.warning.withValues(alpha: 0.06)),
         ),
         _SettingsLink(onTap: () => _openSettings(context)),
       ],
@@ -287,19 +228,11 @@ class _SettingsLinkState extends State<_SettingsLink> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.tune_rounded,
-                size: 12,
-                color: _hovering ? tokens.primary : tokens.muted,
-              ),
+              Icon(Icons.tune_rounded, size: 12, color: _hovering ? tokens.primary : tokens.muted),
               const SizedBox(width: 5),
               Text(
                 S.of(context).sidebarShortcutsManage,
-                style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w500,
-                  color: _hovering ? tokens.primary : tokens.muted,
-                ),
+                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w500, color: _hovering ? tokens.primary : tokens.muted),
               ),
             ],
           ),

@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/ingestion/ingested_message.dart';
 import 'package:mqtt_monitor/core/ingestion/message_ingestion_coordinator.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_message.dart';
-import 'package:mqtt_monitor/models/broker_entry.dart';
+import 'package:mqtt_monitor/core/broker/models/broker_entry_model.dart';
 
 import '../../support/test_dependencies.dart';
 
@@ -12,8 +12,8 @@ void main() {
   test('creates one ordered value sequence per active broker and concrete topic', () async {
     final dependencies = await TestDependencies.create();
     final brokers = dependencies.brokers;
-    await brokers.add(const BrokerEntry(id: 'first', name: 'First', host: 'first.invalid'));
-    await brokers.add(const BrokerEntry(id: 'second', name: 'Second', host: 'second.invalid'), makeActive: false);
+    await brokers.add(const BrokerEntryModel(id: 'first', name: 'First', host: 'first.invalid'));
+    await brokers.add(const BrokerEntryModel(id: 'second', name: 'Second', host: 'second.invalid'), makeActive: false);
     final source = StreamController<MQTTMessage>.broadcast(sync: true);
     final ingestion = MessageIngestionCoordinator.fromStream(source.stream, brokers)..initialize();
     final received = <IngestedMessage>[];
@@ -41,8 +41,8 @@ void main() {
   test('queued traffic from a replaced broker is discarded before the next session', () async {
     final dependencies = await TestDependencies.create();
     final brokers = dependencies.brokers;
-    await brokers.add(const BrokerEntry(id: 'first', name: 'First', host: 'first.invalid'));
-    await brokers.add(const BrokerEntry(id: 'second', name: 'Second', host: 'second.invalid'), makeActive: false);
+    await brokers.add(const BrokerEntryModel(id: 'first', name: 'First', host: 'first.invalid'));
+    await brokers.add(const BrokerEntryModel(id: 'second', name: 'Second', host: 'second.invalid'), makeActive: false);
     final source = StreamController<MQTTMessage>.broadcast(sync: true);
     final ingestion = MessageIngestionCoordinator.fromStream(source.stream, brokers, timeSliced: true)..initialize();
     final received = <IngestedMessage>[];

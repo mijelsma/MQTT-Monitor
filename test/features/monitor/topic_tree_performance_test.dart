@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/monitor/topic_node_metrics.dart';
-import 'package:mqtt_monitor/core/ui/ui_preferences_repository.dart';
+import 'package:mqtt_monitor/core/ui/repositories/ui_preferences_repository.dart';
 import 'package:mqtt_monitor/features/monitor/topic_payload_preview.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/topic_tree_list.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/topic_tree_row.dart';
-import 'package:mqtt_monitor/models/flat_tree_row.dart';
-import 'package:mqtt_monitor/models/topic_node.dart';
-import 'package:mqtt_monitor/models/topic_node_value.dart';
+import 'package:mqtt_monitor/core/monitor/models/flat_tree_row_model.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_tree_node_model.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_node_value_model.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
@@ -75,7 +75,7 @@ void main() {
 
   testWidgets('pulse animation remains lazy and preserves its fade behavior', (tester) async {
     addTearDown(() => debugOnRebuildDirtyWidget = null);
-    final node = TopicTreeNode(segment: 'temperature', fullPath: 'temperature')..valueNotifier.value = TopicNodeValue(payload: '21.5', seq: 1, receivedAt: DateTime(2026));
+    final node = TopicTreeNodeModel(segment: 'temperature', fullPath: 'temperature')..valueNotifier.value = TopicNodeValueModel(payload: '21.5', seq: 1, receivedAt: DateTime(2026));
     await dependencies.uiPreferences.setPulseFadeMs(500);
     await dependencies.uiPreferences.setShowActivity(false);
 
@@ -152,7 +152,7 @@ void main() {
     expect(rowRebuilds, 0);
     expect(overlayRebuilds, 1);
 
-    node.valueNotifier.value = TopicNodeValue(payload: '22.0', seq: 2, receivedAt: DateTime(2026, 1, 1, 0, 0, 1));
+    node.valueNotifier.value = TopicNodeValueModel(payload: '22.0', seq: 2, receivedAt: DateTime(2026, 1, 1, 0, 0, 1));
     node.metricsNotifier.value = const TopicNodeMetrics(topicCount: 1, messageCount: 2);
     await tester.pump();
     expect(rowRebuilds, 1);
@@ -266,7 +266,7 @@ Future<void> _jumpBetweenEnds(WidgetTester tester, ScrollPosition position, {req
   }
 }
 
-Widget _rowApp(TopicTreeNode node, UiPreferencesRepository preferences) => ChangeNotifierProvider.value(
+Widget _rowApp(TopicTreeNodeModel node, UiPreferencesRepository preferences) => ChangeNotifierProvider.value(
   value: preferences,
   child: MaterialApp(
     theme: themeLight,
@@ -279,7 +279,7 @@ Widget _rowApp(TopicTreeNode node, UiPreferencesRepository preferences) => Chang
   ),
 );
 
-Widget _treeApp(List<FlatTreeRow> rows, UiPreferencesRepository preferences, {TextScaler textScaler = TextScaler.noScaling}) => ChangeNotifierProvider.value(
+Widget _treeApp(List<FlatTreeRowModel> rows, UiPreferencesRepository preferences, {TextScaler textScaler = TextScaler.noScaling}) => ChangeNotifierProvider.value(
   value: preferences,
   child: MaterialApp(
     theme: themeLight,
@@ -319,13 +319,13 @@ String _visiblePayloadPreview(WidgetTester tester) {
 class _TopicTreeFixture {
   _TopicTreeFixture(this.rows);
 
-  final List<FlatTreeRow> rows;
+  final List<FlatTreeRowModel> rows;
 
   static _TopicTreeFixture create(int topicTotal, {String? payload}) {
-    final rows = List<FlatTreeRow>.generate(topicTotal, (index) {
+    final rows = List<FlatTreeRowModel>.generate(topicTotal, (index) {
       final path = 'topic-${index.toString().padLeft(4, '0')}';
-      final node = TopicTreeNode(segment: path, fullPath: path)..valueNotifier.value = TopicNodeValue(payload: payload ?? '$index', seq: 1, receivedAt: DateTime(2026));
-      return FlatTreeRow(node: node, depth: 0, metrics: node.metricsNotifier);
+      final node = TopicTreeNodeModel(segment: path, fullPath: path)..valueNotifier.value = TopicNodeValueModel(payload: payload ?? '$index', seq: 1, receivedAt: DateTime(2026));
+      return FlatTreeRowModel(node: node, depth: 0, metrics: node.metricsNotifier);
     });
     return _TopicTreeFixture(rows);
   }

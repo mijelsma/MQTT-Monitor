@@ -3,16 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/broker/broker_repository.dart';
-import 'package:mqtt_monitor/core/history/message_history_service.dart';
+import 'package:mqtt_monitor/core/broker/repositories/broker_repository.dart';
+import 'package:mqtt_monitor/core/history/services/message_history_service.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_message.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/history_panel.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
-import 'package:mqtt_monitor/models/broker_entry.dart';
-import 'package:mqtt_monitor/models/subscription_entry.dart';
-import 'package:mqtt_monitor/models/subscription_history_policy.dart';
-import 'package:mqtt_monitor/models/topic_node.dart';
-import 'package:mqtt_monitor/models/topic_node_value.dart';
+import 'package:mqtt_monitor/core/broker/models/broker_entry_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_entry_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_history_policy_model.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_tree_node_model.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_node_value_model.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
@@ -22,14 +22,14 @@ void main() {
   late BrokerRepository brokers;
   late StreamController<MQTTMessage> messages;
   late MessageHistoryService history;
-  late TopicTreeNode node;
+  late TopicTreeNodeModel node;
 
   setUp(() async {
     final dependencies = await TestDependencies.create();
     brokers = dependencies.brokers;
     messages = StreamController<MQTTMessage>.broadcast();
     history = MessageHistoryService.fromStream(messages.stream, dependencies.historyPreferences, brokers)..initialize();
-    node = TopicTreeNode(segment: 'value', fullPath: 'sensor/value')..valueNotifier.value = TopicNodeValue(payload: 'live', seq: 1, receivedAt: DateTime(2026));
+    node = TopicTreeNodeModel(segment: 'value', fullPath: 'sensor/value')..valueNotifier.value = TopicNodeValueModel(payload: 'live', seq: 1, receivedAt: DateTime(2026));
   });
 
   tearDown(() async {
@@ -61,15 +61,15 @@ void main() {
 
   Future<void> addPolicy({required bool enabled, int retention = 10}) async {
     await brokers.add(
-      BrokerEntry(
+      BrokerEntryModel(
         id: 'broker',
         name: 'Broker',
         host: 'broker.invalid',
         subscriptions: [
-          SubscriptionEntry(
+          SubscriptionEntryModel(
             id: 'subscription',
             topic: 'sensor/#',
-            history: SubscriptionHistoryPolicy(enabled: enabled, retention: retention),
+            history: SubscriptionHistoryPolicyModel(enabled: enabled, retention: retention),
           ),
         ],
       ),

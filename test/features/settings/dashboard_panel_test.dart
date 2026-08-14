@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/dashboard/dashboard_repository.dart';
+import 'package:mqtt_monitor/core/dashboard/repositories/dashboard_repository.dart';
 import 'package:mqtt_monitor/features/settings/panels/dashboard_panel.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';

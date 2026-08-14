@@ -7,12 +7,12 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:mqtt_monitor/core/monitor/topic_node_metrics.dart';
-import 'package:mqtt_monitor/features/monitor/monitor_workspace_controller.dart';
+import 'package:mqtt_monitor/features/monitor/controllers/monitor_workspace_controller.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/topic_tree.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/topic_tree_list.dart';
-import 'package:mqtt_monitor/models/flat_tree_row.dart';
-import 'package:mqtt_monitor/models/topic_node.dart';
-import 'package:mqtt_monitor/models/topic_node_value.dart';
+import 'package:mqtt_monitor/core/monitor/models/flat_tree_row_model.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_tree_node_model.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_node_value_model.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_message.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
@@ -180,15 +180,15 @@ Map<String, Object> _frameData(List<FrameTiming> timings) {
 class _ProfileTreeFixture {
   _ProfileTreeFixture(this.rows);
 
-  final List<FlatTreeRow> rows;
+  final List<FlatTreeRowModel> rows;
 
   static _ProfileTreeFixture create(int topicCount, String payload) {
-    final rows = List<FlatTreeRow>.generate(topicCount, (index) {
+    final rows = List<FlatTreeRowModel>.generate(topicCount, (index) {
       final path = 'topic-${index.toString().padLeft(4, '0')}';
-      final node = TopicTreeNode(segment: path, fullPath: path)
-        ..valueNotifier.value = TopicNodeValue(payload: payload, seq: 1, receivedAt: DateTime.utc(2026))
+      final node = TopicTreeNodeModel(segment: path, fullPath: path)
+        ..valueNotifier.value = TopicNodeValueModel(payload: payload, seq: 1, receivedAt: DateTime.utc(2026))
         ..metricsNotifier.value = const TopicNodeMetrics(topicCount: 1, messageCount: 1);
-      return FlatTreeRow(node: node, depth: 0, metrics: node.metricsNotifier);
+      return FlatTreeRowModel(node: node, depth: 0, metrics: node.metricsNotifier);
     });
     return _ProfileTreeFixture(rows);
   }

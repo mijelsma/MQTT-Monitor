@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/mqtt/connection_status.dart';
-import '../../../models/mqtt_protocol_version.dart';
+import '../../../core/mqtt/models/mqtt_protocol_version_model.dart';
 import '../../../generated/l10n.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 
@@ -15,7 +15,7 @@ class StatusBar extends StatelessWidget {
 
   /// The protocol actually negotiated with the broker. Only shown when
   /// connected (or connecting) — disconnected status hides the chip.
-  final MqttProtocolVersion? activeProtocol;
+  final MqttProtocolVersionModel? activeProtocol;
 
   /// True after the background check finds a newer compatible release.
   final bool showUpdateAvailable;
@@ -138,18 +138,18 @@ class _StatusPill extends StatelessWidget {
 class _ProtocolChip extends StatelessWidget {
   const _ProtocolChip({required this.protocol});
 
-  final MqttProtocolVersion protocol;
+  final MqttProtocolVersionModel protocol;
 
   @override
   Widget build(BuildContext context) {
-    final isFallback = protocol == MqttProtocolVersion.v311;
+    final isFallback = protocol == MqttProtocolVersionModel.v311;
     final tokens = context.tokens;
     final strings = S.of(context);
     final color = isFallback ? tokens.warning : tokens.info;
     return Tooltip(
       message: switch (protocol) {
-        MqttProtocolVersion.v5 => strings.statusMqtt5Detail,
-        MqttProtocolVersion.v311 => strings.statusMqtt311Detail,
+        MqttProtocolVersionModel.v5 => strings.statusMqtt5Detail,
+        MqttProtocolVersionModel.v311 => strings.statusMqtt311Detail,
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),

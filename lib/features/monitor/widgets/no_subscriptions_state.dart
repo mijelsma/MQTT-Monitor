@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../models/broker_entry.dart';
+import '../../../core/broker/models/broker_entry_model.dart';
 import '../../../shared/widgets/empty_state_shell.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../../settings/dialogs/broker_dialog.dart';
-import '../monitor_viewmodel.dart';
+import '../view_models/monitor_view_model.dart';
 
 /// Prompts the user to configure subscriptions for an existing broker.
 class NoSubscriptionsState extends StatelessWidget {
   /// Creates the empty subscription state for [broker].
   const NoSubscriptionsState({super.key, required this.broker});
 
-  final BrokerEntry broker;
+  final BrokerEntryModel broker;
 
   /// Builds the empty state and broker-edit action.
   @override

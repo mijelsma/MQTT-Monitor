@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import '../../models/broker_entry.dart';
+import '../../core/broker/models/broker_entry_model.dart';
 import '../history/history_policy_rules.dart';
 import '../mqtt/mqtt_topic_filter.dart';
 
@@ -10,7 +10,7 @@ class BrokerProfileCodec {
   const BrokerProfileCodec();
 
   /// Decodes [raw] into validated profiles or throws a [FormatException].
-  List<BrokerEntry> decode(Object? raw) {
+  List<BrokerEntryModel> decode(Object? raw) {
     // If there is no raw data, return an empty list of brokers.
     if (raw == null) return const [];
 
@@ -26,7 +26,7 @@ class BrokerProfileCodec {
     }
 
     // Decode each broker profile
-    final brokers = <BrokerEntry>[];
+    final brokers = <BrokerEntryModel>[];
     final ids = <String>{};
     final credentialReferences = <String>{};
     final certificatePaths = <String>{};
@@ -38,7 +38,7 @@ class BrokerProfileCodec {
         throw FormatException('Broker profile ${index + 1} is not a JSON object.');
       }
 
-      // Validate required fields and convert to a BrokerEntry.
+      // Validate required fields and convert to a BrokerEntryModel.
       final json = Map<String, dynamic>.from(item);
       _validateRequiredString(json, 'id', index);
       _validateRequiredString(json, 'name', index);
@@ -48,7 +48,7 @@ class BrokerProfileCodec {
       _validateSubscriptions(json, index);
 
       // Ensure IDs are unique and decode the profile.
-      final broker = BrokerEntry.fromJson(json);
+      final broker = BrokerEntryModel.fromJson(json);
       if (!ids.add(broker.id)) {
         throw FormatException('Broker profile IDs must be unique. Duplicate ID at profile ${index + 1}.');
       }
@@ -69,7 +69,7 @@ class BrokerProfileCodec {
   }
 
   /// Encodes [brokers] as JSON and verifies the result can be decoded.
-  String encode(Iterable<BrokerEntry> brokers) {
+  String encode(Iterable<BrokerEntryModel> brokers) {
     // Encode the list of brokers to JSON.
     final encoded = jsonEncode(brokers.map((broker) => broker.toJson()).toList(growable: false));
 
@@ -149,7 +149,7 @@ class BrokerProfileCodec {
   }
 
   /// Returns every non-null certificate path referenced by [broker].
-  Iterable<String> _certificatePaths(BrokerEntry broker) sync* {
+  Iterable<String> _certificatePaths(BrokerEntryModel broker) sync* {
     final certificates = broker.clientCertificates;
     if (certificates.rootCaPath != null) yield certificates.rootCaPath!;
     if (certificates.clientPrivateKeyPath != null) {

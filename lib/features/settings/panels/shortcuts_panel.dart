@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../generated/l10n.dart';
-import '../../../models/publish_shortcut.dart';
+import '../../../core/publishing/models/publish_shortcut_model.dart';
 import '../../../shared/widgets/badge_tag.dart';
 import '../../../shared/widgets/qos_tag.dart';
 import '../../../shared/widgets/scope_badge.dart';
@@ -13,7 +13,7 @@ import '../../../shared/widgets/ui_section.dart';
 import '../../../shared/widgets/ui_sortable_row.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../dialogs/shortcut_dialog.dart';
-import '../settings_viewmodel.dart';
+import '../view_models/settings_view_model.dart';
 
 class ShortcutsPanel extends StatelessWidget {
   const ShortcutsPanel({super.key});
@@ -26,7 +26,7 @@ class ShortcutsPanel extends StatelessWidget {
     vm.addShortcut(result);
   }
 
-  void _editShortcut(BuildContext context, PublishShortcut shortcut) async {
+  void _editShortcut(BuildContext context, PublishShortcutModel shortcut) async {
     final vm = context.read<SettingsViewModel>();
     final result = await showShortcutDialog(context, shortcut: shortcut, brokers: vm.brokers, onDelete: () => vm.deleteShortcut(shortcut.id));
     if (result == null) return;

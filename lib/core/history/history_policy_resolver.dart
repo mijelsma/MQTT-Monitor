@@ -1,4 +1,4 @@
-import '../../models/subscription_entry.dart';
+import '../../core/broker/models/subscription_entry_model.dart';
 import '../mqtt/mqtt_topic_filter.dart';
 import 'history_policy_resolution.dart';
 import 'history_policy_rules.dart';
@@ -8,7 +8,7 @@ class HistoryPolicyResolver {
   const HistoryPolicyResolver();
 
   /// Uses the greatest enabled retention among all matching filters.
-  HistoryPolicyResolution resolve(String topic, Iterable<SubscriptionEntry> subscriptions, {required int maximumRetention}) {
+  HistoryPolicyResolution resolve(String topic, Iterable<SubscriptionEntryModel> subscriptions, {required int maximumRetention}) {
     HistoryPolicyRules.validateMaximum(maximumRetention);
     var matched = false;
     var retention = 0;

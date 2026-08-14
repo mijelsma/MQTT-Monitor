@@ -5,8 +5,8 @@ import '../../../core/mqtt/connection_status.dart';
 import '../../../generated/l10n.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../../../models/broker_entry.dart';
-import '../monitor_viewmodel.dart';
+import '../../../core/broker/models/broker_entry_model.dart';
+import '../view_models/monitor_view_model.dart';
 
 class BrokerSelector extends StatefulWidget {
   const BrokerSelector({super.key});
@@ -81,7 +81,7 @@ class _BrokerSelectorState extends State<BrokerSelector> {
     );
   }
 
-  PopupMenuEntry<String> _buildMenuItem(BuildContext context, BrokerEntry broker, bool isSelected, Color accent) {
+  PopupMenuEntry<String> _buildMenuItem(BuildContext context, BrokerEntryModel broker, bool isSelected, Color accent) {
     final cs = Theme.of(context).colorScheme;
     return PopupMenuItem<String>(
       value: broker.id,

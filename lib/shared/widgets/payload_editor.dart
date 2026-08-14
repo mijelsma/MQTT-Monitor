@@ -5,40 +5,10 @@ import 'package:flutter/services.dart';
 
 import '../../generated/l10n.dart';
 import '../../theme/app_tokens/app_tokens.dart';
-import 'json_highlighter.dart';
+import '../controllers/highlighting_controller.dart';
 
 /// Payload format for the editor (plain text or JSON).
 enum PayloadFormat { text, json }
-
-/// A [TextEditingController] with optional JSON syntax highlighting.
-///
-/// Toggle [highlightJson] to enable/disable colouring and call
-/// [updateTheme] once per build so the controller knows the current palette.
-class HighlightingController extends TextEditingController {
-  HighlightingController({super.text});
-
-  bool highlightJson = false;
-
-  AppTokens? _tokens;
-  bool _isDark = false;
-
-  /// Feed the current theme into the controller so [buildTextSpan] can
-  /// apply the right colours.
-  void updateTheme(AppTokens tokens, bool isDark) {
-    _tokens = tokens;
-    _isDark = isDark;
-  }
-
-  @override
-  TextSpan buildTextSpan({required BuildContext context, TextStyle? style, required bool withComposing}) {
-    if (!highlightJson || _tokens == null || text.isEmpty) {
-      return super.buildTextSpan(context: context, style: style, withComposing: withComposing);
-    }
-
-    final spans = JsonHighlighter.highlight(text, _isDark, _tokens!);
-    return TextSpan(style: style, children: spans);
-  }
-}
 
 /// A reusable payload editor with TEXT / JSON format toggle, syntax
 /// highlighting, line numbers, and a prettify button.

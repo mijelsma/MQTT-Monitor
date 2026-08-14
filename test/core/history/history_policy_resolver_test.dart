@@ -1,15 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/history/history_policy_resolver.dart';
-import 'package:mqtt_monitor/models/subscription_entry.dart';
-import 'package:mqtt_monitor/models/subscription_history_policy.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_entry_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_history_policy_model.dart';
 
 void main() {
   const resolver = HistoryPolicyResolver();
 
-  SubscriptionEntry subscription(String id, String topic, {bool enabled = true, int retention = 10}) => SubscriptionEntry(
+  SubscriptionEntryModel subscription(String id, String topic, {bool enabled = true, int retention = 10}) => SubscriptionEntryModel(
     id: id,
     topic: topic,
-    history: SubscriptionHistoryPolicy(enabled: enabled, retention: retention),
+    history: SubscriptionHistoryPolicyModel(enabled: enabled, retention: retention),
   );
 
   test('reports unmatched, disabled, and enabled states separately', () {

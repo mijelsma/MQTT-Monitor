@@ -9,9 +9,9 @@ import '../../../shared/widgets/feedback_badge.dart';
 import '../../../shared/widgets/payload_editor.dart';
 import '../../../theme/accent_contrast.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../monitor_viewmodel.dart';
+import '../view_models/monitor_view_model.dart';
 import '../publish_command_feedback.dart';
-import '../publish_draft_controller.dart';
+import '../controllers/publish_draft_controller.dart';
 
 /// A panel for publishing MQTT messages to a topic.
 class PublishPanel extends StatefulWidget {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../models/chart_type.dart';
+import '../../core/dashboard/models/chart_type_model.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 import 'toggle_chip.dart';
 
@@ -12,14 +12,14 @@ class ChartTypeToggle extends StatelessWidget {
 
   final String? label;
   final EdgeInsetsGeometry? margin;
-  final ChartType value;
-  final ValueChanged<ChartType> onChanged;
+  final ChartTypeModel value;
+  final ValueChanged<ChartTypeModel> onChanged;
 
   @override
   Widget build(BuildContext context) {
     final row = Row(
       children: [
-        for (final type in ChartType.values) ...[if (type != ChartType.values.first) const SizedBox(width: 8), ToggleChip(label: type == ChartType.line ? 'Line' : 'Bar', icon: type == ChartType.line ? Icons.show_chart_rounded : Icons.bar_chart_rounded, selected: value == type, onTap: () => onChanged(type))],
+        for (final type in ChartTypeModel.values) ...[if (type != ChartTypeModel.values.first) const SizedBox(width: 8), ToggleChip(label: type == ChartTypeModel.line ? 'Line' : 'Bar', icon: type == ChartTypeModel.line ? Icons.show_chart_rounded : Icons.bar_chart_rounded, selected: value == type, onTap: () => onChanged(type))],
       ],
     );
     if (label == null) return row;

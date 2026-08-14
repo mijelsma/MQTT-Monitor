@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../monitor_workspace_controller.dart';
+import '../controllers/monitor_workspace_controller.dart';
 import 'topic_tree_empty_state.dart';
 import 'topic_tree_list.dart';
 
@@ -22,11 +22,6 @@ class TopicTree extends StatelessWidget {
 
     if (rows.isEmpty) return TopicTreeEmptyState(hasFilter: hasFilter);
 
-    return TopicTreeList(
-      rows: rows,
-      selectedNode: vm.selectedNode,
-      onToggle: vm.toggleExpand,
-      onSelect: vm.selectNode,
-    );
+    return TopicTreeList(rows: rows, selectedNode: vm.selectedNode, onToggle: vm.toggleExpand, onSelect: vm.selectNode);
   }
 }
