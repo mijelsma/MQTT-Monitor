@@ -1,91 +1,241 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/state/app_state.dart';
-import 'package:mqtt_monitor/core/state/keys/settings_keys.dart';
+import 'package:mqtt_monitor/core/broker/repositories/broker_repository.dart';
+import 'package:mqtt_monitor/core/dashboard/repositories/dashboard_preferences_repository.dart';
+import 'package:mqtt_monitor/core/dashboard/repositories/dashboard_repository.dart';
+import 'package:mqtt_monitor/core/storage/services/app_storage_location_service.dart';
 import 'package:mqtt_monitor/features/settings/panels/advanced_panel.dart';
-import 'package:mqtt_monitor/features/settings/settings_viewmodel.dart';
+import 'package:mqtt_monitor/features/settings/view_models/settings_view_model.dart';
+import 'package:mqtt_monitor/features/settings/settings_reset_section.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
+import 'package:mqtt_monitor/core/broker/models/broker_entry_model.dart';
+import 'package:mqtt_monitor/core/dashboard/models/dashboard_layout_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_entry_model.dart';
+import 'package:mqtt_monitor/core/broker/models/subscription_history_policy_model.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../support/test_dependencies.dart';
 
 void main() {
-  final state = AppStateManager.instance;
+  late BrokerRepository brokers;
+  late TestDependencies dependencies;
 
   setUp(() async {
-    SharedPreferences.setMockInitialValues({});
-    await state.initialize();
-    await state.resetAll();
+    dependencies = await TestDependencies.create();
+    brokers = dependencies.brokers;
   });
 
-  Future<void> pumpPanel(WidgetTester tester) async {
-    final vm = SettingsViewModel(state: state);
-    addTearDown(vm.dispose);
+  Future<SettingsViewModel> pumpPanel(WidgetTester tester, {AppStorageLocationService? storageLocations}) async {
+    final viewModel = dependencies.createSettingsViewModel();
+    addTearDown(viewModel.dispose);
     await tester.pumpWidget(
       ChangeNotifierProvider<SettingsViewModel>.value(
-        value: vm,
+        value: viewModel,
         child: MaterialApp(
           theme: themeLight,
           localizationsDelegates: const [S.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
           supportedLocales: S.delegate.supportedLocales,
-          home: const Scaffold(body: SizedBox(width: 700, height: 900, child: AdvancedPanel())),
+          home: Scaffold(
+            body: SizedBox(width: 700, height: 900, child: AdvancedPanel(storageLocations: storageLocations)),
+          ),
         ),
       ),
     );
     await tester.pumpAndSettle();
+    return viewModel;
   }
 
-  testWidgets('advanced panel shows messages-per-topic slider defaulting to 10', (tester) async {
+  testWidgets('shows validated defaults for new subscription history', (tester) async {
     await pumpPanel(tester);
 
-    expect(state.read(SettingsKeys.defaultHistorySize), 10, reason: 'the default history per topic is 10 messages');
-    expect(find.text('Messages stored per topic'), findsOneWidget);
-    expect(find.text('10'), findsWidgets, reason: 'the current value is shown');
+    expect(dependencies.historyPreferences.newSubscriptionEnabled, isTrue);
+    expect(dependencies.historyPreferences.newSubscriptionRetention, 10);
+    expect(dependencies.historyPreferences.maximumRetention, 50);
+    expect(find.text('New subscription history'), findsOneWidget);
+    expect(find.text('Default retention'), findsOneWidget);
+    expect(find.text('Maximum retention'), findsOneWidget);
   });
 
-  testWidgets('history sliders cover the configured ranges', (tester) async {
+  testWidgets('history controls expose domain-supported ranges', (tester) async {
     await pumpPanel(tester);
 
     final sliders = tester.widgetList<Slider>(find.byType(Slider)).toList();
-    expect(sliders, hasLength(2), reason: 'per-topic and increased monitoring buffers');
-
-    final perTopic = sliders.first;
-    expect(perTopic.min, 1);
-    expect(perTopic.max, 500);
-    expect(perTopic.value, 10);
-
-    final increased = sliders.last;
-    expect(increased.min, 50);
-    expect(increased.max, 5000);
-    expect(increased.divisions, 99, reason: 'increased buffer steps by exactly 50');
+    expect(sliders, hasLength(2));
+    expect(sliders.first.min, 1);
+    expect(sliders.first.max, 50);
+    expect(sliders.first.value, 10);
+    expect(sliders.last.min, 50);
+    expect(sliders.last.max, 1000);
+    expect(sliders.last.value, 50);
+    expect(sliders.last.divisions, 19);
   });
 
-  testWidgets('advanced panel warns in the themed error color', (tester) async {
+  testWidgets('turning off the new policy disables its retention slider', (tester) async {
+    await pumpPanel(tester);
+
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+
+    final defaultRetention = tester.widgetList<Slider>(find.byType(Slider)).first;
+    expect(defaultRetention.onChanged, isNull);
+    expect(dependencies.historyPreferences.newSubscriptionEnabled, isFalse);
+  });
+
+  testWidgets('maximum reduction can be cancelled or explicitly confirmed', (tester) async {
+    await dependencies.historyPreferences.setMaximumRetention(500);
+    await brokers.add(
+      const BrokerEntryModel(
+        id: 'broker',
+        name: 'Broker',
+        host: 'broker.invalid',
+        subscriptions: [SubscriptionEntryModel(id: 'subscription', topic: '#', history: SubscriptionHistoryPolicyModel(retention: 100))],
+      ),
+    );
+    await pumpPanel(tester);
+
+    Slider maximumSlider() => tester.widgetList<Slider>(find.byType(Slider)).last;
+
+    maximumSlider().onChanged!(50);
+    await tester.pump();
+    maximumSlider().onChangeEnd!(50);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reduce history maximum?'), findsOneWidget);
+    expect(find.text('Saved subscription policies: 1'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(dependencies.historyPreferences.maximumRetention, 500);
+    expect(brokers.activeBroker!.subscriptions.single.history.retention, 100);
+
+    maximumSlider().onChanged!(50);
+    await tester.pump();
+    maximumSlider().onChangeEnd!(50);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(dependencies.historyPreferences.maximumRetention, 50);
+    expect(brokers.activeBroker!.subscriptions.single.history.retention, 50);
+  });
+
+  testWidgets('advanced warning retains emphasized themed styling', (tester) async {
     await pumpPanel(tester);
 
     final warning = tester.widget<Text>(find.textContaining('affect performance'));
-    expect(warning.style?.fontWeight, FontWeight.w600, reason: 'the warning is emphasised in bold');
+    expect(warning.style?.fontWeight, FontWeight.w600);
     expect(warning.style?.color, isNotNull);
   });
 
-  group('snapPerTopicHistory', () {
-    test('returns 1 for any position below 5', () {
-      expect(snapPerTopicHistory(0), 1);
-      expect(snapPerTopicHistory(1), 1);
-      expect(snapPerTopicHistory(3), 1);
-    });
+  testWidgets('shows the resolved settings and diagnostic log locations', (tester) async {
+    final service = AppStorageLocationService(operatingSystem: 'linux', environment: const {'HOME': '/home/tester', 'XDG_DATA_HOME': '/profile/data'}, launcher: (_) async => true);
+    await pumpPanel(tester, storageLocations: service);
 
-    test('snaps to multiples of 5 from 5 upward', () {
-      expect(snapPerTopicHistory(4), 5);
-      expect(snapPerTopicHistory(5), 5);
-      expect(snapPerTopicHistory(6), 5);
-      expect(snapPerTopicHistory(8), 10);
-      expect(snapPerTopicHistory(10), 10);
-      expect(snapPerTopicHistory(12), 10);
-      expect(snapPerTopicHistory(497), 495);
-      expect(snapPerTopicHistory(498), 500);
-      expect(snapPerTopicHistory(500), 500);
-    });
+    expect(find.text('STORAGE AND DIAGNOSTICS'), findsOneWidget);
+    expect(find.text('/profile/data/MQTT-Monitor/shared_preferences.json'), findsOneWidget);
+    expect(find.text('/profile/data/MQTT-Monitor/logs/mqtt-monitor.log'), findsOneWidget);
+    expect(find.text('Open folder'), findsOneWidget);
+    expect(find.text('Open log'), findsOneWidget);
+  });
+
+  testWidgets('reset checklist keeps unchecked sections and resets selected ones', (tester) async {
+    await dependencies.uiPreferences.setShowStatusBar(false);
+    await dependencies.updatePreferences.setTracksBetaReleases(true);
+    await brokers.add(const BrokerEntryModel(id: 'broker', name: 'Broker', host: 'broker.invalid'));
+    await pumpPanel(tester);
+    final resetButton = find.text('Select data to reset');
+    await tester.ensureVisible(resetButton);
+
+    await tester.tap(resetButton);
+    await tester.pumpAndSettle();
+    expect(find.text('Choose what to reset'), findsOneWidget);
+    expect(find.text('Select all'), findsOneWidget);
+    expect(find.text('User interface'), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(dependencies.uiPreferences.showStatusBar, isFalse);
+    expect(dependencies.updatePreferences.tracksBetaReleases, isTrue);
+    expect(brokers.brokers, hasLength(1));
+
+    await tester.tap(resetButton);
+    await tester.pumpAndSettle();
+    final userInterface = find.text('User interface');
+    await tester.ensureVisible(userInterface);
+    await tester.tap(userInterface);
+    await tester.pump();
+    await tester.tap(find.text('Reset selected'));
+    await tester.pumpAndSettle();
+
+    expect(dependencies.uiPreferences.showStatusBar, isTrue);
+    expect(dependencies.updatePreferences.tracksBetaReleases, isTrue);
+    expect(brokers.brokers, hasLength(1));
+    expect(find.text('The selected data was reset.'), findsOneWidget);
+  });
+
+  testWidgets('select all resets every section', (tester) async {
+    await dependencies.uiPreferences.setShowStatusBar(false);
+    await dependencies.updatePreferences.setTracksBetaReleases(true);
+    await brokers.add(const BrokerEntryModel(id: 'broker', name: 'Broker', host: 'broker.invalid'));
+    await pumpPanel(tester);
+
+    await tester.ensureVisible(find.text('Select data to reset'));
+    await tester.tap(find.text('Select data to reset'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Select all'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Reset selected'));
+    await tester.pumpAndSettle();
+
+    expect(dependencies.uiPreferences.showStatusBar, isTrue);
+    expect(dependencies.updatePreferences.tracksBetaReleases, isFalse);
+    expect(brokers.brokers, isEmpty);
+  });
+
+  test('view model resets only requested repository groups', () async {
+    await dependencies.uiPreferences.setShowStatusBar(false);
+    await dependencies.updatePreferences.setTracksBetaReleases(true);
+    await brokers.add(const BrokerEntryModel(id: 'broker', name: 'Broker', host: 'broker.invalid'));
+    final viewModel = dependencies.createSettingsViewModel();
+    addTearDown(viewModel.dispose);
+
+    final result = await viewModel.resetSettingsToDefaults({SettingsResetSection.updates});
+
+    expect(result.succeeded, isTrue);
+    expect(dependencies.updatePreferences.tracksBetaReleases, isFalse);
+    expect(dependencies.uiPreferences.showStatusBar, isFalse);
+    expect(brokers.brokers, hasLength(1));
+  });
+
+  test('section reset removes only its owned preference namespace', () async {
+    await dependencies.uiPreferences.setShowStatusBar(false);
+    await dependencies.workspaceLayout.setMonitorSplitRatio(0.7);
+    await dependencies.updatePreferences.setTracksBetaReleases(true);
+    final viewModel = dependencies.createSettingsViewModel();
+    addTearDown(viewModel.dispose);
+
+    expect(dependencies.preferences.get('settings.showStatusBar'), isFalse);
+    expect(dependencies.preferences.get('settings.trackBetaReleases'), isTrue);
+
+    await viewModel.resetSettingsToDefaults({SettingsResetSection.userInterface});
+
+    expect(dependencies.preferences.get('settings.showStatusBar'), isNull);
+    expect(dependencies.workspaceLayout.monitorSplitRatio, 0.5);
+    expect(dependencies.preferences.get('settings.trackBetaReleases'), isTrue);
+  });
+
+  test('dashboard group resets saved dashboards and dashboard defaults', () async {
+    final dashboards = DashboardRepository(dependencies.preferences, dependencies.brokers);
+    await dashboards.initialize();
+    addTearDown(dashboards.dispose);
+    await dashboards.setLayouts([DashboardLayoutModel(id: 'saved', title: 'Saved')]);
+    await dependencies.dashboardPreferences.setDotSize(8);
+    final viewModel = dependencies.createSettingsViewModel(dashboardRepository: dashboards);
+    addTearDown(viewModel.dispose);
+
+    await viewModel.resetSettingsToDefaults({SettingsResetSection.dashboards});
+
+    expect(dashboards.layouts, isEmpty);
+    expect(dependencies.dashboardPreferences.dotSize, DashboardPreferencesRepository.defaultDotSize);
   });
 }

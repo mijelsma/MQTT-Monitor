@@ -4,63 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../generated/l10n.dart';
-import '../../theme/app_colors.dart';
 import '../../theme/app_tokens/app_tokens.dart';
-import 'json_highlighter.dart';
+import '../controllers/highlighting_controller.dart';
 
 /// Payload format for the editor (plain text or JSON).
 enum PayloadFormat { text, json }
-
-/// A [TextEditingController] with optional JSON syntax highlighting.
-///
-/// Toggle [highlightJson] to enable/disable colouring and call
-/// [updateTheme] once per build so the controller knows the current palette.
-class HighlightingController extends TextEditingController {
-  HighlightingController({super.text});
-
-  bool highlightJson = false;
-
-  AppTokens? _tokens;
-  bool _isDark = false;
-
-  /// Feed the current theme into the controller so [buildTextSpan] can
-  /// apply the right colours.
-  void updateTheme(AppTokens tokens, bool isDark) {
-    _tokens = tokens;
-    _isDark = isDark;
-  }
-
-  @override
-  TextSpan buildTextSpan({
-    required BuildContext context,
-    TextStyle? style,
-    required bool withComposing,
-  }) {
-    if (!highlightJson || _tokens == null || text.isEmpty) {
-      return super.buildTextSpan(
-        context: context,
-        style: style,
-        withComposing: withComposing,
-      );
-    }
-
-    final spans = JsonHighlighter.highlight(text, _isDark, _tokens!);
-    return TextSpan(style: style, children: spans);
-  }
-}
 
 /// A reusable payload editor with TEXT / JSON format toggle, syntax
 /// highlighting, line numbers, and a prettify button.
 ///
 /// Used by both the publish panel and the shortcut settings dialog.
 class PayloadEditor extends StatefulWidget {
-  const PayloadEditor({
-    super.key,
-    required this.controller,
-    required this.format,
-    required this.onFormatChanged,
-    this.validationError,
-  });
+  const PayloadEditor({super.key, required this.controller, required this.format, required this.onFormatChanged, this.validationError});
 
   final HighlightingController controller;
   final PayloadFormat format;
@@ -106,9 +61,7 @@ class _PayloadEditorState extends State<PayloadEditor> {
     if (!_gutterScrollController.hasClients) return;
 
     final gutterPosition = _gutterScrollController.position;
-    final offset = _scrollController.offset
-        .clamp(gutterPosition.minScrollExtent, gutterPosition.maxScrollExtent)
-        .toDouble();
+    final offset = _scrollController.offset.clamp(gutterPosition.minScrollExtent, gutterPosition.maxScrollExtent).toDouble();
     if (gutterPosition.pixels != offset) {
       _gutterScrollController.jumpTo(offset);
     }
@@ -134,9 +87,7 @@ class _PayloadEditorState extends State<PayloadEditor> {
       final obj = jsonDecode(text);
       final pretty = const JsonEncoder.withIndent('  ').convert(obj);
       widget.controller.text = pretty;
-      widget.controller.selection = TextSelection.collapsed(
-        offset: pretty.length,
-      );
+      widget.controller.selection = TextSelection.collapsed(offset: pretty.length);
     } catch (_) {
       // Invalid JSON — do nothing.
     }
@@ -146,20 +97,13 @@ class _PayloadEditorState extends State<PayloadEditor> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
 
-    widget.controller.updateTheme(
-      tokens,
-      Theme.of(context).brightness == Brightness.dark,
-    );
+    widget.controller.updateTheme(tokens, Theme.of(context).brightness == Brightness.dark);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Header: label + format picker + validation error
-        _PayloadHeader(
-          format: widget.format,
-          onFormatChanged: widget.onFormatChanged,
-          validationError: widget.validationError,
-        ),
+        _PayloadHeader(format: widget.format, onFormatChanged: widget.onFormatChanged, validationError: widget.validationError),
         const SizedBox(height: 6),
         // Input area
         Expanded(child: _buildInput(tokens)),
@@ -168,12 +112,7 @@ class _PayloadEditorState extends State<PayloadEditor> {
   }
 
   Widget _buildInput(AppTokens tokens) {
-    const textStyle = TextStyle(
-      fontSize: 12.5,
-      fontFamily: 'SF Mono, Menlo, monospace',
-      letterSpacing: -0.2,
-      height: 1.45,
-    );
+    const textStyle = TextStyle(fontSize: 12.5, fontFamily: 'SF Mono, Menlo, monospace', letterSpacing: -0.2, height: 1.45);
 
     return Container(
       decoration: BoxDecoration(
@@ -188,18 +127,13 @@ class _PayloadEditorState extends State<PayloadEditor> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Line numbers gutter
-              _LineNumberGutter(
-                lineCount: _lineCount,
-                textStyle: textStyle,
-                scrollController: _gutterScrollController,
-              ),
+              _LineNumberGutter(lineCount: _lineCount, textStyle: textStyle, scrollController: _gutterScrollController),
               // Editor
               Expanded(
                 child: Focus(
                   focusNode: _focusNode,
                   onKeyEvent: (node, event) {
-                    if (event is KeyDownEvent &&
-                        event.logicalKey == LogicalKeyboardKey.tab) {
+                    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.tab) {
                       _insertTab();
                       return KeyEventResult.handled;
                     }
@@ -213,9 +147,7 @@ class _PayloadEditorState extends State<PayloadEditor> {
                     textAlignVertical: TextAlignVertical.top,
                     style: textStyle.copyWith(color: tokens.textPrimary),
                     decoration: InputDecoration(
-                      hintText: widget.format == PayloadFormat.json
-                          ? '{"key": "value"}'
-                          : 'Hello world',
+                      hintText: widget.format == PayloadFormat.json ? '{"key": "value"}' : 'Hello world',
                       hintStyle: TextStyle(fontSize: 12, color: tokens.muted),
                       filled: true,
                       fillColor: Colors.transparent,
@@ -230,12 +162,7 @@ class _PayloadEditorState extends State<PayloadEditor> {
             ],
           ),
           // Prettify button — top-right, only for JSON
-          if (widget.format == PayloadFormat.json)
-            Positioned(
-              top: 6,
-              right: 6,
-              child: _PrettifyButton(onPressed: _prettify),
-            ),
+          if (widget.format == PayloadFormat.json) Positioned(top: 6, right: 6, child: _PrettifyButton(onPressed: _prettify)),
         ],
       ),
     );
@@ -245,11 +172,7 @@ class _PayloadEditorState extends State<PayloadEditor> {
 // ─── Header ──────────────────────────────────────────────────────────────────
 
 class _PayloadHeader extends StatelessWidget {
-  const _PayloadHeader({
-    required this.format,
-    required this.onFormatChanged,
-    this.validationError,
-  });
+  const _PayloadHeader({required this.format, required this.onFormatChanged, this.validationError});
 
   final PayloadFormat format;
   final ValueChanged<PayloadFormat> onFormatChanged;
@@ -267,12 +190,7 @@ class _PayloadHeader extends StatelessWidget {
             const SizedBox(width: 5),
             Text(
               'PAYLOAD',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.8,
-                color: tokens.textTertiary,
-              ),
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.8, color: tokens.textTertiary),
             ),
             const Spacer(),
             _FormatPicker(format: format, onChanged: onFormatChanged),
@@ -283,17 +201,13 @@ class _PayloadHeader extends StatelessWidget {
             padding: const EdgeInsets.only(top: 4),
             child: Row(
               children: [
-                Icon(
-                  Icons.error_outline_rounded,
-                  size: 11,
-                  color: AppColors.error400,
-                ),
+                Icon(Icons.error_outline_rounded, size: 11, color: tokens.error),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
                     validationError!,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 10, color: AppColors.error400),
+                    style: TextStyle(fontSize: 10, color: tokens.error),
                   ),
                 ),
               ],
@@ -322,46 +236,23 @@ class _FormatPicker extends StatelessWidget {
         border: Border.all(color: tokens.border, width: 0.5),
       ),
       padding: const EdgeInsets.all(2),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _chip(context, PayloadFormat.text, 'TEXT', tokens),
-          _chip(context, PayloadFormat.json, 'JSON', tokens),
-        ],
-      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [_chip(context, PayloadFormat.text, 'TEXT', tokens), _chip(context, PayloadFormat.json, 'JSON', tokens)]),
     );
   }
 
-  Widget _chip(
-    BuildContext context,
-    PayloadFormat value,
-    String label,
-    AppTokens tokens,
-  ) {
+  Widget _chip(BuildContext context, PayloadFormat value, String label, AppTokens tokens) {
     final selected = format == value;
     final isJson = value == PayloadFormat.json;
-    final chipColor = selected
-        ? (isJson ? AppColors.success500 : tokens.textSecondary)
-        : tokens.muted;
+    final chipColor = selected ? (isJson ? tokens.success : tokens.textSecondary) : tokens.muted;
     return GestureDetector(
       onTap: () => onChanged(value),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-        decoration: BoxDecoration(
-          color: selected
-              ? chipColor.withValues(alpha: 0.12)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(4),
-        ),
+        decoration: BoxDecoration(color: selected ? chipColor.withValues(alpha: 0.12) : Colors.transparent, borderRadius: BorderRadius.circular(4)),
         child: Text(
           label,
-          style: TextStyle(
-            fontSize: 9.5,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.4,
-            color: chipColor,
-          ),
+          style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, letterSpacing: 0.4, color: chipColor),
         ),
       ),
     );
@@ -371,11 +262,7 @@ class _FormatPicker extends StatelessWidget {
 // ─── Line number gutter ──────────────────────────────────────────────────────
 
 class _LineNumberGutter extends StatelessWidget {
-  const _LineNumberGutter({
-    required this.lineCount,
-    required this.textStyle,
-    required this.scrollController,
-  });
+  const _LineNumberGutter({required this.lineCount, required this.textStyle, required this.scrollController});
 
   final int lineCount;
   final TextStyle textStyle;
@@ -443,17 +330,11 @@ class _PrettifyButtonState extends State<_PrettifyButton> {
             duration: const Duration(milliseconds: 120),
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: _hovering
-                  ? tokens.primary.withValues(alpha: 0.10)
-                  : tokens.surface.withValues(alpha: 0.85),
+              color: _hovering ? tokens.primary.withValues(alpha: 0.10) : tokens.surface.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(5),
               border: Border.all(color: tokens.border, width: 0.5),
             ),
-            child: Icon(
-              Icons.auto_fix_high_rounded,
-              size: 13,
-              color: _hovering ? tokens.primary : tokens.textTertiary,
-            ),
+            child: Icon(Icons.auto_fix_high_rounded, size: 13, color: _hovering ? tokens.primary : tokens.textTertiary),
           ),
         ),
       ),

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/mqtt/publish_result.dart';
 import '../../generated/l10n.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/app_tokens/app_tokens.dart';
 
 /// Visual variant of a publish feedback indicator.
 ///
@@ -14,39 +14,45 @@ import '../../theme/app_colors.dart';
 /// delivery.
 enum PublishFeedbackKind {
   /// Local publish is in flight. Spinner.
-  sending(Icons.refresh_rounded, AppColors.neutral400, isSpinner: true),
+  sending(Icons.refresh_rounded, isSpinner: true),
 
   /// MQTT 5 PUBACK/PUBREC returned reason code 0. Green check.
-  delivered(Icons.check_circle_rounded, AppColors.success500),
+  delivered(Icons.check_circle_rounded),
 
   /// Publish was handed to the broker but the protocol cannot confirm
   /// delivery: QoS 0 (any protocol) or any MQTT 3.1.1 outcome. Grey check.
-  acknowledged(Icons.check_rounded, AppColors.neutral400),
+  acknowledged(Icons.check_rounded),
 
   /// Protocol reported a failure (MQTT 5 reason code >= 0x80 or local
   /// publish error). Red ✕ with the parsed reason.
-  failed(Icons.cancel_rounded, AppColors.error500),
+  failed(Icons.cancel_rounded),
 
   /// The publish was accepted but no ack arrived within the timeout.
-  timedOut(Icons.schedule_rounded, AppColors.warning500),
+  timedOut(Icons.schedule_rounded),
 
   /// Pre-flight: the client is not connected to a broker.
-  offline(Icons.cloud_off_rounded, AppColors.warning500),
+  offline(Icons.cloud_off_rounded),
 
   /// Pre-flight: no topic entered.
-  emptyTopic(Icons.warning_rounded, AppColors.warning500),
+  emptyTopic(Icons.warning_rounded),
 
   /// Pre-flight: the JSON payload did not parse.
-  invalidJson(Icons.warning_rounded, AppColors.error400);
+  invalidJson(Icons.warning_rounded);
 
-  const PublishFeedbackKind(this.icon, this.color, {this.isSpinner = false});
+  const PublishFeedbackKind(this.icon, {this.isSpinner = false});
 
   /// The static icon to render. Ignored when [isSpinner] is true; the
   /// renderer swaps in an indeterminate [CircularProgressIndicator] of
   /// the same color.
   final IconData icon;
-  final Color color;
   final bool isSpinner;
+
+  Color color(AppTokens tokens) => switch (this) {
+    delivered => tokens.success,
+    failed || invalidJson => tokens.error,
+    timedOut || offline || emptyTopic => tokens.warning,
+    sending || acknowledged => tokens.muted,
+  };
 
   /// True if this feedback kind represents the protocol genuinely
   /// confirming delivery.
@@ -66,21 +72,19 @@ class FeedbackBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconColor = kind.color;
+    final iconColor = kind.color(context.tokens);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
           width: 12,
           height: 12,
-          child: kind.isSpinner
-              ? CircularProgressIndicator(strokeWidth: 1.6, valueColor: AlwaysStoppedAnimation<Color>(iconColor))
-              : Icon(kind.icon, size: 11, color: iconColor),
+          child: kind.isSpinner ? CircularProgressIndicator(strokeWidth: 1.6, valueColor: AlwaysStoppedAnimation<Color>(iconColor)) : Icon(kind.icon, size: 11, color: iconColor),
         ),
         const SizedBox(width: 3),
         Text(
           label,
-          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: kind.color),
+          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: iconColor),
         ),
         if (detail != null) ...[
           const SizedBox(width: 4),
@@ -89,7 +93,7 @@ class FeedbackBadge extends StatelessWidget {
               '— ${detail!}',
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
-              style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w500, color: kind.color.withValues(alpha: 0.85)),
+              style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w500, color: iconColor.withValues(alpha: 0.85)),
             ),
           ),
         ],
@@ -101,10 +105,7 @@ class FeedbackBadge extends StatelessWidget {
 /// Wraps [PublishResult] into the [PublishFeedbackKind] + label + detail
 /// that the UI renders. Centralized so the publish panel and shortcut
 /// panel stay in sync.
-({PublishFeedbackKind kind, String label, String? detail}) feedbackForResult(
-  BuildContext context,
-  PublishResult result,
-) {
+({PublishFeedbackKind kind, String label, String? detail}) feedbackForResult(BuildContext context, PublishResult result) {
   final s = S.of(context);
   switch (result.kind) {
     case PublishResultKind.delivered:

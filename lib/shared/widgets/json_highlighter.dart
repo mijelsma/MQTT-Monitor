@@ -172,6 +172,11 @@ class JsonHighlighter extends StatelessWidget {
 
       // ── Array open ──
       if (trimmed.endsWith('[') || trimmed == '[') {
+        // A nested array is itself one element of its parent array. Advance
+        // the parent before pushing the child's independent counter.
+        if (isArrayStack.isNotEmpty && isArrayStack.last) {
+          arrayIndexStack[arrayIndexStack.length - 1]++;
+        }
         final m = RegExp(r'^\s*"([^"]+)"\s*:\s*\[').firstMatch(lines[i]);
         pathStack.add(m != null ? m.group(1)! : '');
         isArrayStack.add(true);

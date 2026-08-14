@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../generated/l10n.dart';
-import '../../../models/dashboard_layout.dart';
+import '../../../core/dashboard/models/dashboard_layout_model.dart';
 import '../../../shared/widgets/app_bar_action_button.dart';
 import '../../../shared/widgets/spacers.dart';
 import 'dashboard_selector.dart';
@@ -17,7 +17,7 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onUpdateLayout;
   final VoidCallback? onDiscardChanges;
   final VoidCallback? onNewEmpty;
-  final void Function(DashboardLayout layout)? onEditLayout;
+  final void Function(DashboardLayoutModel layout)? onEditLayout;
   final VoidCallback? onManageDashboards;
   final VoidCallback? onManageVariables;
   final VoidCallback? onEraseHistory;

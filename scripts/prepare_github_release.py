@@ -10,6 +10,8 @@ import shutil
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
+from desktop_release_contract import validate_release_descriptor
+
 
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -48,20 +50,27 @@ def main() -> None:
 
     source_descriptor = descriptors[0]
     descriptor = json.loads(source_descriptor.read_text(encoding="utf-8"))
-    if descriptor.get("platform") != args.platform:
-        raise ValueError(
-            f"Descriptor platform is {descriptor.get('platform')!r}, expected {args.platform!r}"
-        )
+    validate_release_descriptor(
+        descriptor,
+        platform=args.platform,
+        tag=args.tag,
+        repository=args.repository,
+        require_hosted_url=False,
+    )
 
     artifact = descriptor["artifact"]
     source_name = unquote(Path(urlparse(artifact["url"]).path).name)
     source_artifact = source_descriptor.parent / source_name
     if not source_artifact.is_file():
         candidates = [
-            path for path in source_descriptor.parent.iterdir() if path.is_file() and path != source_descriptor
+            path
+            for path in source_descriptor.parent.iterdir()
+            if path.is_file() and path != source_descriptor
         ]
         if len(candidates) != 1:
-            raise FileNotFoundError(f"Could not identify artifact next to {source_descriptor}")
+            raise FileNotFoundError(
+                f"Could not identify artifact next to {source_descriptor}"
+            )
         source_artifact = candidates[0]
 
     actual_length = source_artifact.stat().st_size
@@ -80,6 +89,13 @@ def main() -> None:
 
     release_base = f"https://github.com/{args.repository}/releases/download/{args.tag}"
     artifact["url"] = f"{release_base}/{destination_name}"
+    validate_release_descriptor(
+        descriptor,
+        platform=args.platform,
+        tag=args.tag,
+        repository=args.repository,
+        require_hosted_url=True,
+    )
     destination_descriptor = args.output / f"release-{args.platform}.json"
     destination_descriptor.write_text(
         json.dumps(descriptor, indent=2) + "\n", encoding="utf-8"

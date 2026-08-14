@@ -1,22 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_colors.dart';
 import '../../theme/app_tokens/app_tokens.dart';
+import '../../generated/l10n.dart';
 
 enum UiNoticeKind { error, warning, success, info }
 
-class _NoticeStyle {
-  const _NoticeStyle(this.color, this.icon);
-  final Color color;
-  final IconData icon;
-}
-
-const _styles = <UiNoticeKind, _NoticeStyle>{
-  UiNoticeKind.error: _NoticeStyle(AppColors.error500, Icons.cloud_off_rounded),
-  UiNoticeKind.warning: _NoticeStyle(AppColors.warning500, Icons.history_rounded),
-  UiNoticeKind.success: _NoticeStyle(AppColors.success500, Icons.check_circle_rounded),
-  UiNoticeKind.info: _NoticeStyle(AppColors.info500, Icons.info_outline_rounded),
-};
+const _icons = <UiNoticeKind, IconData>{UiNoticeKind.error: Icons.cloud_off_rounded, UiNoticeKind.warning: Icons.history_rounded, UiNoticeKind.success: Icons.check_circle_rounded, UiNoticeKind.info: Icons.info_outline_rounded};
 
 class UiInlineNotice extends StatelessWidget {
   const UiInlineNotice({super.key, required this.kind, this.title, this.message, this.subtitle, this.selectable = false, this.detail, this.onDismiss, this.actionLabel, this.onAction, this.margin, this.padding = const EdgeInsets.fromLTRB(12, 10, 8, 10), this.radius = 12});
@@ -49,9 +38,13 @@ class UiInlineNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final style = _styles[kind]!;
-    final color = style.color;
-    final icon = style.icon;
+    final color = switch (kind) {
+      UiNoticeKind.error => tokens.error,
+      UiNoticeKind.warning => tokens.warning,
+      UiNoticeKind.success => tokens.success,
+      UiNoticeKind.info => tokens.info,
+    };
+    final icon = _icons[kind]!;
 
     final body = <Widget>[];
     if (title != null) {
@@ -73,7 +66,9 @@ class UiInlineNotice extends StatelessWidget {
       );
     }
     if (message != null) {
-      if (title != null || subtitle != null) body.add(const SizedBox(height: 4));
+      if (title != null || subtitle != null) {
+        body.add(const SizedBox(height: 4));
+      }
       body.add(selectable ? SelectableText(message!, style: TextStyle(fontSize: 12, height: 1.35, color: tokens.textPrimary.withValues(alpha: 0.85))) : Text(message!, style: TextStyle(fontSize: 12, height: 1.35, color: tokens.textPrimary.withValues(alpha: 0.85))));
     }
     if (detail != null && detail!.trim().isNotEmpty) {
@@ -104,7 +99,7 @@ class UiInlineNotice extends StatelessWidget {
       children.add(
         IconButton(
           onPressed: onDismiss,
-          tooltip: 'Dismiss',
+          tooltip: S.maybeOf(context)?.dismiss ?? 'Dismiss',
           visualDensity: VisualDensity.compact,
           splashRadius: 16,
           padding: EdgeInsets.zero,
@@ -157,7 +152,7 @@ class _ExpandableDetailState extends State<_ExpandableDetail> {
                 Icon(_expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded, size: 14, color: tokens.textSecondary),
                 const SizedBox(width: 4),
                 Text(
-                  _expanded ? 'Hide details' : 'Show details',
+                  _expanded ? S.maybeOf(context)?.hideDetails ?? 'Hide details' : S.maybeOf(context)?.showDetails ?? 'Show details',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: tokens.textSecondary),
                 ),
               ],
@@ -198,24 +193,18 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-          decoration: BoxDecoration(
-            color: tokens.surface,
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: tokens.border, width: 0.5),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: tokens.textSecondary),
-          ),
-        ),
+    return OutlinedButton(
+      onPressed: onTap,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: tokens.textSecondary,
+        backgroundColor: tokens.surface,
+        minimumSize: const Size(44, 32),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        side: BorderSide(color: tokens.border, width: 0.5),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(tokens.controlRadius - 4)),
+        textStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
       ),
+      child: Text(label),
     );
   }
 }

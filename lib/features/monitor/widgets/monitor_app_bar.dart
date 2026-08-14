@@ -3,20 +3,19 @@ import 'package:provider/provider.dart';
 
 import '../../../core/mqtt/connection_status.dart';
 import '../../../generated/l10n.dart';
+import '../../../navigation/app_navigation.dart';
 import '../../../shared/widgets/app_bar_action_button.dart';
 import '../../../shared/widgets/spacers.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../../dashboard/dashboard_screen.dart';
-import '../../settings/settings_screen.dart';
-import '../monitor_viewmodel.dart';
+import '../view_models/monitor_view_model.dart';
+import '../controllers/monitor_workspace_controller.dart';
+import '../search_scope.dart';
 import 'broker_selector.dart';
 
 class MonitorAppBar extends StatefulWidget implements PreferredSizeWidget {
-  const MonitorAppBar({super.key, required this.filterController, required this.scope, required this.onScopeChanged});
+  const MonitorAppBar({super.key, required this.filterController});
 
   final TextEditingController filterController;
-  final SearchScope scope;
-  final ValueChanged<SearchScope> onScopeChanged;
 
   static const double _toolbarHeight = 62;
 
@@ -54,6 +53,7 @@ class _MonitorAppBarState extends State<MonitorAppBar> {
   @override
   Widget build(BuildContext context) {
     final hasText = widget.filterController.text.isNotEmpty;
+    final workspace = context.watch<MonitorWorkspaceController>();
 
     return AppBar(
       toolbarHeight: MonitorAppBar._toolbarHeight,
@@ -66,7 +66,7 @@ class _MonitorAppBarState extends State<MonitorAppBar> {
         children: [
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 280),
-            child: _SearchBox(controller: widget.filterController, scope: widget.scope, hasText: hasText, onScopeChanged: widget.onScopeChanged),
+            child: _SearchBox(controller: widget.filterController, scope: workspace.scope, hasText: hasText, onScopeChanged: workspace.setScope),
           ),
           const HSpacer(8),
           _CollapseExpandButton(),
@@ -193,7 +193,7 @@ class _ScopePicker extends StatelessWidget {
 class _CollapseExpandButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<MonitorViewModel>();
+    final vm = context.watch<MonitorWorkspaceController>();
     final tokens = context.tokens;
     final anyExpanded = vm.anyExpanded;
 
@@ -212,7 +212,7 @@ class _CollapseExpandButton extends StatelessWidget {
 class _ClearAllTopicsButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<MonitorViewModel>();
+    final vm = context.watch<MonitorWorkspaceController>();
     final tokens = context.tokens;
 
     return IconButton(
@@ -260,14 +260,7 @@ class _DashboardButton extends StatelessWidget {
     return AppBarActionButton(
       icon: Icons.bar_chart_rounded,
       tooltip: S.of(context).sectionDashboard,
-      onTap: broker == null
-          ? null
-          : () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => GraphDashboardScreen(brokerId: broker.id, brokerName: broker.name),
-              ),
-            ),
+      onTap: broker == null ? null : () => context.read<AppNavigation>().openDashboard(context, brokerId: broker.id, brokerName: broker.name),
     );
   }
 }
@@ -277,10 +270,6 @@ class _SettingsButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppBarActionButton(
-      icon: Icons.tune_rounded,
-      tooltip: S.of(context).settings,
-      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
-    );
+    return AppBarActionButton(icon: Icons.tune_rounded, tooltip: S.of(context).settings, onTap: () => context.read<AppNavigation>().openSettings(context));
   }
 }

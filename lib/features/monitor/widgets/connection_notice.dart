@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/mqtt/connection_status.dart';
 import '../../../shared/widgets/ui_inline_notice.dart';
-import '../monitor_viewmodel.dart';
+import '../view_models/monitor_view_model.dart';
 
 class ConnectionNotice extends StatefulWidget {
   const ConnectionNotice({super.key});

@@ -25,6 +25,8 @@ import sys
 from argparse import ArgumentParser
 from pathlib import Path
 
+from desktop_release_contract import parse_release_tag
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 GIT_INFO_PATH = PROJECT_ROOT / "lib" / "generated" / "git_info.dart"
@@ -34,7 +36,6 @@ PUBSPEC_PATH = PROJECT_ROOT / "pubspec.yaml"
 # numeric prefix and normalize to a full ``X.Y.Z`` for the generated file.
 TAG_VERSION_RE = re.compile(r"^v?(\d+\.\d+(?:\.\d+)?)")
 COMMITS_SINCE_TAG_RE = re.compile(r"^\D*\d+\.\d+(?:\.\d+)?-(\d+)-g")
-RELEASE_TAG_RE = re.compile(r"^v?(\d+\.\d+\.\d+)(?:-[0-9A-Za-z][0-9A-Za-z.-]*)?$")
 PUBSPEC_VERSION_RE = re.compile(r"^version:\s*.*$", re.MULTILINE)
 
 
@@ -130,14 +131,15 @@ def prepare_release_version() -> tuple[str, int]:
     """
 
     tag = run(["git", "describe", "--tags", "--exact-match", "HEAD"])
-    match = RELEASE_TAG_RE.match(tag)
-    if not match:
+    try:
+        public_version, _ = parse_release_tag(tag)
+    except ValueError as error:
         raise GenerationError(
             "Release tags must look like vX.Y.Z or vX.Y.Z-beta.N; "
             f"got {tag!r}."
-        )
+        ) from error
 
-    version = match.group(1)
+    version = public_version.split("-", maxsplit=1)[0]
     build_number = max(1, int(run(["git", "rev-list", "--count", "HEAD"])))
     content = PUBSPEC_PATH.read_text(encoding="utf-8")
     updated, replacements = PUBSPEC_VERSION_RE.subn(

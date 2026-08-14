@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../../core/publishing/template_resolver.dart';
 import '../../../generated/l10n.dart';
-import '../../../models/broker_entry.dart';
-import '../../../models/environment_variable.dart';
+import '../../../core/broker/models/broker_entry_model.dart';
+import '../../../core/publishing/models/environment_variable_model.dart';
+import '../../../core/publishing/models/environment_variable_option_model.dart';
 import '../../../shared/widgets/scope_picker.dart';
 import '../../../shared/widgets/spacers.dart';
 import '../../../shared/widgets/ui_field.dart';
@@ -11,9 +14,9 @@ import '../../../theme/app_tokens/app_tokens.dart';
 
 /// Shows a dialog for creating or editing an environment variable.
 ///
-/// Returns the resulting [EnvironmentVariable] on save, or null if dismissed.
-Future<EnvironmentVariable?> showVariableDialog(BuildContext context, {EnvironmentVariable? variable, Set<String> existingNames = const {}, List<BrokerEntry> brokers = const [], VoidCallback? onDelete}) {
-  return showDialog<EnvironmentVariable>(
+/// Returns the resulting [EnvironmentVariableModel] on save, or null if dismissed.
+Future<EnvironmentVariableModel?> showVariableDialog(BuildContext context, {EnvironmentVariableModel? variable, Set<String> existingNames = const {}, List<BrokerEntryModel> brokers = const [], VoidCallback? onDelete}) {
+  return showDialog<EnvironmentVariableModel>(
     context: context,
     barrierColor: Colors.black54,
     builder: (_) => _VariableDialog(variable: variable, existingNames: existingNames, brokers: brokers, onDelete: onDelete),
@@ -23,9 +26,9 @@ Future<EnvironmentVariable?> showVariableDialog(BuildContext context, {Environme
 class _VariableDialog extends StatefulWidget {
   const _VariableDialog({this.variable, required this.existingNames, required this.brokers, this.onDelete});
 
-  final EnvironmentVariable? variable;
+  final EnvironmentVariableModel? variable;
   final Set<String> existingNames;
-  final List<BrokerEntry> brokers;
+  final List<BrokerEntryModel> brokers;
   final VoidCallback? onDelete;
 
   @override
@@ -85,8 +88,8 @@ class _VariableDialogState extends State<_VariableDialog> {
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     final name = _nameController.text.trim();
-    final options = _options.where((o) => o.label.text.trim().isNotEmpty && o.value.text.trim().isNotEmpty).map((o) => EnvironmentVariableOption(label: o.label.text.trim(), value: o.value.text.trim())).toList();
-    Navigator.pop(context, EnvironmentVariable(name: name, brokerIds: _isGlobal ? [] : _selectedBrokerIds.toList(), options: options));
+    final options = _options.where((o) => o.label.text.trim().isNotEmpty && o.value.text.trim().isNotEmpty).map((o) => EnvironmentVariableOptionModel(label: o.label.text.trim(), value: o.value.text.trim())).toList();
+    Navigator.pop(context, EnvironmentVariableModel(name: name, brokerIds: _isGlobal ? [] : _selectedBrokerIds.toList(), options: options));
   }
 
   @override
@@ -118,8 +121,12 @@ class _VariableDialogState extends State<_VariableDialog> {
               validator: (value) {
                 final trimmed = value?.trim() ?? '';
                 if (trimmed.isEmpty) return s.variableDialogValidateName;
-                if (widget.existingNames.contains(trimmed)) return s.variableDialogNameExists;
-                if (trimmed.contains(RegExp(r'[\s{}\$]'))) return s.variableDialogNameInvalid;
+                if (widget.existingNames.contains(trimmed)) {
+                  return s.variableDialogNameExists;
+                }
+                if (!context.read<TemplateResolver>().isValidVariableName(trimmed)) {
+                  return s.variableDialogNameInvalid;
+                }
                 return null;
               },
             ),

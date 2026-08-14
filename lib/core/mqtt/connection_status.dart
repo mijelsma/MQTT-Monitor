@@ -11,7 +11,7 @@ enum ConnectionStatus {
   connected,
 
   /// The client encountered an error during connection or while connected.
-  /// The specific error can be found in the `connectionError` state key.
+  /// The specific error can be found in the active MQTT session state.
   error,
 
   /// The client could not find the broker's host. This typically indicates

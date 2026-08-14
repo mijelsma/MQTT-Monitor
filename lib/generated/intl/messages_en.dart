@@ -35,6 +35,11 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m5(count) =>
       "${count} ${Intl.plural(count, one: 'second', other: 'seconds')}";
 
+  static String m6(count, rate) => "${count} msgs · ${rate}/s";
+
+  static String m7(count) =>
+      "${count} ${Intl.plural(count, one: 'option', other: 'options')}";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "aboutPanelAuthor": MessageLookupByLibrary.simpleMessage("Author"),
@@ -58,17 +63,125 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "aboutPanelVersionDetail": MessageLookupByLibrary.simpleMessage("Version"),
     "add": MessageLookupByLibrary.simpleMessage("Add"),
+    "advancedPanelAffectedBuffers": MessageLookupByLibrary.simpleMessage(
+      "Live topic buffers",
+    ),
+    "advancedPanelAffectedDefault": MessageLookupByLibrary.simpleMessage(
+      "New-subscription default",
+    ),
+    "advancedPanelAffectedSubscriptions": MessageLookupByLibrary.simpleMessage(
+      "Saved subscription policies",
+    ),
+    "advancedPanelDefaultRetention": MessageLookupByLibrary.simpleMessage(
+      "Default retention",
+    ),
+    "advancedPanelDefaultRetentionHint": MessageLookupByLibrary.simpleMessage(
+      "Messages retained by each new subscription",
+    ),
     "advancedPanelDescription": MessageLookupByLibrary.simpleMessage(
       "Adjusting these settings may significantly affect performance. Change them with care.",
     ),
     "advancedPanelHistoryBuffer": MessageLookupByLibrary.simpleMessage(
       "History buffer",
     ),
-    "advancedPanelMessagesPerTopic": MessageLookupByLibrary.simpleMessage(
-      "Messages stored per topic",
+    "advancedPanelLogFile": MessageLookupByLibrary.simpleMessage(
+      "Diagnostic log",
     ),
-    "advancedPanelMessagesPerTopicHint": MessageLookupByLibrary.simpleMessage(
-      "Maximum messages kept in history per topic; older messages are pruned. Lower values use less memory.",
+    "advancedPanelLogFileHint": MessageLookupByLibrary.simpleMessage(
+      "Redacted diagnostic events from current and previous sessions",
+    ),
+    "advancedPanelMaximumConfirmBody": MessageLookupByLibrary.simpleMessage(
+      "Affected policies and live buffers will be clamped. Existing messages beyond the new limit will be removed.",
+    ),
+    "advancedPanelMaximumConfirmTitle": MessageLookupByLibrary.simpleMessage(
+      "Reduce history maximum?",
+    ),
+    "advancedPanelMaximumRetention": MessageLookupByLibrary.simpleMessage(
+      "Maximum retention",
+    ),
+    "advancedPanelMaximumRetentionHint": MessageLookupByLibrary.simpleMessage(
+      "Upper bound enforced for every subscription and live history buffer",
+    ),
+    "advancedPanelNewSubscriptionHistory": MessageLookupByLibrary.simpleMessage(
+      "New subscription history",
+    ),
+    "advancedPanelNewSubscriptionHistoryHint":
+        MessageLookupByLibrary.simpleMessage(
+          "Collect bounded history for subscriptions created from now on",
+        ),
+    "advancedPanelOpenFolder": MessageLookupByLibrary.simpleMessage(
+      "Open folder",
+    ),
+    "advancedPanelOpenLocationFailed": MessageLookupByLibrary.simpleMessage(
+      "The location could not be opened.",
+    ),
+    "advancedPanelOpenLog": MessageLookupByLibrary.simpleMessage("Open log"),
+    "advancedPanelResetAction": MessageLookupByLibrary.simpleMessage(
+      "Select data to reset",
+    ),
+    "advancedPanelResetBrokers": MessageLookupByLibrary.simpleMessage(
+      "Broker profiles",
+    ),
+    "advancedPanelResetCleanupWarning": MessageLookupByLibrary.simpleMessage(
+      "The selected data was reset, but some broker files or credentials could not be removed.",
+    ),
+    "advancedPanelResetConfirmBody": MessageLookupByLibrary.simpleMessage(
+      "Selected data will be permanently removed or restored to its defaults. Unchecked data is kept.",
+    ),
+    "advancedPanelResetConfirmTitle": MessageLookupByLibrary.simpleMessage(
+      "Choose what to reset",
+    ),
+    "advancedPanelResetConnection": MessageLookupByLibrary.simpleMessage(
+      "Connection preferences",
+    ),
+    "advancedPanelResetDashboards": MessageLookupByLibrary.simpleMessage(
+      "Dashboards",
+    ),
+    "advancedPanelResetFailed": MessageLookupByLibrary.simpleMessage(
+      "Settings could not be reset. No broker resources were removed.",
+    ),
+    "advancedPanelResetHint": MessageLookupByLibrary.simpleMessage(
+      "Choose which settings and saved data to reset or reset everything",
+    ),
+    "advancedPanelResetHistory": MessageLookupByLibrary.simpleMessage(
+      "History preferences",
+    ),
+    "advancedPanelResetPublishing": MessageLookupByLibrary.simpleMessage(
+      "Publishing preferences",
+    ),
+    "advancedPanelResetSection": MessageLookupByLibrary.simpleMessage("Reset"),
+    "advancedPanelResetSelectAll": MessageLookupByLibrary.simpleMessage(
+      "Select all",
+    ),
+    "advancedPanelResetSelectedAction": MessageLookupByLibrary.simpleMessage(
+      "Reset selected",
+    ),
+    "advancedPanelResetShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Shortcuts",
+    ),
+    "advancedPanelResetSuccess": MessageLookupByLibrary.simpleMessage(
+      "The selected data was reset.",
+    ),
+    "advancedPanelResetTitle": MessageLookupByLibrary.simpleMessage(
+      "Reset application data",
+    ),
+    "advancedPanelResetUpdates": MessageLookupByLibrary.simpleMessage(
+      "Update preferences",
+    ),
+    "advancedPanelResetUserInterface": MessageLookupByLibrary.simpleMessage(
+      "User interface",
+    ),
+    "advancedPanelResetVariables": MessageLookupByLibrary.simpleMessage(
+      "Variables",
+    ),
+    "advancedPanelSettingsLocation": MessageLookupByLibrary.simpleMessage(
+      "Settings location",
+    ),
+    "advancedPanelSettingsLocationHint": MessageLookupByLibrary.simpleMessage(
+      "Application preferences are stored here. Broker passwords remain in the operating system credential store.",
+    ),
+    "advancedPanelStorageSection": MessageLookupByLibrary.simpleMessage(
+      "Storage and diagnostics",
     ),
     "advancedPanelTitle": MessageLookupByLibrary.simpleMessage("Advanced"),
     "back": MessageLookupByLibrary.simpleMessage("Back"),
@@ -94,6 +207,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "brokerDialogFieldPort": MessageLookupByLibrary.simpleMessage("Port"),
     "brokerDialogFieldUsername": MessageLookupByLibrary.simpleMessage(
       "Username",
+    ),
+    "brokerDialogHistoryDisabled": MessageLookupByLibrary.simpleMessage(
+      "History off",
+    ),
+    "brokerDialogHistoryMessages": MessageLookupByLibrary.simpleMessage(
+      "history messages",
     ),
     "brokerDialogRandomSuffix": MessageLookupByLibrary.simpleMessage(
       "Random Suffix",
@@ -125,6 +244,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "brokerDialogValidateName": MessageLookupByLibrary.simpleMessage(
       "Enter a name",
     ),
+    "brokerProfilesUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Broker profiles unavailable",
+    ),
     "brokersPanelAddBroker": MessageLookupByLibrary.simpleMessage("Add Broker"),
     "brokersPanelDescription": MessageLookupByLibrary.simpleMessage(
       "Configure MQTT brokers.",
@@ -142,6 +264,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "cancel": MessageLookupByLibrary.simpleMessage("Cancel"),
     "clearAllTopics": MessageLookupByLibrary.simpleMessage("Clear all topics"),
     "collapseAll": MessageLookupByLibrary.simpleMessage("Collapse all"),
+    "copy": MessageLookupByLibrary.simpleMessage("Copy"),
     "dashboardDialogEditTitle": MessageLookupByLibrary.simpleMessage(
       "Edit Dashboard",
     ),
@@ -182,12 +305,15 @@ class MessageLookup extends MessageLookupByLibrary {
       "Manage saved dashboard layouts.",
     ),
     "dashboardPanelDotSize": MessageLookupByLibrary.simpleMessage("Dot size"),
+    "dashboardPanelDotSizeHint": MessageLookupByLibrary.simpleMessage(
+      "Marker size for data points in new line graphs. Choose 0 to hide markers.",
+    ),
     "dashboardPanelInterpolation": MessageLookupByLibrary.simpleMessage(
       "Interpolation",
     ),
     "dashboardPanelMaxSamples": MessageLookupByLibrary.simpleMessage("Samples"),
     "dashboardPanelMaxSamplesHint": MessageLookupByLibrary.simpleMessage(
-      "0 = unlimited",
+      "Maximum number of recent values retained by each new graph.",
     ),
     "dashboardPanelNoDashboardsMessage": MessageLookupByLibrary.simpleMessage(
       "Create dashboard or save from dashboard view",
@@ -227,6 +353,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "detailYes": MessageLookupByLibrary.simpleMessage("Yes"),
     "disconnect": MessageLookupByLibrary.simpleMessage("Disconnect"),
+    "dismiss": MessageLookupByLibrary.simpleMessage("Dismiss"),
     "durationHours": m3,
     "durationLessThanSecond": MessageLookupByLibrary.simpleMessage(
       "< 1 second",
@@ -240,6 +367,30 @@ class MessageLookup extends MessageLookupByLibrary {
     "filterNoMatchingTopicsSubtitle": MessageLookupByLibrary.simpleMessage(
       "Try adjusting or clearing the filter.",
     ),
+    "hideDetails": MessageLookupByLibrary.simpleMessage("Hide details"),
+    "historyPanelClear": MessageLookupByLibrary.simpleMessage("Clear"),
+    "historyPanelDisabled": MessageLookupByLibrary.simpleMessage(
+      "History disabled",
+    ),
+    "historyPanelDisabledHint": MessageLookupByLibrary.simpleMessage(
+      "Live values continue, but new history is not stored",
+    ),
+    "historyPanelNoHistory": MessageLookupByLibrary.simpleMessage(
+      "No history yet",
+    ),
+    "historyPanelNoHistoryHint": MessageLookupByLibrary.simpleMessage(
+      "Messages will appear here as they arrive",
+    ),
+    "historyPanelNotSubscribed": MessageLookupByLibrary.simpleMessage(
+      "No matching subscription",
+    ),
+    "historyPanelNotSubscribedHint": MessageLookupByLibrary.simpleMessage(
+      "This topic is not covered by the active broker subscriptions",
+    ),
+    "historyPanelRetainingUpTo": MessageLookupByLibrary.simpleMessage(
+      "Retaining up to",
+    ),
+    "historyPanelStored": MessageLookupByLibrary.simpleMessage("stored"),
     "languageNameDe": MessageLookupByLibrary.simpleMessage("German"),
     "languageNameEn": MessageLookupByLibrary.simpleMessage("English"),
     "languageNameEs": MessageLookupByLibrary.simpleMessage("Spanish"),
@@ -259,7 +410,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Clear all",
     ),
     "monitoringPanelDescription": MessageLookupByLibrary.simpleMessage(
-      "Configure message history retention for topics.",
+      "Configure live message-rate sampling.",
     ),
     "monitoringPanelIncreasedBufferHint": MessageLookupByLibrary.simpleMessage(
       "Messages for monitored topics",
@@ -292,6 +443,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "publishBadJson": MessageLookupByLibrary.simpleMessage("Bad JSON"),
     "publishDelivered": MessageLookupByLibrary.simpleMessage("Delivered"),
     "publishFailed": MessageLookupByLibrary.simpleMessage("Failed"),
+    "publishInvalidQos": MessageLookupByLibrary.simpleMessage(
+      "QoS must be 0, 1, or 2",
+    ),
+    "publishInvalidTemplate": MessageLookupByLibrary.simpleMessage(
+      "Put the variable name inside dollar-sign braces",
+    ),
+    "publishInvalidTopic": MessageLookupByLibrary.simpleMessage(
+      "Enter a valid MQTT topic name",
+    ),
+    "publishMissingVariables": MessageLookupByLibrary.simpleMessage(
+      "Set every topic variable before publishing",
+    ),
     "publishNoTopic": MessageLookupByLibrary.simpleMessage("No topic"),
     "publishOffline": MessageLookupByLibrary.simpleMessage("Offline"),
     "publishPrettifyJson": MessageLookupByLibrary.simpleMessage(
@@ -304,6 +467,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "publishTopicHint": MessageLookupByLibrary.simpleMessage("example/topic"),
     "reconnect": MessageLookupByLibrary.simpleMessage("Reconnect"),
     "remove": MessageLookupByLibrary.simpleMessage("Remove"),
+    "retry": MessageLookupByLibrary.simpleMessage("Retry"),
     "save": MessageLookupByLibrary.simpleMessage("Save"),
     "scopeGlobal": MessageLookupByLibrary.simpleMessage("Global"),
     "scopeSelectedBrokers": MessageLookupByLibrary.simpleMessage(
@@ -335,6 +499,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "shortcutDialogFieldColor": MessageLookupByLibrary.simpleMessage("Color"),
     "shortcutDialogFieldName": MessageLookupByLibrary.simpleMessage("Name"),
     "shortcutDialogFieldTopic": MessageLookupByLibrary.simpleMessage("Topic"),
+    "shortcutDialogInvalidTemplate": MessageLookupByLibrary.simpleMessage(
+      "Put the variable name inside dollar-sign braces",
+    ),
+    "shortcutDialogInvalidTopic": MessageLookupByLibrary.simpleMessage(
+      "Enter a valid MQTT topic name",
+    ),
     "shortcutDialogRetain": MessageLookupByLibrary.simpleMessage("Retain"),
     "shortcutDialogRetainSubtitle": MessageLookupByLibrary.simpleMessage(
       "Broker stores the message for new subscribers",
@@ -367,6 +537,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "No shortcuts yet",
     ),
     "shortcutsPanelTitle": MessageLookupByLibrary.simpleMessage("Shortcuts"),
+    "showDetails": MessageLookupByLibrary.simpleMessage("Show details"),
     "sidebarHistory": MessageLookupByLibrary.simpleMessage("HISTORY"),
     "sidebarMessageDetail": MessageLookupByLibrary.simpleMessage(
       "MESSAGE DETAIL",
@@ -378,6 +549,24 @@ class MessageLookup extends MessageLookupByLibrary {
       "Select a topic to inspect",
     ),
     "sidebarPublish": MessageLookupByLibrary.simpleMessage("PUBLISH"),
+    "sidebarResizeDetailHistory": MessageLookupByLibrary.simpleMessage(
+      "Resize Message Detail and History",
+    ),
+    "sidebarResizeDetailPublish": MessageLookupByLibrary.simpleMessage(
+      "Resize Message Detail and Publish",
+    ),
+    "sidebarResizeDetailShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Resize Message Detail and Shortcuts",
+    ),
+    "sidebarResizeHistoryPublish": MessageLookupByLibrary.simpleMessage(
+      "Resize History and Publish",
+    ),
+    "sidebarResizeHistoryShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Resize History and Shortcuts",
+    ),
+    "sidebarResizePublishShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Resize Publish and Shortcuts",
+    ),
     "sidebarShortcuts": MessageLookupByLibrary.simpleMessage("SHORTCUTS"),
     "sidebarShortcutsEmpty": MessageLookupByLibrary.simpleMessage(
       "No shortcuts available.\nAdd shortcuts in Settings.",
@@ -385,9 +574,38 @@ class MessageLookup extends MessageLookupByLibrary {
     "sidebarShortcutsManage": MessageLookupByLibrary.simpleMessage(
       "Manage Shortcuts",
     ),
+    "statusConnected": MessageLookupByLibrary.simpleMessage("Connected"),
+    "statusConnecting": MessageLookupByLibrary.simpleMessage("Connecting"),
+    "statusConnectionRefused": MessageLookupByLibrary.simpleMessage(
+      "Connection refused",
+    ),
+    "statusDisconnected": MessageLookupByLibrary.simpleMessage("Disconnected"),
+    "statusError": MessageLookupByLibrary.simpleMessage("Error"),
+    "statusHostNotFound": MessageLookupByLibrary.simpleMessage(
+      "Host not found",
+    ),
+    "statusMessages": m6,
+    "statusMqtt311Detail": MessageLookupByLibrary.simpleMessage(
+      "MQTT 3.1.1 — broker does not return delivery reasons",
+    ),
+    "statusMqtt5Detail": MessageLookupByLibrary.simpleMessage(
+      "MQTT 5.0 — reason codes and properties available",
+    ),
+    "statusNotPermitted": MessageLookupByLibrary.simpleMessage("Not permitted"),
+    "statusOpenUpdateSettings": MessageLookupByLibrary.simpleMessage(
+      "Open update settings",
+    ),
+    "statusTlsFailed": MessageLookupByLibrary.simpleMessage("TLS failed"),
+    "statusUpdateAvailable": MessageLookupByLibrary.simpleMessage(
+      "Update available",
+    ),
     "subscriptionDialogAddTitle": MessageLookupByLibrary.simpleMessage(
       "Add Subscription",
     ),
+    "subscriptionDialogDuplicateTopicFilter":
+        MessageLookupByLibrary.simpleMessage(
+          "This broker already has that topic filter",
+        ),
     "subscriptionDialogEditTitle": MessageLookupByLibrary.simpleMessage(
       "Edit Subscription",
     ),
@@ -400,6 +618,28 @@ class MessageLookup extends MessageLookupByLibrary {
     "subscriptionDialogHintDisplayName": MessageLookupByLibrary.simpleMessage(
       "Optional friendly name",
     ),
+    "subscriptionDialogHistoryEnabled": MessageLookupByLibrary.simpleMessage(
+      "Store message history",
+    ),
+    "subscriptionDialogHistoryEnabledHint":
+        MessageLookupByLibrary.simpleMessage(
+          "Live messages remain available when history is off",
+        ),
+    "subscriptionDialogHistoryLabel": MessageLookupByLibrary.simpleMessage(
+      "History",
+    ),
+    "subscriptionDialogHistoryOverlapHint": MessageLookupByLibrary.simpleMessage(
+      "When enabled filters overlap, the largest matching retention is used.",
+    ),
+    "subscriptionDialogHistoryRetention": MessageLookupByLibrary.simpleMessage(
+      "Retention",
+    ),
+    "subscriptionDialogHistoryRetentionHint":
+        MessageLookupByLibrary.simpleMessage(
+          "Messages kept for topics matched by this subscription",
+        ),
+    "subscriptionDialogInvalidTopicFilter":
+        MessageLookupByLibrary.simpleMessage("Enter a valid MQTT topic filter"),
     "subscriptionDialogQoS0Description": MessageLookupByLibrary.simpleMessage(
       "At most once",
     ),
@@ -424,6 +664,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "subscriptionDialogValidateTopicFilter":
         MessageLookupByLibrary.simpleMessage("Enter a topic filter"),
     "uiPanelAccentColor": MessageLookupByLibrary.simpleMessage("Accent color"),
+    "uiPanelDefaultBrokerProtocol": MessageLookupByLibrary.simpleMessage(
+      "Default protocol for new brokers",
+    ),
     "uiPanelDefaultPublishQos": MessageLookupByLibrary.simpleMessage(
       "Default publish QoS",
     ),
@@ -594,6 +837,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "variablesPanelNoVariablesTitle": MessageLookupByLibrary.simpleMessage(
       "No variables yet",
     ),
+    "variablesPanelOptionsCount": m7,
     "variablesPanelTitle": MessageLookupByLibrary.simpleMessage("Variables"),
   };
 }

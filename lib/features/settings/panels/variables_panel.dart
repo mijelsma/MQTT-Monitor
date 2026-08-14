@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../generated/l10n.dart';
-import '../../../models/environment_variable.dart';
+import '../../../core/publishing/models/environment_variable_model.dart';
 import '../../../shared/widgets/scope_badge.dart';
 import '../../../shared/widgets/ui_add_button.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
@@ -11,7 +11,7 @@ import '../../../shared/widgets/ui_section.dart';
 import '../../../shared/widgets/ui_sortable_row.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../dialogs/variable_dialog.dart';
-import '../settings_viewmodel.dart';
+import '../view_models/settings_view_model.dart';
 
 class VariablesPanel extends StatelessWidget {
   const VariablesPanel({super.key});
@@ -24,7 +24,7 @@ class VariablesPanel extends StatelessWidget {
     vm.addEnvironmentVariable(result);
   }
 
-  void _editVariable(BuildContext context, EnvironmentVariable variable) async {
+  void _editVariable(BuildContext context, EnvironmentVariableModel variable) async {
     final vm = context.read<SettingsViewModel>();
     final existing = vm.environmentVariables.map((v) => v.name).where((n) => n != variable.name).toSet();
     final result = await showVariableDialog(context, variable: variable, existingNames: existing, brokers: vm.brokers, onDelete: () => vm.deleteEnvironmentVariable(variable.name));
@@ -68,9 +68,9 @@ class VariablesPanel extends StatelessWidget {
     );
   }
 
-  String _subtitle(S s, EnvironmentVariable v) {
+  String _subtitle(S s, EnvironmentVariableModel v) {
     final count = v.options.length;
-    return count == 0 ? s.variablesPanelNoOptions : '$count option${count == 1 ? '' : 's'}';
+    return count == 0 ? s.variablesPanelNoOptions : s.variablesPanelOptionsCount(count);
   }
 }
 

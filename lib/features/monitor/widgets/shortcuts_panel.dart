@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/state/app_state.dart';
-import '../../../core/state/keys/app_keys.dart';
+import '../../../core/publishing/publish_command.dart';
+import '../../../navigation/app_navigation.dart';
 import '../../../generated/l10n.dart';
-import '../../../models/publish_shortcut.dart';
+import '../../../core/publishing/models/publish_shortcut_model.dart';
 import '../../../shared/widgets/feedback_badge.dart';
 import '../../../shared/widgets/qos_tag.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
-import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../../dashboard/widgets/variable_bar.dart';
-import '../../settings/settings_screen.dart';
 import '../../settings/settings_section.dart';
-import '../monitor_viewmodel.dart';
+import '../view_models/monitor_view_model.dart';
+import '../publish_command_feedback.dart';
 
 /// Panel listing publish shortcuts relevant to the active broker.
 ///
@@ -50,15 +49,14 @@ class ShortcutsPanel extends StatelessWidget {
   }
 
   void _openSettings(BuildContext context) {
-    context.read<AppStateManager>().write(AppKeys.activeSettingsSection, SettingsSection.shortcuts);
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+    context.read<AppNavigation>().openSettings(context, section: SettingsSection.shortcuts);
   }
 }
 
 class _ShortcutCard extends StatefulWidget {
   const _ShortcutCard({required this.shortcut});
 
-  final PublishShortcut shortcut;
+  final PublishShortcutModel shortcut;
 
   @override
   State<_ShortcutCard> createState() => _ShortcutCardState();
@@ -70,31 +68,21 @@ class _ShortcutCardState extends State<_ShortcutCard> with FeedbackMixin<_Shortc
   Future<void> _execute() async {
     final vm = context.read<MonitorViewModel>();
 
-    if (!vm.isConnected) {
-      showFeedback(PublishFeedbackKind.offline);
-      return;
-    }
-
-    final resolvedTopic = vm.resolveShortcutTopic(widget.shortcut.topic);
     final shortcut = widget.shortcut;
 
-    // Optimistic "sending" state — never a checkmark before the broker
-    // has had a chance to confirm.
-    showFeedback(PublishFeedbackKind.sending, autoDismiss: const Duration(minutes: 1));
-
-    final future = vm.publish(resolvedTopic, shortcut.payload, qos: shortcut.qos, retain: shortcut.retain);
-    if (future == null) {
-      showFeedback(PublishFeedbackKind.failed, detail: 'Client not connected.');
+    final result = await vm.execute(
+      PublishCommand(topicTemplate: shortcut.topic, payload: shortcut.payload, payloadIsJson: shortcut.payloadFormatIsJson, qos: shortcut.qos, retain: shortcut.retain),
+      onDispatch: () => showFeedback(PublishFeedbackKind.sending, autoDismiss: const Duration(minutes: 1)),
+    );
+    if (!mounted) return;
+    if (!result.wasSent) {
+      final feedback = feedbackForCommandFailure(context, result.failure!, result.detail);
+      showFeedback(feedback.kind, detail: feedback.detail);
       return;
     }
-    final result = await future;
-    if (!mounted) return;
-    final info = feedbackForResult(context, result);
-    showFeedback(
-      info.kind,
-      detail: info.detail,
-      autoDismiss: result.isUnconfirmed ? const Duration(minutes: 1) : const Duration(seconds: 4),
-    );
+    final transport = result.transportResult!;
+    final info = feedbackForResult(context, transport);
+    showFeedback(info.kind, detail: info.detail, autoDismiss: transport.isUnconfirmed ? const Duration(minutes: 1) : const Duration(seconds: 4));
   }
 
   Widget _feedbackLabel(BuildContext context) {
@@ -116,10 +104,10 @@ class _ShortcutCardState extends State<_ShortcutCard> with FeedbackMixin<_Shortc
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final sc = widget.shortcut;
-    final color = sc.displayColor;
+    final color = Color(sc.colorValue);
     final hasFeedback = feedback != null;
-    final resolvedTopic = context.watch<MonitorViewModel>().resolveShortcutTopic(sc.topic);
-    final topicHasVariables = resolvedTopic != sc.topic;
+    final resolvedTopic = context.watch<MonitorViewModel>().resolveTopic(sc.topic);
+    final topicHasVariables = resolvedTopic.value != sc.topic;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -160,7 +148,7 @@ class _ShortcutCardState extends State<_ShortcutCard> with FeedbackMixin<_Shortc
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        resolvedTopic,
+                        resolvedTopic.value,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontSize: 10, color: topicHasVariables ? tokens.primary.withValues(alpha: 0.75) : tokens.muted, fontFamily: 'SF Mono, Menlo, monospace', letterSpacing: -0.2),
                       ),
@@ -176,7 +164,7 @@ class _ShortcutCardState extends State<_ShortcutCard> with FeedbackMixin<_Shortc
                   if (sc.retain)
                     Padding(
                       padding: const EdgeInsets.only(right: 4),
-                      child: Icon(Icons.push_pin_rounded, size: 10, color: AppColors.warning500.withValues(alpha: 0.55)),
+                      child: Icon(Icons.push_pin_rounded, size: 10, color: tokens.warning.withValues(alpha: 0.55)),
                     ),
                   QosChip(qos: sc.qos, color: color),
                 ],
@@ -193,16 +181,16 @@ class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
   void _openSettings(BuildContext context) {
-    context.read<AppStateManager>().write(AppKeys.activeSettingsSection, SettingsSection.shortcuts);
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+    context.read<AppNavigation>().openSettings(context, section: SettingsSection.shortcuts);
   }
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Column(
       children: [
         Expanded(
-          child: UiEmptyState.compact(icon: Icons.bolt_rounded, title: S.of(context).sidebarShortcutsEmpty, iconColor: AppColors.warning500.withValues(alpha: 0.5), iconBackgroundColor: AppColors.warning500.withValues(alpha: 0.06)),
+          child: UiEmptyState.compact(icon: Icons.bolt_rounded, title: S.of(context).sidebarShortcutsEmpty, iconColor: tokens.warning.withValues(alpha: 0.5), iconBackgroundColor: tokens.warning.withValues(alpha: 0.06)),
         ),
         _SettingsLink(onTap: () => _openSettings(context)),
       ],

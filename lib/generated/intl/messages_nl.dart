@@ -35,6 +35,11 @@ class MessageLookup extends MessageLookupByLibrary {
   static String m5(count) =>
       "${count} ${Intl.plural(count, one: 'seconde', other: 'seconden')}";
 
+  static String m6(count, rate) => "${count} berichten · ${rate}/s";
+
+  static String m7(count) =>
+      "${count} ${Intl.plural(count, one: 'optie', other: 'opties')}";
+
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
     "aboutPanelAuthor": MessageLookupByLibrary.simpleMessage("Auteur"),
@@ -58,17 +63,128 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "aboutPanelVersionDetail": MessageLookupByLibrary.simpleMessage("Versie"),
     "add": MessageLookupByLibrary.simpleMessage("Toevoegen"),
+    "advancedPanelAffectedBuffers": MessageLookupByLibrary.simpleMessage(
+      "Actieve topicbuffers",
+    ),
+    "advancedPanelAffectedDefault": MessageLookupByLibrary.simpleMessage(
+      "Standaard voor nieuwe abonnementen",
+    ),
+    "advancedPanelAffectedSubscriptions": MessageLookupByLibrary.simpleMessage(
+      "Opgeslagen abonnementsbeleidsregels",
+    ),
+    "advancedPanelDefaultRetention": MessageLookupByLibrary.simpleMessage(
+      "Standaard bewaarlimiet",
+    ),
+    "advancedPanelDefaultRetentionHint": MessageLookupByLibrary.simpleMessage(
+      "Berichten die door elk nieuw abonnement worden bewaard",
+    ),
     "advancedPanelDescription": MessageLookupByLibrary.simpleMessage(
       "Het aanpassen van deze instellingen kan de prestaties aanzienlijk beïnvloeden. Wijzig ze voorzichtig.",
     ),
     "advancedPanelHistoryBuffer": MessageLookupByLibrary.simpleMessage(
       "Geschiedenisbuffer",
     ),
-    "advancedPanelMessagesPerTopic": MessageLookupByLibrary.simpleMessage(
-      "Berichten per onderwerp opslaan",
+    "advancedPanelLogFile": MessageLookupByLibrary.simpleMessage(
+      "Diagnoselogboek",
     ),
-    "advancedPanelMessagesPerTopicHint": MessageLookupByLibrary.simpleMessage(
-      "Maximum aantal berichten dat per onderwerp in de geschiedenis wordt bewaard; oudere berichten worden verwijderd. Lagere waarden gebruiken minder geheugen.",
+    "advancedPanelLogFileHint": MessageLookupByLibrary.simpleMessage(
+      "Diagnosegebeurtenissen zonder gevoelige gegevens van de huidige en eerdere sessies",
+    ),
+    "advancedPanelMaximumConfirmBody": MessageLookupByLibrary.simpleMessage(
+      "Getroffen beleidsregels en actieve buffers worden begrensd. Bestaande berichten boven de nieuwe limiet worden verwijderd.",
+    ),
+    "advancedPanelMaximumConfirmTitle": MessageLookupByLibrary.simpleMessage(
+      "Maximum voor geschiedenis verlagen?",
+    ),
+    "advancedPanelMaximumRetention": MessageLookupByLibrary.simpleMessage(
+      "Maximale bewaarlimiet",
+    ),
+    "advancedPanelMaximumRetentionHint": MessageLookupByLibrary.simpleMessage(
+      "Bovengrens voor elk abonnement en elke actieve geschiedenisbuffer",
+    ),
+    "advancedPanelNewSubscriptionHistory": MessageLookupByLibrary.simpleMessage(
+      "Geschiedenis voor nieuwe abonnementen",
+    ),
+    "advancedPanelNewSubscriptionHistoryHint": MessageLookupByLibrary.simpleMessage(
+      "Verzamel begrensde geschiedenis voor abonnementen die vanaf nu worden gemaakt",
+    ),
+    "advancedPanelOpenFolder": MessageLookupByLibrary.simpleMessage(
+      "Map openen",
+    ),
+    "advancedPanelOpenLocationFailed": MessageLookupByLibrary.simpleMessage(
+      "De locatie kon niet worden geopend.",
+    ),
+    "advancedPanelOpenLog": MessageLookupByLibrary.simpleMessage(
+      "Logboek openen",
+    ),
+    "advancedPanelResetAction": MessageLookupByLibrary.simpleMessage(
+      "Gegevens selecteren",
+    ),
+    "advancedPanelResetBrokers": MessageLookupByLibrary.simpleMessage(
+      "Brokerprofielen",
+    ),
+    "advancedPanelResetCleanupWarning": MessageLookupByLibrary.simpleMessage(
+      "De geselecteerde gegevens zijn hersteld, maar sommige brokerbestanden of inloggegevens konden niet worden verwijderd.",
+    ),
+    "advancedPanelResetConfirmBody": MessageLookupByLibrary.simpleMessage(
+      "Geselecteerde gegevens worden permanent verwijderd of hersteld naar de standaardwaarden. Niet-geselecteerde gegevens blijven behouden.",
+    ),
+    "advancedPanelResetConfirmTitle": MessageLookupByLibrary.simpleMessage(
+      "Kies wat je wilt herstellen",
+    ),
+    "advancedPanelResetConnection": MessageLookupByLibrary.simpleMessage(
+      "Verbindingsvoorkeuren",
+    ),
+    "advancedPanelResetDashboards": MessageLookupByLibrary.simpleMessage(
+      "Dashboards",
+    ),
+    "advancedPanelResetFailed": MessageLookupByLibrary.simpleMessage(
+      "Instellingen konden niet worden hersteld. Er zijn geen brokerbronnen verwijderd.",
+    ),
+    "advancedPanelResetHint": MessageLookupByLibrary.simpleMessage(
+      "Kies welke instellingen en opgeslagen gegevens je wilt herstellen, of herstel alles",
+    ),
+    "advancedPanelResetHistory": MessageLookupByLibrary.simpleMessage(
+      "Geschiedenisvoorkeuren",
+    ),
+    "advancedPanelResetPublishing": MessageLookupByLibrary.simpleMessage(
+      "Publicatievoorkeuren",
+    ),
+    "advancedPanelResetSection": MessageLookupByLibrary.simpleMessage(
+      "Opnieuw instellen",
+    ),
+    "advancedPanelResetSelectAll": MessageLookupByLibrary.simpleMessage(
+      "Alles selecteren",
+    ),
+    "advancedPanelResetSelectedAction": MessageLookupByLibrary.simpleMessage(
+      "Selectie herstellen",
+    ),
+    "advancedPanelResetShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Snelkoppelingen",
+    ),
+    "advancedPanelResetSuccess": MessageLookupByLibrary.simpleMessage(
+      "De geselecteerde gegevens zijn hersteld.",
+    ),
+    "advancedPanelResetTitle": MessageLookupByLibrary.simpleMessage(
+      "Applicatiegegevens herstellen",
+    ),
+    "advancedPanelResetUpdates": MessageLookupByLibrary.simpleMessage(
+      "Updatevoorkeuren",
+    ),
+    "advancedPanelResetUserInterface": MessageLookupByLibrary.simpleMessage(
+      "Gebruikersinterface",
+    ),
+    "advancedPanelResetVariables": MessageLookupByLibrary.simpleMessage(
+      "Variabelen",
+    ),
+    "advancedPanelSettingsLocation": MessageLookupByLibrary.simpleMessage(
+      "Locatie van instellingen",
+    ),
+    "advancedPanelSettingsLocationHint": MessageLookupByLibrary.simpleMessage(
+      "Applicatievoorkeuren worden hier opgeslagen. Brokerwachtwoorden blijven in de beveiligde opslag van het besturingssysteem.",
+    ),
+    "advancedPanelStorageSection": MessageLookupByLibrary.simpleMessage(
+      "Opslag en diagnose",
     ),
     "advancedPanelTitle": MessageLookupByLibrary.simpleMessage("Geavanceerd"),
     "back": MessageLookupByLibrary.simpleMessage("Terug"),
@@ -96,6 +212,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "brokerDialogFieldPort": MessageLookupByLibrary.simpleMessage("Poort"),
     "brokerDialogFieldUsername": MessageLookupByLibrary.simpleMessage(
       "Gebruikersnaam",
+    ),
+    "brokerDialogHistoryDisabled": MessageLookupByLibrary.simpleMessage(
+      "Geschiedenis uit",
+    ),
+    "brokerDialogHistoryMessages": MessageLookupByLibrary.simpleMessage(
+      "geschiedenisberichten",
     ),
     "brokerDialogRandomSuffix": MessageLookupByLibrary.simpleMessage(
       "Willekeurig achtervoegsel",
@@ -131,6 +253,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "brokerDialogValidateName": MessageLookupByLibrary.simpleMessage(
       "Voer een naam in",
     ),
+    "brokerProfilesUnavailable": MessageLookupByLibrary.simpleMessage(
+      "Brokerprofielen niet beschikbaar",
+    ),
     "brokersPanelAddBroker": MessageLookupByLibrary.simpleMessage(
       "Broker toevoegen",
     ),
@@ -152,6 +277,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Alle topics wissen",
     ),
     "collapseAll": MessageLookupByLibrary.simpleMessage("Alles inklappen"),
+    "copy": MessageLookupByLibrary.simpleMessage("Kopiëren"),
     "dashboardDialogEditTitle": MessageLookupByLibrary.simpleMessage(
       "Dashboard bewerken",
     ),
@@ -196,6 +322,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "dashboardPanelDotSize": MessageLookupByLibrary.simpleMessage(
       "Puntgrootte",
     ),
+    "dashboardPanelDotSizeHint": MessageLookupByLibrary.simpleMessage(
+      "Puntgrootte voor nieuwe lijngrafieken. Kies 0 om punten te verbergen.",
+    ),
     "dashboardPanelInterpolation": MessageLookupByLibrary.simpleMessage(
       "Interpolatie",
     ),
@@ -203,7 +332,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Meetpunten",
     ),
     "dashboardPanelMaxSamplesHint": MessageLookupByLibrary.simpleMessage(
-      "0 = onbeperkt",
+      "Maximumaantal recente waarden dat per nieuwe grafiek wordt bewaard.",
     ),
     "dashboardPanelNoDashboardsMessage": MessageLookupByLibrary.simpleMessage(
       "Maak een dashboard of sla op vanuit de dashboardweergave",
@@ -247,6 +376,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "detailYes": MessageLookupByLibrary.simpleMessage("Ja"),
     "disconnect": MessageLookupByLibrary.simpleMessage("Verbinding verbreken"),
+    "dismiss": MessageLookupByLibrary.simpleMessage("Sluiten"),
     "durationHours": m3,
     "durationLessThanSecond": MessageLookupByLibrary.simpleMessage(
       "< 1 seconde",
@@ -260,6 +390,30 @@ class MessageLookup extends MessageLookupByLibrary {
     "filterNoMatchingTopicsSubtitle": MessageLookupByLibrary.simpleMessage(
       "Probeer het filter aan te passen of te wissen.",
     ),
+    "hideDetails": MessageLookupByLibrary.simpleMessage("Details verbergen"),
+    "historyPanelClear": MessageLookupByLibrary.simpleMessage("Wissen"),
+    "historyPanelDisabled": MessageLookupByLibrary.simpleMessage(
+      "Geschiedenis uitgeschakeld",
+    ),
+    "historyPanelDisabledHint": MessageLookupByLibrary.simpleMessage(
+      "Live waarden blijven binnenkomen, maar nieuwe geschiedenis wordt niet opgeslagen",
+    ),
+    "historyPanelNoHistory": MessageLookupByLibrary.simpleMessage(
+      "Nog geen geschiedenis",
+    ),
+    "historyPanelNoHistoryHint": MessageLookupByLibrary.simpleMessage(
+      "Berichten verschijnen hier zodra ze binnenkomen",
+    ),
+    "historyPanelNotSubscribed": MessageLookupByLibrary.simpleMessage(
+      "Geen passend abonnement",
+    ),
+    "historyPanelNotSubscribedHint": MessageLookupByLibrary.simpleMessage(
+      "Dit topic valt niet onder de abonnementen van de actieve broker",
+    ),
+    "historyPanelRetainingUpTo": MessageLookupByLibrary.simpleMessage(
+      "Maximaal bewaren",
+    ),
+    "historyPanelStored": MessageLookupByLibrary.simpleMessage("opgeslagen"),
     "languageNameDe": MessageLookupByLibrary.simpleMessage("Duits"),
     "languageNameEn": MessageLookupByLibrary.simpleMessage("Engels"),
     "languageNameEs": MessageLookupByLibrary.simpleMessage("Spaans"),
@@ -279,7 +433,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Alles wissen",
     ),
     "monitoringPanelDescription": MessageLookupByLibrary.simpleMessage(
-      "Configureer berichtgeschiedenis per topic.",
+      "Configureer live bemonstering van de berichtfrequentie.",
     ),
     "monitoringPanelIncreasedBufferHint": MessageLookupByLibrary.simpleMessage(
       "Berichten voor gemonitorde topics",
@@ -312,6 +466,18 @@ class MessageLookup extends MessageLookupByLibrary {
     "publishBadJson": MessageLookupByLibrary.simpleMessage("Ongeldige JSON"),
     "publishDelivered": MessageLookupByLibrary.simpleMessage("Bezorgd"),
     "publishFailed": MessageLookupByLibrary.simpleMessage("Mislukt"),
+    "publishInvalidQos": MessageLookupByLibrary.simpleMessage(
+      "QoS moet 0, 1 of 2 zijn",
+    ),
+    "publishInvalidTemplate": MessageLookupByLibrary.simpleMessage(
+      "Zet de variabelenaam tussen accolades na een dollarteken",
+    ),
+    "publishInvalidTopic": MessageLookupByLibrary.simpleMessage(
+      "Voer een geldige MQTT-topicnaam in",
+    ),
+    "publishMissingVariables": MessageLookupByLibrary.simpleMessage(
+      "Stel elke topicvariabele in voordat je publiceert",
+    ),
     "publishNoTopic": MessageLookupByLibrary.simpleMessage("Geen topic"),
     "publishOffline": MessageLookupByLibrary.simpleMessage("Offline"),
     "publishPrettifyJson": MessageLookupByLibrary.simpleMessage("JSON opmaken"),
@@ -322,6 +488,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "publishTopicHint": MessageLookupByLibrary.simpleMessage("voorbeeld/topic"),
     "reconnect": MessageLookupByLibrary.simpleMessage("Opnieuw verbinden"),
     "remove": MessageLookupByLibrary.simpleMessage("Verwijderen"),
+    "retry": MessageLookupByLibrary.simpleMessage("Opnieuw proberen"),
     "save": MessageLookupByLibrary.simpleMessage("Opslaan"),
     "scopeGlobal": MessageLookupByLibrary.simpleMessage("Globaal"),
     "scopeSelectedBrokers": MessageLookupByLibrary.simpleMessage(
@@ -353,6 +520,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "shortcutDialogFieldColor": MessageLookupByLibrary.simpleMessage("Kleur"),
     "shortcutDialogFieldName": MessageLookupByLibrary.simpleMessage("Naam"),
     "shortcutDialogFieldTopic": MessageLookupByLibrary.simpleMessage("Topic"),
+    "shortcutDialogInvalidTemplate": MessageLookupByLibrary.simpleMessage(
+      "Zet de variabelenaam tussen accolades na een dollarteken",
+    ),
+    "shortcutDialogInvalidTopic": MessageLookupByLibrary.simpleMessage(
+      "Voer een geldige MQTT-topicnaam in",
+    ),
     "shortcutDialogRetain": MessageLookupByLibrary.simpleMessage("Retain"),
     "shortcutDialogRetainSubtitle": MessageLookupByLibrary.simpleMessage(
       "Broker slaat het bericht op voor nieuwe abonnees",
@@ -387,6 +560,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "shortcutsPanelTitle": MessageLookupByLibrary.simpleMessage(
       "Snelkoppelingen",
     ),
+    "showDetails": MessageLookupByLibrary.simpleMessage("Details tonen"),
     "sidebarHistory": MessageLookupByLibrary.simpleMessage("GESCHIEDENIS"),
     "sidebarMessageDetail": MessageLookupByLibrary.simpleMessage(
       "BERICHTDETAILS",
@@ -398,6 +572,24 @@ class MessageLookup extends MessageLookupByLibrary {
       "Selecteer een topic om te bekijken",
     ),
     "sidebarPublish": MessageLookupByLibrary.simpleMessage("PUBLICEREN"),
+    "sidebarResizeDetailHistory": MessageLookupByLibrary.simpleMessage(
+      "Formaat van Berichtdetails en Geschiedenis wijzigen",
+    ),
+    "sidebarResizeDetailPublish": MessageLookupByLibrary.simpleMessage(
+      "Formaat van Berichtdetails en Publiceren wijzigen",
+    ),
+    "sidebarResizeDetailShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Formaat van Berichtdetails en Snelkoppelingen wijzigen",
+    ),
+    "sidebarResizeHistoryPublish": MessageLookupByLibrary.simpleMessage(
+      "Formaat van Geschiedenis en Publiceren wijzigen",
+    ),
+    "sidebarResizeHistoryShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Formaat van Geschiedenis en Snelkoppelingen wijzigen",
+    ),
+    "sidebarResizePublishShortcuts": MessageLookupByLibrary.simpleMessage(
+      "Formaat van Publiceren en Snelkoppelingen wijzigen",
+    ),
     "sidebarShortcuts": MessageLookupByLibrary.simpleMessage("SNELKOPPELINGEN"),
     "sidebarShortcutsEmpty": MessageLookupByLibrary.simpleMessage(
       "Geen snelkoppelingen beschikbaar.\nVoeg ze toe via Instellingen.",
@@ -405,9 +597,40 @@ class MessageLookup extends MessageLookupByLibrary {
     "sidebarShortcutsManage": MessageLookupByLibrary.simpleMessage(
       "Snelkoppelingen beheren",
     ),
+    "statusConnected": MessageLookupByLibrary.simpleMessage("Verbonden"),
+    "statusConnecting": MessageLookupByLibrary.simpleMessage("Verbinden"),
+    "statusConnectionRefused": MessageLookupByLibrary.simpleMessage(
+      "Verbinding geweigerd",
+    ),
+    "statusDisconnected": MessageLookupByLibrary.simpleMessage("Verbroken"),
+    "statusError": MessageLookupByLibrary.simpleMessage("Fout"),
+    "statusHostNotFound": MessageLookupByLibrary.simpleMessage(
+      "Host niet gevonden",
+    ),
+    "statusMessages": m6,
+    "statusMqtt311Detail": MessageLookupByLibrary.simpleMessage(
+      "MQTT 3.1.1 — broker retourneert geen bezorgredenen",
+    ),
+    "statusMqtt5Detail": MessageLookupByLibrary.simpleMessage(
+      "MQTT 5.0 — redencodes en eigenschappen beschikbaar",
+    ),
+    "statusNotPermitted": MessageLookupByLibrary.simpleMessage(
+      "Niet toegestaan",
+    ),
+    "statusOpenUpdateSettings": MessageLookupByLibrary.simpleMessage(
+      "Update-instellingen openen",
+    ),
+    "statusTlsFailed": MessageLookupByLibrary.simpleMessage("TLS mislukt"),
+    "statusUpdateAvailable": MessageLookupByLibrary.simpleMessage(
+      "Update beschikbaar",
+    ),
     "subscriptionDialogAddTitle": MessageLookupByLibrary.simpleMessage(
       "Abonnement toevoegen",
     ),
+    "subscriptionDialogDuplicateTopicFilter":
+        MessageLookupByLibrary.simpleMessage(
+          "Deze broker heeft dit topicfilter al",
+        ),
     "subscriptionDialogEditTitle": MessageLookupByLibrary.simpleMessage(
       "Abonnement bewerken",
     ),
@@ -420,6 +643,29 @@ class MessageLookup extends MessageLookupByLibrary {
     "subscriptionDialogHintDisplayName": MessageLookupByLibrary.simpleMessage(
       "Optionele vriendelijke naam",
     ),
+    "subscriptionDialogHistoryEnabled": MessageLookupByLibrary.simpleMessage(
+      "Berichtgeschiedenis opslaan",
+    ),
+    "subscriptionDialogHistoryEnabledHint":
+        MessageLookupByLibrary.simpleMessage(
+          "Live berichten blijven beschikbaar wanneer geschiedenis uit staat",
+        ),
+    "subscriptionDialogHistoryLabel": MessageLookupByLibrary.simpleMessage(
+      "Geschiedenis",
+    ),
+    "subscriptionDialogHistoryOverlapHint": MessageLookupByLibrary.simpleMessage(
+      "Wanneer ingeschakelde filters overlappen, wordt de grootste passende bewaarlimiet gebruikt.",
+    ),
+    "subscriptionDialogHistoryRetention": MessageLookupByLibrary.simpleMessage(
+      "Bewaarlimiet",
+    ),
+    "subscriptionDialogHistoryRetentionHint": MessageLookupByLibrary.simpleMessage(
+      "Berichten die worden bewaard voor topics die bij dit abonnement passen",
+    ),
+    "subscriptionDialogInvalidTopicFilter":
+        MessageLookupByLibrary.simpleMessage(
+          "Voer een geldig MQTT-topicfilter in",
+        ),
     "subscriptionDialogQoS0Description": MessageLookupByLibrary.simpleMessage(
       "Maximaal één keer",
     ),
@@ -444,6 +690,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "subscriptionDialogValidateTopicFilter":
         MessageLookupByLibrary.simpleMessage("Voer een onderwerpfilter in"),
     "uiPanelAccentColor": MessageLookupByLibrary.simpleMessage("Accentkleur"),
+    "uiPanelDefaultBrokerProtocol": MessageLookupByLibrary.simpleMessage(
+      "Standaardprotocol voor nieuwe brokers",
+    ),
     "uiPanelDefaultPublishQos": MessageLookupByLibrary.simpleMessage(
       "Standaard QoS publiceren",
     ),
@@ -616,6 +865,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "variablesPanelNoVariablesTitle": MessageLookupByLibrary.simpleMessage(
       "Nog geen variabelen",
     ),
+    "variablesPanelOptionsCount": m7,
     "variablesPanelTitle": MessageLookupByLibrary.simpleMessage("Variabelen"),
   };
 }

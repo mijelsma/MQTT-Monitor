@@ -14,11 +14,12 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   intl: any
-  cupertino_icons: ^1.0.8
   provider: ^6.1.5+1
   shared_preferences: ^2.3.5
+  flutter_secure_storage: ^10.3.1
   mqtt_client: ^10.11.9
   mqtt5_client: ^5.0.0
+  event_bus: ^2.0.1
   file_picker: ^10.3.10
   path: ^1.9.1
   path_provider: ^2.1.5
@@ -33,17 +34,14 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  integration_test:
+    sdk: flutter
   flutter_lints: ^6.0.0
-  build_runner: 
-  arb_generator: 
   intl_utils: ^2.8.7
-  # Transitive deps of mqtt5_client used by the MQTT 5 fake in mqtt_service_test.
-  event_bus: ^2.0.1
+  # Transitive dependency of mqtt5_client used by the MQTT 5 fake tests.
   typed_data: ^1.4.0
-  dmg: ^0.1.10
 
 flutter:
-  generate: true
   uses-material-design: true
   assets:
     - macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_512.png

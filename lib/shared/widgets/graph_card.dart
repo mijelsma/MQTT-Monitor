@@ -3,19 +3,19 @@ import 'dart:math' as math;
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-import '../../models/chart_type.dart';
-import '../../models/data_point.dart';
-import '../../models/graph_card_model.dart';
-import '../../models/interpolation_mode.dart';
-import '../../theme/app_colors.dart';
+import '../../core/dashboard/models/chart_type_model.dart';
+import '../../core/dashboard/models/data_point_model.dart';
+import '../../core/dashboard/models/graph_card_model.dart';
+import '../../core/dashboard/models/interpolation_mode_model.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 
 /// A reusable card widget that renders a live-updating line or bar chart
 /// for a single tracked MQTT value.
 class GraphCard extends StatelessWidget {
-  const GraphCard({super.key, required this.model, this.onEdit, this.onRemove});
+  const GraphCard({super.key, required this.model, required this.dataPoints, this.onEdit, this.onRemove});
 
   final GraphCardModel model;
+  final List<DataPointModel> dataPoints;
   final VoidCallback? onEdit;
   final VoidCallback? onRemove;
 
@@ -33,15 +33,15 @@ class GraphCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _Header(model: model, onEdit: onEdit, onRemove: onRemove),
+          _Header(model: model, dataPoints: dataPoints, onEdit: onEdit, onRemove: onRemove),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(4, 0, 8, 4),
-              child: model.dataPoints.isEmpty
+              child: dataPoints.isEmpty
                   ? _EmptyChart(tokens: tokens)
-                  : model.chartType == ChartType.line
-                  ? _LineChart(model: model, tokens: tokens)
-                  : _BarChart(model: model, tokens: tokens),
+                  : model.chartType == ChartTypeModel.line
+                  ? _LineChart(model: model, dataPoints: dataPoints, tokens: tokens)
+                  : _BarChart(model: model, dataPoints: dataPoints, tokens: tokens),
             ),
           ),
         ],
@@ -51,16 +51,17 @@ class GraphCard extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.model, this.onEdit, this.onRemove});
+  const _Header({required this.model, required this.dataPoints, this.onEdit, this.onRemove});
 
   final GraphCardModel model;
+  final List<DataPointModel> dataPoints;
   final VoidCallback? onEdit;
   final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final lastValue = model.dataPoints.isNotEmpty ? model.dataPoints.last.value.toStringAsFixed(2) : '—';
+    final lastValue = dataPoints.isNotEmpty ? dataPoints.last.value.toStringAsFixed(2) : '—';
     final unitSuffix = model.unit != null && model.unit!.isNotEmpty ? ' ${model.unit}' : '';
 
     return Padding(
@@ -70,7 +71,7 @@ class _Header extends StatelessWidget {
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(color: model.color, shape: BoxShape.circle),
+            decoration: BoxDecoration(color: Color(model.colorValue), shape: BoxShape.circle),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -97,8 +98,8 @@ class _Header extends StatelessWidget {
               constraints: const BoxConstraints(),
               iconSize: 16,
               itemBuilder: (_) => [
-                if (onEdit != null) PopupMenuItem(value: 'edit', child: _menuItem(Icons.edit_rounded, 'Edit')),
-                if (onRemove != null) ...[const PopupMenuDivider(), PopupMenuItem(value: 'remove', child: _menuItem(Icons.delete_outline_rounded, 'Remove', isDestructive: true))],
+                if (onEdit != null) PopupMenuItem(value: 'edit', child: _menuItem(tokens, Icons.edit_rounded, 'Edit')),
+                if (onRemove != null) ...[const PopupMenuDivider(), PopupMenuItem(value: 'remove', child: _menuItem(tokens, Icons.delete_outline_rounded, 'Remove', isDestructive: true))],
               ],
               onSelected: (action) {
                 switch (action) {
@@ -114,8 +115,8 @@ class _Header extends StatelessWidget {
     );
   }
 
-  Widget _menuItem(IconData icon, String label, {bool isDestructive = false}) {
-    final color = isDestructive ? AppColors.error500 : null;
+  Widget _menuItem(AppTokens tokens, IconData icon, String label, {bool isDestructive = false}) {
+    final color = isDestructive ? tokens.error : null;
     return Row(
       children: [
         Icon(icon, size: 16, color: color),
@@ -150,15 +151,16 @@ class _EmptyChart extends StatelessWidget {
 }
 
 class _LineChart extends StatelessWidget {
-  const _LineChart({required this.model, required this.tokens});
+  const _LineChart({required this.model, required this.dataPoints, required this.tokens});
 
   final GraphCardModel model;
+  final List<DataPointModel> dataPoints;
   final AppTokens tokens;
 
   @override
   Widget build(BuildContext context) {
-    final spots = _buildSpots(model.dataPoints);
-    final (:minY, :maxY, :yInterval) = _yConfig(model);
+    final spots = _buildSpots(dataPoints);
+    final (:minY, :maxY, :yInterval) = _yConfig(model, dataPoints);
 
     return LineChart(
       LineChartData(
@@ -171,9 +173,11 @@ class _LineChart extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 20,
-              interval: _xInterval(model.dataPoints),
+              interval: _xInterval(dataPoints),
               getTitlesWidget: (value, meta) {
-                if (value <= meta.min || value >= meta.max) return const SizedBox.shrink();
+                if (value <= meta.min || value >= meta.max) {
+                  return const SizedBox.shrink();
+                }
                 return _timeLabel(value, tokens);
               },
             ),
@@ -186,20 +190,20 @@ class _LineChart extends StatelessWidget {
         lineBarsData: [
           LineChartBarData(
             spots: spots,
-            isCurved: model.interpolation == InterpolationMode.curved,
+            isCurved: model.interpolation == InterpolationModeModel.curved,
             curveSmoothness: 0.2,
             preventCurveOverShooting: true,
-            isStepLineChart: model.interpolation == InterpolationMode.stepped,
-            color: model.color,
+            isStepLineChart: model.interpolation == InterpolationModeModel.stepped,
+            color: Color(model.colorValue),
             barWidth: 2,
             isStrokeCapRound: true,
             dotData: FlDotData(
               show: model.dotSize > 0,
-              getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(radius: model.dotSize, color: model.color, strokeWidth: 0),
+              getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(radius: model.dotSize, color: Color(model.colorValue), strokeWidth: 0),
             ),
             belowBarData: BarAreaData(
               show: model.showFill,
-              color: model.color.withValues(alpha: model.fillOpacity),
+              color: Color(model.colorValue).withValues(alpha: model.fillOpacity),
             ),
           ),
         ],
@@ -210,7 +214,7 @@ class _LineChart extends StatelessWidget {
               final timestamp = _formatTimestamp(s.x);
               return LineTooltipItem(
                 '${_formatValue(s.y)}\n',
-                TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: model.color),
+                TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(model.colorValue)),
                 children: [
                   TextSpan(
                     text: timestamp,
@@ -227,14 +231,15 @@ class _LineChart extends StatelessWidget {
 }
 
 class _BarChart extends StatelessWidget {
-  const _BarChart({required this.model, required this.tokens});
+  const _BarChart({required this.model, required this.dataPoints, required this.tokens});
 
   final GraphCardModel model;
+  final List<DataPointModel> dataPoints;
   final AppTokens tokens;
 
   @override
   Widget build(BuildContext context) {
-    final (:minY, :maxY, :yInterval) = _yConfig(model);
+    final (:minY, :maxY, :yInterval) = _yConfig(model, dataPoints);
 
     return BarChart(
       BarChartData(
@@ -248,9 +253,13 @@ class _BarChart extends StatelessWidget {
               reservedSize: 20,
               getTitlesWidget: (value, _) {
                 final idx = value.toInt();
-                if (idx < 0 || idx >= model.dataPoints.length) return const SizedBox.shrink();
-                if (model.dataPoints.length > 10 && idx % (model.dataPoints.length ~/ 5) != 0) return const SizedBox.shrink();
-                return _timeLabel(model.dataPoints[idx].timestamp.millisecondsSinceEpoch.toDouble(), tokens);
+                if (idx < 0 || idx >= dataPoints.length) {
+                  return const SizedBox.shrink();
+                }
+                if (dataPoints.length > 10 && idx % (dataPoints.length ~/ 5) != 0) {
+                  return const SizedBox.shrink();
+                }
+                return _timeLabel(dataPoints[idx].timestamp.millisecondsSinceEpoch.toDouble(), tokens);
               },
             ),
           ),
@@ -259,14 +268,14 @@ class _BarChart extends StatelessWidget {
         borderData: FlBorderData(show: false),
         minY: minY,
         maxY: maxY,
-        barGroups: model.dataPoints.asMap().entries.map((e) {
+        barGroups: dataPoints.asMap().entries.map((e) {
           return BarChartGroupData(
             x: e.key,
             barRods: [
               BarChartRodData(
                 toY: e.value.value,
-                color: model.color,
-                width: model.dataPoints.length > 30 ? 3 : 8,
+                color: Color(model.colorValue),
+                width: dataPoints.length > 30 ? 3 : 8,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
               ),
             ],
@@ -277,10 +286,10 @@ class _BarChart extends StatelessWidget {
             getTooltipColor: (_) => tokens.elevated,
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final idx = group.x;
-              final timestamp = idx >= 0 && idx < model.dataPoints.length ? _formatTimestamp(model.dataPoints[idx].timestamp.millisecondsSinceEpoch.toDouble()) : '';
+              final timestamp = idx >= 0 && idx < dataPoints.length ? _formatTimestamp(dataPoints[idx].timestamp.millisecondsSinceEpoch.toDouble()) : '';
               return BarTooltipItem(
                 '${_formatValue(rod.toY)}\n',
-                TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: model.color),
+                TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(model.colorValue)),
                 children: [
                   TextSpan(
                     text: timestamp,
@@ -296,8 +305,8 @@ class _BarChart extends StatelessWidget {
   }
 }
 
-({double minY, double maxY, double yInterval}) _yConfig(GraphCardModel model) {
-  final (autoMin, autoMax) = _yRange(model.dataPoints);
+({double minY, double maxY, double yInterval}) _yConfig(GraphCardModel model, List<DataPointModel> dataPoints) {
+  final (autoMin, autoMax) = _yRange(dataPoints);
   final minY = model.yMin ?? autoMin;
   final maxY = model.yMax ?? autoMax;
   return (minY: minY, maxY: maxY, yInterval: _niceInterval(minY, maxY));
@@ -324,12 +333,12 @@ AxisTitles _leftAxisTitles(AppTokens tokens, double yInterval) => AxisTitles(
   ),
 );
 
-List<FlSpot> _buildSpots(List<DataPoint> points) {
+List<FlSpot> _buildSpots(List<DataPointModel> points) {
   if (points.isEmpty) return [];
   return points.map((p) => FlSpot(p.timestamp.millisecondsSinceEpoch.toDouble(), p.value)).toList();
 }
 
-(double, double) _yRange(List<DataPoint> points) {
+(double, double) _yRange(List<DataPointModel> points) {
   if (points.isEmpty) return (0, 1);
   var min = points.first.value;
   var max = points.first.value;
@@ -360,12 +369,16 @@ double _niceInterval(double minY, double maxY) {
 
 bool _tooCloseToEdge(double value, double min, double max, double interval) {
   final threshold = interval * 0.6;
-  if ((value - min).abs() < threshold && (value - min).abs() > 0.001) return true;
-  if ((max - value).abs() < threshold && (max - value).abs() > 0.001) return true;
+  if ((value - min).abs() < threshold && (value - min).abs() > 0.001) {
+    return true;
+  }
+  if ((max - value).abs() < threshold && (max - value).abs() > 0.001) {
+    return true;
+  }
   return false;
 }
 
-double _xInterval(List<DataPoint> points) {
+double _xInterval(List<DataPointModel> points) {
   if (points.length < 2) return 1;
   final total = points.last.timestamp.millisecondsSinceEpoch - points.first.timestamp.millisecondsSinceEpoch;
   if (total <= 0) return 1;

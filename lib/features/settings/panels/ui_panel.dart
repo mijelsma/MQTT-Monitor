@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../generated/l10n.dart';
-import '../../../models/mqtt_qos_default.dart';
-import '../../../models/sidebar_panel_default.dart';
-import '../../../models/startup_connection.dart';
+import '../../../core/publishing/models/mqtt_qos_default_model.dart';
+import '../../../core/mqtt/models/mqtt_protocol_version_model.dart';
+import '../../../core/ui/models/sidebar_panel_default_model.dart';
+import '../../../core/mqtt/models/startup_connection_model.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../../../shared/widgets/color_picker_field.dart';
 import '../../../shared/widgets/ui_inline_segment_row.dart';
@@ -13,7 +14,7 @@ import '../../../shared/widgets/ui_section.dart';
 import '../../../shared/widgets/ui_segment_row.dart';
 import '../../../shared/widgets/ui_slider_row.dart';
 import '../../../shared/widgets/ui_switch_row.dart';
-import '../settings_viewmodel.dart';
+import '../view_models/settings_view_model.dart';
 
 class UiPanel extends StatelessWidget {
   const UiPanel({super.key});
@@ -106,16 +107,23 @@ class UiPanel extends StatelessWidget {
         UiSection(
           label: s.uiPanelSectionConnection,
           children: [
-            UiSegmentRow<StartupConnection>(
+            UiSegmentRow<StartupConnectionModel>(
               label: s.uiPanelStartupBehavior,
               accent: accent,
               value: vm.startupConnection,
               onChanged: (v) => vm.setStartupConnection(v),
               options: [
-                UiSegmentOption(value: StartupConnection.alwaysConnect, label: s.uiPanelStartupConnect, icon: Icons.power_rounded),
-                UiSegmentOption(value: StartupConnection.lastStatus, label: s.uiPanelStartupLastStatus, icon: Icons.restore_rounded),
-                UiSegmentOption(value: StartupConnection.stayDisconnected, label: s.uiPanelStartupDisconnected, icon: Icons.power_off_rounded),
+                UiSegmentOption(value: StartupConnectionModel.alwaysConnect, label: s.uiPanelStartupConnect, icon: Icons.power_rounded),
+                UiSegmentOption(value: StartupConnectionModel.lastStatus, label: s.uiPanelStartupLastStatus, icon: Icons.restore_rounded),
+                UiSegmentOption(value: StartupConnectionModel.stayDisconnected, label: s.uiPanelStartupDisconnected, icon: Icons.power_off_rounded),
               ],
+            ),
+            UiSegmentRow<MqttProtocolVersionModel>(
+              label: s.uiPanelDefaultBrokerProtocol,
+              accent: accent,
+              value: vm.defaultBrokerProtocol,
+              onChanged: vm.setDefaultBrokerProtocol,
+              options: [for (final version in MqttProtocolVersionModel.values) UiSegmentOption(value: version, label: version.displayName)],
             ),
           ],
         ),
@@ -124,52 +132,52 @@ class UiPanel extends StatelessWidget {
         UiSection(
           label: s.uiPanelSectionSidebarPanels,
           children: [
-            UiInlineSegmentRow<SidebarPanelDefault>(
+            UiInlineSegmentRow<SidebarPanelDefaultModel>(
               icon: const Icon(Icons.info_outline_rounded),
               label: s.sidebarMessageDetail,
               accent: accent,
               value: vm.defaultSidebarDetail,
               onChanged: (v) => vm.setDefaultSidebarDetail(v),
               options: [
-                UiInlineSegmentOption(value: SidebarPanelDefault.collapsed, label: s.uiPanelDefaultStateCollapsed, icon: const Icon(Icons.expand_less_rounded)),
-                UiInlineSegmentOption(value: SidebarPanelDefault.expanded, label: s.uiPanelDefaultStateExpanded, icon: const Icon(Icons.expand_more_rounded)),
-                UiInlineSegmentOption(value: SidebarPanelDefault.lastStatus, label: s.uiPanelDefaultStateLastStatus, icon: const Icon(Icons.restore_rounded)),
+                UiInlineSegmentOption(value: SidebarPanelDefaultModel.collapsed, label: s.uiPanelDefaultStateCollapsed, icon: const Icon(Icons.expand_less_rounded)),
+                UiInlineSegmentOption(value: SidebarPanelDefaultModel.expanded, label: s.uiPanelDefaultStateExpanded, icon: const Icon(Icons.expand_more_rounded)),
+                UiInlineSegmentOption(value: SidebarPanelDefaultModel.lastStatus, label: s.uiPanelDefaultStateLastStatus, icon: const Icon(Icons.restore_rounded)),
               ],
             ),
-            UiInlineSegmentRow<SidebarPanelDefault>(
+            UiInlineSegmentRow<SidebarPanelDefaultModel>(
               icon: const Icon(Icons.history_rounded),
               label: s.sidebarHistory,
               accent: accent,
               value: vm.defaultSidebarHistory,
               onChanged: (v) => vm.setDefaultSidebarHistory(v),
               options: [
-                UiInlineSegmentOption(value: SidebarPanelDefault.collapsed, label: s.uiPanelDefaultStateCollapsed, icon: const Icon(Icons.expand_less_rounded)),
-                UiInlineSegmentOption(value: SidebarPanelDefault.expanded, label: s.uiPanelDefaultStateExpanded, icon: const Icon(Icons.expand_more_rounded)),
-                UiInlineSegmentOption(value: SidebarPanelDefault.lastStatus, label: s.uiPanelDefaultStateLastStatus, icon: const Icon(Icons.restore_rounded)),
+                UiInlineSegmentOption(value: SidebarPanelDefaultModel.collapsed, label: s.uiPanelDefaultStateCollapsed, icon: const Icon(Icons.expand_less_rounded)),
+                UiInlineSegmentOption(value: SidebarPanelDefaultModel.expanded, label: s.uiPanelDefaultStateExpanded, icon: const Icon(Icons.expand_more_rounded)),
+                UiInlineSegmentOption(value: SidebarPanelDefaultModel.lastStatus, label: s.uiPanelDefaultStateLastStatus, icon: const Icon(Icons.restore_rounded)),
               ],
             ),
-            UiInlineSegmentRow<SidebarPanelDefault>(
+            UiInlineSegmentRow<SidebarPanelDefaultModel>(
               icon: const Icon(Icons.send_rounded),
               label: s.sidebarPublish,
               accent: accent,
               value: vm.defaultSidebarPublish,
               onChanged: (v) => vm.setDefaultSidebarPublish(v),
               options: [
-                UiInlineSegmentOption(value: SidebarPanelDefault.collapsed, label: s.uiPanelDefaultStateCollapsed, icon: const Icon(Icons.expand_less_rounded)),
-                UiInlineSegmentOption(value: SidebarPanelDefault.expanded, label: s.uiPanelDefaultStateExpanded, icon: const Icon(Icons.expand_more_rounded)),
-                UiInlineSegmentOption(value: SidebarPanelDefault.lastStatus, label: s.uiPanelDefaultStateLastStatus, icon: const Icon(Icons.restore_rounded)),
+                UiInlineSegmentOption(value: SidebarPanelDefaultModel.collapsed, label: s.uiPanelDefaultStateCollapsed, icon: const Icon(Icons.expand_less_rounded)),
+                UiInlineSegmentOption(value: SidebarPanelDefaultModel.expanded, label: s.uiPanelDefaultStateExpanded, icon: const Icon(Icons.expand_more_rounded)),
+                UiInlineSegmentOption(value: SidebarPanelDefaultModel.lastStatus, label: s.uiPanelDefaultStateLastStatus, icon: const Icon(Icons.restore_rounded)),
               ],
             ),
-            UiInlineSegmentRow<SidebarPanelDefault>(
+            UiInlineSegmentRow<SidebarPanelDefaultModel>(
               icon: const Icon(Icons.bolt_rounded),
               label: s.sidebarShortcuts,
               accent: accent,
               value: vm.defaultSidebarShortcuts,
               onChanged: (v) => vm.setDefaultSidebarShortcuts(v),
               options: [
-                UiInlineSegmentOption(value: SidebarPanelDefault.collapsed, label: s.uiPanelDefaultStateCollapsed, icon: const Icon(Icons.expand_less_rounded)),
-                UiInlineSegmentOption(value: SidebarPanelDefault.expanded, label: s.uiPanelDefaultStateExpanded, icon: const Icon(Icons.expand_more_rounded)),
-                UiInlineSegmentOption(value: SidebarPanelDefault.lastStatus, label: s.uiPanelDefaultStateLastStatus, icon: const Icon(Icons.restore_rounded)),
+                UiInlineSegmentOption(value: SidebarPanelDefaultModel.collapsed, label: s.uiPanelDefaultStateCollapsed, icon: const Icon(Icons.expand_less_rounded)),
+                UiInlineSegmentOption(value: SidebarPanelDefaultModel.expanded, label: s.uiPanelDefaultStateExpanded, icon: const Icon(Icons.expand_more_rounded)),
+                UiInlineSegmentOption(value: SidebarPanelDefaultModel.lastStatus, label: s.uiPanelDefaultStateLastStatus, icon: const Icon(Icons.restore_rounded)),
               ],
             ),
           ],
@@ -179,41 +187,32 @@ class UiPanel extends StatelessWidget {
         UiSection(
           label: s.uiPanelSectionDefaults,
           children: [
-            UiInlineSegmentRow<MqttQosDefault>(
+            UiInlineSegmentRow<MqttQosDefaultModel>(
               label: s.uiPanelDefaultPublishQos,
               subtitle: s.uiPanelDefaultPublishQosSubtitle,
               accent: accent,
               value: vm.defaultPublishQos,
               onChanged: (v) => vm.setDefaultPublishQos(v),
-              footer: vm.defaultPublishQos == MqttQosDefault.lastUsed ? Text('${s.uiPanelQosOptionLastUsed}: ${MqttQosDefault.fromQos(vm.lastUsedQos).shortLabel}') : null,
-              options: [
-                for (final option in MqttQosDefault.values)
-                  UiInlineSegmentOption(value: option, label: option == MqttQosDefault.lastUsed ? s.uiPanelQosOptionLastUsed : option.shortLabel, icon: option == MqttQosDefault.lastUsed ? const Icon(Icons.history_rounded) : null),
-              ],
+              footer: vm.defaultPublishQos == MqttQosDefaultModel.lastUsed ? Text('${s.uiPanelQosOptionLastUsed}: ${MqttQosDefaultModel.fromQos(vm.lastUsedQos).shortLabel}') : null,
+              options: [for (final option in MqttQosDefaultModel.values) UiInlineSegmentOption(value: option, label: option == MqttQosDefaultModel.lastUsed ? s.uiPanelQosOptionLastUsed : option.shortLabel, icon: option == MqttQosDefaultModel.lastUsed ? const Icon(Icons.history_rounded) : null)],
             ),
-            UiInlineSegmentRow<MqttQosDefault>(
+            UiInlineSegmentRow<MqttQosDefaultModel>(
               label: s.uiPanelDefaultShortcutQos,
               subtitle: s.uiPanelDefaultShortcutQosSubtitle,
               accent: accent,
               value: vm.defaultShortcutQos,
               onChanged: (v) => vm.setDefaultShortcutQos(v),
-              footer: vm.defaultShortcutQos == MqttQosDefault.lastUsed ? Text('${s.uiPanelQosOptionLastUsed}: ${MqttQosDefault.fromQos(vm.lastUsedQos).shortLabel}') : null,
-              options: [
-                for (final option in MqttQosDefault.values)
-                  UiInlineSegmentOption(value: option, label: option == MqttQosDefault.lastUsed ? s.uiPanelQosOptionLastUsed : option.shortLabel, icon: option == MqttQosDefault.lastUsed ? const Icon(Icons.history_rounded) : null),
-              ],
+              footer: vm.defaultShortcutQos == MqttQosDefaultModel.lastUsed ? Text('${s.uiPanelQosOptionLastUsed}: ${MqttQosDefaultModel.fromQos(vm.lastUsedQos).shortLabel}') : null,
+              options: [for (final option in MqttQosDefaultModel.values) UiInlineSegmentOption(value: option, label: option == MqttQosDefaultModel.lastUsed ? s.uiPanelQosOptionLastUsed : option.shortLabel, icon: option == MqttQosDefaultModel.lastUsed ? const Icon(Icons.history_rounded) : null)],
             ),
-            UiInlineSegmentRow<MqttQosDefault>(
+            UiInlineSegmentRow<MqttQosDefaultModel>(
               label: s.uiPanelDefaultSubscribeQos,
               subtitle: s.uiPanelDefaultSubscribeQosSubtitle,
               accent: accent,
               value: vm.defaultSubscribeQos,
               onChanged: (v) => vm.setDefaultSubscribeQos(v),
-              footer: vm.defaultSubscribeQos == MqttQosDefault.lastUsed ? Text('${s.uiPanelQosOptionLastUsed}: ${MqttQosDefault.fromQos(vm.lastUsedQos).shortLabel}') : null,
-              options: [
-                for (final option in MqttQosDefault.values)
-                  UiInlineSegmentOption(value: option, label: option == MqttQosDefault.lastUsed ? s.uiPanelQosOptionLastUsed : option.shortLabel, icon: option == MqttQosDefault.lastUsed ? const Icon(Icons.history_rounded) : null),
-              ],
+              footer: vm.defaultSubscribeQos == MqttQosDefaultModel.lastUsed ? Text('${s.uiPanelQosOptionLastUsed}: ${MqttQosDefaultModel.fromQos(vm.lastUsedQos).shortLabel}') : null,
+              options: [for (final option in MqttQosDefaultModel.values) UiInlineSegmentOption(value: option, label: option == MqttQosDefaultModel.lastUsed ? s.uiPanelQosOptionLastUsed : option.shortLabel, icon: option == MqttQosDefaultModel.lastUsed ? const Icon(Icons.history_rounded) : null)],
             ),
           ],
         ),

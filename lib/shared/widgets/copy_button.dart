@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../format_helpers.dart';
-import '../../theme/app_colors.dart';
+import '../../generated/l10n.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 
 /// A small icon button that copies [text] to the clipboard and briefly
@@ -38,7 +38,7 @@ class _CopyButtonState extends State<CopyButton> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final color = _copied
-        ? AppColors.success400
+        ? tokens.success
         : _hovering
         ? tokens.textPrimary
         : tokens.textTertiary;
@@ -47,15 +47,15 @@ class _CopyButtonState extends State<CopyButton> {
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
-      child: GestureDetector(
-        onTap: _copy,
-        behavior: HitTestBehavior.opaque,
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 150),
-            child: Icon(_copied ? Icons.check_rounded : Icons.copy_rounded, key: ValueKey(_copied), size: widget.size, color: color),
-          ),
+      child: IconButton(
+        onPressed: _copy,
+        tooltip: S.maybeOf(context)?.copy ?? 'Copy',
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.all(4),
+        constraints: BoxConstraints(minWidth: 32, minHeight: 32),
+        icon: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 150),
+          child: Icon(_copied ? Icons.check_rounded : Icons.copy_rounded, key: ValueKey(_copied), size: widget.size, color: color),
         ),
       ),
     );

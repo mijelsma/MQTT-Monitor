@@ -38,5 +38,23 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_macos_build_settings(target)
+
+    # desktop_updater 2.7.0 includes its privacy manifest in source_files
+    # instead of a resource bundle. Move it to the framework resources phase
+    # so Xcode packages it rather than trying to compile it as XML.
+    next unless target.name == 'desktop_updater'
+
+    target.source_build_phase.files.each do |build_file|
+      file_reference = build_file.file_ref
+      next unless file_reference&.path&.end_with?('PrivacyInfo.xcprivacy')
+
+      build_file.remove_from_project
+      already_added = target.resources_build_phase.files.any? do |resource|
+        resource.file_ref == file_reference
+      end
+      unless already_added
+        target.resources_build_phase.add_file_reference(file_reference)
+      end
+    end
   end
 end

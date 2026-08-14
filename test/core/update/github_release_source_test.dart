@@ -53,6 +53,22 @@ void main() {
     expect(beta?.channel, GitHubReleaseSource.stableChannel);
   });
 
+  test(
+    'stable selection uses the greatest version regardless of API order',
+    () async {
+      final source = _source(releasesUrl, [
+        _release('v1.4.0'),
+        _release('v1.2.0'),
+        _release('v1.3.5'),
+      ]);
+      addTearDown(source.close);
+
+      final selection = await source.findLatest(includePrereleases: false);
+
+      expect(selection?.release.tagName, 'v1.4.0');
+    },
+  );
+
   test('supports calendar-version tags with leading zeroes', () async {
     final source = _source(releasesUrl, [
       _release('2025.09.28'),

@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/history/message_history_service.dart';
-import '../../core/mqtt/mqtt_service.dart';
-import '../../core/state/app_state.dart';
-import '../../core/state/keys/app_keys.dart';
-import '../../models/dashboard_layout.dart';
+import '../../core/broker/repositories/broker_repository.dart';
+import '../../core/dashboard/repositories/dashboard_repository.dart';
+import '../../core/dashboard/dashboard_series_store.dart';
+import '../../core/history/services/message_history_service.dart';
+import '../../core/publishing/template_resolver.dart';
+import '../../core/publishing/repositories/variable_repository.dart';
+import '../../navigation/app_navigation.dart';
+import '../../core/dashboard/models/dashboard_layout_model.dart';
 import '../../shared/widgets/empty_state_shell.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 import '../settings/dialogs/create_dashboard_dialog.dart';
-import '../settings/settings_screen.dart';
 import '../settings/settings_section.dart';
-import 'dashboard_view_model.dart';
+import 'view_models/dashboard_view_model.dart';
 import 'dialogs/new_empty_dashboard_dialog.dart';
 import 'dialogs/save_dashboard_dialog.dart';
 import 'widgets/dashboard_app_bar.dart';
@@ -21,15 +23,17 @@ import 'widgets/variable_bar.dart';
 
 /// Main dashboard screen. Provides a [DashboardViewModel] to the widget tree.
 class GraphDashboardScreen extends StatelessWidget {
+  /// Creates a dashboard scoped to [brokerId] and labeled [brokerName].
   const GraphDashboardScreen({super.key, required this.brokerId, required this.brokerName});
 
   final String brokerId;
   final String brokerName;
 
+  /// Creates the broker-aware dashboard view model and screen scaffold.
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (ctx) => DashboardViewModel(mqttService: ctx.read<MqttService>(), state: ctx.read<AppStateManager>(), brokerId: brokerId, historyService: ctx.read<MessageHistoryService>()),
+      create: (ctx) => DashboardViewModel(repository: ctx.read<DashboardRepository>(), seriesStore: ctx.read<DashboardSeriesStore>(), variableRepository: ctx.read<VariableRepository>(), templateResolver: ctx.read<TemplateResolver>(), brokerId: brokerId, historyService: ctx.read<MessageHistoryService>(), brokerRepository: ctx.read<BrokerRepository>()),
       child: _DashboardScaffold(brokerName: brokerName),
     );
   }
@@ -86,7 +90,7 @@ class _DashboardScaffold extends StatelessWidget {
     await vm.clearDashboard();
   }
 
-  void _showEditLayoutDialog(BuildContext context, DashboardViewModel vm, DashboardLayout layout) async {
+  void _showEditLayoutDialog(BuildContext context, DashboardViewModel vm, DashboardLayoutModel layout) async {
     final updated = await showCreateDashboardDialog(context, dashboard: layout, brokers: vm.brokers, onDelete: () => vm.deleteLayout(layout.id));
     if (updated == null) return;
     await vm.updateLayoutMetadata(updated);
@@ -102,7 +106,7 @@ class _DashboardScaffold extends StatelessWidget {
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error500),
+            style: FilledButton.styleFrom(backgroundColor: context.tokens.error),
             child: const Text('Erase'),
           ),
         ],
@@ -113,7 +117,6 @@ class _DashboardScaffold extends StatelessWidget {
   }
 
   void _openSettings(BuildContext context, SettingsSection section) {
-    context.read<AppStateManager>().write(AppKeys.activeSettingsSection, section);
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+    context.read<AppNavigation>().openSettings(context, section: section);
   }
 }

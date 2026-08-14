@@ -5,8 +5,8 @@ import '../../../core/mqtt/connection_status.dart';
 import '../../../generated/l10n.dart';
 import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../../../models/broker_entry.dart';
-import '../monitor_viewmodel.dart';
+import '../../../core/broker/models/broker_entry_model.dart';
+import '../view_models/monitor_view_model.dart';
 
 class BrokerSelector extends StatefulWidget {
   const BrokerSelector({super.key});
@@ -25,13 +25,14 @@ class _BrokerSelectorState extends State<BrokerSelector> {
     final activeBroker = vm.activeBroker;
     final connectionStatus = vm.connectionStatus;
 
-    final accent = context.tokens.primary;
+    final tokens = context.tokens;
+    final accent = tokens.primary;
     final cs = Theme.of(context).colorScheme;
 
     final dotColor = switch (connectionStatus) {
-      ConnectionStatus.connected => AppColors.success500,
-      ConnectionStatus.connecting => AppColors.warning500,
-      _ => AppColors.error500,
+      ConnectionStatus.connected => tokens.success,
+      ConnectionStatus.connecting => tokens.warning,
+      _ => tokens.error,
     };
 
     const borderRadius = BorderRadius.all(Radius.circular(8));
@@ -80,7 +81,7 @@ class _BrokerSelectorState extends State<BrokerSelector> {
     );
   }
 
-  PopupMenuEntry<String> _buildMenuItem(BuildContext context, BrokerEntry broker, bool isSelected, Color accent) {
+  PopupMenuEntry<String> _buildMenuItem(BuildContext context, BrokerEntryModel broker, bool isSelected, Color accent) {
     final cs = Theme.of(context).colorScheme;
     return PopupMenuItem<String>(
       value: broker.id,

@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/state/app_state.dart';
+import '../../core/broker/repositories/broker_repository.dart';
+import '../../core/dashboard/repositories/dashboard_repository.dart';
+import '../../core/dashboard/repositories/dashboard_preferences_repository.dart';
+import '../../core/history/services/message_history_service.dart';
+import '../../core/history/repositories/history_preferences_repository.dart';
+import '../../core/logging/app_logger.dart';
+import '../../core/mqtt/repositories/connection_preferences_repository.dart';
+import '../../core/mqtt/session/mqtt_session_controller.dart';
+import '../../core/publishing/repositories/shortcut_repository.dart';
+import '../../core/publishing/repositories/qos_preferences_repository.dart';
+import '../../core/publishing/repositories/variable_repository.dart';
+import '../../core/ui/repositories/ui_preferences_repository.dart';
+import '../../core/ui/repositories/workspace_layout_repository.dart';
+import '../../core/update/repositories/update_preferences_repository.dart';
 import '../../generated/l10n.dart';
 import '../../theme/app_colors.dart';
 import 'panels/about_panel.dart';
@@ -14,12 +27,15 @@ import 'panels/ui_panel.dart';
 import 'panels/variables_panel.dart';
 import 'settings_item.dart';
 import 'settings_section.dart';
-import 'settings_viewmodel.dart';
+import 'view_models/settings_view_model.dart';
+import 'controllers/settings_navigation_controller.dart';
 import 'layouts/settings_narrow_layout.dart';
 import 'layouts/settings_wide_layout.dart';
 import 'panels/dashboard_panel.dart';
 
+/// Hosts responsive settings navigation and feature-scoped settings state.
 class SettingsScreen extends StatelessWidget {
+  /// Creates the settings screen.
   const SettingsScreen({super.key});
 
   List<SettingsItem> _items(BuildContext context) {
@@ -37,10 +53,27 @@ class SettingsScreen extends StatelessWidget {
     ];
   }
 
+  /// Builds the broker-aware settings controller and responsive layout.
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (ctx) => SettingsViewModel(state: ctx.read<AppStateManager>()),
+      create: (ctx) => SettingsViewModel(
+        navigation: ctx.read<SettingsNavigationController>(),
+        connectionPreferences: ctx.read<ConnectionPreferencesRepository>(),
+        dashboardPreferences: ctx.read<DashboardPreferencesRepository>(),
+        historyPreferences: ctx.read<HistoryPreferencesRepository>(),
+        workspaceLayout: ctx.read<WorkspaceLayoutRepository>(),
+        logger: ctx.read<AppLogger>(),
+        brokerRepository: ctx.read<BrokerRepository>(),
+        shortcutRepository: ctx.read<ShortcutRepository>(),
+        variableRepository: ctx.read<VariableRepository>(),
+        qosPreferences: ctx.read<QosPreferencesRepository>(),
+        uiPreferences: ctx.read<UiPreferencesRepository>(),
+        updatePreferences: ctx.read<UpdatePreferencesRepository>(),
+        mqttSession: ctx.read<MqttSessionController>(),
+        dashboardRepository: ctx.read<DashboardRepository>(),
+        historyService: ctx.read<MessageHistoryService>(),
+      ),
       child: Builder(
         builder: (context) {
           final vm = context.watch<SettingsViewModel>();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../models/environment_variable.dart';
+import '../../../core/publishing/models/environment_variable_model.dart';
+import '../../../theme/accent_contrast.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 
 /// A horizontal bar that lets the user set the current value for each
@@ -9,7 +10,7 @@ import '../../../theme/app_tokens/app_tokens.dart';
 class VariableBar extends StatelessWidget {
   const VariableBar({super.key, required this.variables, required this.values, required this.onChanged});
 
-  final List<EnvironmentVariable> variables;
+  final List<EnvironmentVariableModel> variables;
   final Map<String, String> values;
   final void Function(String name, String value) onChanged;
 
@@ -42,7 +43,7 @@ class VariableBar extends StatelessWidget {
 class _VariableChip extends StatelessWidget {
   const _VariableChip({required this.variable, required this.currentValue, required this.onChanged});
 
-  final EnvironmentVariable variable;
+  final EnvironmentVariableModel variable;
   final String currentValue;
   final ValueChanged<String> onChanged;
 
@@ -110,7 +111,7 @@ class _VariableChip extends StatelessWidget {
 class _VariablePickerDialog extends StatefulWidget {
   const _VariablePickerDialog({required this.variable, required this.currentValue});
 
-  final EnvironmentVariable variable;
+  final EnvironmentVariableModel variable;
   final String currentValue;
 
   @override
@@ -225,7 +226,7 @@ class _VariablePickerDialogState extends State<_VariablePickerDialog> {
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: _submit,
-                    style: FilledButton.styleFrom(backgroundColor: tokens.primary, foregroundColor: tokens.onPrimary),
+                    style: FilledButton.styleFrom(backgroundColor: accentFillForWhiteForeground(tokens.primary), foregroundColor: tokens.onPrimary),
                     child: const Text('Apply'),
                   ),
                 ],

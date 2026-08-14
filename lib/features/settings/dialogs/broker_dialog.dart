@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -6,15 +7,22 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 import 'package:provider/provider.dart';
 
-import '../../../core/mqtt/client_certificate_service.dart';
-import '../../../core/state/app_state.dart';
-import '../../../core/state/keys/settings_keys.dart';
+import '../../../core/mqtt/app_private_certificate_storage.dart';
+import '../../../core/mqtt/certificate_validation_exception.dart';
+import '../../../core/mqtt/client_certificate_kind.dart';
+import '../../../core/mqtt/services/client_certificate_service.dart';
+import '../../../core/mqtt/repositories/connection_preferences_repository.dart';
+import '../../../core/history/history_policy_rules.dart';
+import '../../../core/history/repositories/history_preferences_repository.dart';
+import '../../../core/logging/app_logger.dart';
+import '../../../core/publishing/repositories/qos_preferences_repository.dart';
 import '../../../generated/l10n.dart';
-import '../../../models/broker_entry.dart';
-import '../../../models/client_certificate_config.dart';
-import '../../../models/mqtt_protocol_version.dart';
-import '../../../models/mqtt_qos_default.dart';
-import '../../../models/subscription_entry.dart';
+import '../../../core/broker/models/broker_entry_model.dart';
+import '../../../core/broker/models/client_certificate_config_model.dart';
+import '../../../core/mqtt/models/mqtt_protocol_version_model.dart';
+import '../../../core/broker/models/subscription_history_policy_model.dart';
+import '../../../core/broker/models/subscription_entry_model.dart';
+import '../../../shared/widgets/badge_tag.dart';
 import '../../../shared/widgets/qos_tag.dart';
 import '../../../shared/widgets/spacers.dart';
 import '../../../shared/widgets/color_picker_field.dart';
@@ -29,6 +37,7 @@ import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import 'subscription_dialog.dart';
 
+/// Builds the compact uppercase label used above dialog sections.
 Widget _sectionLabel(BuildContext context, String label) => Padding(
   padding: const EdgeInsets.only(left: 4, bottom: 2),
   child: Text(
@@ -37,24 +46,30 @@ Widget _sectionLabel(BuildContext context, String label) => Padding(
   ),
 );
 
-Future<BrokerEntry?> showBrokerDialog(BuildContext context, {BrokerEntry? broker, VoidCallback? onDelete}) {
-  return showDialog<BrokerEntry>(
+/// Opens a broker editor and returns the submitted profile.
+Future<BrokerEntryModel?> showBrokerDialog(BuildContext context, {BrokerEntryModel? broker, VoidCallback? onDelete}) {
+  return showDialog<BrokerEntryModel>(
     context: context,
+    barrierDismissible: false,
     barrierColor: Colors.black54,
     builder: (_) => BrokerDialog(broker: broker, onDelete: onDelete),
   );
 }
 
+/// Edits broker connection, authentication, certificate, and subscription data.
 class BrokerDialog extends StatefulWidget {
+  /// Creates a broker editor for an optional existing [broker].
   const BrokerDialog({super.key, this.broker, this.onDelete});
 
-  final BrokerEntry? broker;
+  final BrokerEntryModel? broker;
   final VoidCallback? onDelete;
 
+  /// Creates the mutable dialog state.
   @override
   State<BrokerDialog> createState() => _BrokerDialogState();
 }
 
+/// Owns temporary editor values and uncommitted certificate imports.
 class _BrokerDialogState extends State<BrokerDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _name;
@@ -64,21 +79,27 @@ class _BrokerDialogState extends State<BrokerDialog> {
   late final TextEditingController _password;
   late final TextEditingController _clientId;
   late bool _useSSL;
-  late MqttProtocolVersion _protocolVersion;
-  late ClientCertificateConfig _clientCertificates;
+  late MqttProtocolVersionModel _protocolVersion;
+  late ClientCertificateConfigModel _clientCertificates;
   late final String _brokerId;
   final _certificateService = ClientCertificateService();
   final _certificateStorage = AppPrivateCertificateStorage.standard();
+  final Set<String> _importedCertificatePaths = {};
+  bool _submitted = false;
   String? _certificateError;
   late bool _validateCertificates;
   late bool _randomClientIdSuffix;
   late Color _color;
   bool _obscurePassword = true;
-  late List<SubscriptionEntry> _subscriptions;
+  late List<SubscriptionEntryModel> _subscriptions;
+  late AppLogger _logger;
 
+  /// Returns whether the dialog edits an existing broker.
   bool get _isEditing => widget.broker != null;
   bool _defaultSubscriptionApplied = false;
+  bool _defaultBrokerPreferencesApplied = false;
 
+  /// Initializes controllers and a stable broker ID for certificate ownership.
   @override
   void initState() {
     super.initState();
@@ -91,30 +112,45 @@ class _BrokerDialogState extends State<BrokerDialog> {
     _password = TextEditingController(text: b?.password ?? '');
     _clientId = TextEditingController(text: b?.clientId ?? '');
     _useSSL = b?.useSSL ?? false;
-    _protocolVersion = b?.protocolVersion ?? MqttProtocolVersion.v311;
-    _clientCertificates = b?.clientCertificates ?? const ClientCertificateConfig();
-    _validateCertificates = b?.validateCertificates ?? true;
+    _protocolVersion = b?.protocolVersion ?? MqttProtocolVersionModel.v5;
+    _clientCertificates = b?.clientCertificates ?? const ClientCertificateConfigModel();
+    _validateCertificates = b?.validateCertificates ?? false;
     _randomClientIdSuffix = b?.randomClientIdSuffix ?? true;
     _color = AppColors.brokerColorOptions[b?.colorIndex ?? 0];
     _subscriptions = List.from(b?.subscriptions ?? []);
   }
 
+  /// Adds the configured default subscription once localization is available.
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _logger = context.read<AppLogger>();
+    if (widget.broker == null && !_defaultBrokerPreferencesApplied) {
+      _defaultBrokerPreferencesApplied = true;
+      _protocolVersion = context.read<ConnectionPreferencesRepository>().brokerProtocol;
+    }
     if (widget.broker == null && !_defaultSubscriptionApplied) {
       _defaultSubscriptionApplied = true;
-      final state = context.read<AppStateManager>();
-      state.load(SettingsKeys.defaultSubscribeQos);
-      state.load(SettingsKeys.lastUsedQos);
-      final strategy = state.read<MqttQosDefault>(SettingsKeys.defaultSubscribeQos);
-      final defaultQos = strategy.resolve(state.read(SettingsKeys.lastUsedQos));
-      _subscriptions.add(SubscriptionEntry(topic: '#', qos: defaultQos, name: S.of(context).brokerDialogDefaultSubscriptionName));
+      final history = context.read<HistoryPreferencesRepository>();
+      final qosPreferences = context.read<QosPreferencesRepository>();
+      final defaultQos = qosPreferences.resolve(qosPreferences.defaultSubscribe);
+      final maximum = history.maximumRetention;
+      final retention = history.newSubscriptionRetention.clamp(HistoryPolicyRules.minimumRetention, maximum);
+      _subscriptions.add(
+        SubscriptionEntryModel.create(
+          topic: '#',
+          qos: defaultQos,
+          name: S.of(context).brokerDialogDefaultSubscriptionName,
+          history: SubscriptionHistoryPolicyModel(enabled: history.newSubscriptionEnabled, retention: retention),
+        ),
+      );
     }
   }
 
+  /// Disposes controllers and schedules cleanup for abandoned imports.
   @override
   void dispose() {
+    if (!_submitted) unawaited(_cleanupImportedCertificates());
     _name.dispose();
     _host.dispose();
     _port.dispose();
@@ -124,6 +160,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
     super.dispose();
   }
 
+  /// Validates the form and transfers certificate ownership to the repository.
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_clientCertificates.isEmpty && !_useSSL) {
@@ -138,9 +175,10 @@ class _BrokerDialogState extends State<BrokerDialog> {
       return;
     }
     if (!mounted) return;
+    _submitted = true;
     Navigator.pop(
       context,
-      BrokerEntry(
+      BrokerEntryModel(
         id: _brokerId,
         name: _name.text.trim(),
         host: _host.text.trim(),
@@ -148,9 +186,10 @@ class _BrokerDialogState extends State<BrokerDialog> {
         protocolVersion: _protocolVersion,
         clientCertificates: _clientCertificates,
         useSSL: _useSSL,
-        validateCertificates: _validateCertificates,
+        validateCertificates: _useSSL && _validateCertificates,
         username: _username.text.trim().isEmpty ? null : _username.text.trim(),
         password: _password.text.isEmpty ? null : _password.text,
+        passwordReference: widget.broker?.passwordReference,
         clientId: _clientId.text.trim().isEmpty ? null : _clientId.text.trim(),
         randomClientIdSuffix: _randomClientIdSuffix,
         colorIndex: AppColors.colorIndex(_color),
@@ -159,7 +198,9 @@ class _BrokerDialogState extends State<BrokerDialog> {
     );
   }
 
+  /// Imports and validates one certificate into an isolated broker slot.
   Future<void> _pickCertificate(ClientCertificateKind kind) async {
+    String? importedPath;
     try {
       final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: const ['pem', 'crt', 'cer', 'key'], withData: true);
       if (result == null || result.files.isEmpty) return;
@@ -174,15 +215,23 @@ class _BrokerDialogState extends State<BrokerDialog> {
         throw const CertificateValidationException('The selected file could not be read.');
       }
       _certificateService.validateBytes(kind, bytes);
-      final storedPath = await _certificateStorage.store(_brokerId, kind, bytes, originalFileName: selected.name);
-      if (!mounted) return;
+      importedPath = await _certificateStorage.store(_brokerId, kind, bytes, originalFileName: selected.name);
+      if (!mounted) {
+        await _certificateStorage.delete(importedPath);
+        return;
+      }
+      final previousPath = _certificatePath(kind);
+      if (previousPath != null && _importedCertificatePaths.remove(previousPath)) {
+        await _certificateStorage.delete(previousPath);
+      }
       setState(() {
+        _importedCertificatePaths.add(importedPath!);
         _useSSL = true;
         _certificateError = null;
         _clientCertificates = switch (kind) {
-          ClientCertificateKind.rootCa => _clientCertificates.copyWith(rootCaPath: storedPath),
-          ClientCertificateKind.privateKey => _clientCertificates.copyWith(clientPrivateKeyPath: storedPath),
-          ClientCertificateKind.clientCertificate => _clientCertificates.copyWith(clientCertificatePath: storedPath),
+          ClientCertificateKind.rootCa => _clientCertificates.copyWith(rootCaPath: importedPath),
+          ClientCertificateKind.privateKey => _clientCertificates.copyWith(clientPrivateKeyPath: importedPath),
+          ClientCertificateKind.clientCertificate => _clientCertificates.copyWith(clientCertificatePath: importedPath),
         };
       });
     } on PlatformException catch (error) {
@@ -192,13 +241,34 @@ class _BrokerDialogState extends State<BrokerDialog> {
     } on CertificateValidationException catch (error) {
       if (mounted) setState(() => _certificateError = error.message);
     } catch (error) {
+      if (importedPath != null && !_importedCertificatePaths.contains(importedPath)) {
+        try {
+          await _certificateStorage.delete(importedPath);
+        } on Object catch (cleanupError) {
+          _logger.log(AppLogLevel.warning, 'broker.certificateCleanup', 'A failed certificate import left temporary cleanup work.', error: cleanupError);
+        }
+      }
       if (mounted) {
         setState(() => _certificateError = 'Could not import the selected file: $error');
       }
     }
   }
 
-  void _clearCertificate(ClientCertificateKind kind) {
+  /// Clears a certificate slot and deletes it immediately when still temporary.
+  Future<void> _clearCertificate(ClientCertificateKind kind) async {
+    final previousPath = _certificatePath(kind);
+    if (previousPath != null && _importedCertificatePaths.contains(previousPath)) {
+      try {
+        await _certificateStorage.delete(previousPath);
+        _importedCertificatePaths.remove(previousPath);
+      } on Object catch (error) {
+        if (mounted) {
+          setState(() => _certificateError = 'Could not remove the imported certificate: $error');
+        }
+        return;
+      }
+    }
+    if (!mounted) return;
     setState(() {
       _certificateError = null;
       _clientCertificates = switch (kind) {
@@ -209,25 +279,70 @@ class _BrokerDialogState extends State<BrokerDialog> {
     });
   }
 
+  /// Returns the configured path for [kind].
+  String? _certificatePath(ClientCertificateKind kind) => switch (kind) {
+    ClientCertificateKind.rootCa => _clientCertificates.rootCaPath,
+    ClientCertificateKind.privateKey => _clientCertificates.clientPrivateKeyPath,
+    ClientCertificateKind.clientCertificate => _clientCertificates.clientCertificatePath,
+  };
+
+  /// Deletes every certificate imported during an abandoned edit.
+  Future<void> _cleanupImportedCertificates() async {
+    for (final filePath in _importedCertificatePaths) {
+      try {
+        await _certificateStorage.delete(filePath);
+      } on Object catch (error) {
+        _logger.log(AppLogLevel.warning, 'broker.certificateCleanup', 'A temporary certificate could not be removed.', error: error);
+      }
+    }
+    _importedCertificatePaths.clear();
+  }
+
+  /// Deletes temporary imports before closing without a submitted profile.
+  Future<void> _cancel() async {
+    await _cleanupImportedCertificates();
+    if (mounted) Navigator.pop(context);
+  }
+
+  /// Deletes temporary imports before requesting deletion of the saved broker.
+  Future<void> _delete() async {
+    await _cleanupImportedCertificates();
+    if (!mounted) return;
+    Navigator.pop(context);
+    widget.onDelete!();
+  }
+
+  /// Adds a subscription using the configured default QoS policy.
   Future<void> _addSubscription() async {
-    final state = context.read<AppStateManager>();
-    state.load(SettingsKeys.defaultSubscribeQos);
-    state.load(SettingsKeys.lastUsedQos);
-    final strategy = state.read<MqttQosDefault>(SettingsKeys.defaultSubscribeQos);
-    final defaultQos = strategy.resolve(state.read(SettingsKeys.lastUsedQos));
-    final sub = await showSubscriptionDialog(context, defaultQos: defaultQos);
+    final history = context.read<HistoryPreferencesRepository>();
+    final qosPreferences = context.read<QosPreferencesRepository>();
+    final defaultQos = qosPreferences.resolve(qosPreferences.defaultSubscribe);
+    final maximum = history.maximumRetention;
+    final sub = await showSubscriptionDialog(context, defaultQos: defaultQos, defaultHistoryEnabled: history.newSubscriptionEnabled, defaultHistoryRetention: history.newSubscriptionRetention.clamp(HistoryPolicyRules.minimumRetention, maximum), maximumHistoryRetention: maximum, existingTopicFilters: _subscriptions.map((entry) => entry.topic).toSet());
     if (sub == null) return;
     setState(() => _subscriptions.add(sub));
   }
 
+  /// Replaces the subscription at [index] when the editor returns a value.
   Future<void> _editSubscription(int index) async {
-    final sub = await showSubscriptionDialog(context, entry: _subscriptions[index]);
+    final history = context.read<HistoryPreferencesRepository>();
+    final sub = await showSubscriptionDialog(
+      context,
+      entry: _subscriptions[index],
+      maximumHistoryRetention: history.maximumRetention,
+      existingTopicFilters: {
+        for (var i = 0; i < _subscriptions.length; i++)
+          if (i != index) _subscriptions[i].topic,
+      },
+    );
     if (sub == null) return;
     setState(() => _subscriptions[index] = sub);
   }
 
+  /// Removes the subscription at [index].
   void _removeSubscription(int index) => setState(() => _subscriptions.removeAt(index));
 
+  /// Reorders subscriptions using Flutter's insertion-index convention.
   void _reorderSubscriptions(int oldIndex, int newIndex) {
     setState(() {
       if (newIndex > oldIndex) newIndex--;
@@ -236,6 +351,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
     });
   }
 
+  /// Builds the broker endpoint and protocol controls.
   Widget _buildConnectionSection(Color accent) {
     final s = S.of(context);
     return Column(
@@ -272,21 +388,33 @@ class _BrokerDialogState extends State<BrokerDialog> {
             ),
           ],
         ),
-        UiSegmentRow<MqttProtocolVersion>(
+        UiSegmentRow<MqttProtocolVersionModel>(
           label: 'Protocol version',
-          options: MqttProtocolVersion.values.map((version) => UiSegmentOption(value: version, label: version.displayName)).toList(),
+          options: MqttProtocolVersionModel.values.map((version) => UiSegmentOption(value: version, label: version.displayName)).toList(),
           value: _protocolVersion,
           onChanged: (value) => setState(() => _protocolVersion = value),
           accent: accent,
         ),
-        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogUseSSL, subtitle: s.brokerDialogUseSSLSubtitle, value: _useSSL, accent: accent, bordered: true, onChanged: (v) => setState(() => _useSSL = v)),
-        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogValidateCertificates, subtitle: s.brokerDialogValidateCertificatesSubtitle, value: _validateCertificates, accent: accent, bordered: true, onChanged: (v) => setState(() => _validateCertificates = v)),
+        UiSwitchRow(
+          margin: const EdgeInsets.only(top: 12),
+          label: s.brokerDialogUseSSL,
+          subtitle: s.brokerDialogUseSSLSubtitle,
+          value: _useSSL,
+          accent: accent,
+          bordered: true,
+          onChanged: (value) => setState(() {
+            _useSSL = value;
+            if (!value) _validateCertificates = false;
+          }),
+        ),
+        if (_useSSL) UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogValidateCertificates, subtitle: s.brokerDialogValidateCertificatesSubtitle, value: _validateCertificates, accent: accent, bordered: true, onChanged: (value) => setState(() => _validateCertificates = value)),
         UiField(margin: const EdgeInsets.only(top: 14), label: s.brokerDialogFieldClientId, optional: true, controller: _clientId, hint: 'mqtt-monitor', textInputAction: TextInputAction.next),
         UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogRandomSuffix, subtitle: s.brokerDialogRandomSuffixSubtitle, value: _randomClientIdSuffix, accent: accent, bordered: true, onChanged: (v) => setState(() => _randomClientIdSuffix = v)),
       ],
     );
   }
 
+  /// Builds username, password, and mTLS controls.
   Widget _buildAuthSection() {
     final s = S.of(context);
     return Column(
@@ -309,9 +437,36 @@ class _BrokerDialogState extends State<BrokerDialog> {
           ),
         ),
         const VSpacer(18),
-        _CertificatePickerRow(label: 'Root CA certificate', fileName: _fileName(_clientCertificates.rootCaPath), onSelect: () => _pickCertificate(ClientCertificateKind.rootCa), onClear: _clientCertificates.rootCaPath == null ? null : () => _clearCertificate(ClientCertificateKind.rootCa)),
-        _CertificatePickerRow(label: 'Client private key', fileName: _fileName(_clientCertificates.clientPrivateKeyPath), onSelect: () => _pickCertificate(ClientCertificateKind.privateKey), onClear: _clientCertificates.clientPrivateKeyPath == null ? null : () => _clearCertificate(ClientCertificateKind.privateKey)),
-        _CertificatePickerRow(label: 'Client certificate', fileName: _fileName(_clientCertificates.clientCertificatePath), onSelect: () => _pickCertificate(ClientCertificateKind.clientCertificate), onClear: _clientCertificates.clientCertificatePath == null ? null : () => _clearCertificate(ClientCertificateKind.clientCertificate)),
+        _CertificatePickerRow(
+          label: 'Root CA certificate',
+          fileName: _fileName(_clientCertificates.rootCaPath),
+          onSelect: () => _pickCertificate(ClientCertificateKind.rootCa),
+          onClear: _clientCertificates.rootCaPath == null
+              ? null
+              : () {
+                  _clearCertificate(ClientCertificateKind.rootCa);
+                },
+        ),
+        _CertificatePickerRow(
+          label: 'Client private key',
+          fileName: _fileName(_clientCertificates.clientPrivateKeyPath),
+          onSelect: () => _pickCertificate(ClientCertificateKind.privateKey),
+          onClear: _clientCertificates.clientPrivateKeyPath == null
+              ? null
+              : () {
+                  _clearCertificate(ClientCertificateKind.privateKey);
+                },
+        ),
+        _CertificatePickerRow(
+          label: 'Client certificate',
+          fileName: _fileName(_clientCertificates.clientCertificatePath),
+          onSelect: () => _pickCertificate(ClientCertificateKind.clientCertificate),
+          onClear: _clientCertificates.clientCertificatePath == null
+              ? null
+              : () {
+                  _clearCertificate(ClientCertificateKind.clientCertificate);
+                },
+        ),
         if (_certificateError != null)
           Padding(
             padding: const EdgeInsets.only(top: 10),
@@ -321,8 +476,10 @@ class _BrokerDialogState extends State<BrokerDialog> {
     );
   }
 
+  /// Returns a compact filename or the empty-slot label for [filePath].
   String _fileName(String? filePath) => filePath == null ? 'Not configured' : path.basename(filePath);
 
+  /// Builds the editable subscription collection.
   Widget _buildSubscriptionsSection(Color accent) {
     final s = S.of(context);
     return Column(
@@ -337,12 +494,14 @@ class _BrokerDialogState extends State<BrokerDialog> {
             children: List.generate(_subscriptions.length, (i) {
               final sub = _subscriptions[i];
               final hasName = sub.name != null && sub.name!.isNotEmpty;
+              final historyLabel = sub.history.enabled ? '${sub.history.retention} ${s.brokerDialogHistoryMessages}' : s.brokerDialogHistoryDisabled;
               return UiSortableRow(
-                key: ValueKey('${sub.topic}_$i'),
+                key: ValueKey(sub.id),
                 index: i,
                 leading: QosTag(qos: sub.qos),
                 title: hasName ? sub.name! : sub.topic,
                 subtitle: hasName ? sub.topic : null,
+                trailing: [BadgeTag(label: historyLabel, color: sub.history.enabled ? context.tokens.success : context.tokens.textTertiary)],
                 onTap: () => _editSubscription(i),
                 onDelete: () => _removeSubscription(i),
               );
@@ -363,6 +522,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
     );
   }
 
+  /// Builds the complete broker dialog.
   @override
   Widget build(BuildContext context) {
     final accent = context.tokens.primary;
@@ -371,13 +531,8 @@ class _BrokerDialogState extends State<BrokerDialog> {
     return UiModalScaffold(
       title: _isEditing ? s.brokerDialogEditTitle : s.brokerDialogAddTitle,
       isEditing: _isEditing,
-      onDelete: (widget.onDelete != null)
-          ? () {
-              Navigator.pop(context);
-              widget.onDelete!();
-            }
-          : null,
-      onCancel: () => Navigator.pop(context),
+      onDelete: widget.onDelete == null ? null : _delete,
+      onCancel: _cancel,
       onSubmit: _submit,
       submitLabel: _isEditing ? s.save : s.add,
       body: Form(
@@ -388,7 +543,9 @@ class _BrokerDialogState extends State<BrokerDialog> {
   }
 }
 
+/// Displays one certificate slot with choose, replace, and clear actions.
 class _CertificatePickerRow extends StatelessWidget {
+  /// Creates a certificate picker row.
   const _CertificatePickerRow({required this.label, required this.fileName, required this.onSelect, this.onClear});
 
   final String label;
@@ -396,6 +553,7 @@ class _CertificatePickerRow extends StatelessWidget {
   final VoidCallback onSelect;
   final VoidCallback? onClear;
 
+  /// Builds the certificate slot controls.
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;

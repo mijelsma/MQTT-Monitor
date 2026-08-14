@@ -1,48 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mqtt_monitor/core/history/message_history_service.dart';
-import 'package:mqtt_monitor/core/mqtt/mqtt_service.dart';
-import 'package:mqtt_monitor/core/state/app_state.dart';
+import 'package:mqtt_monitor/core/history/services/message_history_service.dart';
+import 'package:mqtt_monitor/core/ingestion/message_ingestion_coordinator.dart';
+import 'package:mqtt_monitor/core/history/repositories/history_preferences_repository.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/message_detail_panel.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
-import 'package:mqtt_monitor/models/topic_node.dart';
-import 'package:mqtt_monitor/models/topic_node_value.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_tree_node_model.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_node_value_model.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
+import '../../support/test_dependencies.dart';
+
 void main() {
+  late TestDependencies dependencies;
+
+  setUp(() async {
+    dependencies = await TestDependencies.create();
+  });
+
   test('recognizes a standalone JSON numeric string as a pinnable payload', () {
     expect(parseNumericPayload('"23.5"'), (23.5, null));
   });
 
   Widget buildHarness(String payload) {
-    final state = AppStateManager.instance;
-    final mqtt = MqttService(state);
-    final history = MessageHistoryService(mqtt, state);
-    final node = TopicTreeNode(
-      segment: 'temperature',
-      fullPath: 'home/temperature',
-    );
-    node.valueNotifier.value = TopicNodeValue(
-      payload: payload,
-      seq: 1,
-      receivedAt: DateTime(2026),
-    );
+    final mqtt = dependencies.mqttSession;
+    addTearDown(mqtt.dispose);
+    final ingestion = MessageIngestionCoordinator(mqtt, dependencies.brokers);
+    final history = MessageHistoryService(ingestion, dependencies.historyPreferences, dependencies.brokers);
+    final node = TopicTreeNodeModel(segment: 'temperature', fullPath: 'home/temperature');
+    node.valueNotifier.value = TopicNodeValueModel(payload: payload, seq: 1, receivedAt: DateTime(2026));
 
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<AppStateManager>.value(value: state),
+        ChangeNotifierProvider<HistoryPreferencesRepository>.value(value: dependencies.historyPreferences),
         Provider<MessageHistoryService>.value(value: history),
       ],
       child: MaterialApp(
         theme: themeLight,
-        localizationsDelegates: const [
-          S.delegate,
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
+        localizationsDelegates: const [S.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
         supportedLocales: S.delegate.supportedLocales,
         home: Scaffold(body: MessageDetailPanel(node: node)),
       ),
@@ -54,10 +51,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('payload-selection-area')), findsOneWidget);
-    expect(
-      tester.widget(find.byKey(const Key('payload-selection-area'))),
-      isA<SelectionArea>(),
-    );
+    expect(tester.widget(find.byKey(const Key('payload-selection-area'))), isA<SelectionArea>());
     expect(tester.takeException(), isNull);
   });
 
@@ -78,4 +72,14 @@ void main() {
     expect(find.byKey(const Key('payload-selection-area')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  for (final payload in ['42', '"23.5"', '32.69 °C']) {
+    testWidgets('selection display lays out pinnable payload $payload', (tester) async {
+      await tester.pumpWidget(buildHarness(payload));
+      await tester.pump();
+
+      expect(find.byKey(const Key('payload-selection-area')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 }

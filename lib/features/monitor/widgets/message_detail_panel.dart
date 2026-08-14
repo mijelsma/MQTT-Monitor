@@ -3,23 +3,23 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/history/message_history_service.dart';
-import '../../../core/state/app_state.dart';
-import '../../../core/state/keys/dashboard_keys.dart';
-import '../../../core/state/keys/settings_keys.dart';
+import '../../../core/history/services/message_history_service.dart';
+import '../../../core/history/repositories/history_preferences_repository.dart';
+import '../../../core/dashboard/repositories/dashboard_preferences_repository.dart';
+import '../../../core/dashboard/repositories/dashboard_repository.dart';
 import '../../../generated/l10n.dart';
-import '../../../models/graph_card_model.dart';
-import '../../../models/topic_node.dart';
-import '../../../models/topic_node_value.dart';
+import '../../../core/dashboard/models/graph_card_model.dart';
+import '../../../core/monitor/models/topic_tree_node_model.dart';
+import '../../../core/monitor/models/topic_node_value_model.dart';
 import '../../../shared/format_helpers.dart';
 import '../../../shared/widgets/copy_button.dart';
 import '../../../shared/widgets/json_highlighter.dart';
 import '../../../shared/widgets/qos_tag.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../shared/widgets/ui_inline_notice.dart';
-import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
-import '../monitor_viewmodel.dart';
+import '../view_models/monitor_view_model.dart';
+import '../controllers/monitor_workspace_controller.dart';
 import 'comparison_section.dart';
 
 /// Shows the details of the currently selected MQTT message.
@@ -30,17 +30,17 @@ import 'comparison_section.dart';
 class MessageDetailPanel extends StatelessWidget {
   const MessageDetailPanel({super.key, required this.node, this.selectedHistory, this.onClearSelection});
 
-  final TopicTreeNode node;
+  final TopicTreeNodeModel node;
 
   /// A historical value selected from the history panel, or null for latest.
-  final TopicNodeValue? selectedHistory;
+  final TopicNodeValueModel? selectedHistory;
 
   /// Called when the user wants to return to viewing the latest message.
   final VoidCallback? onClearSelection;
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<TopicNodeValue?>(
+    return ValueListenableBuilder<TopicNodeValueModel?>(
       valueListenable: node.valueNotifier,
       builder: (context, latestValue, _) {
         final displayValue = selectedHistory ?? latestValue;
@@ -79,16 +79,16 @@ class _EmptyDetail extends StatelessWidget {
 class _DetailContent extends StatelessWidget {
   const _DetailContent({required this.node, required this.value, this.latestValue, this.isHistorical = false, this.onClearSelection});
 
-  final TopicTreeNode node;
-  final TopicNodeValue value;
-  final TopicNodeValue? latestValue;
+  final TopicTreeNodeModel node;
+  final TopicNodeValueModel value;
+  final TopicNodeValueModel? latestValue;
   final bool isHistorical;
   final VoidCallback? onClearSelection;
 
   @override
   Widget build(BuildContext context) {
     // Find the message immediately before the selected one in history.
-    TopicNodeValue? previousValue;
+    TopicNodeValueModel? previousValue;
     if (isHistorical) {
       final history = context.read<MessageHistoryService>().getHistory(node.fullPath);
       final idx = history.indexWhere((v) => v.seq == value.seq);
@@ -107,8 +107,7 @@ class _DetailContent extends StatelessWidget {
             onDelete: isHistorical
                 ? null
                 : () {
-                    final vm = context.read<MonitorViewModel>();
-                    vm.deleteTopic(node);
+                    context.read<MonitorWorkspaceController>().deleteTopic(node);
                     final messenger = ScaffoldMessenger.of(context);
                     messenger.clearSnackBars();
                     messenger.showSnackBar(SnackBar(content: Text(S.of(context).detailTopicDeleted), behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 2)));
@@ -121,12 +120,13 @@ class _DetailContent extends StatelessWidget {
             isHistorical: isHistorical,
             onClearRetained: isHistorical
                 ? null
-                : () {
+                : () async {
                     final vm = context.read<MonitorViewModel>();
-                    final ok = vm.clearRetainedMessage(node.fullPath);
+                    final result = await vm.clearRetainedMessage(node.fullPath);
+                    if (!context.mounted) return;
                     final messenger = ScaffoldMessenger.of(context);
                     messenger.clearSnackBars();
-                    messenger.showSnackBar(SnackBar(content: Text(ok ? S.of(context).detailRetainedCleared : S.of(context).detailRetainedClearFailed), behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 2)));
+                    messenger.showSnackBar(SnackBar(content: Text(result.wasSent ? S.of(context).detailRetainedCleared : S.of(context).detailRetainedClearFailed), behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 2)));
                   },
           ),
           const SizedBox(height: 16),
@@ -181,7 +181,7 @@ class _TopicHeader extends StatelessWidget {
 class _PropertiesCard extends StatelessWidget {
   const _PropertiesCard({required this.value, required this.topic, this.isHistorical = false, this.onClearRetained});
 
-  final TopicNodeValue value;
+  final TopicNodeValueModel value;
   final String topic;
   final bool isHistorical;
   final VoidCallback? onClearRetained;
@@ -207,9 +207,7 @@ class _PropertiesCard extends StatelessWidget {
     final history = context.read<MessageHistoryService>().getHistory(topic);
     if (history.length < 2) return null;
 
-    final state = context.read<AppStateManager>();
-    state.load(SettingsKeys.messageRateSampleSize);
-    final sampleSize = state.read(SettingsKeys.messageRateSampleSize);
+    final sampleSize = context.read<HistoryPreferencesRepository>().rateSampleSize;
 
     // Take the last N messages (or fewer if not enough yet).
     final count = history.length < sampleSize ? history.length : sampleSize;
@@ -252,7 +250,7 @@ class _PropertiesCard extends StatelessWidget {
         children: [
           _PropertyRow(
             icon: Icons.swap_vert_rounded,
-            iconColor: QosTag.colorFor(value.qos),
+            iconColor: QosTag.colorFor(context, value.qos),
             label: S.of(context).detailQoS,
             labelWidth: labelWidth,
             child: Row(
@@ -267,7 +265,7 @@ class _PropertiesCard extends StatelessWidget {
           _divider(tokens),
           _PropertyRow(
             icon: Icons.push_pin_rounded,
-            iconColor: value.retain ? AppColors.warning500 : tokens.muted,
+            iconColor: value.retain ? tokens.warning : tokens.muted,
             label: S.of(context).detailRetained,
             labelWidth: labelWidth,
             child: value.retain
@@ -276,7 +274,7 @@ class _PropertiesCard extends StatelessWidget {
                     children: [
                       Text(
                         S.of(context).detailYes,
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.warning500),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: tokens.warning),
                       ),
                       if (onClearRetained != null) ...[const SizedBox(width: 8), _ClearRetainedButton(onTap: onClearRetained!)],
                     ],
@@ -392,7 +390,7 @@ class _DeleteTopicButtonState extends State<_DeleteTopicButton> {
         child: GestureDetector(
           onTap: widget.onDelete,
           behavior: HitTestBehavior.opaque,
-          child: Icon(Icons.delete_outline_rounded, size: 14, color: _hovering ? AppColors.error500 : tokens.textTertiary),
+          child: Icon(Icons.delete_outline_rounded, size: 14, color: _hovering ? tokens.error : tokens.textTertiary),
         ),
       ),
     );
@@ -413,6 +411,7 @@ class _ClearRetainedButtonState extends State<_ClearRetainedButton> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.tokens;
     return Tooltip(
       message: S.of(context).detailClearRetained,
       child: MouseRegion(
@@ -425,18 +424,18 @@ class _ClearRetainedButtonState extends State<_ClearRetainedButton> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: _hovering ? AppColors.warning500.withValues(alpha: 0.12) : Colors.transparent,
+              color: _hovering ? tokens.warning.withValues(alpha: 0.12) : Colors.transparent,
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: AppColors.warning500.withValues(alpha: 0.3), width: 0.5),
+              border: Border.all(color: tokens.warning.withValues(alpha: 0.3), width: 0.5),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.delete_outline_rounded, size: 11, color: AppColors.warning500),
+                Icon(Icons.delete_outline_rounded, size: 11, color: tokens.warning),
                 const SizedBox(width: 3),
                 Text(
                   S.of(context).detailClearRetained,
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: AppColors.warning500),
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: tokens.warning),
                 ),
               ],
             ),
@@ -473,7 +472,7 @@ class _PayloadCardState extends State<_PayloadCard> {
     final numericParts = showPin ? parseNumericPayload(widget.payload) : null;
     final isNumeric = numericParts != null;
     final formatLabel = isJson ? 'JSON' : 'TEXT';
-    final formatColor = isJson ? AppColors.success500 : tokens.textTertiary;
+    final formatColor = isJson ? tokens.success : tokens.textTertiary;
 
     // Build the main payload content widget.
     Widget content;
@@ -537,7 +536,7 @@ class _PayloadCardState extends State<_PayloadCard> {
             decoration: BoxDecoration(
               color: tokens.inputFill,
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: widget.isHistorical ? AppColors.warning500.withValues(alpha: 0.6) : tokens.border, width: widget.isHistorical ? 1.5 : 0.5),
+              border: Border.all(color: widget.isHistorical ? tokens.warning.withValues(alpha: 0.6) : tokens.border, width: widget.isHistorical ? 1.5 : 0.5),
             ),
             child: Stack(
               children: [
@@ -576,6 +575,7 @@ class _PinnableValueState extends State<_PinnableValue> {
     final color = _hovering ? tokens.primary : tokens.muted;
 
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         MouseRegion(
           cursor: SystemMouseCursors.click,
@@ -590,7 +590,7 @@ class _PinnableValueState extends State<_PinnableValue> {
             ),
           ),
         ),
-        Expanded(child: JsonHighlighter(source: widget.payload, selectable: false)),
+        JsonHighlighter(source: widget.payload, selectable: false),
       ],
     );
   }
@@ -628,31 +628,18 @@ void _onPin(BuildContext context, String topic, String? keyPath, String? default
   final brokerId = vm.activeBroker?.id;
   if (brokerId == null) return;
 
-  final state = context.read<AppStateManager>();
-  final key = DashboardKeys.cardsForBroker(brokerId);
-  final cards = List.of(state.read(key));
+  final preferences = context.read<DashboardPreferencesRepository>();
+  final dashboard = context.read<DashboardRepository>();
+  final cards = dashboard.cardsForBroker(brokerId);
 
-  // Read all defaults from settings.
-  state.load(SettingsKeys.defaultCardColor);
-  state.load(SettingsKeys.defaultDotSize);
-  state.load(SettingsKeys.defaultChartType);
-  state.load(SettingsKeys.defaultInterpolation);
-  state.load(SettingsKeys.defaultMaxSamples);
-
-  final color = Color(state.read(SettingsKeys.defaultCardColor));
-  final dotSize = state.read(SettingsKeys.defaultDotSize);
-  final chartType = state.read(SettingsKeys.defaultChartType);
-  final interpolation = state.read(SettingsKeys.defaultInterpolation);
-  final maxSamples = state.read(SettingsKeys.defaultMaxSamples);
+  final colorValue = preferences.cardColor;
+  final dotSize = preferences.dotSize;
+  final chartType = preferences.chartType;
+  final interpolation = preferences.interpolation;
+  final maxSamples = preferences.maximumSamples;
 
   final id = '${DateTime.now().millisecondsSinceEpoch}_${cards.length}';
-  cards.add(GraphCardModel(id: id, topic: topic, jsonKeyPath: keyPath, displayName: defaultName ?? keyPath ?? topic.split('/').last, unit: unit, color: color, chartType: chartType, interpolation: interpolation, dotSize: dotSize, maxDataPoints: maxSamples, position: cards.length));
-  await state.write(key, cards);
-
-  // Auto-enable increased monitoring for pinned topics.
-  if (context.mounted) {
-    context.read<MessageHistoryService>().enableIncreased(topic);
-  }
+  await dashboard.addCard(brokerId, GraphCardModel(id: id, topic: topic, jsonKeyPath: keyPath, displayName: defaultName ?? keyPath ?? topic.split('/').last, unit: unit, colorValue: colorValue, chartType: chartType, interpolation: interpolation, dotSize: dotSize, maxDataPoints: maxSamples, position: cards.length));
 
   if (!context.mounted) return;
   final messenger = ScaffoldMessenger.of(context);
@@ -670,12 +657,6 @@ class _HistoricalBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return UiInlineNotice(
-      kind: UiNoticeKind.warning,
-      title: S.of(context).detailViewingMessage(seq),
-      actionLabel: onShowLatest == null ? null : S.of(context).detailShowLatest,
-      onAction: onShowLatest,
-      radius: 10,
-    );
+    return UiInlineNotice(kind: UiNoticeKind.warning, title: S.of(context).detailViewingMessage(seq), actionLabel: onShowLatest == null ? null : S.of(context).detailShowLatest, onAction: onShowLatest, radius: 10);
   }
 }

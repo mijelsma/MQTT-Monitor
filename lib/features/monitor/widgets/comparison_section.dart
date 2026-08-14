@@ -2,11 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
-import '../../../models/topic_node_value.dart';
+import '../../../core/monitor/models/topic_node_value_model.dart';
 import '../../../shared/format_helpers.dart';
 import '../../../shared/widgets/copy_button.dart';
 import '../../../shared/widgets/json_highlighter.dart';
-import '../../../theme/app_colors.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 
 /// Shows a side-by-side comparison of two historical messages,
@@ -14,8 +13,8 @@ import '../../../theme/app_tokens/app_tokens.dart';
 class ComparisonSection extends StatefulWidget {
   const ComparisonSection({super.key, required this.selected, required this.previous});
 
-  final TopicNodeValue selected;
-  final TopicNodeValue previous;
+  final TopicNodeValueModel selected;
+  final TopicNodeValueModel previous;
 
   @override
   State<ComparisonSection> createState() => _ComparisonSectionState();
@@ -72,11 +71,11 @@ class _ComparisonSectionState extends State<ComparisonSection> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: _ComparePanel(label: 'Previous (#${widget.previous.seq})', timestamp: widget.previous.receivedAt, value: widget.previous, color: AppColors.info500),
+                  child: _ComparePanel(label: 'Previous (#${widget.previous.seq})', timestamp: widget.previous.receivedAt, value: widget.previous, color: tokens.info),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: _ComparePanel(label: 'Selected (#${widget.selected.seq})', timestamp: widget.selected.receivedAt, value: widget.selected, color: AppColors.warning500),
+                  child: _ComparePanel(label: 'Selected (#${widget.selected.seq})', timestamp: widget.selected.receivedAt, value: widget.selected, color: tokens.warning),
                 ),
               ],
             ),
@@ -169,8 +168,8 @@ class _DiffRow {
 class _DiffView extends StatelessWidget {
   const _DiffView({required this.selected, required this.previous});
 
-  final TopicNodeValue selected;
-  final TopicNodeValue previous;
+  final TopicNodeValueModel selected;
+  final TopicNodeValueModel previous;
 
   @override
   Widget build(BuildContext context) {
@@ -192,11 +191,11 @@ class _DiffView extends StatelessWidget {
             decoration: BoxDecoration(
               color: tokens.inputFill,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.warning500.withValues(alpha: 0.2), width: 0.5),
+              border: Border.all(color: tokens.warning.withValues(alpha: 0.2), width: 0.5),
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_diffColumnHeader(tokens, 'Previous (#${previous.seq})', previous.receivedAt, AppColors.info500), const SizedBox(height: 4), for (final row in rows) _diffCell(row.left, monoStyle, tokens)]),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_diffColumnHeader(tokens, 'Previous (#${previous.seq})', previous.receivedAt, tokens.info), const SizedBox(height: 4), for (final row in rows) _diffCell(row.left, monoStyle, tokens)]),
             ),
           ),
         ),
@@ -208,11 +207,11 @@ class _DiffView extends StatelessWidget {
             decoration: BoxDecoration(
               color: tokens.inputFill,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.warning500.withValues(alpha: 0.2), width: 0.5),
+              border: Border.all(color: tokens.warning.withValues(alpha: 0.2), width: 0.5),
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_diffColumnHeader(tokens, 'Selected (#${selected.seq})', selected.receivedAt, AppColors.warning500), const SizedBox(height: 4), for (final row in rows) _diffCell(row.right, monoStyle, tokens)]),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_diffColumnHeader(tokens, 'Selected (#${selected.seq})', selected.receivedAt, tokens.warning), const SizedBox(height: 4), for (final row in rows) _diffCell(row.right, monoStyle, tokens)]),
             ),
           ),
         ),
@@ -260,13 +259,13 @@ class _DiffView extends StatelessWidget {
 
     final isChange = line.type != _DiffLineType.same;
     final color = switch (line.type) {
-      _DiffLineType.removed => AppColors.error500,
-      _DiffLineType.added => AppColors.success500,
+      _DiffLineType.removed => tokens.error,
+      _DiffLineType.added => tokens.success,
       _DiffLineType.same => tokens.textSecondary,
     };
     final bgColor = switch (line.type) {
-      _DiffLineType.removed => AppColors.error500.withValues(alpha: 0.08),
-      _DiffLineType.added => AppColors.success500.withValues(alpha: 0.08),
+      _DiffLineType.removed => tokens.error.withValues(alpha: 0.08),
+      _DiffLineType.added => tokens.success.withValues(alpha: 0.08),
       _DiffLineType.same => Colors.transparent,
     };
 
@@ -328,7 +327,7 @@ class _ComparePanel extends StatelessWidget {
 
   final String label;
   final DateTime timestamp;
-  final TopicNodeValue value;
+  final TopicNodeValueModel value;
   final Color color;
 
   @override

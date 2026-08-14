@@ -32,7 +32,7 @@ class UiSwitchRow extends StatelessWidget {
         ? Container(
             decoration: BoxDecoration(
               color: tokens.inputFill,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(tokens.controlRadius),
               border: Border.all(color: tokens.border, width: 0.5),
             ),
             child: tile,

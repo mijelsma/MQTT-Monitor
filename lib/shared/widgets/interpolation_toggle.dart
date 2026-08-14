@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../models/interpolation_mode.dart';
+import '../../core/dashboard/models/interpolation_mode_model.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 import 'toggle_chip.dart';
 
@@ -12,14 +12,14 @@ class InterpolationToggle extends StatelessWidget {
 
   final String? label;
   final EdgeInsetsGeometry? margin;
-  final InterpolationMode value;
-  final ValueChanged<InterpolationMode> onChanged;
+  final InterpolationModeModel value;
+  final ValueChanged<InterpolationModeModel> onChanged;
 
   @override
   Widget build(BuildContext context) {
     final row = Row(
       children: [
-        for (final mode in InterpolationMode.values) ...[if (mode != InterpolationMode.values.first) const SizedBox(width: 8), ToggleChip(label: _label(mode), selected: value == mode, onTap: () => onChanged(mode))],
+        for (final mode in InterpolationModeModel.values) ...[if (mode != InterpolationModeModel.values.first) const SizedBox(width: 8), ToggleChip(label: _label(mode), selected: value == mode, onTap: () => onChanged(mode))],
       ],
     );
     if (label == null) return row;
@@ -38,9 +38,9 @@ class InterpolationToggle extends StatelessWidget {
     return result;
   }
 
-  String _label(InterpolationMode mode) => switch (mode) {
-    InterpolationMode.curved => 'Curved',
-    InterpolationMode.linear => 'Linear',
-    InterpolationMode.stepped => 'Stepped',
+  String _label(InterpolationModeModel mode) => switch (mode) {
+    InterpolationModeModel.curved => 'Curved',
+    InterpolationModeModel.linear => 'Linear',
+    InterpolationModeModel.stepped => 'Stepped',
   };
 }

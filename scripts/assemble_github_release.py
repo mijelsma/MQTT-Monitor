@@ -9,9 +9,13 @@ import json
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
-
-PLATFORMS = ("windows", "macos", "linux")
-CANONICAL_APP_NAME = "MQTT Monitor"
+from desktop_release_contract import (
+    CANONICAL_APP_NAME,
+    SUPPORTED_PLATFORMS,
+    parse_release_tag,
+    validate_release_descriptor,
+    validate_repository,
+)
 
 
 def _sha256(path: Path) -> str:
@@ -36,21 +40,23 @@ def main() -> None:
     parser.add_argument("--assets", type=Path, required=True)
     args = parser.parse_args()
 
+    validate_repository(args.repository)
+    _, expected_channel = parse_release_tag(args.tag)
     release_base = f"https://github.com/{args.repository}/releases/download/{args.tag}"
-    expected_version = args.tag[1:] if args.tag.startswith("v") else args.tag
     items: list[dict[str, object]] = []
     app_names: set[str] = set()
     channels: set[str] = set()
 
-    for platform in PLATFORMS:
+    for platform in SUPPORTED_PLATFORMS:
         descriptor_path = args.assets / f"release-{platform}.json"
         descriptor = json.loads(descriptor_path.read_text(encoding="utf-8"))
-        if descriptor.get("schemaVersion") != 3:
-            raise ValueError(f"{descriptor_path} is not a schema-v3 descriptor")
-        if descriptor.get("platform") != platform:
-            raise ValueError(f"{descriptor_path} has the wrong platform")
-        if descriptor.get("version") != expected_version:
-            raise ValueError(f"{descriptor_path} does not match tag {args.tag}")
+        validate_release_descriptor(
+            descriptor,
+            platform=platform,
+            tag=args.tag,
+            repository=args.repository,
+            require_hosted_url=True,
+        )
 
         app_names.add(_display_name(descriptor["appName"]))
         channels.add(descriptor["channel"])
@@ -77,10 +83,16 @@ def main() -> None:
             item["buildNumber"] = descriptor["buildNumber"]
         items.append(item)
 
-    if {name.casefold() for name in app_names} != {CANONICAL_APP_NAME.casefold()}:
-        raise ValueError(f"Platform descriptors disagree on app name: {sorted(app_names)}")
+    if {name.casefold() for name in app_names} != {
+        CANONICAL_APP_NAME.casefold()
+    }:
+        raise ValueError(
+            f"Platform descriptors disagree on app name: {sorted(app_names)}"
+        )
     if len(channels) != 1:
         raise ValueError(f"Platform descriptors disagree on channel: {sorted(channels)}")
+    if channels != {expected_channel}:
+        raise ValueError(f"Release channel does not match tag {args.tag}")
 
     archive = {
         "schemaVersion": 3,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../generated/l10n.dart';
-import '../../../models/publish_shortcut.dart';
+import '../../../core/publishing/models/publish_shortcut_model.dart';
 import '../../../shared/widgets/badge_tag.dart';
 import '../../../shared/widgets/qos_tag.dart';
 import '../../../shared/widgets/scope_badge.dart';
@@ -11,9 +11,9 @@ import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
 import '../../../shared/widgets/ui_sortable_row.dart';
-import '../../../theme/app_colors.dart';
+import '../../../theme/app_tokens/app_tokens.dart';
 import '../dialogs/shortcut_dialog.dart';
-import '../settings_viewmodel.dart';
+import '../view_models/settings_view_model.dart';
 
 class ShortcutsPanel extends StatelessWidget {
   const ShortcutsPanel({super.key});
@@ -26,11 +26,11 @@ class ShortcutsPanel extends StatelessWidget {
     vm.addShortcut(result);
   }
 
-  void _editShortcut(BuildContext context, int index, PublishShortcut shortcut) async {
+  void _editShortcut(BuildContext context, PublishShortcutModel shortcut) async {
     final vm = context.read<SettingsViewModel>();
-    final result = await showShortcutDialog(context, shortcut: shortcut, brokers: vm.brokers, onDelete: () => vm.deleteShortcut(index));
+    final result = await showShortcutDialog(context, shortcut: shortcut, brokers: vm.brokers, onDelete: () => vm.deleteShortcut(shortcut.id));
     if (result == null) return;
-    vm.updateShortcut(index, result);
+    vm.updateShortcut(result);
   }
 
   @override
@@ -53,12 +53,12 @@ class ShortcutsPanel extends StatelessWidget {
             children: [
               for (int i = 0; i < shortcuts.length; i++)
                 UiSortableRow(
-                  key: ValueKey(i),
+                  key: ValueKey(shortcuts[i].id),
                   index: i,
                   leading: Container(
                     width: 36,
                     height: 36,
-                    decoration: BoxDecoration(color: shortcuts[i].displayColor, borderRadius: BorderRadius.circular(9)),
+                    decoration: BoxDecoration(color: Color(shortcuts[i].colorValue), borderRadius: BorderRadius.circular(9)),
                     child: const Icon(Icons.bolt_rounded, size: 18, color: Colors.white),
                   ),
                   title: shortcuts[i].name,
@@ -66,10 +66,10 @@ class ShortcutsPanel extends StatelessWidget {
                   trailing: [
                     ScopeBadge(isGlobal: shortcuts[i].isGlobal, brokerCount: shortcuts[i].brokerIds.length),
                     QosTag(qos: shortcuts[i].qos),
-                    if (shortcuts[i].retain) BadgeTag(label: 'RET', color: AppColors.warning500),
+                    if (shortcuts[i].retain) BadgeTag(label: 'RET', color: context.tokens.warning),
                   ],
-                  onTap: () => _editShortcut(context, i, shortcuts[i]),
-                  onDelete: () => vm.deleteShortcut(i),
+                  onTap: () => _editShortcut(context, shortcuts[i]),
+                  onDelete: () => vm.deleteShortcut(shortcuts[i].id),
                 ),
             ],
           ),

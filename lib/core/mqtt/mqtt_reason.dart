@@ -1,6 +1,6 @@
 import 'package:mqtt5_client/mqtt5_client.dart' as mqtt5;
 
-import '../../models/mqtt_protocol_version.dart';
+import '../../core/mqtt/models/mqtt_protocol_version_model.dart';
 
 const mqtt311BrokerDisconnectMessage =
     'Disconnected by broker (no reason available — this is a limitation of MQTT 3.1.1). '
@@ -58,9 +58,9 @@ class MqttReasonNotice {
   static int _connectCode(mqtt5.MqttConnectReasonCode? code) => mqtt5.MqttConnectReasonCodeSupport.mqttConnectReasonCode.asInt(code) ?? 0xff;
 }
 
-String brokerDisconnectMessage(MqttProtocolVersion version) => switch (version) {
-  MqttProtocolVersion.v311 => mqtt311BrokerDisconnectMessage,
-  MqttProtocolVersion.v5 => 'Disconnected from broker.',
+String brokerDisconnectMessage(MqttProtocolVersionModel version) => switch (version) {
+  MqttProtocolVersionModel.v311 => mqtt311BrokerDisconnectMessage,
+  MqttProtocolVersionModel.v5 => 'Disconnected from broker.',
 };
 
 /// Human-readable MQTT 5 reason-code labels shared across packet families.

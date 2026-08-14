@@ -2,107 +2,100 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
-import 'core/history/message_history_service.dart';
-import 'core/mqtt/mqtt_service.dart';
-import 'core/platform/window_chrome.dart';
-import 'core/state/app_state.dart';
-import 'core/state/keys/settings_keys.dart';
-import 'core/update/app_update_service.dart';
+import 'application/bootstrap/app_lifetime.dart';
+import 'core/broker/repositories/broker_repository.dart';
+import 'core/dashboard/repositories/dashboard_preferences_repository.dart';
+import 'core/dashboard/repositories/dashboard_repository.dart';
+import 'core/dashboard/dashboard_series_store.dart';
+import 'core/history/repositories/history_preferences_repository.dart';
+import 'core/history/services/message_history_service.dart';
+import 'core/ingestion/message_ingestion_coordinator.dart';
+import 'core/logging/app_logger.dart';
+import 'core/monitor/topic_projection.dart';
+import 'core/mqtt/repositories/connection_preferences_repository.dart';
+import 'core/mqtt/session/mqtt_session_controller.dart';
+import 'core/platform/window_chrome_lifecycle.dart';
+import 'core/publishing/json_payload_validator.dart';
+import 'core/publishing/services/publish_command_service.dart';
+import 'core/publishing/repositories/qos_preferences_repository.dart';
+import 'core/publishing/repositories/shortcut_repository.dart';
+import 'core/publishing/template_resolver.dart';
+import 'core/publishing/repositories/variable_repository.dart';
+import 'core/ui/repositories/ui_preferences_repository.dart';
+import 'core/ui/repositories/workspace_layout_repository.dart';
+import 'core/update/services/app_update_service.dart';
+import 'core/update/app_update_lifecycle.dart';
+import 'core/update/repositories/update_preferences_repository.dart';
 import 'features/monitor/monitor_screen.dart';
+import 'features/settings/controllers/settings_navigation_controller.dart';
 import 'generated/l10n.dart';
-import 'models/language.dart';
+import 'navigation/app_navigation.dart';
 import 'theme/app_theme.dart';
-import 'theme/app_tokens/app_tokens.dart';
+import 'theme/app_theme_builder.dart';
 
+/// Exposes the owned application lifetime and builds the visual shell.
 class App extends StatelessWidget {
-  const App({super.key, required this.mqttService, required this.historyService, required this.updater});
+  const App({super.key, required this.lifetime});
 
-  final MqttService mqttService;
-  final MessageHistoryService historyService;
-  final AppUpdateService updater;
+  final AppLifetime lifetime;
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<AppStateManager>.value(value: AppStateManager.instance),
-        Provider<MqttService>.value(value: mqttService),
-        Provider<MessageHistoryService>.value(value: historyService),
-        ChangeNotifierProvider<AppUpdateService>.value(value: updater),
+        Provider<AppLogger>.value(value: lifetime.logger),
+        ChangeNotifierProvider<ConnectionPreferencesRepository>.value(value: lifetime.connectionPreferences),
+        ChangeNotifierProvider<DashboardPreferencesRepository>.value(value: lifetime.dashboardPreferences),
+        ChangeNotifierProvider<HistoryPreferencesRepository>.value(value: lifetime.historyPreferences),
+        ChangeNotifierProvider<WorkspaceLayoutRepository>.value(value: lifetime.workspaceLayout),
+        ChangeNotifierProvider<UiPreferencesRepository>.value(value: lifetime.uiPreferences),
+        ChangeNotifierProvider<UpdatePreferencesRepository>.value(value: lifetime.updatePreferences),
+        ChangeNotifierProvider<QosPreferencesRepository>.value(value: lifetime.qosPreferences),
+        ChangeNotifierProvider<BrokerRepository>.value(value: lifetime.brokerRepository),
+        ChangeNotifierProvider<DashboardRepository>.value(value: lifetime.dashboardRepository),
+        ChangeNotifierProvider<ShortcutRepository>.value(value: lifetime.shortcutRepository),
+        ChangeNotifierProvider<VariableRepository>.value(value: lifetime.variableRepository),
+        ChangeNotifierProvider<MqttSessionController>.value(value: lifetime.mqttSession),
+        ChangeNotifierProvider<TopicProjection>.value(value: lifetime.topicProjection),
+        ChangeNotifierProvider<SettingsNavigationController>.value(value: lifetime.settingsNavigation),
+        ChangeNotifierProvider<AppUpdateService>.value(value: lifetime.updater),
+        Provider<MessageIngestionCoordinator>.value(value: lifetime.ingestion),
+        Provider<MessageHistoryService>.value(value: lifetime.historyService),
+        Provider<DashboardSeriesStore>.value(value: lifetime.dashboardSeriesStore),
+        Provider<PublishCommandService>.value(value: lifetime.publisher),
+        Provider<TemplateResolver>.value(value: lifetime.templateResolver),
+        Provider<JsonPayloadValidator>.value(value: lifetime.jsonValidator),
+        Provider<AppNavigation>.value(value: lifetime.navigation),
       ],
-      child: const _AppView(),
+      child: WindowChromeLifecycle(
+        preferences: lifetime.uiPreferences,
+        controller: lifetime.windowChrome,
+        child: AppUpdateLifecycle(service: lifetime.updater, child: const _AppView()),
+      ),
     );
   }
 }
 
-class _AppView extends StatefulWidget {
+class _AppView extends StatelessWidget {
   const _AppView();
 
   @override
-  State<_AppView> createState() => _AppViewState();
-}
-
-class _AppViewState extends State<_AppView> {
-  late final AppStateManager _state;
-  Brightness? _lastAppearance;
-
-  Brightness get _effectiveBrightness {
-    final platform = WidgetsBinding.instance.platformDispatcher.platformBrightness;
-    return switch (_state.read(SettingsKeys.themeMode)) {
-      ThemeMode.light => Brightness.light,
-      ThemeMode.dark => Brightness.dark,
-      ThemeMode.system => platform,
-    };
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _state = AppStateManager.instance;
-    WidgetsBinding.instance.platformDispatcher.onPlatformBrightnessChanged = _syncAppearance;
-    _syncAppearance();
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.platformDispatcher.onPlatformBrightnessChanged = null;
-    super.dispose();
-  }
-
-  void _syncAppearance() {
-    final brightness = _effectiveBrightness;
-    if (brightness == _lastAppearance) return;
-    _lastAppearance = brightness;
-    WindowChrome.setAppearance(brightness);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final themeMode = context.select<AppStateManager, ThemeMode>((s) => s.read(SettingsKeys.themeMode));
-    final language = context.select<AppStateManager, AppLanguage>((s) => s.read(SettingsKeys.language));
-    final accentValue = context.select<AppStateManager, int>((s) => s.read(SettingsKeys.accentColor));
+    final themeMode = context.select<UiPreferencesRepository, ThemeMode>((preferences) => preferences.themeMode);
+    final language = context.select<UiPreferencesRepository, String>((preferences) => preferences.language.name);
+    final accentValue = context.select<UiPreferencesRepository, int>((preferences) => preferences.accentColor);
     final accent = Color(accentValue);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => _syncAppearance());
 
     return MaterialApp(
       title: 'MQTT Monitor',
       debugShowCheckedModeBanner: false,
-      theme: _applyAccent(themeLight, accent, Brightness.light),
-      darkTheme: _applyAccent(themeDark, accent, Brightness.dark),
+      theme: AppThemeBuilder.withAccent(themeLight, accent, Brightness.light),
+      darkTheme: AppThemeBuilder.withAccent(themeDark, accent, Brightness.dark),
       themeMode: themeMode,
-      locale: Locale(language.name),
+      locale: Locale(language),
       supportedLocales: S.delegate.supportedLocales,
       localizationsDelegates: const [S.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
       home: const MonitorScreen(),
     );
   }
-}
-
-ThemeData _applyAccent(ThemeData base, Color accent, Brightness brightness) {
-  final baseTokens = base.extension<AppTokens>()!;
-  final isLight = brightness == Brightness.light;
-  final tokens = baseTokens.copyWith(primary: accent, selectedBg: isLight ? accent.withValues(alpha: 0.08) : baseTokens.selectedBg);
-  final scheme = base.colorScheme.copyWith(primary: accent, primaryContainer: Color.lerp(accent, Colors.white, isLight ? 0.85 : 0.0)!, inversePrimary: Color.lerp(accent, Colors.white, 0.25)!);
-  return base.copyWith(colorScheme: scheme, extensions: <ThemeExtension<dynamic>>[tokens]);
 }

@@ -99,6 +99,51 @@ class S {
     return Intl.message('No Broker', name: 'noBroker', desc: '', args: []);
   }
 
+  /// `Retry`
+  String get retry {
+    return Intl.message('Retry', name: 'retry', desc: '', args: []);
+  }
+
+  /// `Broker profiles unavailable`
+  String get brokerProfilesUnavailable {
+    return Intl.message(
+      'Broker profiles unavailable',
+      name: 'brokerProfilesUnavailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Copy`
+  String get copy {
+    return Intl.message('Copy', name: 'copy', desc: '', args: []);
+  }
+
+  /// `Dismiss`
+  String get dismiss {
+    return Intl.message('Dismiss', name: 'dismiss', desc: '', args: []);
+  }
+
+  /// `Show details`
+  String get showDetails {
+    return Intl.message(
+      'Show details',
+      name: 'showDetails',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Hide details`
+  String get hideDetails {
+    return Intl.message(
+      'Hide details',
+      name: 'hideDetails',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Brokers`
   String get sectionBrokers {
     return Intl.message('Brokers', name: 'sectionBrokers', desc: '', args: []);
@@ -299,6 +344,16 @@ class S {
     );
   }
 
+  /// `Marker size for data points in new line graphs. Choose 0 to hide markers.`
+  String get dashboardPanelDotSizeHint {
+    return Intl.message(
+      'Marker size for data points in new line graphs. Choose 0 to hide markers.',
+      name: 'dashboardPanelDotSizeHint',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Samples`
   String get dashboardPanelMaxSamples {
     return Intl.message(
@@ -309,10 +364,10 @@ class S {
     );
   }
 
-  /// `0 = unlimited`
+  /// `Maximum number of recent values retained by each new graph.`
   String get dashboardPanelMaxSamplesHint {
     return Intl.message(
-      '0 = unlimited',
+      'Maximum number of recent values retained by each new graph.',
       name: 'dashboardPanelMaxSamplesHint',
       desc: '',
       args: [],
@@ -506,6 +561,16 @@ class S {
       name: 'variablesPanelNoOptions',
       desc: '',
       args: [],
+    );
+  }
+
+  /// `{count} {count, plural, =1{option} other{options}}`
+  String variablesPanelOptionsCount(int count) {
+    return Intl.message(
+      '$count ${Intl.plural(count, one: 'option', other: 'options')}',
+      name: 'variablesPanelOptionsCount',
+      desc: '',
+      args: [count],
     );
   }
 
@@ -759,6 +824,26 @@ class S {
     );
   }
 
+  /// `Enter a valid MQTT topic name`
+  String get shortcutDialogInvalidTopic {
+    return Intl.message(
+      'Enter a valid MQTT topic name',
+      name: 'shortcutDialogInvalidTopic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Put the variable name inside dollar-sign braces`
+  String get shortcutDialogInvalidTemplate {
+    return Intl.message(
+      'Put the variable name inside dollar-sign braces',
+      name: 'shortcutDialogInvalidTemplate',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Color`
   String get shortcutDialogFieldColor {
     return Intl.message(
@@ -819,10 +904,10 @@ class S {
     );
   }
 
-  /// `Configure message history retention for topics.`
+  /// `Configure live message-rate sampling.`
   String get monitoringPanelDescription {
     return Intl.message(
-      'Configure message history retention for topics.',
+      'Configure live message-rate sampling.',
       name: 'monitoringPanelDescription',
       desc: '',
       args: [],
@@ -939,21 +1024,391 @@ class S {
     );
   }
 
-  /// `Messages stored per topic`
-  String get advancedPanelMessagesPerTopic {
+  /// `New subscription history`
+  String get advancedPanelNewSubscriptionHistory {
     return Intl.message(
-      'Messages stored per topic',
-      name: 'advancedPanelMessagesPerTopic',
+      'New subscription history',
+      name: 'advancedPanelNewSubscriptionHistory',
       desc: '',
       args: [],
     );
   }
 
-  /// `Maximum messages kept in history per topic; older messages are pruned. Lower values use less memory.`
-  String get advancedPanelMessagesPerTopicHint {
+  /// `Collect bounded history for subscriptions created from now on`
+  String get advancedPanelNewSubscriptionHistoryHint {
     return Intl.message(
-      'Maximum messages kept in history per topic; older messages are pruned. Lower values use less memory.',
-      name: 'advancedPanelMessagesPerTopicHint',
+      'Collect bounded history for subscriptions created from now on',
+      name: 'advancedPanelNewSubscriptionHistoryHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Default retention`
+  String get advancedPanelDefaultRetention {
+    return Intl.message(
+      'Default retention',
+      name: 'advancedPanelDefaultRetention',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Messages retained by each new subscription`
+  String get advancedPanelDefaultRetentionHint {
+    return Intl.message(
+      'Messages retained by each new subscription',
+      name: 'advancedPanelDefaultRetentionHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Maximum retention`
+  String get advancedPanelMaximumRetention {
+    return Intl.message(
+      'Maximum retention',
+      name: 'advancedPanelMaximumRetention',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Upper bound enforced for every subscription and live history buffer`
+  String get advancedPanelMaximumRetentionHint {
+    return Intl.message(
+      'Upper bound enforced for every subscription and live history buffer',
+      name: 'advancedPanelMaximumRetentionHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reduce history maximum?`
+  String get advancedPanelMaximumConfirmTitle {
+    return Intl.message(
+      'Reduce history maximum?',
+      name: 'advancedPanelMaximumConfirmTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Affected policies and live buffers will be clamped. Existing messages beyond the new limit will be removed.`
+  String get advancedPanelMaximumConfirmBody {
+    return Intl.message(
+      'Affected policies and live buffers will be clamped. Existing messages beyond the new limit will be removed.',
+      name: 'advancedPanelMaximumConfirmBody',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Saved subscription policies`
+  String get advancedPanelAffectedSubscriptions {
+    return Intl.message(
+      'Saved subscription policies',
+      name: 'advancedPanelAffectedSubscriptions',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `New-subscription default`
+  String get advancedPanelAffectedDefault {
+    return Intl.message(
+      'New-subscription default',
+      name: 'advancedPanelAffectedDefault',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Live topic buffers`
+  String get advancedPanelAffectedBuffers {
+    return Intl.message(
+      'Live topic buffers',
+      name: 'advancedPanelAffectedBuffers',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reset`
+  String get advancedPanelResetSection {
+    return Intl.message(
+      'Reset',
+      name: 'advancedPanelResetSection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reset application data`
+  String get advancedPanelResetTitle {
+    return Intl.message(
+      'Reset application data',
+      name: 'advancedPanelResetTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Choose which settings and saved data to reset or reset everything`
+  String get advancedPanelResetHint {
+    return Intl.message(
+      'Choose which settings and saved data to reset or reset everything',
+      name: 'advancedPanelResetHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select data to reset`
+  String get advancedPanelResetAction {
+    return Intl.message(
+      'Select data to reset',
+      name: 'advancedPanelResetAction',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Reset selected`
+  String get advancedPanelResetSelectedAction {
+    return Intl.message(
+      'Reset selected',
+      name: 'advancedPanelResetSelectedAction',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Choose what to reset`
+  String get advancedPanelResetConfirmTitle {
+    return Intl.message(
+      'Choose what to reset',
+      name: 'advancedPanelResetConfirmTitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Selected data will be permanently removed or restored to its defaults. Unchecked data is kept.`
+  String get advancedPanelResetConfirmBody {
+    return Intl.message(
+      'Selected data will be permanently removed or restored to its defaults. Unchecked data is kept.',
+      name: 'advancedPanelResetConfirmBody',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Select all`
+  String get advancedPanelResetSelectAll {
+    return Intl.message(
+      'Select all',
+      name: 'advancedPanelResetSelectAll',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Broker profiles`
+  String get advancedPanelResetBrokers {
+    return Intl.message(
+      'Broker profiles',
+      name: 'advancedPanelResetBrokers',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Dashboards`
+  String get advancedPanelResetDashboards {
+    return Intl.message(
+      'Dashboards',
+      name: 'advancedPanelResetDashboards',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Variables`
+  String get advancedPanelResetVariables {
+    return Intl.message(
+      'Variables',
+      name: 'advancedPanelResetVariables',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Shortcuts`
+  String get advancedPanelResetShortcuts {
+    return Intl.message(
+      'Shortcuts',
+      name: 'advancedPanelResetShortcuts',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `History preferences`
+  String get advancedPanelResetHistory {
+    return Intl.message(
+      'History preferences',
+      name: 'advancedPanelResetHistory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connection preferences`
+  String get advancedPanelResetConnection {
+    return Intl.message(
+      'Connection preferences',
+      name: 'advancedPanelResetConnection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Publishing preferences`
+  String get advancedPanelResetPublishing {
+    return Intl.message(
+      'Publishing preferences',
+      name: 'advancedPanelResetPublishing',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `User interface`
+  String get advancedPanelResetUserInterface {
+    return Intl.message(
+      'User interface',
+      name: 'advancedPanelResetUserInterface',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Update preferences`
+  String get advancedPanelResetUpdates {
+    return Intl.message(
+      'Update preferences',
+      name: 'advancedPanelResetUpdates',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The selected data was reset.`
+  String get advancedPanelResetSuccess {
+    return Intl.message(
+      'The selected data was reset.',
+      name: 'advancedPanelResetSuccess',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Settings could not be reset. No broker resources were removed.`
+  String get advancedPanelResetFailed {
+    return Intl.message(
+      'Settings could not be reset. No broker resources were removed.',
+      name: 'advancedPanelResetFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The selected data was reset, but some broker files or credentials could not be removed.`
+  String get advancedPanelResetCleanupWarning {
+    return Intl.message(
+      'The selected data was reset, but some broker files or credentials could not be removed.',
+      name: 'advancedPanelResetCleanupWarning',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Storage and diagnostics`
+  String get advancedPanelStorageSection {
+    return Intl.message(
+      'Storage and diagnostics',
+      name: 'advancedPanelStorageSection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Settings location`
+  String get advancedPanelSettingsLocation {
+    return Intl.message(
+      'Settings location',
+      name: 'advancedPanelSettingsLocation',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Application preferences are stored here. Broker passwords remain in the operating system credential store.`
+  String get advancedPanelSettingsLocationHint {
+    return Intl.message(
+      'Application preferences are stored here. Broker passwords remain in the operating system credential store.',
+      name: 'advancedPanelSettingsLocationHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Open folder`
+  String get advancedPanelOpenFolder {
+    return Intl.message(
+      'Open folder',
+      name: 'advancedPanelOpenFolder',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Diagnostic log`
+  String get advancedPanelLogFile {
+    return Intl.message(
+      'Diagnostic log',
+      name: 'advancedPanelLogFile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Redacted diagnostic events from current and previous sessions`
+  String get advancedPanelLogFileHint {
+    return Intl.message(
+      'Redacted diagnostic events from current and previous sessions',
+      name: 'advancedPanelLogFileHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Open log`
+  String get advancedPanelOpenLog {
+    return Intl.message(
+      'Open log',
+      name: 'advancedPanelOpenLog',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The location could not be opened.`
+  String get advancedPanelOpenLocationFailed {
+    return Intl.message(
+      'The location could not be opened.',
+      name: 'advancedPanelOpenLocationFailed',
       desc: '',
       args: [],
     );
@@ -1314,6 +1769,16 @@ class S {
     return Intl.message(
       'Disconnected',
       name: 'uiPanelStartupDisconnected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Default protocol for new brokers`
+  String get uiPanelDefaultBrokerProtocol {
+    return Intl.message(
+      'Default protocol for new brokers',
+      name: 'uiPanelDefaultBrokerProtocol',
       desc: '',
       args: [],
     );
@@ -1794,6 +2259,26 @@ class S {
     );
   }
 
+  /// `History off`
+  String get brokerDialogHistoryDisabled {
+    return Intl.message(
+      'History off',
+      name: 'brokerDialogHistoryDisabled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `history messages`
+  String get brokerDialogHistoryMessages {
+    return Intl.message(
+      'history messages',
+      name: 'brokerDialogHistoryMessages',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Edit Subscription`
   String get subscriptionDialogEditTitle {
     return Intl.message(
@@ -1922,6 +2407,171 @@ class S {
       desc: '',
       args: [],
     );
+  }
+
+  /// `History`
+  String get subscriptionDialogHistoryLabel {
+    return Intl.message(
+      'History',
+      name: 'subscriptionDialogHistoryLabel',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Store message history`
+  String get subscriptionDialogHistoryEnabled {
+    return Intl.message(
+      'Store message history',
+      name: 'subscriptionDialogHistoryEnabled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Live messages remain available when history is off`
+  String get subscriptionDialogHistoryEnabledHint {
+    return Intl.message(
+      'Live messages remain available when history is off',
+      name: 'subscriptionDialogHistoryEnabledHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Retention`
+  String get subscriptionDialogHistoryRetention {
+    return Intl.message(
+      'Retention',
+      name: 'subscriptionDialogHistoryRetention',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Messages kept for topics matched by this subscription`
+  String get subscriptionDialogHistoryRetentionHint {
+    return Intl.message(
+      'Messages kept for topics matched by this subscription',
+      name: 'subscriptionDialogHistoryRetentionHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `When enabled filters overlap, the largest matching retention is used.`
+  String get subscriptionDialogHistoryOverlapHint {
+    return Intl.message(
+      'When enabled filters overlap, the largest matching retention is used.',
+      name: 'subscriptionDialogHistoryOverlapHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Enter a valid MQTT topic filter`
+  String get subscriptionDialogInvalidTopicFilter {
+    return Intl.message(
+      'Enter a valid MQTT topic filter',
+      name: 'subscriptionDialogInvalidTopicFilter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This broker already has that topic filter`
+  String get subscriptionDialogDuplicateTopicFilter {
+    return Intl.message(
+      'This broker already has that topic filter',
+      name: 'subscriptionDialogDuplicateTopicFilter',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No history yet`
+  String get historyPanelNoHistory {
+    return Intl.message(
+      'No history yet',
+      name: 'historyPanelNoHistory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Messages will appear here as they arrive`
+  String get historyPanelNoHistoryHint {
+    return Intl.message(
+      'Messages will appear here as they arrive',
+      name: 'historyPanelNoHistoryHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `History disabled`
+  String get historyPanelDisabled {
+    return Intl.message(
+      'History disabled',
+      name: 'historyPanelDisabled',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Live values continue, but new history is not stored`
+  String get historyPanelDisabledHint {
+    return Intl.message(
+      'Live values continue, but new history is not stored',
+      name: 'historyPanelDisabledHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `No matching subscription`
+  String get historyPanelNotSubscribed {
+    return Intl.message(
+      'No matching subscription',
+      name: 'historyPanelNotSubscribed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `This topic is not covered by the active broker subscriptions`
+  String get historyPanelNotSubscribedHint {
+    return Intl.message(
+      'This topic is not covered by the active broker subscriptions',
+      name: 'historyPanelNotSubscribedHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Retaining up to`
+  String get historyPanelRetainingUpTo {
+    return Intl.message(
+      'Retaining up to',
+      name: 'historyPanelRetainingUpTo',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `stored`
+  String get historyPanelStored {
+    return Intl.message(
+      'stored',
+      name: 'historyPanelStored',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Clear`
+  String get historyPanelClear {
+    return Intl.message('Clear', name: 'historyPanelClear', desc: '', args: []);
   }
 
   /// `Waiting for messages`
@@ -2239,6 +2889,46 @@ class S {
     return Intl.message('Bad JSON', name: 'publishBadJson', desc: '', args: []);
   }
 
+  /// `Enter a valid MQTT topic name`
+  String get publishInvalidTopic {
+    return Intl.message(
+      'Enter a valid MQTT topic name',
+      name: 'publishInvalidTopic',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Put the variable name inside dollar-sign braces`
+  String get publishInvalidTemplate {
+    return Intl.message(
+      'Put the variable name inside dollar-sign braces',
+      name: 'publishInvalidTemplate',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Set every topic variable before publishing`
+  String get publishMissingVariables {
+    return Intl.message(
+      'Set every topic variable before publishing',
+      name: 'publishMissingVariables',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `QoS must be 0, 1, or 2`
+  String get publishInvalidQos {
+    return Intl.message(
+      'QoS must be 0, 1, or 2',
+      name: 'publishInvalidQos',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `MESSAGE DETAIL`
   String get sidebarMessageDetail {
     return Intl.message(
@@ -2304,6 +2994,66 @@ class S {
     return Intl.message(
       'Choose a topic from the tree\nto view message details',
       name: 'sidebarNoSelectionSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Resize Message Detail and History`
+  String get sidebarResizeDetailHistory {
+    return Intl.message(
+      'Resize Message Detail and History',
+      name: 'sidebarResizeDetailHistory',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Resize Message Detail and Publish`
+  String get sidebarResizeDetailPublish {
+    return Intl.message(
+      'Resize Message Detail and Publish',
+      name: 'sidebarResizeDetailPublish',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Resize Message Detail and Shortcuts`
+  String get sidebarResizeDetailShortcuts {
+    return Intl.message(
+      'Resize Message Detail and Shortcuts',
+      name: 'sidebarResizeDetailShortcuts',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Resize History and Publish`
+  String get sidebarResizeHistoryPublish {
+    return Intl.message(
+      'Resize History and Publish',
+      name: 'sidebarResizeHistoryPublish',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Resize History and Shortcuts`
+  String get sidebarResizeHistoryShortcuts {
+    return Intl.message(
+      'Resize History and Shortcuts',
+      name: 'sidebarResizeHistoryShortcuts',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Resize Publish and Shortcuts`
+  String get sidebarResizePublishShortcuts {
+    return Intl.message(
+      'Resize Publish and Shortcuts',
+      name: 'sidebarResizePublishShortcuts',
       desc: '',
       args: [],
     );
@@ -2394,6 +3144,131 @@ class S {
     return Intl.message(
       'Failed to clear — not connected',
       name: 'detailRetainedClearFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connected`
+  String get statusConnected {
+    return Intl.message(
+      'Connected',
+      name: 'statusConnected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connecting`
+  String get statusConnecting {
+    return Intl.message(
+      'Connecting',
+      name: 'statusConnecting',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Disconnected`
+  String get statusDisconnected {
+    return Intl.message(
+      'Disconnected',
+      name: 'statusDisconnected',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Host not found`
+  String get statusHostNotFound {
+    return Intl.message(
+      'Host not found',
+      name: 'statusHostNotFound',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Not permitted`
+  String get statusNotPermitted {
+    return Intl.message(
+      'Not permitted',
+      name: 'statusNotPermitted',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Connection refused`
+  String get statusConnectionRefused {
+    return Intl.message(
+      'Connection refused',
+      name: 'statusConnectionRefused',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `TLS failed`
+  String get statusTlsFailed {
+    return Intl.message(
+      'TLS failed',
+      name: 'statusTlsFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Error`
+  String get statusError {
+    return Intl.message('Error', name: 'statusError', desc: '', args: []);
+  }
+
+  /// `{count} msgs · {rate}/s`
+  String statusMessages(int count, int rate) {
+    return Intl.message(
+      '$count msgs · $rate/s',
+      name: 'statusMessages',
+      desc: '',
+      args: [count, rate],
+    );
+  }
+
+  /// `Update available`
+  String get statusUpdateAvailable {
+    return Intl.message(
+      'Update available',
+      name: 'statusUpdateAvailable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Open update settings`
+  String get statusOpenUpdateSettings {
+    return Intl.message(
+      'Open update settings',
+      name: 'statusOpenUpdateSettings',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `MQTT 5.0 — reason codes and properties available`
+  String get statusMqtt5Detail {
+    return Intl.message(
+      'MQTT 5.0 — reason codes and properties available',
+      name: 'statusMqtt5Detail',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `MQTT 3.1.1 — broker does not return delivery reasons`
+  String get statusMqtt311Detail {
+    return Intl.message(
+      'MQTT 3.1.1 — broker does not return delivery reasons',
+      name: 'statusMqtt311Detail',
       desc: '',
       args: [],
     );
