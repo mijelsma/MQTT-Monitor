@@ -6,10 +6,21 @@ import 'package:mqtt_monitor/core/storage/shared_preferences_store.dart';
 import 'package:mqtt_monitor/core/ui/workspace_layout_repository.dart';
 import 'package:mqtt_monitor/models/chart_type.dart';
 import 'package:mqtt_monitor/models/interpolation_mode.dart';
+import 'package:mqtt_monitor/models/mqtt_protocol_version.dart';
 import 'package:mqtt_monitor/models/startup_connection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  test('fresh connection preferences use production-friendly defaults', () async {
+    SharedPreferences.setMockInitialValues({});
+    final repository = ConnectionPreferencesRepository(await SharedPreferencesStore.load());
+
+    await repository.initialize();
+
+    expect(repository.startupConnection, StartupConnection.alwaysConnect);
+    expect(repository.brokerProtocol, MqttProtocolVersion.v5);
+  });
+
   test('typed owners round-trip the remaining version 1 settings', () async {
     SharedPreferences.setMockInitialValues({});
     final store = await SharedPreferencesStore.load();
@@ -20,7 +31,8 @@ void main() {
     await Future.wait([connection.initialize(), dashboard.initialize(), history.initialize(), layout.initialize()]);
 
     await connection.setRateIntervalMs(2500);
-    await connection.setStartupConnection(StartupConnection.alwaysConnect);
+    await connection.setStartupConnection(StartupConnection.stayDisconnected);
+    await connection.setBrokerProtocol(MqttProtocolVersion.v311);
     await dashboard.setDotSize(7.5);
     await dashboard.setCardColor(0xFF123456);
     await dashboard.setChartType(ChartType.bar);
@@ -40,7 +52,8 @@ void main() {
     await Future.wait([restoredConnection.initialize(), restoredDashboard.initialize(), restoredHistory.initialize(), restoredLayout.initialize()]);
 
     expect(restoredConnection.rateIntervalMs, 2500);
-    expect(restoredConnection.startupConnection, StartupConnection.alwaysConnect);
+    expect(restoredConnection.startupConnection, StartupConnection.stayDisconnected);
+    expect(restoredConnection.brokerProtocol, MqttProtocolVersion.v311);
     expect(restoredDashboard.dotSize, 7.5);
     expect(restoredDashboard.cardColor, 0xFF123456);
     expect(restoredDashboard.chartType, ChartType.bar);
@@ -51,7 +64,7 @@ void main() {
     expect(restoredHistory.maximumRetention, 100);
     expect(restoredHistory.rateSampleSize, 20);
     expect(restoredLayout.monitorSplitRatio, 0.7);
-    expect(restoredLayout.collapsed, [false, true, false, false]);
+    expect(restoredLayout.collapsed, [false, true, true, false]);
 
     expect(store.get(ConnectionPreferencesRepository.schemaVersionKey), ConnectionPreferencesRepository.currentSchemaVersion);
     expect(store.get(DashboardPreferencesRepository.schemaVersionKey), DashboardPreferencesRepository.currentSchemaVersion);

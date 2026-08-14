@@ -1694,6 +1694,16 @@ class S {
     );
   }
 
+  /// `Default protocol for new brokers`
+  String get uiPanelDefaultBrokerProtocol {
+    return Intl.message(
+      'Default protocol for new brokers',
+      name: 'uiPanelDefaultBrokerProtocol',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Defaults`
   String get uiPanelSectionDefaults {
     return Intl.message(

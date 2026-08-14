@@ -666,6 +666,9 @@ class MessageLookup extends MessageLookupByLibrary {
     "subscriptionDialogValidateTopicFilter":
         MessageLookupByLibrary.simpleMessage("Voer een onderwerpfilter in"),
     "uiPanelAccentColor": MessageLookupByLibrary.simpleMessage("Accentkleur"),
+    "uiPanelDefaultBrokerProtocol": MessageLookupByLibrary.simpleMessage(
+      "Standaardprotocol voor nieuwe brokers",
+    ),
     "uiPanelDefaultPublishQos": MessageLookupByLibrary.simpleMessage(
       "Standaard QoS publiceren",
     ),

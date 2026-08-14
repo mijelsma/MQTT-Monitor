@@ -14,7 +14,7 @@ class WorkspaceLayoutRepository extends ChangeNotifier {
   static const String sidebarPublishCollapsedKey = 'layout.sidebarPublishCollapsed';
   static const String sidebarShortcutsCollapsedKey = 'layout.sidebarShortcutsCollapsed';
   static const double defaultMonitorSplitRatio = 0.5;
-  static const List<bool> defaultCollapsed = [false, true, false, true];
+  static const List<bool> defaultCollapsed = [false, true, true, true];
 
   final PreferencesStore _store;
   bool _persistLayout;

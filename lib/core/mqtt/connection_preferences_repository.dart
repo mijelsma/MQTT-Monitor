@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../models/mqtt_protocol_version.dart';
 import '../../models/startup_connection.dart';
 import '../storage/preferences_store.dart';
 
@@ -11,22 +12,27 @@ class ConnectionPreferencesRepository extends ChangeNotifier {
   static const int currentSchemaVersion = 1;
   static const String rateIntervalKey = 'settings.rateIntervalMs';
   static const String startupConnectionKey = 'settings.startupConnection';
+  static const String defaultBrokerProtocolKey = 'settings.defaultBrokerProtocol';
   static const int defaultRateIntervalMs = 1000;
-  static const StartupConnection defaultStartupConnection = StartupConnection.lastStatus;
+  static const StartupConnection defaultStartupConnection = StartupConnection.alwaysConnect;
+  static const MqttProtocolVersion defaultBrokerProtocol = MqttProtocolVersion.v5;
 
   final PreferencesStore _store;
 
   int _rateIntervalMs = defaultRateIntervalMs;
   StartupConnection _startupConnection = defaultStartupConnection;
+  MqttProtocolVersion _defaultBrokerProtocol = defaultBrokerProtocol;
 
   int get rateIntervalMs => _rateIntervalMs;
   StartupConnection get startupConnection => _startupConnection;
+  MqttProtocolVersion get brokerProtocol => _defaultBrokerProtocol;
 
   Future<void> initialize() async {
     await _ensureSchema();
     final interval = _store.get(rateIntervalKey);
     _rateIntervalMs = interval is int && interval >= 500 && interval <= 5000 ? interval : defaultRateIntervalMs;
     _startupConnection = _decodeEnum(_store.get(startupConnectionKey), StartupConnection.values, defaultStartupConnection);
+    _defaultBrokerProtocol = _decodeEnum(_store.get(defaultBrokerProtocolKey), MqttProtocolVersion.values, defaultBrokerProtocol);
     notifyListeners();
   }
 
@@ -45,11 +51,20 @@ class ConnectionPreferencesRepository extends ChangeNotifier {
     await _store.setString(startupConnectionKey, value.name);
   }
 
+  Future<void> setBrokerProtocol(MqttProtocolVersion value) async {
+    if (_defaultBrokerProtocol == value) return;
+    _defaultBrokerProtocol = value;
+    notifyListeners();
+    await _store.setString(defaultBrokerProtocolKey, value.name);
+  }
+
   Future<void> resetToDefaults() async {
     await _store.remove(rateIntervalKey);
     await _store.remove(startupConnectionKey);
+    await _store.remove(defaultBrokerProtocolKey);
     _rateIntervalMs = defaultRateIntervalMs;
     _startupConnection = defaultStartupConnection;
+    _defaultBrokerProtocol = defaultBrokerProtocol;
     notifyListeners();
   }
 

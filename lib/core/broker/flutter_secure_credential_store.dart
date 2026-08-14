@@ -4,9 +4,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'credential_store.dart';
 
 /// Persists broker secrets in the operating system's protected credential store.
-///
-/// macOS uses the file-based Keychain so local and Developer ID builds do not
-/// require the restricted keychain-sharing entitlement or a provisioning profile.
 class FlutterSecureCredentialStore implements CredentialStore {
   /// User-facing Keychain service name for MQTT Monitor credentials.
   static const String keychainServiceName = 'MQTT Monitor';

@@ -684,8 +684,9 @@ void main() {
       await brokers.add(const BrokerEntry(id: 'broker-1', name: 'Test', host: 'broker.invalid'));
       final service = createSession(mqtt311ClientFactory: (_) => _FakeMqtt3Client());
       addTearDown(service.dispose);
-      service.disconnect();
       service.initialize();
+      await settle();
+      service.disconnect();
       await settle();
 
       expect(service.publish('offline', 'ignored'), isNull);

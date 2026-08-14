@@ -22,6 +22,7 @@ import '../../models/dashboard_layout.dart';
 import '../../models/interpolation_mode.dart';
 import '../../models/language.dart';
 import '../../models/mqtt_qos_default.dart';
+import '../../models/mqtt_protocol_version.dart';
 import '../../models/sidebar_panel_default.dart';
 import '../../models/startup_connection.dart';
 import 'settings_section.dart';
@@ -358,6 +359,9 @@ class SettingsViewModel extends ChangeNotifier {
 
   StartupConnection get startupConnection => _connectionPreferences.startupConnection;
   void setStartupConnection(StartupConnection v) => _connectionPreferences.setStartupConnection(v);
+
+  MqttProtocolVersion get defaultBrokerProtocol => _connectionPreferences.brokerProtocol;
+  void setDefaultBrokerProtocol(MqttProtocolVersion value) => _connectionPreferences.setBrokerProtocol(value);
 
   //  Language
 

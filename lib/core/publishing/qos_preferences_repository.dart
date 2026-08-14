@@ -13,13 +13,17 @@ class QosPreferencesRepository extends ChangeNotifier {
   static const String defaultSubscribeKey = 'settings.defaultSubscribeQos';
   static const String lastUsedKey = 'settings.lastUsedQos';
   static const int currentSchemaVersion = 1;
+  static const MqttQosDefault defaultPublishValue = MqttQosDefault.qos1;
+  static const MqttQosDefault defaultShortcutValue = MqttQosDefault.qos1;
+  static const MqttQosDefault defaultSubscribeValue = MqttQosDefault.qos0;
+  static const int defaultLastUsedValue = 1;
 
   final PreferencesStore _store;
 
-  MqttQosDefault _defaultPublish = MqttQosDefault.qos1;
-  MqttQosDefault _defaultShortcut = MqttQosDefault.qos1;
-  MqttQosDefault _defaultSubscribe = MqttQosDefault.qos1;
-  int _lastUsed = 1;
+  MqttQosDefault _defaultPublish = defaultPublishValue;
+  MqttQosDefault _defaultShortcut = defaultShortcutValue;
+  MqttQosDefault _defaultSubscribe = defaultSubscribeValue;
+  int _lastUsed = defaultLastUsedValue;
 
   MqttQosDefault get defaultPublish => _defaultPublish;
   MqttQosDefault get defaultShortcut => _defaultShortcut;
@@ -33,14 +37,14 @@ class QosPreferencesRepository extends ChangeNotifier {
     } else if (version != currentSchemaVersion) {
       throw StateError('Unsupported QoS schema version: $version');
     }
-    _defaultPublish = _decode(defaultPublishKey);
-    _defaultShortcut = _decode(defaultShortcutKey);
-    _defaultSubscribe = _decode(defaultSubscribeKey);
+    _defaultPublish = _decode(defaultPublishKey, defaultPublishValue);
+    _defaultShortcut = _decode(defaultShortcutKey, defaultShortcutValue);
+    _defaultSubscribe = _decode(defaultSubscribeKey, defaultSubscribeValue);
     final storedLastUsed = _store.get(lastUsedKey);
     if (storedLastUsed != null && (storedLastUsed is! int || storedLastUsed < 0 || storedLastUsed > 2)) {
       throw const FormatException('Last-used QoS must be 0, 1, or 2.');
     }
-    _lastUsed = storedLastUsed as int? ?? 1;
+    _lastUsed = storedLastUsed as int? ?? defaultLastUsedValue;
     notifyListeners();
   }
 
@@ -65,10 +69,10 @@ class QosPreferencesRepository extends ChangeNotifier {
     await _store.remove(defaultShortcutKey);
     await _store.remove(defaultSubscribeKey);
     await _store.remove(lastUsedKey);
-    _defaultPublish = MqttQosDefault.qos1;
-    _defaultShortcut = MqttQosDefault.qos1;
-    _defaultSubscribe = MqttQosDefault.qos1;
-    _lastUsed = 1;
+    _defaultPublish = defaultPublishValue;
+    _defaultShortcut = defaultShortcutValue;
+    _defaultSubscribe = defaultSubscribeValue;
+    _lastUsed = defaultLastUsedValue;
     notifyListeners();
   }
 
@@ -78,9 +82,9 @@ class QosPreferencesRepository extends ChangeNotifier {
     await _store.setString(key, value.name);
   }
 
-  MqttQosDefault _decode(String key) {
+  MqttQosDefault _decode(String key, MqttQosDefault fallback) {
     final raw = _store.get(key);
-    if (raw == null) return MqttQosDefault.qos1;
+    if (raw == null) return fallback;
     if (raw is! String) throw FormatException('$key must be a QoS strategy.');
     return MqttQosDefault.values.firstWhere((value) => value.name == raw, orElse: () => throw FormatException('$key has an unknown QoS strategy.'));
   }

@@ -11,6 +11,7 @@ import '../../../core/mqtt/app_private_certificate_storage.dart';
 import '../../../core/mqtt/certificate_validation_exception.dart';
 import '../../../core/mqtt/client_certificate_kind.dart';
 import '../../../core/mqtt/client_certificate_service.dart';
+import '../../../core/mqtt/connection_preferences_repository.dart';
 import '../../../core/history/history_policy_rules.dart';
 import '../../../core/history/history_preferences_repository.dart';
 import '../../../core/logging/app_logger.dart';
@@ -96,6 +97,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
   /// Returns whether the dialog edits an existing broker.
   bool get _isEditing => widget.broker != null;
   bool _defaultSubscriptionApplied = false;
+  bool _defaultBrokerPreferencesApplied = false;
 
   /// Initializes controllers and a stable broker ID for certificate ownership.
   @override
@@ -110,9 +112,9 @@ class _BrokerDialogState extends State<BrokerDialog> {
     _password = TextEditingController(text: b?.password ?? '');
     _clientId = TextEditingController(text: b?.clientId ?? '');
     _useSSL = b?.useSSL ?? false;
-    _protocolVersion = b?.protocolVersion ?? MqttProtocolVersion.v311;
+    _protocolVersion = b?.protocolVersion ?? MqttProtocolVersion.v5;
     _clientCertificates = b?.clientCertificates ?? const ClientCertificateConfig();
-    _validateCertificates = b?.validateCertificates ?? true;
+    _validateCertificates = b?.validateCertificates ?? false;
     _randomClientIdSuffix = b?.randomClientIdSuffix ?? true;
     _color = AppColors.brokerColorOptions[b?.colorIndex ?? 0];
     _subscriptions = List.from(b?.subscriptions ?? []);
@@ -123,6 +125,10 @@ class _BrokerDialogState extends State<BrokerDialog> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     _logger = context.read<AppLogger>();
+    if (widget.broker == null && !_defaultBrokerPreferencesApplied) {
+      _defaultBrokerPreferencesApplied = true;
+      _protocolVersion = context.read<ConnectionPreferencesRepository>().brokerProtocol;
+    }
     if (widget.broker == null && !_defaultSubscriptionApplied) {
       _defaultSubscriptionApplied = true;
       final history = context.read<HistoryPreferencesRepository>();
@@ -180,7 +186,7 @@ class _BrokerDialogState extends State<BrokerDialog> {
         protocolVersion: _protocolVersion,
         clientCertificates: _clientCertificates,
         useSSL: _useSSL,
-        validateCertificates: _validateCertificates,
+        validateCertificates: _useSSL && _validateCertificates,
         username: _username.text.trim().isEmpty ? null : _username.text.trim(),
         password: _password.text.isEmpty ? null : _password.text,
         passwordReference: widget.broker?.passwordReference,
@@ -389,8 +395,19 @@ class _BrokerDialogState extends State<BrokerDialog> {
           onChanged: (value) => setState(() => _protocolVersion = value),
           accent: accent,
         ),
-        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogUseSSL, subtitle: s.brokerDialogUseSSLSubtitle, value: _useSSL, accent: accent, bordered: true, onChanged: (v) => setState(() => _useSSL = v)),
-        UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogValidateCertificates, subtitle: s.brokerDialogValidateCertificatesSubtitle, value: _validateCertificates, accent: accent, bordered: true, onChanged: (v) => setState(() => _validateCertificates = v)),
+        UiSwitchRow(
+          margin: const EdgeInsets.only(top: 12),
+          label: s.brokerDialogUseSSL,
+          subtitle: s.brokerDialogUseSSLSubtitle,
+          value: _useSSL,
+          accent: accent,
+          bordered: true,
+          onChanged: (value) => setState(() {
+            _useSSL = value;
+            if (!value) _validateCertificates = false;
+          }),
+        ),
+        if (_useSSL) UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogValidateCertificates, subtitle: s.brokerDialogValidateCertificatesSubtitle, value: _validateCertificates, accent: accent, bordered: true, onChanged: (value) => setState(() => _validateCertificates = value)),
         UiField(margin: const EdgeInsets.only(top: 14), label: s.brokerDialogFieldClientId, optional: true, controller: _clientId, hint: 'mqtt-monitor', textInputAction: TextInputAction.next),
         UiSwitchRow(margin: const EdgeInsets.only(top: 12), label: s.brokerDialogRandomSuffix, subtitle: s.brokerDialogRandomSuffixSubtitle, value: _randomClientIdSuffix, accent: accent, bordered: true, onChanged: (v) => setState(() => _randomClientIdSuffix = v)),
       ],

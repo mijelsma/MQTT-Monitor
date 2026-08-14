@@ -12,11 +12,11 @@ void main() {
   });
 
   group('SettingsViewModel default QoS', () {
-    test('defaults to fixed QoS 1 for all three strategies', () {
+    test('defaults subscriptions to QoS 0 and publishing to QoS 1', () {
       final vm = dependencies.createSettingsViewModel();
       expect(vm.defaultPublishQos, MqttQosDefault.qos1);
       expect(vm.defaultShortcutQos, MqttQosDefault.qos1);
-      expect(vm.defaultSubscribeQos, MqttQosDefault.qos1);
+      expect(vm.defaultSubscribeQos, MqttQosDefault.qos0);
     });
 
     test('lastUsedQos defaults to 1 so the "last used" option also starts at QoS 1', () {
@@ -69,6 +69,18 @@ void main() {
       expect(restored.defaultPublish, MqttQosDefault.qos0);
       expect(restored.defaultShortcut, MqttQosDefault.lastUsed);
       expect(restored.defaultSubscribe, MqttQosDefault.qos2);
+    });
+
+    test('reset restores the distinct publish and subscribe defaults', () async {
+      await dependencies.qosPreferences.setDefaultPublish(MqttQosDefault.qos0);
+      await dependencies.qosPreferences.setDefaultShortcut(MqttQosDefault.qos2);
+      await dependencies.qosPreferences.setDefaultSubscribe(MqttQosDefault.qos2);
+
+      await dependencies.qosPreferences.resetToDefaults();
+
+      expect(dependencies.qosPreferences.defaultPublish, MqttQosDefault.qos1);
+      expect(dependencies.qosPreferences.defaultShortcut, MqttQosDefault.qos1);
+      expect(dependencies.qosPreferences.defaultSubscribe, MqttQosDefault.qos0);
     });
   });
 }

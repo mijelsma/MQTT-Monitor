@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../generated/l10n.dart';
 import '../../../models/mqtt_qos_default.dart';
+import '../../../models/mqtt_protocol_version.dart';
 import '../../../models/sidebar_panel_default.dart';
 import '../../../models/startup_connection.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
@@ -117,6 +118,13 @@ class UiPanel extends StatelessWidget {
                 UiSegmentOption(value: StartupConnection.stayDisconnected, label: s.uiPanelStartupDisconnected, icon: Icons.power_off_rounded),
               ],
             ),
+            UiSegmentRow<MqttProtocolVersion>(
+              label: s.uiPanelDefaultBrokerProtocol,
+              accent: accent,
+              value: vm.defaultBrokerProtocol,
+              onChanged: vm.setDefaultBrokerProtocol,
+              options: [for (final version in MqttProtocolVersion.values) UiSegmentOption(value: version, label: version.displayName)],
+            ),
           ],
         ),
 
@@ -186,10 +194,7 @@ class UiPanel extends StatelessWidget {
               value: vm.defaultPublishQos,
               onChanged: (v) => vm.setDefaultPublishQos(v),
               footer: vm.defaultPublishQos == MqttQosDefault.lastUsed ? Text('${s.uiPanelQosOptionLastUsed}: ${MqttQosDefault.fromQos(vm.lastUsedQos).shortLabel}') : null,
-              options: [
-                for (final option in MqttQosDefault.values)
-                  UiInlineSegmentOption(value: option, label: option == MqttQosDefault.lastUsed ? s.uiPanelQosOptionLastUsed : option.shortLabel, icon: option == MqttQosDefault.lastUsed ? const Icon(Icons.history_rounded) : null),
-              ],
+              options: [for (final option in MqttQosDefault.values) UiInlineSegmentOption(value: option, label: option == MqttQosDefault.lastUsed ? s.uiPanelQosOptionLastUsed : option.shortLabel, icon: option == MqttQosDefault.lastUsed ? const Icon(Icons.history_rounded) : null)],
             ),
             UiInlineSegmentRow<MqttQosDefault>(
               label: s.uiPanelDefaultShortcutQos,
@@ -198,10 +203,7 @@ class UiPanel extends StatelessWidget {
               value: vm.defaultShortcutQos,
               onChanged: (v) => vm.setDefaultShortcutQos(v),
               footer: vm.defaultShortcutQos == MqttQosDefault.lastUsed ? Text('${s.uiPanelQosOptionLastUsed}: ${MqttQosDefault.fromQos(vm.lastUsedQos).shortLabel}') : null,
-              options: [
-                for (final option in MqttQosDefault.values)
-                  UiInlineSegmentOption(value: option, label: option == MqttQosDefault.lastUsed ? s.uiPanelQosOptionLastUsed : option.shortLabel, icon: option == MqttQosDefault.lastUsed ? const Icon(Icons.history_rounded) : null),
-              ],
+              options: [for (final option in MqttQosDefault.values) UiInlineSegmentOption(value: option, label: option == MqttQosDefault.lastUsed ? s.uiPanelQosOptionLastUsed : option.shortLabel, icon: option == MqttQosDefault.lastUsed ? const Icon(Icons.history_rounded) : null)],
             ),
             UiInlineSegmentRow<MqttQosDefault>(
               label: s.uiPanelDefaultSubscribeQos,
@@ -210,10 +212,7 @@ class UiPanel extends StatelessWidget {
               value: vm.defaultSubscribeQos,
               onChanged: (v) => vm.setDefaultSubscribeQos(v),
               footer: vm.defaultSubscribeQos == MqttQosDefault.lastUsed ? Text('${s.uiPanelQosOptionLastUsed}: ${MqttQosDefault.fromQos(vm.lastUsedQos).shortLabel}') : null,
-              options: [
-                for (final option in MqttQosDefault.values)
-                  UiInlineSegmentOption(value: option, label: option == MqttQosDefault.lastUsed ? s.uiPanelQosOptionLastUsed : option.shortLabel, icon: option == MqttQosDefault.lastUsed ? const Icon(Icons.history_rounded) : null),
-              ],
+              options: [for (final option in MqttQosDefault.values) UiInlineSegmentOption(value: option, label: option == MqttQosDefault.lastUsed ? s.uiPanelQosOptionLastUsed : option.shortLabel, icon: option == MqttQosDefault.lastUsed ? const Icon(Icons.history_rounded) : null)],
             ),
           ],
         ),

@@ -11,6 +11,13 @@ void main() {
     dependencies = await TestDependencies.create();
   });
 
+  test('fresh sidebar defaults start with publish collapsed', () {
+    final controller = DetailSidebarController(dependencies.workspaceLayout, dependencies.uiPreferences);
+    addTearDown(controller.dispose);
+
+    expect([for (var index = 0; index < 4; index++) controller.isCollapsed(index)], [false, true, true, true]);
+  });
+
   test('startup defaults override last layout except for lastStatus', () async {
     await dependencies.workspaceLayout.setCollapsed(0, true);
     await dependencies.workspaceLayout.setCollapsed(1, false);

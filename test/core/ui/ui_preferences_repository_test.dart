@@ -26,7 +26,7 @@ void main() {
     expect(repository.sidebarAnimationSpeed, 50);
     expect(repository.defaultSidebarDetail, SidebarPanelDefault.expanded);
     expect(repository.defaultSidebarHistory, SidebarPanelDefault.collapsed);
-    expect(repository.defaultSidebarPublish, SidebarPanelDefault.expanded);
+    expect(repository.defaultSidebarPublish, SidebarPanelDefault.collapsed);
     expect(repository.defaultSidebarShortcuts, SidebarPanelDefault.collapsed);
     expect(repository.language, AppLanguage.en);
     expect(store.get(UiPreferencesRepository.schemaVersionKey), UiPreferencesRepository.currentSchemaVersion);

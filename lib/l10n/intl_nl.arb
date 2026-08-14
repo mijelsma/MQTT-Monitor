@@ -187,6 +187,7 @@
     "uiPanelStartupConnect": "Verbinden",
     "uiPanelStartupLastStatus": "Laatste status",
     "uiPanelStartupDisconnected": "Verbroken",
+    "uiPanelDefaultBrokerProtocol": "Standaardprotocol voor nieuwe brokers",
     "uiPanelSectionDefaults": "Standaardwaarden",
     "uiPanelDefaultPublishQos": "Standaard QoS publiceren",
     "uiPanelDefaultPublishQosSubtitle": "QoS voor nieuwe te publiceren berichten",

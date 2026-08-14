@@ -39,7 +39,7 @@ class UiPreferencesRepository extends ChangeNotifier {
   static const int defaultSidebarAnimationSpeed = 50;
   static const SidebarPanelDefault defaultSidebarDetailValue = SidebarPanelDefault.expanded;
   static const SidebarPanelDefault defaultSidebarHistoryValue = SidebarPanelDefault.collapsed;
-  static const SidebarPanelDefault defaultSidebarPublishValue = SidebarPanelDefault.expanded;
+  static const SidebarPanelDefault defaultSidebarPublishValue = SidebarPanelDefault.collapsed;
   static const SidebarPanelDefault defaultSidebarShortcutsValue = SidebarPanelDefault.collapsed;
   static const AppLanguage defaultLanguage = AppLanguage.en;
 

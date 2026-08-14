@@ -3,9 +3,13 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/history/history_preferences_repository.dart';
 import 'package:mqtt_monitor/core/logging/app_logger.dart';
+import 'package:mqtt_monitor/core/mqtt/connection_preferences_repository.dart';
 import 'package:mqtt_monitor/features/settings/dialogs/broker_dialog.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
 import 'package:mqtt_monitor/models/broker_entry.dart';
+import 'package:mqtt_monitor/models/mqtt_protocol_version.dart';
+import 'package:mqtt_monitor/shared/widgets/ui_segment_row.dart';
+import 'package:mqtt_monitor/shared/widgets/ui_switch_row.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
@@ -23,6 +27,7 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider<HistoryPreferencesRepository>.value(value: dependencies.historyPreferences),
+          ChangeNotifierProvider<ConnectionPreferencesRepository>.value(value: dependencies.connectionPreferences),
           ChangeNotifierProvider.value(value: dependencies.qosPreferences),
           Provider<AppLogger>.value(value: dependencies.logger),
         ],
@@ -62,5 +67,21 @@ void main() {
 
     expect(S.current.brokerDialogDefaultSubscriptionName, 'Every topic');
     expect(find.text(S.current.brokerDialogDefaultSubscriptionName), findsOneWidget);
+  });
+
+  testWidgets('new brokers use the configured protocol and safe TLS defaults', (tester) async {
+    await dependencies.connectionPreferences.setBrokerProtocol(MqttProtocolVersion.v311);
+    await pumpDialog(tester);
+
+    final protocol = tester.widget<UiSegmentRow<MqttProtocolVersion>>(find.byWidgetPredicate((widget) => widget is UiSegmentRow<MqttProtocolVersion> && widget.label == 'Protocol version'));
+    expect(protocol.value, MqttProtocolVersion.v311);
+    expect(find.text('Validate Certificates'), findsNothing);
+
+    final ssl = tester.widget<UiSwitchRow>(find.byWidgetPredicate((widget) => widget is UiSwitchRow && widget.label == S.current.brokerDialogUseSSL));
+    ssl.onChanged(true);
+    await tester.pump();
+
+    final validation = tester.widget<UiSwitchRow>(find.byWidgetPredicate((widget) => widget is UiSwitchRow && widget.label == S.current.brokerDialogValidateCertificates));
+    expect(validation.value, isFalse);
   });
 }
