@@ -107,6 +107,7 @@ class AppLifetime {
          AppShutdownTask('UI preferences', uiPreferences.dispose),
          AppShutdownTask('update preferences', updatePreferences.dispose),
          AppShutdownTask('QoS preferences', qosPreferences.dispose),
+         AppShutdownTask('diagnostic log', logger.flush),
        ], logger);
 
   final AppLogger logger;

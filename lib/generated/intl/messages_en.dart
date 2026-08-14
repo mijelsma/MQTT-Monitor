@@ -84,6 +84,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "advancedPanelHistoryBuffer": MessageLookupByLibrary.simpleMessage(
       "History buffer",
     ),
+    "advancedPanelLogFile": MessageLookupByLibrary.simpleMessage(
+      "Diagnostic log",
+    ),
+    "advancedPanelLogFileHint": MessageLookupByLibrary.simpleMessage(
+      "Redacted diagnostic events from current and previous sessions",
+    ),
     "advancedPanelMaximumConfirmBody": MessageLookupByLibrary.simpleMessage(
       "Affected policies and live buffers will be clamped. Existing messages beyond the new limit will be removed.",
     ),
@@ -103,6 +109,13 @@ class MessageLookup extends MessageLookupByLibrary {
         MessageLookupByLibrary.simpleMessage(
           "Collect bounded history for subscriptions created from now on",
         ),
+    "advancedPanelOpenFolder": MessageLookupByLibrary.simpleMessage(
+      "Open folder",
+    ),
+    "advancedPanelOpenLocationFailed": MessageLookupByLibrary.simpleMessage(
+      "The location could not be opened.",
+    ),
+    "advancedPanelOpenLog": MessageLookupByLibrary.simpleMessage("Open log"),
     "advancedPanelResetAction": MessageLookupByLibrary.simpleMessage(
       "Select data to reset",
     ),
@@ -160,6 +173,15 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "advancedPanelResetVariables": MessageLookupByLibrary.simpleMessage(
       "Variables",
+    ),
+    "advancedPanelSettingsLocation": MessageLookupByLibrary.simpleMessage(
+      "Settings location",
+    ),
+    "advancedPanelSettingsLocationHint": MessageLookupByLibrary.simpleMessage(
+      "Application preferences are stored here. Broker passwords remain in the operating system credential store.",
+    ),
+    "advancedPanelStorageSection": MessageLookupByLibrary.simpleMessage(
+      "Storage and diagnostics",
     ),
     "advancedPanelTitle": MessageLookupByLibrary.simpleMessage("Advanced"),
     "back": MessageLookupByLibrary.simpleMessage("Back"),

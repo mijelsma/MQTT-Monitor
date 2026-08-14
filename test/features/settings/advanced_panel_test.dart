@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/broker/repositories/broker_repository.dart';
 import 'package:mqtt_monitor/core/dashboard/repositories/dashboard_preferences_repository.dart';
 import 'package:mqtt_monitor/core/dashboard/repositories/dashboard_repository.dart';
+import 'package:mqtt_monitor/core/storage/services/app_storage_location_service.dart';
 import 'package:mqtt_monitor/features/settings/panels/advanced_panel.dart';
 import 'package:mqtt_monitor/features/settings/view_models/settings_view_model.dart';
 import 'package:mqtt_monitor/features/settings/settings_reset_section.dart';
@@ -26,7 +27,7 @@ void main() {
     brokers = dependencies.brokers;
   });
 
-  Future<SettingsViewModel> pumpPanel(WidgetTester tester) async {
+  Future<SettingsViewModel> pumpPanel(WidgetTester tester, {AppStorageLocationService? storageLocations}) async {
     final viewModel = dependencies.createSettingsViewModel();
     addTearDown(viewModel.dispose);
     await tester.pumpWidget(
@@ -36,7 +37,9 @@ void main() {
           theme: themeLight,
           localizationsDelegates: const [S.delegate, GlobalMaterialLocalizations.delegate, GlobalWidgetsLocalizations.delegate, GlobalCupertinoLocalizations.delegate],
           supportedLocales: S.delegate.supportedLocales,
-          home: const Scaffold(body: SizedBox(width: 700, height: 900, child: AdvancedPanel())),
+          home: Scaffold(
+            body: SizedBox(width: 700, height: 900, child: AdvancedPanel(storageLocations: storageLocations)),
+          ),
         ),
       ),
     );
@@ -123,6 +126,17 @@ void main() {
     final warning = tester.widget<Text>(find.textContaining('affect performance'));
     expect(warning.style?.fontWeight, FontWeight.w600);
     expect(warning.style?.color, isNotNull);
+  });
+
+  testWidgets('shows the resolved settings and diagnostic log locations', (tester) async {
+    final service = AppStorageLocationService(operatingSystem: 'linux', environment: const {'HOME': '/home/tester', 'XDG_DATA_HOME': '/profile/data'}, launcher: (_) async => true);
+    await pumpPanel(tester, storageLocations: service);
+
+    expect(find.text('STORAGE AND DIAGNOSTICS'), findsOneWidget);
+    expect(find.text('/profile/data/MQTT-Monitor/shared_preferences.json'), findsOneWidget);
+    expect(find.text('/profile/data/MQTT-Monitor/logs/mqtt-monitor.log'), findsOneWidget);
+    expect(find.text('Open folder'), findsOneWidget);
+    expect(find.text('Open log'), findsOneWidget);
   });
 
   testWidgets('reset checklist keeps unchecked sections and resets selected ones', (tester) async {

@@ -24,6 +24,7 @@ import '../../core/publishing/repositories/variable_repository.dart';
 import '../../core/storage/app_data_directory.dart';
 import '../../core/storage/preferences_store.dart';
 import '../../core/storage/shared_preferences_store.dart';
+import '../../core/storage/services/app_storage_location_service.dart';
 import '../../core/ui/repositories/ui_preferences_repository.dart';
 import '../../core/ui/repositories/workspace_layout_repository.dart';
 import '../../core/update/services/app_update_service.dart';
@@ -86,7 +87,12 @@ class StagedInitializer<T> {
 
 /// Builds a fresh application graph for each startup or retry attempt.
 class ProductionAppBootstrap implements AppBootstrap {
-  ProductionAppBootstrap({LocalAppLogger? logger}) : logger = logger ?? LocalAppLogger();
+  factory ProductionAppBootstrap({LocalAppLogger? logger}) {
+    final storageLocations = AppStorageLocationService.standard();
+    return ProductionAppBootstrap._(logger ?? LocalAppLogger(logFilePath: storageLocations.diagnosticLogFilePath));
+  }
+
+  ProductionAppBootstrap._(this.logger);
 
   final LocalAppLogger logger;
 
@@ -274,6 +280,7 @@ class _ProductionLifetimeBuilder {
       if (uiPreferences case final value?) AppShutdownTask('partial UI preferences', value.dispose),
       if (updatePreferences case final value?) AppShutdownTask('partial update preferences', value.dispose),
       if (qosPreferences case final value?) AppShutdownTask('partial QoS preferences', value.dispose),
+      AppShutdownTask('partial diagnostic log', logger.flush),
     ];
     await AppShutdownCoordinator(tasks, logger).shutdown();
   }

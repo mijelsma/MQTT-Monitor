@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/history/history_policy_rules.dart';
+import '../../../core/storage/services/app_storage_location_service.dart';
 import '../../../generated/l10n.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
 import '../../../shared/widgets/ui_section.dart';
@@ -12,7 +13,9 @@ import '../view_models/settings_view_model.dart';
 import '../settings_reset_section.dart';
 
 class AdvancedPanel extends StatefulWidget {
-  const AdvancedPanel({super.key});
+  const AdvancedPanel({super.key, this.storageLocations});
+
+  final AppStorageLocationService? storageLocations;
 
   @override
   State<AdvancedPanel> createState() => _AdvancedPanelState();
@@ -20,6 +23,22 @@ class AdvancedPanel extends StatefulWidget {
 
 class _AdvancedPanelState extends State<AdvancedPanel> {
   int? _draftMaximum;
+  late final AppStorageLocationService _storageLocations;
+
+  @override
+  void initState() {
+    super.initState();
+    _storageLocations = widget.storageLocations ?? AppStorageLocationService.standard();
+  }
+
+  Future<void> _openStorageLocation(Future<void> Function() action) async {
+    try {
+      await action();
+    } on Object {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(S.of(context).advancedPanelOpenLocationFailed)));
+    }
+  }
 
   Future<void> _resetSettings(SettingsViewModel viewModel) async {
     final strings = S.of(context);
@@ -110,7 +129,60 @@ class _AdvancedPanelState extends State<AdvancedPanel> {
           label: strings.advancedPanelResetSection,
           children: [_ResetSettingsRow(title: strings.advancedPanelResetTitle, subtitle: strings.advancedPanelResetHint, actionLabel: strings.advancedPanelResetAction, onPressed: () => _resetSettings(viewModel))],
         ),
+        UiSection(
+          label: strings.advancedPanelStorageSection,
+          children: [
+            _StorageLocationRow(icon: Icons.settings_outlined, title: strings.advancedPanelSettingsLocation, subtitle: strings.advancedPanelSettingsLocationHint, path: _storageLocations.settingsFilePath, actionLabel: strings.advancedPanelOpenFolder, onPressed: () => _openStorageLocation(_storageLocations.openSettingsDirectory)),
+            _StorageLocationRow(icon: Icons.description_outlined, title: strings.advancedPanelLogFile, subtitle: strings.advancedPanelLogFileHint, path: _storageLocations.diagnosticLogFilePath, actionLabel: strings.advancedPanelOpenLog, onPressed: () => _openStorageLocation(_storageLocations.openDiagnosticLog)),
+          ],
+        ),
       ],
+    );
+  }
+}
+
+class _StorageLocationRow extends StatelessWidget {
+  const _StorageLocationRow({required this.icon, required this.title, required this.subtitle, required this.path, required this.actionLabel, required this.onPressed});
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String path;
+  final String actionLabel;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(icon, size: 18, color: tokens.textSecondary),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 14)),
+                const SizedBox(height: 3),
+                Text(subtitle, style: TextStyle(fontSize: 11.5, color: tokens.textSecondary)),
+                const SizedBox(height: 6),
+                SelectableText(
+                  path,
+                  style: TextStyle(fontSize: 11, fontFamily: 'monospace', color: tokens.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          OutlinedButton.icon(onPressed: onPressed, icon: const Icon(Icons.open_in_new_rounded, size: 16), label: Text(actionLabel)),
+        ],
+      ),
     );
   }
 }

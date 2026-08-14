@@ -84,6 +84,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "advancedPanelHistoryBuffer": MessageLookupByLibrary.simpleMessage(
       "Geschiedenisbuffer",
     ),
+    "advancedPanelLogFile": MessageLookupByLibrary.simpleMessage(
+      "Diagnoselogboek",
+    ),
+    "advancedPanelLogFileHint": MessageLookupByLibrary.simpleMessage(
+      "Diagnosegebeurtenissen zonder gevoelige gegevens van de huidige en eerdere sessies",
+    ),
     "advancedPanelMaximumConfirmBody": MessageLookupByLibrary.simpleMessage(
       "Getroffen beleidsregels en actieve buffers worden begrensd. Bestaande berichten boven de nieuwe limiet worden verwijderd.",
     ),
@@ -101,6 +107,15 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "advancedPanelNewSubscriptionHistoryHint": MessageLookupByLibrary.simpleMessage(
       "Verzamel begrensde geschiedenis voor abonnementen die vanaf nu worden gemaakt",
+    ),
+    "advancedPanelOpenFolder": MessageLookupByLibrary.simpleMessage(
+      "Map openen",
+    ),
+    "advancedPanelOpenLocationFailed": MessageLookupByLibrary.simpleMessage(
+      "De locatie kon niet worden geopend.",
+    ),
+    "advancedPanelOpenLog": MessageLookupByLibrary.simpleMessage(
+      "Logboek openen",
     ),
     "advancedPanelResetAction": MessageLookupByLibrary.simpleMessage(
       "Gegevens selecteren",
@@ -161,6 +176,15 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "advancedPanelResetVariables": MessageLookupByLibrary.simpleMessage(
       "Variabelen",
+    ),
+    "advancedPanelSettingsLocation": MessageLookupByLibrary.simpleMessage(
+      "Locatie van instellingen",
+    ),
+    "advancedPanelSettingsLocationHint": MessageLookupByLibrary.simpleMessage(
+      "Applicatievoorkeuren worden hier opgeslagen. Brokerwachtwoorden blijven in de beveiligde opslag van het besturingssysteem.",
+    ),
+    "advancedPanelStorageSection": MessageLookupByLibrary.simpleMessage(
+      "Opslag en diagnose",
     ),
     "advancedPanelTitle": MessageLookupByLibrary.simpleMessage("Geavanceerd"),
     "back": MessageLookupByLibrary.simpleMessage("Terug"),

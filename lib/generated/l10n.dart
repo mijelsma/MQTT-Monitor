@@ -1334,6 +1334,86 @@ class S {
     );
   }
 
+  /// `Storage and diagnostics`
+  String get advancedPanelStorageSection {
+    return Intl.message(
+      'Storage and diagnostics',
+      name: 'advancedPanelStorageSection',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Settings location`
+  String get advancedPanelSettingsLocation {
+    return Intl.message(
+      'Settings location',
+      name: 'advancedPanelSettingsLocation',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Application preferences are stored here. Broker passwords remain in the operating system credential store.`
+  String get advancedPanelSettingsLocationHint {
+    return Intl.message(
+      'Application preferences are stored here. Broker passwords remain in the operating system credential store.',
+      name: 'advancedPanelSettingsLocationHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Open folder`
+  String get advancedPanelOpenFolder {
+    return Intl.message(
+      'Open folder',
+      name: 'advancedPanelOpenFolder',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Diagnostic log`
+  String get advancedPanelLogFile {
+    return Intl.message(
+      'Diagnostic log',
+      name: 'advancedPanelLogFile',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Redacted diagnostic events from current and previous sessions`
+  String get advancedPanelLogFileHint {
+    return Intl.message(
+      'Redacted diagnostic events from current and previous sessions',
+      name: 'advancedPanelLogFileHint',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Open log`
+  String get advancedPanelOpenLog {
+    return Intl.message(
+      'Open log',
+      name: 'advancedPanelOpenLog',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `The location could not be opened.`
+  String get advancedPanelOpenLocationFailed {
+    return Intl.message(
+      'The location could not be opened.',
+      name: 'advancedPanelOpenLocationFailed',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `User Interface`
   String get uiPanelTitle {
     return Intl.message(
