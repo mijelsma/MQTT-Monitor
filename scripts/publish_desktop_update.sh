@@ -99,6 +99,10 @@ macos:
   gatekeeperAssess: true
   artifact:
     kind: dmg
+hooks:
+  prePackage:
+    - command: bash scripts/restore_macos_app_entitlements.sh
+      platforms: [macos]
 EOF
 fi
 
