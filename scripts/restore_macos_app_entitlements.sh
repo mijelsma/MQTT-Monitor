@@ -26,6 +26,7 @@ while IFS= read -r -d '' nested_code; do
 done < <(find "$app_path/Contents/Frameworks" -depth \( -name '*.app' -o -name '*.appex' -o -name '*.framework' -o -name '*.xpc' -o -name '*.dylib' -o -name '*.so' \) -print0)
 
 codesign --force --options runtime --timestamp \
+  --generate-entitlement-der \
   --entitlements "$entitlements_path" \
   --sign "$MACOS_DEVELOPER_ID_APPLICATION" "$app_path"
 codesign --verify --deep --strict --verbose=2 "$app_path"

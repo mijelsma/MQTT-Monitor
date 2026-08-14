@@ -59,6 +59,8 @@ class DesktopPlatformContractsTest(unittest.TestCase):
         )
         self.assertNotIn("com.apple.security.get-task-allow", entitlements)
         self.assertIn("restore_macos_app_entitlements.sh", release_contract)
+        restore_entitlements = _read("scripts/restore_macos_app_entitlements.sh")
+        self.assertIn("--generate-entitlement-der", restore_entitlements)
 
     def test_windows_release_lane_builds_a_real_installer(self) -> None:
         workflow = _read(".github/workflows/release.yml")
