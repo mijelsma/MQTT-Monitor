@@ -8,6 +8,29 @@ import 'package:mqtt_monitor/core/mqtt/adapters/mqtt311/mqtt311_event_client.dar
 import 'package:typed_data/typed_buffers.dart';
 
 void main() {
+  test('socket timeout does not reduce the CONNACK wait to 10 ms', () async {
+    final server = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
+    addTearDown(server.close);
+    unawaited(() async {
+      await for (final socket in server) {
+        var acknowledged = false;
+        socket.listen((_) {
+          if (acknowledged) return;
+          acknowledged = true;
+          Timer(const Duration(milliseconds: 100), () => socket.add(const [0x20, 0x02, 0x00, 0x00]));
+        });
+      }
+    }());
+
+    final client = Mqtt311EventClient.withPort('127.0.0.1', 'delayed-connack-test', server.port, maxConnectionAttempts: 1)..socketTimeout = 5000;
+    addTearDown(client.disconnect);
+
+    final status = await client.connect();
+
+    expect(status?.state, mqtt3.MqttConnectionState.connected);
+    expect(status?.returnCode, mqtt3.MqttConnectReturnCode.connectionAccepted);
+  });
+
   test('time-sliced transport receives a large local TCP burst responsively', () async {
     const packetCount = 10000;
     final burst = Uint8Buffer();

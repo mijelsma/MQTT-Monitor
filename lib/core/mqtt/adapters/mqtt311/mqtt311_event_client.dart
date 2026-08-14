@@ -23,10 +23,11 @@ class Mqtt311EventClient extends mqtt3_server.MqttServerClient {
     clientEventBus = mqtt3.MqttEventBus.fromEventBus(events.EventBus());
     clientEventBus?.on<mqtt3.DisconnectOnNoPingResponse>().listen(disconnectOnNoPingResponse);
     clientEventBus?.on<mqtt3.DisconnectOnNoMessageSent>().listen(disconnectOnNoMessageSent);
+    final acknowledgementTimeoutMs = socketTimeout ?? connectTimeoutPeriod;
     final handler = _TimeSlicedMqtt311ConnectionHandler(
       clientEventBus,
       maxConnectionAttempts: maxConnectionAttempts,
-      reconnectTimePeriod: connectTimeoutPeriod,
+      reconnectTimePeriod: acknowledgementTimeoutMs,
       socketOptions: socketOptions,
       socketTimeout: socketTimeout == null ? null : Duration(milliseconds: socketTimeout!),
     );
