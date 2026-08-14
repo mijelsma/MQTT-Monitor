@@ -33,7 +33,13 @@ void main() {
         expect(tokens.primary, accent);
         expect(tokens.focusRing, accent);
         expect(tokens.selectedBg.a, greaterThan(0));
-        expect(_contrastRatio(tokens.primary, tokens.onPrimary), greaterThanOrEqualTo(4.5));
+        expect(tokens.onPrimary, Colors.white);
+
+        final buttonStyle = theme.filledButtonTheme.style!;
+        final buttonBackground = buttonStyle.backgroundColor!.resolve({})!;
+        final buttonForeground = buttonStyle.foregroundColor!.resolve({})!;
+        expect(buttonForeground, Colors.white);
+        expect(_contrastRatio(buttonBackground, buttonForeground), greaterThanOrEqualTo(4.5));
       }
     }
   });

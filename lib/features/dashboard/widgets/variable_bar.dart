@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../models/environment_variable.dart';
+import '../../../theme/accent_contrast.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 
 /// A horizontal bar that lets the user set the current value for each
@@ -225,7 +226,7 @@ class _VariablePickerDialogState extends State<_VariablePickerDialog> {
                   const SizedBox(width: 8),
                   FilledButton(
                     onPressed: _submit,
-                    style: FilledButton.styleFrom(backgroundColor: tokens.primary, foregroundColor: tokens.onPrimary),
+                    style: FilledButton.styleFrom(backgroundColor: accentFillForWhiteForeground(tokens.primary), foregroundColor: tokens.onPrimary),
                     child: const Text('Apply'),
                   ),
                 ],

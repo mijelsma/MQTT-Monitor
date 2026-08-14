@@ -7,6 +7,7 @@ import '../../../core/publishing/publish_command_result.dart';
 import '../../../generated/l10n.dart';
 import '../../../shared/widgets/feedback_badge.dart';
 import '../../../shared/widgets/payload_editor.dart';
+import '../../../theme/accent_contrast.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../monitor_viewmodel.dart';
 import '../publish_command_feedback.dart';
@@ -187,6 +188,7 @@ class _MiniQosSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final accent = tokens.primary;
+    final selectedFill = accentFillForWhiteForeground(accent);
     return Container(
       decoration: BoxDecoration(
         color: tokens.inputFill,
@@ -207,7 +209,7 @@ class _MiniQosSelector extends StatelessWidget {
                 duration: const Duration(milliseconds: 150),
                 curve: Curves.easeOut,
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(color: selected ? accent : Colors.transparent, borderRadius: BorderRadius.circular(4)),
+                decoration: BoxDecoration(color: selected ? selectedFill : Colors.transparent, borderRadius: BorderRadius.circular(4)),
                 child: Text(
                   'Q$i',
                   style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: selected ? tokens.onPrimary : tokens.textSecondary),
@@ -292,8 +294,9 @@ class _PublishChipState extends State<_PublishChip> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final enabled = widget.connected && !_busy;
-    final bg = enabled ? tokens.primary : tokens.muted.withValues(alpha: 0.3);
+    final bg = enabled ? accentFillForWhiteForeground(tokens.primary) : tokens.muted.withValues(alpha: 0.3);
     final fg = enabled ? tokens.onPrimary : tokens.textTertiary;
+    final hoverBg = enabled ? Color.lerp(bg, Colors.black, 0.08)! : bg;
 
     return MouseRegion(
       cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
@@ -304,7 +307,7 @@ class _PublishChipState extends State<_PublishChip> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-          decoration: BoxDecoration(color: enabled && _hovering ? bg.withValues(alpha: 0.85) : bg, borderRadius: BorderRadius.circular(7)),
+          decoration: BoxDecoration(color: enabled && _hovering ? hoverBg : bg, borderRadius: BorderRadius.circular(7)),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

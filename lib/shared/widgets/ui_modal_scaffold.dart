@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../generated/l10n.dart';
+import '../../theme/accent_contrast.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 
 class UiModalScaffold extends StatelessWidget {
@@ -73,7 +74,7 @@ class UiModalScaffold extends StatelessWidget {
                     const SizedBox(width: 8),
                     FilledButton(
                       onPressed: onSubmit,
-                      style: FilledButton.styleFrom(backgroundColor: accent, foregroundColor: tokens.onPrimary),
+                      style: FilledButton.styleFrom(backgroundColor: accentFillForWhiteForeground(accent), foregroundColor: tokens.onPrimary),
                       child: Text(submitLabel),
                     ),
                   ],

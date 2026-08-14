@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../theme/accent_contrast.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 import 'spacers.dart';
 import 'ui_segment_option.dart';
@@ -18,6 +19,7 @@ class UiSegmentRow<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final resolvedAccent = accent ?? tokens.primary;
+    final selectedFill = accentFillForWhiteForeground(resolvedAccent);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
@@ -47,9 +49,9 @@ class UiSegmentRow<T> extends StatelessWidget {
                         curve: Curves.easeOut,
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: isSelected ? resolvedAccent : tokens.inputFill,
+                          color: isSelected ? selectedFill : tokens.inputFill,
                           borderRadius: BorderRadius.circular(tokens.controlRadius),
-                          border: Border.all(color: isSelected ? resolvedAccent : tokens.border, width: isSelected ? 0.5 : 1.0),
+                          border: Border.all(color: isSelected ? selectedFill : tokens.border, width: isSelected ? 0.5 : 1.0),
                         ),
                         child: Column(
                           children: [
@@ -64,7 +66,7 @@ class UiSegmentRow<T> extends StatelessWidget {
                               Text(
                                 opt.description!,
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 9.5, color: isSelected ? tokens.onPrimary.withValues(alpha: 0.75) : tokens.textSecondary),
+                                style: TextStyle(fontSize: 9.5, color: isSelected ? tokens.onPrimary : tokens.textSecondary),
                               ),
                             ],
                           ],

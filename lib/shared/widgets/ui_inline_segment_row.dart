@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/accent_contrast.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 import 'spacers.dart';
 import 'ui_inline_segment_option.dart';
@@ -120,6 +121,7 @@ class _InlineSegmentChip<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final fg = selected ? tokens.onPrimary : tokens.textPrimary;
+    final selectedFill = accentFillForWhiteForeground(accent);
     return Semantics(
       container: true,
       label: option.label,
@@ -134,7 +136,7 @@ class _InlineSegmentChip<T> extends StatelessWidget {
           duration: const Duration(milliseconds: 150),
           curve: Curves.easeOut,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-          decoration: BoxDecoration(color: selected ? accent : Colors.transparent, borderRadius: BorderRadius.circular(tokens.controlRadius - 2)),
+          decoration: BoxDecoration(color: selected ? selectedFill : Colors.transparent, borderRadius: BorderRadius.circular(tokens.controlRadius - 2)),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
