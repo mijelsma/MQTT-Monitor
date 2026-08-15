@@ -29,7 +29,11 @@ class BrokersPanel extends StatelessWidget {
   /// Opens the broker dialog and persists edits or deletion.
   Future<void> _openEdit(BuildContext context, BrokerEntryModel broker) async {
     final vm = context.read<SettingsViewModel>();
-    final updated = await showBrokerDialog(context, broker: broker, onDelete: () async => vm.deleteBroker(broker.id));
+    final updated = await showBrokerDialog(
+      context,
+      broker: broker,
+      onDelete: () async => vm.deleteBroker(broker.id),
+    );
     if (updated == null) return;
     await vm.updateBroker(updated);
   }
@@ -46,9 +50,21 @@ class BrokersPanel extends StatelessWidget {
       description: s.brokersPanelDescription,
       children: [
         if (vm.brokerFailure case final failure?)
-          UiInlineNotice(kind: UiNoticeKind.error, title: s.brokerProfilesUnavailable, message: failure.message, detail: failure.details, actionLabel: s.retry, onAction: vm.retryBrokerLoad, margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8))
+          UiInlineNotice(
+            kind: UiNoticeKind.error,
+            title: s.brokerProfilesUnavailable,
+            message: failure.message,
+            detail: failure.details,
+            actionLabel: s.retry,
+            onAction: vm.retryBrokerLoad,
+            margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          )
         else if (brokers.isEmpty)
-          UiEmptyState(icon: Icons.dns_outlined, title: s.brokersPanelNoBrokersTitle, message: s.brokersPanelNoBrokersMessage)
+          UiEmptyState(
+            icon: Icons.dns_outlined,
+            title: s.brokersPanelNoBrokersTitle,
+            message: s.brokersPanelNoBrokersMessage,
+          )
         else
           UiSection(
             label: s.brokersPanelSectionConnections,
@@ -60,13 +76,18 @@ class BrokersPanel extends StatelessWidget {
                   key: ValueKey(brokers[i].id),
                   index: i,
                   leading: Container(
-                    width: 36,
-                    height: 36,
+                    width: 3.5,
+                    height: 28,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: AppColors.brokerGradientFor(brokers[i].colorIndex)),
-                      borderRadius: BorderRadius.circular(9),
+                      gradient: LinearGradient(
+                        colors: AppColors.brokerGradientFor(
+                          brokers[i].colorIndex,
+                        ),
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    child: const Icon(Icons.dns_rounded, size: 18, color: Colors.white),
                   ),
                   title: brokers[i].name,
                   subtitle: brokers[i].displayAddress,
@@ -75,7 +96,11 @@ class BrokersPanel extends StatelessWidget {
                 ),
             ],
           ),
-        if (vm.brokerFailure == null) UiAddButton(label: s.brokersPanelAddBroker, onPressed: () => _openAdd(context)),
+        if (vm.brokerFailure == null)
+          UiAddButton(
+            label: s.brokersPanelAddBroker,
+            onPressed: () => _openAdd(context),
+          ),
       ],
     );
   }
