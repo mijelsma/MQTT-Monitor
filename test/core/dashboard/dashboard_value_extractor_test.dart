@@ -32,4 +32,10 @@ void main() {
     expect(() => extractor.extract(decoded, 'values[x]'), throwsFormatException);
     expect(() => extractor.decode('{broken'), throwsFormatException);
   });
+
+  test('validates editable dashboard key paths', () {
+    expect(() => DashboardValueExtractor.validateKeyPath('sensor.values[0]'), returnsNormally);
+    expect(() => DashboardValueExtractor.validateKeyPath(''), returnsNormally);
+    expect(() => DashboardValueExtractor.validateKeyPath('sensor..value'), throwsFormatException);
+  });
 }

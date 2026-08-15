@@ -10,6 +10,12 @@ class DashboardValueExtractor {
 
   Object? decode(String payload) => _decoder(payload);
 
+  /// Validates the dot-and-index syntax accepted for dashboard JSON paths.
+  static void validateKeyPath(String path) {
+    if (path.trim().isEmpty) return;
+    _tokens(path).toList(growable: false);
+  }
+
   double? extract(Object? decoded, String? keyPath) {
     Object? current = decoded;
     if (keyPath != null && keyPath.trim().isNotEmpty) {

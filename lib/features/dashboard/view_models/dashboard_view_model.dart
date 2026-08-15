@@ -19,13 +19,20 @@ import '../dialogs/edit_graph_dialog.dart';
 
 /// Coordinates one dashboard route while repositories own its actual state.
 class DashboardViewModel extends ChangeNotifier {
-  DashboardViewModel({required DashboardRepository repository, required DashboardSeriesStore seriesStore, required VariableRepository variableRepository, required TemplateResolver templateResolver, required this.brokerId, required MessageHistoryService historyService, required BrokerRepository brokerRepository})
-    : _repository = repository,
-      _seriesStore = seriesStore,
-      _variables = variableRepository,
-      _templateResolver = templateResolver,
-      _historyService = historyService,
-      _brokers = brokerRepository {
+  DashboardViewModel({
+    required DashboardRepository repository,
+    required DashboardSeriesStore seriesStore,
+    required VariableRepository variableRepository,
+    required TemplateResolver templateResolver,
+    required this.brokerId,
+    required MessageHistoryService historyService,
+    required BrokerRepository brokerRepository,
+  }) : _repository = repository,
+       _seriesStore = seriesStore,
+       _variables = variableRepository,
+       _templateResolver = templateResolver,
+       _historyService = historyService,
+       _brokers = brokerRepository {
     _repository.addListener(_onConfigurationChanged);
     _variables.addListener(_onStateChanged);
     _brokers.addListener(_onConfigurationChanged);
@@ -45,17 +52,23 @@ class DashboardViewModel extends ChangeNotifier {
     return List.unmodifiable(cards);
   }
 
-  ValueListenable<List<DataPointModel>> seriesFor(String cardId) => _seriesStore.seriesFor(brokerId, cardId);
+  ValueListenable<List<DataPointModel>> seriesFor(String cardId) =>
+      _seriesStore.seriesFor(brokerId, cardId);
 
-  Map<String, String> get variableValues => _variables.valuesForBroker(brokerId);
+  Map<String, String> get variableValues =>
+      _variables.valuesForBroker(brokerId);
 
-  List<DashboardLayoutModel> get layouts => _repository.layouts.where((layout) => layout.isGlobal || layout.brokerIds.contains(brokerId)).toList(growable: false);
+  List<DashboardLayoutModel> get layouts => _repository.layouts
+      .where((layout) => layout.isGlobal || layout.brokerIds.contains(brokerId))
+      .toList(growable: false);
 
   String? get activeLayoutId => _repository.activeLayoutIdForBroker(brokerId);
 
   DashboardLayoutModel? get activeLayout {
     final id = activeLayoutId;
-    return id == null ? null : _repository.layouts.where((layout) => layout.id == id).firstOrNull;
+    return id == null
+        ? null
+        : _repository.layouts.where((layout) => layout.id == id).firstOrNull;
   }
 
   List<BrokerEntryModel> get brokers => _brokers.brokers;
@@ -66,7 +79,10 @@ class DashboardViewModel extends ChangeNotifier {
 
   void removeCard(String cardId) {
     final remaining = cards.where((card) => card.id != cardId).toList();
-    final reindexed = [for (var index = 0; index < remaining.length; index++) remaining[index].copyWith(position: index)];
+    final reindexed = [
+      for (var index = 0; index < remaining.length; index++)
+        remaining[index].copyWith(position: index),
+    ];
     unawaited(_repository.setCards(brokerId, reindexed));
   }
 
@@ -76,6 +92,7 @@ class DashboardViewModel extends ChangeNotifier {
         if (card.id == cardId)
           card.copyWith(
             topic: result.topic,
+            jsonKeyPath: () => result.jsonKeyPath,
             displayName: result.displayName,
             unit: result.unit,
             clearUnit: result.unit == null,
@@ -85,7 +102,9 @@ class DashboardViewModel extends ChangeNotifier {
             dotSize: result.dotSize,
             showFill: result.showFill,
             fillOpacity: result.fillOpacity,
-            maxDataPoints: DashboardSeriesPolicy.normalize(result.maxDataPoints),
+            maxDataPoints: DashboardSeriesPolicy.normalize(
+              result.maxDataPoints,
+            ),
             yMin: () => result.yMin,
             yMax: () => result.yMax,
           )
@@ -96,23 +115,42 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   void setCardSize(String cardId, int colSpan, int rowSpan) {
-    unawaited(_repository.setCards(brokerId, [for (final card in cards) card.id == cardId ? card.copyWith(colSpan: colSpan, rowSpan: rowSpan) : card]));
+    unawaited(
+      _repository.setCards(brokerId, [
+        for (final card in cards)
+          card.id == cardId
+              ? card.copyWith(colSpan: colSpan, rowSpan: rowSpan)
+              : card,
+      ]),
+    );
   }
 
   void moveCard(String cardId, int gridCol, int gridRow) {
-    unawaited(_repository.setCards(brokerId, [for (final card in cards) card.id == cardId ? card.copyWith(gridCol: gridCol, gridRow: gridRow) : card]));
+    unawaited(
+      _repository.setCards(brokerId, [
+        for (final card in cards)
+          card.id == cardId
+              ? card.copyWith(gridCol: gridCol, gridRow: gridRow)
+              : card,
+      ]),
+    );
   }
 
   bool ensureValidLayout(int columns) {
     final current = cards;
-    final mustPack = current.any((card) => card.colSpan > columns) || _hasOverlaps(current);
+    final mustPack =
+        current.any((card) => card.colSpan > columns) || _hasOverlaps(current);
     if (!mustPack) return false;
     unawaited(_repository.setCards(brokerId, _packCards(current, columns)));
     return true;
   }
 
   void clearDashboardHistory() {
-    final topics = cards.map((card) => _templateResolver.resolve(card.topic, variableValues)).where((resolution) => resolution.isComplete).map((resolution) => resolution.value).toSet();
+    final topics = cards
+        .map((card) => _templateResolver.resolve(card.topic, variableValues))
+        .where((resolution) => resolution.isComplete)
+        .map((resolution) => resolution.value)
+        .toSet();
     _historyService.clearTopics(topics);
     _seriesStore.clearCards(brokerId, cards.map((card) => card.id));
   }
@@ -123,7 +161,8 @@ class DashboardViewModel extends ChangeNotifier {
       return layout != null;
     }
     for (var index = 0; index < cards.length; index++) {
-      if (jsonEncode(cards[index].toJson()) != jsonEncode(layout.cards[index].toJson())) {
+      if (jsonEncode(cards[index].toJson()) !=
+          jsonEncode(layout.cards[index].toJson())) {
         return true;
       }
     }
@@ -136,15 +175,30 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   Future<void> selectLayout(String layoutId) async {
-    final layout = _repository.layouts.where((candidate) => candidate.id == layoutId).firstOrNull;
+    final layout = _repository.layouts
+        .where((candidate) => candidate.id == layoutId)
+        .firstOrNull;
     if (layout == null) return;
-    await _repository.setCards(brokerId, [...layout.cards]..sort((a, b) => a.position.compareTo(b.position)));
+    await _repository.setCards(
+      brokerId,
+      [...layout.cards]..sort((a, b) => a.position.compareTo(b.position)),
+    );
     await _repository.setActiveLayout(brokerId, layoutId);
   }
 
-  Future<void> saveLayout({required String title, List<String> brokerIds = const [], int colorIndex = 0}) async {
+  Future<void> saveLayout({
+    required String title,
+    List<String> brokerIds = const [],
+    int colorIndex = 0,
+  }) async {
     final id = 'layout_${DateTime.now().microsecondsSinceEpoch}';
-    final layout = DashboardLayoutModel(id: id, title: title, brokerIds: List.unmodifiable(brokerIds), colorIndex: colorIndex, cards: cards);
+    final layout = DashboardLayoutModel(
+      id: id,
+      title: title,
+      brokerIds: List.unmodifiable(brokerIds),
+      colorIndex: colorIndex,
+      cards: cards,
+    );
     await _repository.setLayouts([..._repository.layouts, layout]);
     await _repository.setActiveLayout(brokerId, id);
   }
@@ -152,7 +206,10 @@ class DashboardViewModel extends ChangeNotifier {
   Future<void> updateActiveLayout() async {
     final id = activeLayoutId;
     if (id == null) return;
-    await _repository.setLayouts([for (final layout in _repository.layouts) layout.id == id ? layout.copyWith(cards: cards) : layout]);
+    await _repository.setLayouts([
+      for (final layout in _repository.layouts)
+        layout.id == id ? layout.copyWith(cards: cards) : layout,
+    ]);
   }
 
   Future<void> clearDashboard() async {
@@ -162,11 +219,18 @@ class DashboardViewModel extends ChangeNotifier {
   }
 
   Future<void> deleteLayout(String layoutId) async {
-    await _repository.setLayouts(_repository.layouts.where((layout) => layout.id != layoutId).toList(growable: false));
+    await _repository.setLayouts(
+      _repository.layouts
+          .where((layout) => layout.id != layoutId)
+          .toList(growable: false),
+    );
   }
 
   Future<void> updateLayoutMetadata(DashboardLayoutModel updated) async {
-    await _repository.setLayouts([for (final layout in _repository.layouts) layout.id == updated.id ? updated : layout]);
+    await _repository.setLayouts([
+      for (final layout in _repository.layouts)
+        layout.id == updated.id ? updated : layout,
+    ]);
   }
 
   void setVariableValue(String name, String value) {
@@ -208,7 +272,11 @@ List<GraphCardModel> _packCards(List<GraphCardModel> cards, int columns) {
     while (!placed) {
       for (var col = 0; col <= columns - colSpan; col++) {
         if (_fitsAt(occupied, row, col, original.rowSpan, colSpan)) {
-          final card = original.copyWith(colSpan: colSpan, gridCol: col, gridRow: row);
+          final card = original.copyWith(
+            colSpan: colSpan,
+            gridCol: col,
+            gridRow: row,
+          );
           packed.add(card);
           for (var usedRow = row; usedRow < row + card.rowSpan; usedRow++) {
             for (var usedCol = col; usedCol < col + card.colSpan; usedCol++) {

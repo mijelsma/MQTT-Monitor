@@ -48,6 +48,7 @@ class GraphCardModel {
 
   GraphCardModel copyWith({
     String? topic,
+    String? Function()? jsonKeyPath,
     String? displayName,
     String? unit,
     bool clearUnit = false,
@@ -69,7 +70,7 @@ class GraphCardModel {
     return GraphCardModel(
       id: id,
       topic: topic ?? this.topic,
-      jsonKeyPath: jsonKeyPath,
+      jsonKeyPath: jsonKeyPath != null ? jsonKeyPath() : this.jsonKeyPath,
       displayName: displayName ?? this.displayName,
       unit: clearUnit ? null : unit ?? this.unit,
       colorValue: colorValue ?? this.colorValue,
