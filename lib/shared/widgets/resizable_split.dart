@@ -72,32 +72,39 @@ class _ResizableSplitState extends State<ResizableSplit> {
       builder: (context, constraints) {
         final totalSize = isHorizontal ? constraints.maxWidth : constraints.maxHeight;
         final ratio = _clampRatio(_ratio, totalSize);
-        // Convert ratio to integer flex weights (x1000 for precision).
-        final firstFlex = (ratio * 1000).round();
-        final secondFlex = 1000 - firstFlex;
+        const hitArea = 14.0;
+        final splitPosition = ratio * totalSize;
 
-        final children = <Widget>[
-          Expanded(flex: firstFlex, child: widget.first),
-          MouseRegion(
-            cursor: isHorizontal ? SystemMouseCursors.resizeColumn : SystemMouseCursors.resizeRow,
-            onEnter: (_) => setState(() => _hovering = true),
-            onExit: (_) => setState(() => _hovering = false),
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onHorizontalDragUpdate: isHorizontal ? (d) => _onDragUpdate(d, totalSize) : null,
-              onVerticalDragUpdate: !isHorizontal ? (d) => _onDragUpdate(d, totalSize) : null,
-              onHorizontalDragEnd: isHorizontal ? _onDragEnd : null,
-              onVerticalDragEnd: !isHorizontal ? _onDragEnd : null,
-              child: _DividerHandle(isHorizontal: isHorizontal, hovering: _hovering, borderColor: tokens.border, accentColor: tokens.primary),
-            ),
+        final divider = MouseRegion(
+          cursor: isHorizontal ? SystemMouseCursors.resizeColumn : SystemMouseCursors.resizeRow,
+          onEnter: (_) => setState(() => _hovering = true),
+          onExit: (_) => setState(() => _hovering = false),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onHorizontalDragUpdate: isHorizontal ? (d) => _onDragUpdate(d, totalSize) : null,
+            onVerticalDragUpdate: !isHorizontal ? (d) => _onDragUpdate(d, totalSize) : null,
+            onHorizontalDragEnd: isHorizontal ? _onDragEnd : null,
+            onVerticalDragEnd: !isHorizontal ? _onDragEnd : null,
+            child: _DividerHandle(isHorizontal: isHorizontal, hovering: _hovering, borderColor: tokens.border, accentColor: tokens.primary),
           ),
-          Expanded(flex: secondFlex, child: widget.second),
-        ];
+        );
 
         if (isHorizontal) {
-          return Row(children: children);
+          return Stack(
+            children: [
+              Positioned(left: 0, top: 0, bottom: 0, width: splitPosition, child: widget.first),
+              Positioned(left: splitPosition, top: 0, right: 0, bottom: 0, child: widget.second),
+              Positioned(left: splitPosition - hitArea / 2, top: 0, bottom: 0, width: hitArea, child: divider),
+            ],
+          );
         } else {
-          return Column(children: children);
+          return Stack(
+            children: [
+              Positioned(left: 0, top: 0, right: 0, height: splitPosition, child: widget.first),
+              Positioned(left: 0, top: splitPosition, right: 0, bottom: 0, child: widget.second),
+              Positioned(left: 0, top: splitPosition - hitArea / 2, right: 0, height: hitArea, child: divider),
+            ],
+          );
         }
       },
     );

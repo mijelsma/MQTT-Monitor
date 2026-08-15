@@ -4,6 +4,7 @@ import 'package:mqtt_monitor/core/storage/shared_preferences_store.dart';
 import 'package:mqtt_monitor/core/ui/repositories/ui_preferences_repository.dart';
 import 'package:mqtt_monitor/core/ui/models/app_language_model.dart';
 import 'package:mqtt_monitor/core/ui/models/sidebar_panel_default_model.dart';
+import 'package:mqtt_monitor/core/ui/models/ui_density_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -29,6 +30,9 @@ void main() {
     expect(repository.defaultSidebarPublish, SidebarPanelDefaultModel.collapsed);
     expect(repository.defaultSidebarShortcuts, SidebarPanelDefaultModel.collapsed);
     expect(repository.language, AppLanguageModel.en);
+    expect(repository.density, UiDensityModel.comfortable);
+    expect(repository.showTopicPayloadPreview, isTrue);
+    expect(repository.showTopicBadges, isTrue);
     expect(store.get(UiPreferencesRepository.schemaVersionKey), UiPreferencesRepository.currentSchemaVersion);
   });
 
@@ -53,6 +57,9 @@ void main() {
     await repository.setDefaultSidebarPublish(SidebarPanelDefaultModel.lastStatus);
     await repository.setDefaultSidebarShortcuts(SidebarPanelDefaultModel.lastStatus);
     await repository.setLanguage(AppLanguageModel.nl);
+    await repository.setDensity(UiDensityModel.compact);
+    await repository.setShowTopicPayloadPreview(false);
+    await repository.setShowTopicBadges(false);
 
     final restored = UiPreferencesRepository(store);
     await restored.initialize();
@@ -72,6 +79,9 @@ void main() {
     expect(restored.defaultSidebarPublish, SidebarPanelDefaultModel.lastStatus);
     expect(restored.defaultSidebarShortcuts, SidebarPanelDefaultModel.lastStatus);
     expect(restored.language, AppLanguageModel.nl);
+    expect(restored.density, UiDensityModel.compact);
+    expect(restored.showTopicPayloadPreview, isFalse);
+    expect(restored.showTopicBadges, isFalse);
     expect(store.get(UiPreferencesRepository.themeModeKey), 'dark');
     expect(store.get(UiPreferencesRepository.languageKey), 'nl');
     expect(store.get(UiPreferencesRepository.persistLayoutKey), isFalse);

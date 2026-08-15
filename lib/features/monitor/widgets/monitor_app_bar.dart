@@ -17,7 +17,7 @@ class MonitorAppBar extends StatefulWidget implements PreferredSizeWidget {
 
   final TextEditingController filterController;
 
-  static const double _toolbarHeight = 62;
+  static const double _toolbarHeight = 68;
 
   @override
   Size get preferredSize => const Size.fromHeight(_toolbarHeight + 0.5);
@@ -65,7 +65,7 @@ class _MonitorAppBarState extends State<MonitorAppBar> {
         mainAxisSize: MainAxisSize.min,
         children: [
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
+            constraints: const BoxConstraints(maxWidth: 500),
             child: _SearchBox(controller: widget.filterController, scope: workspace.scope, matchMode: workspace.matchMode, hasText: hasText, onScopeChanged: workspace.setScope, onMatchModeChanged: workspace.setMatchMode),
           ),
           const HSpacer(8),
@@ -74,13 +74,13 @@ class _MonitorAppBarState extends State<MonitorAppBar> {
           _ClearAllTopicsButton(),
         ],
       ),
-      titleSpacing: 10,
+      titleSpacing: 14,
       actions: const [BrokerSelector(), HSpacer(8), _ConnectionButton(), HSpacer(4), _DashboardButton(), HSpacer(4), _SettingsButton(), HSpacer(8)],
     );
   }
 }
 
-class _SearchBox extends StatelessWidget {
+class _SearchBox extends StatefulWidget {
   const _SearchBox({required this.controller, required this.scope, required this.matchMode, required this.hasText, required this.onScopeChanged, required this.onMatchModeChanged});
 
   final TextEditingController controller;
@@ -91,49 +91,61 @@ class _SearchBox extends StatelessWidget {
   final ValueChanged<SearchMatchMode> onMatchModeChanged;
 
   @override
+  State<_SearchBox> createState() => _SearchBoxState();
+}
+
+class _SearchBoxState extends State<_SearchBox> {
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
 
-    return Container(
-      height: 34,
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
+      height: 40,
       decoration: BoxDecoration(
-        color: tokens.inputFill,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: tokens.border, width: 1.0),
+        color: _focused ? tokens.surface : tokens.elevated.withValues(alpha: 0.62),
+        borderRadius: BorderRadius.circular(tokens.controlRadius + 2),
+        border: Border.all(color: _focused ? tokens.focusRing.withValues(alpha: 0.65) : tokens.border, width: _focused ? 1.25 : 0.5),
+        boxShadow: _focused ? [BoxShadow(color: tokens.focusRing.withValues(alpha: 0.10), blurRadius: 0, spreadRadius: 3)] : const [],
       ),
-      child: Row(
-        children: [
-          const SizedBox(width: 8),
-          Icon(Icons.search_rounded, size: 15, color: tokens.textTertiary),
-          const SizedBox(width: 6),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              style: TextStyle(fontSize: 13, color: tokens.textPrimary, height: 1.0),
-              decoration: InputDecoration(
-                hintText: '${S.of(context).searchHint}…',
-                hintStyle: TextStyle(fontSize: 13, color: tokens.textTertiary, fontWeight: FontWeight.w400),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
+      child: Focus(
+        onFocusChange: (value) => setState(() => _focused = value),
+        child: Row(
+          children: [
+            const SizedBox(width: 11),
+            Icon(Icons.search_rounded, size: 17, color: _focused ? tokens.primary : tokens.textTertiary),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: widget.controller,
+                style: TextStyle(fontSize: 13, color: tokens.textPrimary, height: 1.0),
+                decoration: InputDecoration(
+                  hintText: '${S.of(context).searchHint}…',
+                  hintStyle: TextStyle(fontSize: 13, color: tokens.textTertiary, fontWeight: FontWeight.w400),
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                cursorColor: tokens.primary,
+                cursorWidth: 1.5,
               ),
-              cursorColor: tokens.primary,
-              cursorWidth: 1.5,
             ),
-          ),
-          if (hasText) ...[
-            const SizedBox(width: 4),
-            GestureDetector(
-              onTap: controller.clear,
-              child: Icon(Icons.cancel_rounded, size: 14, color: tokens.textTertiary),
-            ),
+            if (widget.hasText) ...[
+              const SizedBox(width: 4),
+              GestureDetector(
+                onTap: widget.controller.clear,
+                child: Icon(Icons.cancel_rounded, size: 14, color: tokens.textTertiary),
+              ),
+            ],
+            const SizedBox(width: 6),
+            Container(width: 0.5, height: 18, color: tokens.border),
+            _MatchModePicker(mode: widget.matchMode, onChanged: widget.onMatchModeChanged),
+            Container(width: 0.5, height: 18, color: tokens.border),
+            _ScopePicker(scope: widget.scope, onChanged: widget.onScopeChanged),
           ],
-          const SizedBox(width: 6),
-          Container(width: 0.5, height: 18, color: tokens.border),
-          _MatchModePicker(mode: matchMode, onChanged: onMatchModeChanged),
-          Container(width: 0.5, height: 18, color: tokens.border),
-          _ScopePicker(scope: scope, onChanged: onScopeChanged),
-        ],
+        ),
       ),
     );
   }

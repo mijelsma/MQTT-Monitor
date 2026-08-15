@@ -5,11 +5,14 @@ import 'package:flutter/material.dart';
 import '../../../core/monitor/models/flat_tree_row_model.dart';
 import '../../../core/monitor/models/topic_tree_node_model.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
+import '../../../theme/ui_layout.dart';
 import 'topic_tree_row.dart';
 
-const double _minimumTopicTreeRowHeight = 37.0;
 const double _topicTreeDividerHeight = 0.5;
-const double topicTreeItemExtent = _minimumTopicTreeRowHeight + _topicTreeDividerHeight;
+
+/// Default item extent in comfortable density. Compact density calculates a
+/// smaller extent at build time.
+const double topicTreeItemExtent = 37.0 + _topicTreeDividerHeight;
 
 /// Lazily renders the cached, flattened topic rows with a fixed item extent.
 class TopicTreeList extends StatelessWidget {
@@ -23,7 +26,9 @@ class TopicTreeList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final rowHeight = math.max(_minimumTopicTreeRowHeight, 18.0 + MediaQuery.textScalerOf(context).scale(13.0) * 1.3);
+    final layout = context.uiLayout;
+    final minimumRowHeight = layout.isCompact ? 33.0 : 37.0;
+    final rowHeight = math.max(minimumRowHeight, 18.0 + MediaQuery.textScalerOf(context).scale(13.0) * 1.3);
 
     return ListView.builder(
       padding: EdgeInsets.zero,

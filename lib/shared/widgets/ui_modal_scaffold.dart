@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../generated/l10n.dart';
 import '../../theme/accent_contrast.dart';
 import '../../theme/app_tokens/app_tokens.dart';
+import '../../theme/ui_layout.dart';
 
 class UiModalScaffold extends StatelessWidget {
   const UiModalScaffold({super.key, required this.title, this.isEditing = false, this.onDelete, required this.body, required this.onCancel, required this.onSubmit, this.submitLabel = 'Save'});
@@ -18,18 +19,20 @@ class UiModalScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final accent = tokens.primary;
+    final layout = context.uiLayout;
+    final panelRadius = BorderRadius.all(Radius.circular(tokens.panelRadius));
     final maxH = MediaQuery.sizeOf(context).height * 0.88;
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
 
     return Dialog(
       backgroundColor: tokens.surface,
       surfaceTintColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
+      shape: RoundedRectangleBorder(borderRadius: panelRadius),
       insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 560, maxHeight: maxH),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: panelRadius,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -62,7 +65,7 @@ class UiModalScaffold extends StatelessWidget {
               const SizedBox(height: 4),
               Divider(height: 0.5, thickness: 0.5, color: tokens.border),
               Flexible(
-                child: SingleChildScrollView(padding: const EdgeInsets.fromLTRB(24, 20, 24, 24), child: body),
+                child: SingleChildScrollView(padding: EdgeInsets.fromLTRB(24, layout.isCompact ? 16 : 20, 24, 24), child: body),
               ),
               Divider(height: 0.5, thickness: 0.5, color: tokens.border),
               Padding(

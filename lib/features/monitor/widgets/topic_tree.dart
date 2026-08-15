@@ -19,7 +19,6 @@ class TopicTree extends StatelessWidget {
     final vm = context.watch<MonitorWorkspaceController>();
     final rows = vm.visibleRows;
     final hasFilter = vm.filter.isNotEmpty;
-
     if (rows.isEmpty) return TopicTreeEmptyState(hasFilter: hasFilter);
 
     return TopicTreeList(rows: rows, selectedNode: vm.selectedNode, onToggle: vm.toggleExpand, onSelect: vm.selectNode);

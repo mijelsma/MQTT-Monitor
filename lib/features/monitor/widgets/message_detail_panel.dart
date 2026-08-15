@@ -541,7 +541,7 @@ class _PayloadCardState extends State<_PayloadCard> {
             width: double.infinity,
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: tokens.inputFill,
+              color: tokens.surface,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: widget.isHistorical ? tokens.warning.withValues(alpha: 0.6) : tokens.border, width: widget.isHistorical ? 1.5 : 0.5),
             ),

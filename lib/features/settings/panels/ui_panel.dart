@@ -5,6 +5,7 @@ import '../../../generated/l10n.dart';
 import '../../../core/publishing/models/mqtt_qos_default_model.dart';
 import '../../../core/mqtt/models/mqtt_protocol_version_model.dart';
 import '../../../core/ui/models/sidebar_panel_default_model.dart';
+import '../../../core/ui/models/ui_density_model.dart';
 import '../../../core/ui/models/search_defaults.dart';
 import '../../../core/mqtt/models/startup_connection_model.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
@@ -49,6 +50,16 @@ class UiPanel extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: ColorPickerField(label: s.uiPanelAccentColor, value: vm.accentColor, onChanged: (c) => vm.setAccentColor(c)),
             ),
+            UiSegmentRow<UiDensityModel>(
+              label: s.uiPanelDensity,
+              accent: accent,
+              value: vm.density,
+              onChanged: vm.setDensity,
+              options: [
+                UiSegmentOption(value: UiDensityModel.comfortable, label: s.uiPanelDensityComfortable),
+                UiSegmentOption(value: UiDensityModel.compact, label: s.uiPanelDensityCompact),
+              ],
+            ),
             UiSwitchRow(label: s.uiPanelShowStatusBar, subtitle: s.uiPanelShowStatusBarSubtitle, value: vm.showStatusBar, onChanged: (v) => vm.setShowStatusBar(v)),
             if (vm.showStatusBar)
               UiSliderRow(
@@ -73,6 +84,8 @@ class UiPanel extends StatelessWidget {
           label: s.uiPanelSectionDataDisplay,
           children: [
             UiSwitchRow(label: s.uiPanelShowActivity, subtitle: s.uiPanelShowActivitySubtitle, value: vm.showActivity, onChanged: (v) => vm.setShowActivity(v)),
+            UiSwitchRow(label: s.uiPanelShowTopicPayloadPreview, subtitle: s.uiPanelShowTopicPayloadPreviewSubtitle, value: vm.showTopicPayloadPreview, onChanged: vm.setShowTopicPayloadPreview),
+            UiSwitchRow(label: s.uiPanelShowTopicBadges, subtitle: s.uiPanelShowTopicBadgesSubtitle, value: vm.showTopicBadges, onChanged: vm.setShowTopicBadges),
             UiSwitchRow(label: s.uiPanelDisableSelectionHighlight, subtitle: s.uiPanelDisableSelectionHighlightSubtitle, value: vm.disableSelectionHighlight, onChanged: (v) => vm.setDisableSelectionHighlight(v)),
             if (vm.showActivity) ...[
               UiSliderRow(label: s.uiPanelPulseRate, subtitle: s.uiPanelPulseRateSubtitle, value: vm.pulseRatePps.toDouble(), min: 1, max: 30, divisions: 29, displayValue: '${vm.pulseRatePps} pps', accent: accent, onChanged: (v) => vm.setPulseRatePps(v.round())),

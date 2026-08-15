@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_tokens/app_tokens.dart';
+import '../../theme/ui_layout.dart';
 import 'spacers.dart';
 
 class EmptyStateShell extends StatelessWidget {
@@ -15,6 +16,7 @@ class EmptyStateShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final tokens = context.tokens;
+    final layout = context.uiLayout;
 
     return Center(
       child: Padding(
@@ -23,16 +25,16 @@ class EmptyStateShell extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 68,
-              height: 68,
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
-                gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: gradientColors),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [BoxShadow(color: gradientColors.first.withValues(alpha: 0.28), blurRadius: 24, offset: const Offset(0, 8))],
+                color: gradientColors.first.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(tokens.panelRadius),
+                border: Border.all(color: gradientColors.first.withValues(alpha: 0.18), width: 0.5),
               ),
-              child: Icon(icon, size: 30, color: Colors.white),
+              child: Icon(icon, size: 28, color: gradientColors.first),
             ),
-            VSpacer(20),
+            VSpacer(layout.sectionGap),
             Text(
               title,
               style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600, letterSpacing: -0.2),

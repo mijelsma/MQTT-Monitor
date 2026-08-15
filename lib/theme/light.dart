@@ -9,6 +9,7 @@ import 'card/light.dart';
 import 'popup_menu/light.dart';
 import 'text/light.dart';
 import 'app_tokens/app_tokens.dart';
+import 'ui_layout.dart';
 
 final ThemeData themeLight = ThemeData(
   useMaterial3: true,
@@ -21,5 +22,5 @@ final ThemeData themeLight = ThemeData(
   iconTheme: iconThemeLight,
   bottomAppBarTheme: bottomAppBarThemeLight,
   textTheme: textThemeLight(),
-  extensions: const [AppTokens.light],
+  extensions: const [AppTokens.light, UiLayout.comfortable],
 );

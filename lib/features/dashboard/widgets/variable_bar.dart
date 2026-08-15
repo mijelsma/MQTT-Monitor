@@ -19,7 +19,6 @@ class VariableBar extends StatelessWidget {
     if (variables.isEmpty) return const SizedBox.shrink();
 
     final tokens = context.tokens;
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -164,20 +163,21 @@ class _VariablePickerDialogState extends State<_VariablePickerDialog> {
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: tokens.textSecondary),
                 ),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    for (final opt in options)
+                    for (var index = 0; index < options.length; index++) ...[
                       _OptionChip(
-                        label: opt.label,
-                        subtitle: opt.value,
-                        selected: _controller.text == opt.value,
+                        label: options[index].label,
+                        subtitle: options[index].value,
+                        selected: _controller.text == options[index].value,
                         onTap: () {
-                          _controller.text = opt.value;
-                          Navigator.pop(context, opt.value);
+                          _controller.text = options[index].value;
+                          Navigator.pop(context, options[index].value);
                         },
                       ),
+                      if (index < options.length - 1) const SizedBox(height: 6),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -255,6 +255,7 @@ class _OptionChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       onTap: onTap,
       child: Container(
+        width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: selected ? tokens.primary.withValues(alpha: 0.12) : tokens.inputFill,
@@ -263,13 +264,21 @@ class _OptionChip extends StatelessWidget {
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
               label,
+              textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: selected ? tokens.primary : tokens.textPrimary),
             ),
-            if (subtitle != label) ...[const SizedBox(height: 1), Text(subtitle, style: TextStyle(fontSize: 10.5, color: tokens.textTertiary))],
+            if (subtitle != label) ...[
+              const SizedBox(height: 1),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 10.5, color: tokens.textTertiary),
+              ),
+            ],
           ],
         ),
       ),

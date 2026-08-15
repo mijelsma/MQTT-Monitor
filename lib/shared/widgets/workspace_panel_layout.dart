@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../controllers/workspace_panel_controller.dart';
+import '../../theme/ui_layout.dart';
 import 'workspace_panel_divider.dart';
 import 'workspace_panel_header.dart';
 import 'workspace_panel_section.dart';
@@ -14,7 +15,6 @@ Duration workspacePanelAnimationDurationForSpeed(int speed) {
   return Duration(milliseconds: milliseconds.round());
 }
 
-const double _headerHeight = 36;
 const double _dividerHeight = 14;
 
 /// Lays out collapsible, resizable workspace panels with animated redistribution.
@@ -128,11 +128,12 @@ class _WorkspacePanelLayoutState extends State<WorkspacePanelLayout> with Single
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: _transition,
-      builder: (context, _) => LayoutBuilder(builder: (context, constraints) => _buildPanels(constraints)),
+      builder: (context, _) => LayoutBuilder(builder: (context, constraints) => _buildPanels(context, constraints)),
     );
   }
 
-  Widget _buildPanels(BoxConstraints constraints) {
+  Widget _buildPanels(BuildContext context, BoxConstraints constraints) {
+    final headerHeight = context.uiLayout.isCompact ? 40.0 : 44.0;
     final panelCount = widget.sections.length;
     final expandedIndices = [
       for (var index = 0; index < panelCount; index++)
@@ -140,7 +141,7 @@ class _WorkspacePanelLayoutState extends State<WorkspacePanelLayout> with Single
     ];
     final nextExpandedByIndex = <int, int>{for (var position = 0; position < expandedIndices.length - 1; position++) expandedIndices[position]: expandedIndices[position + 1]};
     final dividerCount = math.max(0, expandedIndices.length - 1);
-    final chromeHeight = panelCount * _headerHeight + dividerCount * _dividerHeight;
+    final chromeHeight = panelCount * headerHeight + dividerCount * _dividerHeight;
     final maxHeight = constraints.maxHeight.isFinite ? constraints.maxHeight : chromeHeight;
     final available = math.max(0.0, maxHeight - chromeHeight);
     final shares = _normalizedCurrentShares();
@@ -150,7 +151,7 @@ class _WorkspacePanelLayoutState extends State<WorkspacePanelLayout> with Single
       final section = widget.sections[index];
       children.add(
         SizedBox(
-          height: _headerHeight,
+          height: headerHeight,
           child: WorkspacePanelHeader(key: section.toggleKey, title: section.title, icon: section.icon, collapsed: widget.controller.isCollapsed(index), onToggle: () => widget.controller.toggle(index), animationDuration: widget.animationsEnabled ? widget.animationDuration : Duration.zero),
         ),
       );

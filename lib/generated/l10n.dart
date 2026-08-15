@@ -1484,6 +1484,36 @@ class S {
     );
   }
 
+  /// `Display density`
+  String get uiPanelDensity {
+    return Intl.message(
+      'Display density',
+      name: 'uiPanelDensity',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Comfortable`
+  String get uiPanelDensityComfortable {
+    return Intl.message(
+      'Comfortable',
+      name: 'uiPanelDensityComfortable',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Compact`
+  String get uiPanelDensityCompact {
+    return Intl.message(
+      'Compact',
+      name: 'uiPanelDensityCompact',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Show status bar`
   String get uiPanelShowStatusBar {
     return Intl.message(
@@ -1549,6 +1579,46 @@ class S {
     return Intl.message(
       'Pulse topic when activity occurs',
       name: 'uiPanelShowActivitySubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show payload previews`
+  String get uiPanelShowTopicPayloadPreview {
+    return Intl.message(
+      'Show payload previews',
+      name: 'uiPanelShowTopicPayloadPreview',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show the most recent value inline in the topic tree`
+  String get uiPanelShowTopicPayloadPreviewSubtitle {
+    return Intl.message(
+      'Show the most recent value inline in the topic tree',
+      name: 'uiPanelShowTopicPayloadPreviewSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show topic badges`
+  String get uiPanelShowTopicBadges {
+    return Intl.message(
+      'Show topic badges',
+      name: 'uiPanelShowTopicBadges',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Show topic and message counts in the topic tree`
+  String get uiPanelShowTopicBadgesSubtitle {
+    return Intl.message(
+      'Show topic and message counts in the topic tree',
+      name: 'uiPanelShowTopicBadgesSubtitle',
       desc: '',
       args: [],
     );
