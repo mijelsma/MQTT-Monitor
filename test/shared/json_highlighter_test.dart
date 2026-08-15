@@ -16,23 +16,35 @@ void main() {
 }''';
 
     final spans = JsonHighlighter.highlight(json, false, AppTokens.light);
-    final values = spans.where((span) => span.text?.startsWith('"') ?? false).toList();
+    final values = spans
+        .where((span) => span.text?.startsWith('"') ?? false)
+        .toList();
 
-    expect(values.map((span) => span.text), ['"v"', '"226.5"', '"227.5"', '"227.8"']);
+    expect(values.map((span) => span.text), [
+      '"v"',
+      '"226.5"',
+      '"227.5"',
+      '"227.8"',
+    ]);
     expect((values.first.style as TextStyle).color, AppTokens.light.primary);
     for (final value in values.skip(1)) {
       expect((value.style as TextStyle).color, AppColors.success700);
     }
   });
 
-  testWidgets('offers numeric strings in arrays as pinnable values', (tester) async {
+  testWidgets('offers numeric strings in arrays as pinnable values', (
+    tester,
+  ) async {
     final pinnedPaths = <String>[];
 
     await tester.pumpWidget(
       MaterialApp(
         theme: ThemeData(extensions: const [AppTokens.light]),
         home: Scaffold(
-          body: JsonHighlighter(source: '{"voltage": ["226.5", "227.5", "227.8"]}', onPin: (keyPath, _) => pinnedPaths.add(keyPath)),
+          body: JsonHighlighter(
+            source: '{"voltage": ["226.5", "227.5", "227.8"]}',
+            onPin: (keyPath, _) => pinnedPaths.add(keyPath),
+          ),
         ),
       ),
     );
@@ -44,35 +56,69 @@ void main() {
     expect(pinnedPaths, ['voltage.[1]']);
   });
 
-  testWidgets('expands a compact numeric array before offering its pin targets', (tester) async {
-    final pinnedPaths = <String>[];
-
+  testWidgets('highlights pins that are already on the dashboard', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: ThemeData(extensions: const [AppTokens.light]),
         home: Scaffold(
-          body: JsonHighlighter(source: '{"samples":[1,2,3]}', maxInlineArrayItems: 3, onPin: (keyPath, _) => pinnedPaths.add(keyPath)),
+          body: JsonHighlighter(
+            source: '{"value": 12}',
+            pinnedKeyPaths: {'value'},
+            onPin: (_, _) {},
+          ),
         ),
       ),
     );
 
-    expect(find.byIcon(Icons.unfold_more_rounded), findsOneWidget);
-    expect(find.byIcon(Icons.push_pin_rounded), findsNothing);
-
-    await tester.tap(find.byIcon(Icons.unfold_more_rounded));
-    await tester.pump();
-
-    final pins = find.byIcon(Icons.push_pin_rounded);
-    expect(pins, findsNWidgets(3));
-    await tester.tap(pins.first);
-    expect(pinnedPaths, ['samples.[0]']);
+    final pin = tester.widget<Icon>(find.byIcon(Icons.push_pin_rounded));
+    expect(pin.color, AppTokens.light.primary);
   });
 
-  testWidgets('keeps an expanded array open when a new payload arrives', (tester) async {
+  testWidgets(
+    'expands a compact numeric array before offering its pin targets',
+    (tester) async {
+      final pinnedPaths = <String>[];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(extensions: const [AppTokens.light]),
+          home: Scaffold(
+            body: JsonHighlighter(
+              source: '{"samples":[1,2,3]}',
+              maxInlineArrayItems: 3,
+              onPin: (keyPath, _) => pinnedPaths.add(keyPath),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.unfold_more_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.push_pin_rounded), findsNothing);
+
+      await tester.tap(find.byIcon(Icons.unfold_more_rounded));
+      await tester.pump();
+
+      final pins = find.byIcon(Icons.push_pin_rounded);
+      expect(pins, findsNWidgets(3));
+      await tester.tap(pins.first);
+      expect(pinnedPaths, ['samples.[0]']);
+    },
+  );
+
+  testWidgets('keeps an expanded array open when a new payload arrives', (
+    tester,
+  ) async {
     Widget build(String payload) => MaterialApp(
       theme: ThemeData(extensions: const [AppTokens.light]),
       home: Scaffold(
-        body: JsonHighlighter(key: const ValueKey('payload'), source: payload, maxInlineArrayItems: 3, onPin: (_, _) {}),
+        body: JsonHighlighter(
+          key: const ValueKey('payload'),
+          source: payload,
+          maxInlineArrayItems: 3,
+          onPin: (_, _) {},
+        ),
       ),
     );
 
@@ -85,14 +131,19 @@ void main() {
     expect(find.byIcon(Icons.push_pin_rounded), findsNWidgets(3));
   });
 
-  testWidgets('uses zero-based paths for values in nested arrays', (tester) async {
+  testWidgets('uses zero-based paths for values in nested arrays', (
+    tester,
+  ) async {
     final pinnedPaths = <String>[];
 
     await tester.pumpWidget(
       MaterialApp(
         theme: ThemeData(extensions: const [AppTokens.light]),
         home: Scaffold(
-          body: JsonHighlighter(source: '{"my_array":[[110,32.69,-22.52]]}', onPin: (keyPath, _) => pinnedPaths.add(keyPath)),
+          body: JsonHighlighter(
+            source: '{"my_array":[[110,32.69,-22.52]]}',
+            onPin: (keyPath, _) => pinnedPaths.add(keyPath),
+          ),
         ),
       ),
     );
@@ -103,17 +154,26 @@ void main() {
       await tester.tap(pins.at(index));
     }
 
-    expect(pinnedPaths, ['my_array.[0].[0]', 'my_array.[0].[1]', 'my_array.[0].[2]']);
+    expect(pinnedPaths, [
+      'my_array.[0].[0]',
+      'my_array.[0].[1]',
+      'my_array.[0].[2]',
+    ]);
   });
 
-  testWidgets('increments each nested parent array index independently', (tester) async {
+  testWidgets('increments each nested parent array index independently', (
+    tester,
+  ) async {
     final pinnedPaths = <String>[];
 
     await tester.pumpWidget(
       MaterialApp(
         theme: ThemeData(extensions: const [AppTokens.light]),
         home: Scaffold(
-          body: JsonHighlighter(source: '{"matrix":[[1,2],[3,4]]}', onPin: (keyPath, _) => pinnedPaths.add(keyPath)),
+          body: JsonHighlighter(
+            source: '{"matrix":[[1,2],[3,4]]}',
+            onPin: (keyPath, _) => pinnedPaths.add(keyPath),
+          ),
         ),
       ),
     );
@@ -124,6 +184,11 @@ void main() {
       await tester.tap(pins.at(index));
     }
 
-    expect(pinnedPaths, ['matrix.[0].[0]', 'matrix.[0].[1]', 'matrix.[1].[0]', 'matrix.[1].[1]']);
+    expect(pinnedPaths, [
+      'matrix.[0].[0]',
+      'matrix.[0].[1]',
+      'matrix.[1].[0]',
+      'matrix.[1].[1]',
+    ]);
   });
 }

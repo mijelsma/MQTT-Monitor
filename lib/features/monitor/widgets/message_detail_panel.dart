@@ -469,6 +469,11 @@ class _PayloadCardState extends State<_PayloadCard> {
     final maxInlineArrayItems = context.watch<UiPreferencesRepository>().jsonInlineArrayMaxItems;
     final isJson = JsonHighlighter.isJson(widget.payload);
     final showPin = !widget.isHistorical;
+    final brokerId = showPin ? context.watch<MonitorViewModel>().activeBroker?.id : null;
+    final dashboard = showPin ? context.watch<DashboardRepository>() : null;
+    final pinnedCards = brokerId != null && dashboard != null ? dashboard.cardsForBroker(brokerId).where((card) => card.topic == widget.topic).toList(growable: false) : const <GraphCardModel>[];
+    final pinnedKeyPaths = pinnedCards.map((card) => card.jsonKeyPath).whereType<String>().toSet();
+    final isRootValuePinned = pinnedCards.any((card) => card.jsonKeyPath == null);
     // Try this before classifying the payload as JSON: a bare number (or a
     // JSON string containing one) is valid JSON too and should be pinnable.
     final numericParts = showPin ? parseNumericPayload(widget.payload) : null;
@@ -481,12 +486,12 @@ class _PayloadCardState extends State<_PayloadCard> {
     if (isNumeric) {
       content = SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: _PinnableValue(payload: widget.payload, topic: widget.topic, unit: numericParts.$2),
+        child: _PinnableValue(payload: widget.payload, topic: widget.topic, unit: numericParts.$2, isPinned: isRootValuePinned),
       );
     } else if (isJson && showPin) {
       content = SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: JsonHighlighter(source: widget.payload, selectable: false, maxInlineArrayItems: maxInlineArrayItems, onPin: (keyPath, label) => _onPin(context, widget.topic, keyPath, label)),
+        child: JsonHighlighter(source: widget.payload, selectable: false, maxInlineArrayItems: maxInlineArrayItems, pinnedKeyPaths: pinnedKeyPaths, onPin: (keyPath, label) => _onPin(context, widget.topic, keyPath, label)),
       );
     } else {
       content = SingleChildScrollView(
@@ -562,11 +567,12 @@ class _PayloadCardState extends State<_PayloadCard> {
 
 /// Small inline widget for a bare numeric payload with a pin icon.
 class _PinnableValue extends StatefulWidget {
-  const _PinnableValue({required this.payload, required this.topic, this.unit});
+  const _PinnableValue({required this.payload, required this.topic, required this.isPinned, this.unit});
 
   final String payload;
   final String topic;
   final String? unit;
+  final bool isPinned;
 
   @override
   State<_PinnableValue> createState() => _PinnableValueState();
@@ -578,7 +584,7 @@ class _PinnableValueState extends State<_PinnableValue> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final color = _hovering ? tokens.primary : tokens.muted;
+    final color = widget.isPinned || _hovering ? tokens.primary : tokens.muted;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -587,12 +593,15 @@ class _PinnableValueState extends State<_PinnableValue> {
           cursor: SystemMouseCursors.click,
           onEnter: (_) => setState(() => _hovering = true),
           onExit: (_) => setState(() => _hovering = false),
-          child: GestureDetector(
-            onTap: () => _onPin(context, widget.topic, null, null, unit: widget.unit),
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: Icon(Icons.push_pin_rounded, size: 12, color: color),
+          child: Tooltip(
+            message: widget.isPinned ? 'Remove from dashboard' : 'Pin to dashboard',
+            child: GestureDetector(
+              onTap: () => _onPin(context, widget.topic, null, null, unit: widget.unit),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Icon(Icons.push_pin_rounded, size: 12, color: color),
+              ),
             ),
           ),
         ),
@@ -628,7 +637,7 @@ class _PinnableValueState extends State<_PinnableValue> {
   return (value, match.group(2)!.trim());
 }
 
-/// Directly pins a value to the dashboard without a dialog.
+/// Pins a value to the dashboard, or removes its existing dashboard graphs.
 void _onPin(BuildContext context, String topic, String? keyPath, String? defaultName, {String? unit}) async {
   final vm = context.read<MonitorViewModel>();
   final brokerId = vm.activeBroker?.id;
@@ -637,6 +646,19 @@ void _onPin(BuildContext context, String topic, String? keyPath, String? default
   final preferences = context.read<DashboardPreferencesRepository>();
   final dashboard = context.read<DashboardRepository>();
   final cards = dashboard.cardsForBroker(brokerId);
+
+  final existing = cards.where((card) => card.topic == topic && card.jsonKeyPath == keyPath).toList(growable: false);
+  if (existing.isNotEmpty) {
+    final existingIds = existing.map((card) => card.id).toSet();
+    final remaining = cards.where((card) => !existingIds.contains(card.id)).toList(growable: false);
+    await dashboard.setCards(brokerId, [for (var index = 0; index < remaining.length; index++) remaining[index].copyWith(position: index)]);
+
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(const SnackBar(content: Text('Removed from dashboard'), behavior: SnackBarBehavior.floating, duration: Duration(seconds: 2)));
+    return;
+  }
 
   final colorValue = preferences.cardColor;
   final dotSize = preferences.dotSize;

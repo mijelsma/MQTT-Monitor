@@ -24,7 +24,7 @@ typedef JsonPinCallback = void Function(String keyPath, String label);
 /// JSON text and is reused by the publish-panel's editable controller so
 /// there is exactly *one* tokeniser for the entire app.
 class JsonHighlighter extends StatefulWidget {
-  const JsonHighlighter({super.key, required this.source, this.prettyPrint = true, this.maxInlineArrayItems = 1, this.onPin, this.selectable = true});
+  const JsonHighlighter({super.key, required this.source, this.prettyPrint = true, this.maxInlineArrayItems = 1, this.onPin, this.pinnedKeyPaths = const {}, this.selectable = true});
 
   final String source;
 
@@ -39,6 +39,9 @@ class JsonHighlighter extends StatefulWidget {
 
   /// Optional callback to enable inline pin icons next to numeric values.
   final JsonPinCallback? onPin;
+
+  /// Paths that already have a graph on the active dashboard.
+  final Set<String> pinnedKeyPaths;
 
   @override
   State<JsonHighlighter> createState() => _JsonHighlighterState();
@@ -108,6 +111,7 @@ class _JsonHighlighterState extends State<JsonHighlighter> {
                     final info = pinnableLines[i]!;
                     widget.onPin!(info.keyPath, info.label);
                   },
+                  isPinned: widget.pinnedKeyPaths.contains(pinnableLines[i]!.keyPath),
                   tokens: tokens,
                 )
               else
@@ -427,9 +431,10 @@ class _PinnableInfo {
 }
 
 class _InlinePinButton extends StatefulWidget {
-  const _InlinePinButton({required this.onTap, required this.tokens});
+  const _InlinePinButton({required this.onTap, required this.isPinned, required this.tokens});
 
   final VoidCallback onTap;
+  final bool isPinned;
   final AppTokens tokens;
 
   @override
@@ -467,20 +472,23 @@ class _InlinePinButtonState extends State<_InlinePinButton> {
 
   @override
   Widget build(BuildContext context) {
-    final color = _hovering ? widget.tokens.primary : widget.tokens.muted;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovering = true),
-      onExit: (_) => setState(() => _hovering = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        behavior: HitTestBehavior.opaque,
-        child: SizedBox(
-          width: 20,
-          height: 12.5 * 1.5, // match line height
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Icon(Icons.push_pin_rounded, size: 12, color: color),
+    final color = widget.isPinned || _hovering ? widget.tokens.primary : widget.tokens.muted;
+    return Tooltip(
+      message: widget.isPinned ? 'Remove from dashboard' : 'Pin to dashboard',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovering = true),
+        onExit: (_) => setState(() => _hovering = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          behavior: HitTestBehavior.opaque,
+          child: SizedBox(
+            width: 20,
+            height: 12.5 * 1.5, // match line height
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Icon(Icons.push_pin_rounded, size: 12, color: color),
+            ),
           ),
         ),
       ),

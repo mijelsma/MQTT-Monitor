@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/history/services/message_history_service.dart';
+import 'package:mqtt_monitor/core/dashboard/repositories/dashboard_repository.dart';
 import 'package:mqtt_monitor/core/ingestion/message_ingestion_coordinator.dart';
 import 'package:mqtt_monitor/core/history/repositories/history_preferences_repository.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/message_detail_panel.dart';
+import 'package:mqtt_monitor/features/monitor/view_models/monitor_view_model.dart';
+import 'package:mqtt_monitor/core/publishing/services/publish_command_service.dart';
+import 'package:mqtt_monitor/core/ui/repositories/ui_preferences_repository.dart';
 import 'package:mqtt_monitor/generated/l10n.dart';
 import 'package:mqtt_monitor/core/monitor/models/topic_tree_node_model.dart';
 import 'package:mqtt_monitor/core/monitor/models/topic_node_value_model.dart';
@@ -31,9 +35,16 @@ void main() {
     final history = MessageHistoryService(ingestion, dependencies.historyPreferences, dependencies.brokers);
     final node = TopicTreeNodeModel(segment: 'temperature', fullPath: 'home/temperature');
     node.valueNotifier.value = TopicNodeValueModel(payload: payload, seq: 1, receivedAt: DateTime(2026));
+    final dashboard = DashboardRepository(dependencies.preferences, dependencies.brokers);
+    final monitor = MonitorViewModel(mqttSession: mqtt, uiPreferences: dependencies.uiPreferences, brokerRepository: dependencies.brokers, shortcutRepository: dependencies.shortcuts, variableRepository: dependencies.variables, publisher: PublishCommandService(mqtt, dependencies.templateResolver), templateResolver: dependencies.templateResolver);
+    addTearDown(dashboard.dispose);
+    addTearDown(monitor.dispose);
 
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider<UiPreferencesRepository>.value(value: dependencies.uiPreferences),
+        ChangeNotifierProvider<DashboardRepository>.value(value: dashboard),
+        ChangeNotifierProvider<MonitorViewModel>.value(value: monitor),
         ChangeNotifierProvider<HistoryPreferencesRepository>.value(value: dependencies.historyPreferences),
         Provider<MessageHistoryService>.value(value: history),
       ],
