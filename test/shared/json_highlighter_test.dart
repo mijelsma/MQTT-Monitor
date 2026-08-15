@@ -44,6 +44,47 @@ void main() {
     expect(pinnedPaths, ['voltage.[1]']);
   });
 
+  testWidgets('expands a compact numeric array before offering its pin targets', (tester) async {
+    final pinnedPaths = <String>[];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: ThemeData(extensions: const [AppTokens.light]),
+        home: Scaffold(
+          body: JsonHighlighter(source: '{"samples":[1,2,3]}', maxInlineArrayItems: 3, onPin: (keyPath, _) => pinnedPaths.add(keyPath)),
+        ),
+      ),
+    );
+
+    expect(find.byIcon(Icons.unfold_more_rounded), findsOneWidget);
+    expect(find.byIcon(Icons.push_pin_rounded), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.unfold_more_rounded));
+    await tester.pump();
+
+    final pins = find.byIcon(Icons.push_pin_rounded);
+    expect(pins, findsNWidgets(3));
+    await tester.tap(pins.first);
+    expect(pinnedPaths, ['samples.[0]']);
+  });
+
+  testWidgets('keeps an expanded array open when a new payload arrives', (tester) async {
+    Widget build(String payload) => MaterialApp(
+      theme: ThemeData(extensions: const [AppTokens.light]),
+      home: Scaffold(
+        body: JsonHighlighter(key: const ValueKey('payload'), source: payload, maxInlineArrayItems: 3, onPin: (_, _) {}),
+      ),
+    );
+
+    await tester.pumpWidget(build('{"samples":[1,2,3]}'));
+    await tester.tap(find.byIcon(Icons.unfold_more_rounded));
+    await tester.pump();
+    expect(find.byIcon(Icons.push_pin_rounded), findsNWidgets(3));
+
+    await tester.pumpWidget(build('{"samples":[4,5,6]}'));
+    expect(find.byIcon(Icons.push_pin_rounded), findsNWidgets(3));
+  });
+
   testWidgets('uses zero-based paths for values in nested arrays', (tester) async {
     final pinnedPaths = <String>[];
 

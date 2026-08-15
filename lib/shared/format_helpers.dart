@@ -8,9 +8,9 @@ const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 
 
 /// Pretty-prints JSON while keeping short arrays of primitive values on one
 /// line. Maps always remain expanded for readability.
-String formatJsonPayload(String payload, {int maxInlineArrayItems = 1}) {
+String formatJsonPayload(String payload, {int maxInlineArrayItems = 1, Set<String> expandedArrayPaths = const {}, bool includeArrayMarkers = false}) {
   try {
-    return _formatJsonValue(jsonDecode(payload), level: 0, maxInlineArrayItems: maxInlineArrayItems.clamp(1, 10));
+    return _formatJsonValue(jsonDecode(payload), level: 0, path: r'$', maxInlineArrayItems: maxInlineArrayItems.clamp(1, 10), expandedArrayPaths: expandedArrayPaths, includeArrayMarkers: includeArrayMarkers);
   } on FormatException {
     return payload;
   }
@@ -20,20 +20,28 @@ String formatJsonPayload(String payload, {int maxInlineArrayItems = 1}) {
 /// message value window. Non-JSON content is returned byte-for-byte unchanged.
 String formatPayloadForClipboard(String payload, {int maxInlineArrayItems = 1}) => formatJsonPayload(payload, maxInlineArrayItems: maxInlineArrayItems);
 
-String _formatJsonValue(Object? value, {required int level, required int maxInlineArrayItems}) {
+String _formatJsonValue(Object? value, {required int level, required String path, required int maxInlineArrayItems, required Set<String> expandedArrayPaths, required bool includeArrayMarkers}) {
   const indent = '    ';
   final currentIndent = List.filled(level, indent).join();
   final childIndent = List.filled(level + 1, indent).join();
   if (value is Map) {
     if (value.isEmpty) return '{}';
-    final entries = value.entries.map((entry) => '$childIndent${jsonEncode(entry.key)}: ${_formatJsonValue(entry.value, level: level + 1, maxInlineArrayItems: maxInlineArrayItems)}');
+    final entries = value.entries.map((entry) => '$childIndent${jsonEncode(entry.key)}: ${_formatJsonValue(entry.value, level: level + 1, path: '$path.${entry.key}', maxInlineArrayItems: maxInlineArrayItems, expandedArrayPaths: expandedArrayPaths, includeArrayMarkers: includeArrayMarkers)}');
     return '{\n${entries.join(',\n')}\n$currentIndent}';
   }
   if (value is List) {
-    final inline = value.length <= maxInlineArrayItems && value.every((item) => item == null || item is num || item is bool || item is String);
-    if (inline) return '[${value.map(jsonEncode).join(', ')}]';
+    final primitive = value.every((item) => item == null || item is num || item is bool || item is String);
+    final inline = primitive && value.length <= maxInlineArrayItems && !expandedArrayPaths.contains(path);
+    if (inline) {
+      final pinnable = value.any((item) => item is num || item is String && num.tryParse(item) != null);
+      final marker = includeArrayMarkers && pinnable ? '\uE000$path\uE001' : '';
+      return '[${value.map(jsonEncode).join(', ')}]$marker';
+    }
     if (value.isEmpty) return '[]';
-    final items = value.map((item) => '$childIndent${_formatJsonValue(item, level: level + 1, maxInlineArrayItems: maxInlineArrayItems)}');
+    final items = <String>[];
+    for (var index = 0; index < value.length; index++) {
+      items.add('$childIndent${_formatJsonValue(value[index], level: level + 1, path: '$path[$index]', maxInlineArrayItems: maxInlineArrayItems, expandedArrayPaths: expandedArrayPaths, includeArrayMarkers: includeArrayMarkers)}');
+    }
     return '[\n${items.join(',\n')}\n$currentIndent]';
   }
   return jsonEncode(value);

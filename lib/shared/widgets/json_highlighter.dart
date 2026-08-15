@@ -23,7 +23,7 @@ typedef JsonPinCallback = void Function(String keyPath, String label);
 /// The static [highlight] method produces coloured [TextSpan]s from raw
 /// JSON text and is reused by the publish-panel's editable controller so
 /// there is exactly *one* tokeniser for the entire app.
-class JsonHighlighter extends StatelessWidget {
+class JsonHighlighter extends StatefulWidget {
   const JsonHighlighter({super.key, required this.source, this.prettyPrint = true, this.maxInlineArrayItems = 1, this.onPin, this.selectable = true});
 
   final String source;
@@ -40,6 +40,9 @@ class JsonHighlighter extends StatelessWidget {
   /// Optional callback to enable inline pin icons next to numeric values.
   final JsonPinCallback? onPin;
 
+  @override
+  State<JsonHighlighter> createState() => _JsonHighlighterState();
+
   /// Returns `true` if [text] is valid JSON.
   static bool isJson(String text) {
     try {
@@ -50,29 +53,38 @@ class JsonHighlighter extends StatelessWidget {
     }
   }
 
+  static List<TextSpan> highlight(String json, bool isDark, AppTokens tokens) => _JsonHighlighterState.highlight(json, isDark, tokens);
+}
+
+class _JsonHighlighterState extends State<JsonHighlighter> {
+  final Set<String> _expandedArrayPaths = {};
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    String displayText = source;
+    String displayText = widget.source;
     Object? parsed;
-    if (prettyPrint) {
-      parsed = _tryParse(source);
+    if (widget.prettyPrint) {
+      parsed = _tryParse(widget.source);
       if (parsed == null) {
         final style = TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 12.5, height: 1.5, color: tokens.textPrimary);
-        return selectable ? SelectableText(source, style: style) : Text(source, style: style);
+        return widget.selectable ? SelectableText(widget.source, style: style) : Text(widget.source, style: style);
       }
-      displayText = formatJsonPayload(source, maxInlineArrayItems: maxInlineArrayItems);
+      displayText = formatJsonPayload(widget.source, maxInlineArrayItems: widget.maxInlineArrayItems, expandedArrayPaths: _expandedArrayPaths, includeArrayMarkers: widget.onPin != null);
     }
 
-    final spans = highlight(displayText, isDark, tokens);
+    final expandableArrayLines = _extractArrayMarkers(displayText);
+    displayText = _stripArrayMarkers(displayText);
+
+    final spans = JsonHighlighter.highlight(displayText, isDark, tokens);
 
     // No pin callback → simple selectable text (original behaviour).
-    if (onPin == null || parsed == null) {
+    if (widget.onPin == null || parsed == null) {
       final span = TextSpan(children: spans);
       final style = TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 12.5, height: 1.5, color: tokens.textPrimary);
-      return selectable ? SelectableText.rich(span, style: style) : Text.rich(span, style: style);
+      return widget.selectable ? SelectableText.rich(span, style: style) : Text.rich(span, style: style);
     }
 
     // Build a line-indexed map of pinnable key paths, then render per-line
@@ -88,11 +100,13 @@ class JsonHighlighter extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (pinnableLines.containsKey(i))
+              if (expandableArrayLines.containsKey(i))
+                _InlineArrayExpandButton(onTap: () => setState(() => _expandedArrayPaths.add(expandableArrayLines[i]!)), tokens: tokens)
+              else if (pinnableLines.containsKey(i))
                 _InlinePinButton(
                   onTap: () {
                     final info = pinnableLines[i]!;
-                    onPin!(info.keyPath, info.label);
+                    widget.onPin!(info.keyPath, info.label);
                   },
                   tokens: tokens,
                 )
@@ -108,6 +122,18 @@ class JsonHighlighter extends StatelessWidget {
       ],
     );
   }
+
+  Map<int, String> _extractArrayMarkers(String source) {
+    final markers = <int, String>{};
+    final pattern = RegExp('\uE000([^\uE001]+)\uE001');
+    for (var index = 0; index < source.split('\n').length; index++) {
+      final match = pattern.firstMatch(source.split('\n')[index]);
+      if (match != null) markers[index] = match.group(1)!;
+    }
+    return markers;
+  }
+
+  String _stripArrayMarkers(String source) => source.replaceAll(RegExp('\uE000[^\uE001]+\uE001'), '');
 
   static Object? _tryParse(String text) {
     try {
@@ -408,6 +434,32 @@ class _InlinePinButton extends StatefulWidget {
 
   @override
   State<_InlinePinButton> createState() => _InlinePinButtonState();
+}
+
+class _InlineArrayExpandButton extends StatelessWidget {
+  const _InlineArrayExpandButton({required this.onTap, required this.tokens});
+
+  final VoidCallback onTap;
+  final AppTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Expand array to pin values',
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: 20,
+          height: 12.5 * 1.5,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Icon(Icons.unfold_more_rounded, size: 14, color: tokens.primary),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _InlinePinButtonState extends State<_InlinePinButton> {
