@@ -22,6 +22,7 @@ import 'core/publishing/repositories/shortcut_repository.dart';
 import 'core/publishing/template_resolver.dart';
 import 'core/publishing/repositories/variable_repository.dart';
 import 'core/ui/repositories/ui_preferences_repository.dart';
+import 'core/ui/models/ui_density_model.dart';
 import 'core/ui/repositories/workspace_layout_repository.dart';
 import 'core/update/services/app_update_service.dart';
 import 'core/update/app_update_lifecycle.dart';
@@ -84,13 +85,14 @@ class _AppView extends StatelessWidget {
     final themeMode = context.select<UiPreferencesRepository, ThemeMode>((preferences) => preferences.themeMode);
     final language = context.select<UiPreferencesRepository, String>((preferences) => preferences.language.name);
     final accentValue = context.select<UiPreferencesRepository, int>((preferences) => preferences.accentColor);
+    final density = context.select<UiPreferencesRepository, UiDensityModel>((preferences) => preferences.density);
     final accent = Color(accentValue);
 
     return MaterialApp(
       title: 'MQTT Monitor',
       debugShowCheckedModeBanner: false,
-      theme: AppThemeBuilder.withAccent(themeLight, accent, Brightness.light),
-      darkTheme: AppThemeBuilder.withAccent(themeDark, accent, Brightness.dark),
+      theme: AppThemeBuilder.withAccent(themeLight, accent, Brightness.light, compact: density == UiDensityModel.compact),
+      darkTheme: AppThemeBuilder.withAccent(themeDark, accent, Brightness.dark, compact: density == UiDensityModel.compact),
       themeMode: themeMode,
       locale: Locale(language),
       supportedLocales: S.delegate.supportedLocales,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_tokens/app_tokens.dart';
+import '../../theme/ui_layout.dart';
 import 'spacers.dart';
+import 'ui_surface.dart';
 
 class UiSection extends StatelessWidget {
   const UiSection({super.key, required this.label, required this.children, this.sortable = false, this.onReorder});
@@ -13,6 +15,7 @@ class UiSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final layout = context.uiLayout;
 
     Widget content;
     if (sortable) {
@@ -47,18 +50,8 @@ class UiSection extends StatelessWidget {
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5, color: tokens.textSecondary),
           ),
         ),
-        const VSpacer(8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
-            decoration: BoxDecoration(
-              color: tokens.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: tokens.border, width: 0.5),
-            ),
-            child: content,
-          ),
-        ),
+        VSpacer(layout.isCompact ? 6 : 8),
+        UiSurface(child: content),
       ],
     );
   }

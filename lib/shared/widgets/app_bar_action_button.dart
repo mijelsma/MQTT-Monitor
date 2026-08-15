@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
-class AppBarActionButton extends StatelessWidget {
+import '../../theme/app_tokens/app_tokens.dart';
+import '../../theme/ui_layout.dart';
+
+class AppBarActionButton extends StatefulWidget {
   const AppBarActionButton({super.key, required this.icon, required this.tooltip, this.onTap});
 
   final IconData icon;
@@ -8,27 +11,52 @@ class AppBarActionButton extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    const borderRadius = BorderRadius.all(Radius.circular(8));
+  State<AppBarActionButton> createState() => _AppBarActionButtonState();
+}
 
-    final iconColor = onTap != null ? cs.onSurfaceVariant : cs.onSurfaceVariant.withValues(alpha: 0.35);
+class _AppBarActionButtonState extends State<AppBarActionButton> {
+  bool _hovering = false;
+  bool _focused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final layout = context.uiLayout;
+    final borderRadius = BorderRadius.all(Radius.circular(tokens.controlRadius));
+
+    final enabled = widget.onTap != null;
+    final active = enabled && (_hovering || _focused);
+    final iconColor = enabled
+        ? active
+              ? tokens.primary
+              : tokens.textSecondary
+        : tokens.textSecondary.withValues(alpha: 0.35);
 
     return Tooltip(
-      message: tooltip,
-      child: ClipRRect(
-        borderRadius: borderRadius,
-        child: Material(
-          color: cs.surface,
-          child: InkWell(
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                borderRadius: borderRadius,
-                border: Border.all(color: Theme.of(context).dividerColor, width: 1.0),
+      message: widget.tooltip,
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovering = true),
+        onExit: (_) => setState(() => _hovering = false),
+        child: ClipRRect(
+          borderRadius: borderRadius,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: widget.onTap,
+              onFocusChange: (value) => setState(() => _focused = value),
+              hoverColor: Colors.transparent,
+              focusColor: Colors.transparent,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 140),
+                curve: Curves.easeOut,
+                padding: layout.toolbarButtonPadding,
+                decoration: BoxDecoration(
+                  borderRadius: borderRadius,
+                  color: active ? tokens.selectedBg : tokens.elevated.withValues(alpha: 0.55),
+                  border: Border.all(color: active ? tokens.primary.withValues(alpha: 0.22) : Colors.transparent, width: 0.5),
+                ),
+                child: Icon(widget.icon, size: 18, color: iconColor),
               ),
-              child: Icon(icon, size: 18, color: iconColor),
             ),
           ),
         ),

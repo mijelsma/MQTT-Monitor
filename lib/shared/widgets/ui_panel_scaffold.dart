@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../theme/ui_layout.dart';
 import 'spacers.dart';
 
 class UiPanelScaffold extends StatelessWidget {
@@ -12,6 +14,7 @@ class UiPanelScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final layout = context.uiLayout;
 
     final body = <Widget>[
       Text(title, style: theme.textTheme.headlineSmall),
@@ -19,12 +22,12 @@ class UiPanelScaffold extends StatelessWidget {
     ];
 
     for (final child in children) {
-      body.add(const VSpacer(20));
+      body.add(VSpacer(layout.sectionGap));
       body.add(child);
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(30, 30, 30, 30),
+      padding: EdgeInsets.all(layout.pagePadding),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: body),
     );
   }

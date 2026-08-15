@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_tokens/app_tokens.dart';
+import '../../theme/ui_layout.dart';
 
 /// Accessible interactive header for a collapsible workspace panel.
 class WorkspacePanelHeader extends StatefulWidget {
@@ -33,6 +34,7 @@ class _WorkspacePanelHeaderState extends State<WorkspacePanelHeader> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final layout = context.uiLayout;
     return Semantics(
       button: true,
       header: true,
@@ -50,7 +52,7 @@ class _WorkspacePanelHeaderState extends State<WorkspacePanelHeader> {
             mouseCursor: SystemMouseCursors.click,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 120),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: layout.isCompact ? 8 : 10),
               decoration: BoxDecoration(
                 color: _hovering || _focused ? tokens.elevated : tokens.surface,
                 border: Border(
@@ -60,8 +62,13 @@ class _WorkspacePanelHeaderState extends State<WorkspacePanelHeader> {
               ),
               child: Row(
                 children: [
-                  Icon(widget.icon, size: 14, color: tokens.textSecondary),
-                  const SizedBox(width: 6),
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(color: widget.collapsed ? tokens.elevated : tokens.selectedBg, borderRadius: BorderRadius.circular(7)),
+                    child: Icon(widget.icon, size: 13, color: widget.collapsed ? tokens.textTertiary : tokens.primary),
+                  ),
+                  const SizedBox(width: 9),
                   Expanded(
                     child: Text(
                       widget.title,

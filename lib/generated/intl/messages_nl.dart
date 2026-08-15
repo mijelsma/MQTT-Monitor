@@ -722,6 +722,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "uiPanelDefaultSubscribeQosSubtitle": MessageLookupByLibrary.simpleMessage(
       "QoS voor nieuwe abonnementen",
     ),
+    "uiPanelDensity": MessageLookupByLibrary.simpleMessage("Weergavedichtheid"),
+    "uiPanelDensityComfortable": MessageLookupByLibrary.simpleMessage(
+      "Comfortabel",
+    ),
+    "uiPanelDensityCompact": MessageLookupByLibrary.simpleMessage("Compact"),
     "uiPanelDescription": MessageLookupByLibrary.simpleMessage(
       "Uiterlijk en lay-outvoorkeuren.",
     ),
@@ -800,6 +805,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "uiPanelShowStatusBarSubtitle": MessageLookupByLibrary.simpleMessage(
       "Toont de statusbalk onder het scherm",
     ),
+    "uiPanelShowTopicBadges": MessageLookupByLibrary.simpleMessage(
+      "Topicbadges tonen",
+    ),
+    "uiPanelShowTopicBadgesSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Toon topic- en berichtentellingen in de topicboom",
+    ),
+    "uiPanelShowTopicPayloadPreview": MessageLookupByLibrary.simpleMessage(
+      "Payloadvoorbeelden tonen",
+    ),
+    "uiPanelShowTopicPayloadPreviewSubtitle":
+        MessageLookupByLibrary.simpleMessage(
+          "Toon de recentste waarde direct in de topicboom",
+        ),
     "uiPanelSidebarAnimationSpeed": MessageLookupByLibrary.simpleMessage(
       "Animatiesnelheid panelen",
     ),

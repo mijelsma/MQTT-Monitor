@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../theme/app_tokens/app_tokens.dart';
+import '../../theme/ui_layout.dart';
 import 'spacers.dart';
 
 class UiField extends StatelessWidget {
@@ -25,8 +26,9 @@ class UiField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final layout = context.uiLayout;
     final accent = tokens.primary;
-    const radius = BorderRadius.all(Radius.circular(10));
+    final radius = BorderRadius.all(Radius.circular(tokens.controlRadius));
 
     final field =
         child ??
@@ -46,7 +48,7 @@ class UiField extends StatelessWidget {
             isDense: true,
             filled: true,
             fillColor: tokens.inputFill,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: layout.controlVerticalPadding),
             border: OutlineInputBorder(
               borderRadius: radius,
               borderSide: BorderSide(color: tokens.border, width: 0.5),

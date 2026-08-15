@@ -25,6 +25,7 @@ import '../../../core/ui/models/app_language_model.dart';
 import '../../../core/publishing/models/mqtt_qos_default_model.dart';
 import '../../../core/mqtt/models/mqtt_protocol_version_model.dart';
 import '../../../core/ui/models/sidebar_panel_default_model.dart';
+import '../../../core/ui/models/ui_density_model.dart';
 import '../../../core/mqtt/models/startup_connection_model.dart';
 import '../settings_section.dart';
 import '../controllers/settings_navigation_controller.dart';
@@ -311,6 +312,15 @@ class SettingsViewModel extends ChangeNotifier {
 
   Color get accentColor => Color(_uiPreferences.accentColor);
   void setAccentColor(Color value) => _uiPreferences.setAccentColor(value.toARGB32());
+
+  UiDensityModel get density => _uiPreferences.density;
+  void setDensity(UiDensityModel value) => _uiPreferences.setDensity(value);
+
+  bool get showTopicPayloadPreview => _uiPreferences.showTopicPayloadPreview;
+  void setShowTopicPayloadPreview(bool value) => _uiPreferences.setShowTopicPayloadPreview(value);
+
+  bool get showTopicBadges => _uiPreferences.showTopicBadges;
+  void setShowTopicBadges(bool value) => _uiPreferences.setShowTopicBadges(value);
 
   //  UI settings
 

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/theme/app_theme.dart';
 import 'package:mqtt_monitor/theme/app_theme_builder.dart';
 import 'package:mqtt_monitor/theme/app_tokens/app_tokens.dart';
+import 'package:mqtt_monitor/theme/ui_layout.dart';
 import 'package:mqtt_monitor/core/ui/repositories/ui_preferences_repository.dart';
 import 'package:provider/provider.dart';
 
@@ -42,6 +43,15 @@ void main() {
         expect(_contrastRatio(buttonBackground, buttonForeground), greaterThanOrEqualTo(4.5));
       }
     }
+  });
+
+  test('runtime theme includes the requested display density', () {
+    final comfortable = AppThemeBuilder.withAccent(themeLight, const Color(0xFF6366F1), Brightness.light);
+    final compact = AppThemeBuilder.withAccent(themeLight, const Color(0xFF6366F1), Brightness.light, compact: true);
+
+    expect(comfortable.extension<UiLayout>()!.isCompact, isFalse);
+    expect(compact.extension<UiLayout>()!.isCompact, isTrue);
+    expect(compact.extension<UiLayout>()!.pagePadding, lessThan(comfortable.extension<UiLayout>()!.pagePadding));
   });
 
   testWidgets('theme selectors ignore unrelated UI preference changes', (tester) async {

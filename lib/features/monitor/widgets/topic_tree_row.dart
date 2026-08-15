@@ -8,6 +8,7 @@ import '../../../shared/widgets/count_pill.dart';
 import '../../../core/monitor/models/topic_tree_node_model.dart';
 import '../../../core/monitor/models/topic_node_value_model.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
+import '../../../theme/ui_layout.dart';
 import '../topic_payload_preview.dart';
 
 /// A single row in the topic tree.
@@ -35,6 +36,7 @@ class _TopicTreeRowState extends State<TopicTreeRow> {
   TopicNodeValueModel? _currentValue;
   String? _payloadPreview;
   late TopicNodeMetrics _currentMetrics;
+  bool _hovering = false;
 
   @override
   void initState() {
@@ -87,9 +89,12 @@ class _TopicTreeRowState extends State<TopicTreeRow> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final layout = context.uiLayout;
     final node = widget.node;
 
     final hideHighlight = context.select<UiPreferencesRepository, bool>((preferences) => preferences.disableSelectionHighlight);
+    final showPayloadPreview = context.select<UiPreferencesRepository, bool>((preferences) => preferences.showTopicPayloadPreview);
+    final showBadges = context.select<UiPreferencesRepository, bool>((preferences) => preferences.showTopicBadges);
     final effectiveSelected = widget.selected && !hideHighlight;
 
     return Stack(
@@ -98,79 +103,89 @@ class _TopicTreeRowState extends State<TopicTreeRow> {
         Positioned.fill(
           child: _TopicPulseOverlay(node: node, color: tokens.primary),
         ),
-        InkWell(
-          onTap: () {
-            if (node.isBranch) widget.onToggle();
-            widget.onSelect?.call();
-          },
-          splashColor: tokens.primary.withValues(alpha: 0.07),
-          highlightColor: effectiveSelected ? tokens.selectedBg : Colors.transparent,
-          child: Container(
-            decoration: BoxDecoration(
-              color: effectiveSelected ? tokens.selectedBg : Colors.transparent,
-              border: effectiveSelected ? Border(left: BorderSide(color: tokens.primary, width: 2.5)) : null,
-            ),
-            padding: EdgeInsets.fromLTRB(effectiveSelected ? 7.5 + widget.depth * 18.0 : 10.0 + widget.depth * 18.0, 9, 14, 9),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Branch chevron or leaf dot
-                SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: node.isBranch
-                      ? AnimatedRotation(
-                          turns: node.isExpanded ? 0.25 : 0.0,
-                          duration: const Duration(milliseconds: 160),
-                          curve: Curves.easeInOut,
-                          child: Icon(Icons.chevron_right_rounded, size: 15, color: tokens.textTertiary),
-                        )
-                      : Center(
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            width: 5,
-                            height: 5,
-                            decoration: BoxDecoration(color: _currentValue != null ? tokens.primary.withValues(alpha: 0.6) : tokens.muted, shape: BoxShape.circle),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onHover: (value) => setState(() => _hovering = value),
+            onTap: () {
+              if (node.isBranch) widget.onToggle();
+              widget.onSelect?.call();
+            },
+            splashColor: tokens.primary.withValues(alpha: 0.07),
+            hoverColor: Colors.transparent,
+            focusColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              curve: Curves.easeOut,
+              decoration: BoxDecoration(
+                color: effectiveSelected
+                    ? tokens.selectedBg
+                    : _hovering
+                    ? tokens.elevated.withValues(alpha: 0.70)
+                    : tokens.elevated.withValues(alpha: 0),
+                border: effectiveSelected ? Border(left: BorderSide(color: tokens.primary, width: 2.5)) : null,
+              ),
+              padding: EdgeInsets.fromLTRB((effectiveSelected ? 7.5 : 10.0) + widget.depth * 18.0, layout.isCompact ? 7 : 9, 14, layout.isCompact ? 7 : 9),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Branch chevron or leaf dot
+                  SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: node.isBranch
+                        ? RotatedBox(
+                            quarterTurns: node.isExpanded ? 1 : 0,
+                            child: Icon(Icons.chevron_right_rounded, size: 15, color: tokens.textTertiary),
+                          )
+                        : Center(
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              width: 5,
+                              height: 5,
+                              decoration: BoxDecoration(color: _currentValue != null ? tokens.primary.withValues(alpha: 0.6) : tokens.muted, shape: BoxShape.circle),
+                            ),
                           ),
-                        ),
-                ),
-                const SizedBox(width: 4),
-
-                Expanded(
-                  child: Text.rich(
-                    TextSpan(
-                      text: node.segment,
-                      style: TextStyle(fontSize: 13, fontWeight: node.isBranch ? FontWeight.w600 : FontWeight.w400, color: node.isBranch ? tokens.textPrimary : tokens.textSecondary, height: 1.3),
-                      children: _currentValue != null
-                          ? [
-                              TextSpan(
-                                text: ' = ',
-                                style: TextStyle(fontSize: 12, color: tokens.textTertiary, fontWeight: FontWeight.w300, height: 1.3),
-                              ),
-                              TextSpan(
-                                text: _payloadPreview,
-                                style: TextStyle(fontSize: 13, color: tokens.primary, fontWeight: FontWeight.w500, height: 1.3),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    maxLines: 1,
-                    softWrap: false,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-
-                // Badges (branches) or value (leaves)
-                if (node.isBranch) ...[
-                  if (_currentValue != null) const SizedBox(width: 6),
-                  CountPill(count: _currentMetrics.topicCount, label: 'topics', color: tokens.textSecondary),
                   const SizedBox(width: 4),
-                  CountPill(count: _currentMetrics.messageCount, label: 'msgs', color: tokens.primary),
-                ] else if (_currentValue != null) ...[
-                  const SizedBox(width: 6),
-                  CountPill(count: _currentMetrics.messageCount, label: 'msgs', color: tokens.primary),
+
+                  Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        text: node.segment,
+                        style: TextStyle(fontSize: 13, fontWeight: node.isBranch || _currentValue != null ? FontWeight.w600 : FontWeight.w400, color: node.isBranch || _currentValue != null ? tokens.textPrimary : tokens.textSecondary, height: 1.3),
+                        children: _currentValue != null && showPayloadPreview
+                            ? [
+                                TextSpan(
+                                  text: ' = ',
+                                  style: TextStyle(fontSize: 12, color: tokens.textTertiary, fontWeight: FontWeight.w300, height: 1.3),
+                                ),
+                                TextSpan(
+                                  text: _payloadPreview,
+                                  style: TextStyle(fontSize: 13, color: effectiveSelected ? tokens.primary : tokens.textSecondary, fontWeight: effectiveSelected ? FontWeight.w500 : FontWeight.w400, height: 1.3),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+
+                  // Badges (branches) or value (leaves)
+                  if (showBadges && node.isBranch) ...[
+                    if (_currentValue != null) const SizedBox(width: 6),
+                    CountPill(count: _currentMetrics.topicCount, label: 'topics', color: tokens.textSecondary),
+                    const SizedBox(width: 4),
+                    CountPill(count: _currentMetrics.messageCount, label: 'msgs', color: tokens.primary),
+                  ] else if (showBadges && _currentValue != null) ...[
+                    const SizedBox(width: 6),
+                    CountPill(count: _currentMetrics.messageCount, label: 'msgs', color: tokens.primary),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/ui/models/app_language_model.dart';
 import '../../../core/ui/models/sidebar_panel_default_model.dart';
+import '../../../core/ui/models/ui_density_model.dart';
 import '../models/search_defaults.dart';
 import '../../storage/preferences_store.dart';
 
@@ -30,6 +31,9 @@ class UiPreferencesRepository extends ChangeNotifier {
   static const String defaultSearchScopeKey = 'settings.defaultSearchScope';
   static const String jsonInlineArrayMaxItemsKey = 'settings.jsonInlineArrayMaxItems';
   static const String languageKey = 'settings.language';
+  static const String densityKey = 'settings.density';
+  static const String showTopicPayloadPreviewKey = 'settings.showTopicPayloadPreview';
+  static const String showTopicBadgesKey = 'settings.showTopicBadges';
 
   static const ThemeMode defaultThemeMode = ThemeMode.system;
   static const int defaultAccentColor = 0xFF6366F1;
@@ -49,6 +53,9 @@ class UiPreferencesRepository extends ChangeNotifier {
   static const SearchMatchMode defaultSearchMatchModeValue = SearchMatchMode.any;
   static const SearchScope defaultSearchScopeValue = SearchScope.all;
   static const int defaultJsonInlineArrayMaxItems = 1;
+  static const UiDensityModel defaultDensity = UiDensityModel.comfortable;
+  static const bool defaultShowTopicPayloadPreview = true;
+  static const bool defaultShowTopicBadges = true;
 
   final PreferencesStore _store;
 
@@ -70,6 +77,9 @@ class UiPreferencesRepository extends ChangeNotifier {
   SearchMatchMode _defaultSearchMatchMode = defaultSearchMatchModeValue;
   SearchScope _defaultSearchScope = defaultSearchScopeValue;
   int _jsonInlineArrayMaxItems = defaultJsonInlineArrayMaxItems;
+  UiDensityModel _density = defaultDensity;
+  bool _showTopicPayloadPreview = defaultShowTopicPayloadPreview;
+  bool _showTopicBadges = defaultShowTopicBadges;
 
   ThemeMode get themeMode => _themeMode;
   int get accentColor => _accentColor;
@@ -89,6 +99,9 @@ class UiPreferencesRepository extends ChangeNotifier {
   SearchMatchMode get defaultSearchMatchMode => _defaultSearchMatchMode;
   SearchScope get defaultSearchScope => _defaultSearchScope;
   int get jsonInlineArrayMaxItems => _jsonInlineArrayMaxItems;
+  UiDensityModel get density => _density;
+  bool get showTopicPayloadPreview => _showTopicPayloadPreview;
+  bool get showTopicBadges => _showTopicBadges;
 
   Future<void> initialize() async {
     final version = _store.get(schemaVersionKey);
@@ -116,6 +129,9 @@ class UiPreferencesRepository extends ChangeNotifier {
     _defaultSearchMatchMode = _enumValue(defaultSearchMatchModeKey, SearchMatchMode.values, defaultSearchMatchModeValue);
     _defaultSearchScope = _enumValue(defaultSearchScopeKey, SearchScope.values, defaultSearchScopeValue);
     _jsonInlineArrayMaxItems = _boundedInt(jsonInlineArrayMaxItemsKey, defaultJsonInlineArrayMaxItems, minimum: 1, maximum: 10);
+    _density = _enumValue(densityKey, UiDensityModel.values, defaultDensity);
+    _showTopicPayloadPreview = _value<bool>(showTopicPayloadPreviewKey, defaultShowTopicPayloadPreview);
+    _showTopicBadges = _value<bool>(showTopicBadgesKey, defaultShowTopicBadges);
     notifyListeners();
   }
 
@@ -155,6 +171,12 @@ class UiPreferencesRepository extends ChangeNotifier {
 
   Future<void> setJsonInlineArrayMaxItems(int value) => _setInt(jsonInlineArrayMaxItemsKey, value.clamp(1, 10), (next) => _jsonInlineArrayMaxItems = next);
 
+  Future<void> setDensity(UiDensityModel value) => _setEnum(densityKey, value, (next) => _density = next);
+
+  Future<void> setShowTopicPayloadPreview(bool value) => _setBool(showTopicPayloadPreviewKey, value, (next) => _showTopicPayloadPreview = next);
+
+  Future<void> setShowTopicBadges(bool value) => _setBool(showTopicBadgesKey, value, (next) => _showTopicBadges = next);
+
   Future<void> resetToDefaults() async {
     for (final key in const [
       themeModeKey,
@@ -175,6 +197,9 @@ class UiPreferencesRepository extends ChangeNotifier {
       defaultSearchScopeKey,
       jsonInlineArrayMaxItemsKey,
       languageKey,
+      densityKey,
+      showTopicPayloadPreviewKey,
+      showTopicBadgesKey,
     ]) {
       await _store.remove(key);
     }
@@ -196,6 +221,9 @@ class UiPreferencesRepository extends ChangeNotifier {
     _defaultSearchMatchMode = defaultSearchMatchModeValue;
     _defaultSearchScope = defaultSearchScopeValue;
     _jsonInlineArrayMaxItems = defaultJsonInlineArrayMaxItems;
+    _density = defaultDensity;
+    _showTopicPayloadPreview = defaultShowTopicPayloadPreview;
+    _showTopicBadges = defaultShowTopicBadges;
     notifyListeners();
   }
 

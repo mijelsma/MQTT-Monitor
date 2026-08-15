@@ -696,6 +696,11 @@ class MessageLookup extends MessageLookupByLibrary {
     "uiPanelDefaultSubscribeQosSubtitle": MessageLookupByLibrary.simpleMessage(
       "QoS used for new subscriptions",
     ),
+    "uiPanelDensity": MessageLookupByLibrary.simpleMessage("Display density"),
+    "uiPanelDensityComfortable": MessageLookupByLibrary.simpleMessage(
+      "Comfortable",
+    ),
+    "uiPanelDensityCompact": MessageLookupByLibrary.simpleMessage("Compact"),
     "uiPanelDescription": MessageLookupByLibrary.simpleMessage(
       "Appearance and layout preferences.",
     ),
@@ -772,6 +777,19 @@ class MessageLookup extends MessageLookupByLibrary {
     "uiPanelShowStatusBarSubtitle": MessageLookupByLibrary.simpleMessage(
       "Shows the bottom status bar",
     ),
+    "uiPanelShowTopicBadges": MessageLookupByLibrary.simpleMessage(
+      "Show topic badges",
+    ),
+    "uiPanelShowTopicBadgesSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Show topic and message counts in the topic tree",
+    ),
+    "uiPanelShowTopicPayloadPreview": MessageLookupByLibrary.simpleMessage(
+      "Show payload previews",
+    ),
+    "uiPanelShowTopicPayloadPreviewSubtitle":
+        MessageLookupByLibrary.simpleMessage(
+          "Show the most recent value inline in the topic tree",
+        ),
     "uiPanelSidebarAnimationSpeed": MessageLookupByLibrary.simpleMessage(
       "Panel animation speed",
     ),
