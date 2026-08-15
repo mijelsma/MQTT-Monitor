@@ -10,7 +10,7 @@ import 'resize_grip_painter.dart';
 
 /// Wraps a [GraphCard] with drag-to-move and drag-to-resize behavior.
 class CardTile extends StatefulWidget {
-  const CardTile({super.key, required this.card, required this.series, required this.width, required this.height, required this.metrics, required this.onEdit, required this.onRemove, required this.onResize, required this.onDragStarted, required this.onDragEnd});
+  const CardTile({super.key, required this.card, required this.series, required this.width, required this.height, required this.metrics, required this.onEdit, required this.onRemove, required this.onResize, required this.onResizeStarted, required this.onResizeEnd, required this.onDragStarted, required this.onDragEnd});
 
   final GraphCardModel card;
   final ValueListenable<List<DataPointModel>> series;
@@ -20,6 +20,8 @@ class CardTile extends StatefulWidget {
 
   /// Called when the user finishes resizing with the new span.
   final void Function(int cols, int rows) onResize;
+  final VoidCallback onResizeStarted;
+  final VoidCallback onResizeEnd;
 
   // Callbacks for edit, remove, and drag events
   final VoidCallback onEdit;
@@ -144,11 +146,14 @@ class _CardTileState extends State<CardTile> {
       top: previewHeight - GridMetrics.handleSize,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onPanStart: (_) => setState(() {
-          _isResizing = true;
-          _resizeDeltaX = 0;
-          _resizeDeltaY = 0;
-        }),
+        onPanStart: (_) {
+          setState(() {
+            _isResizing = true;
+            _resizeDeltaX = 0;
+            _resizeDeltaY = 0;
+          });
+          widget.onResizeStarted();
+        },
         onPanUpdate: (d) => setState(() {
           _resizeDeltaX += d.delta.dx;
           _resizeDeltaY += d.delta.dy;
@@ -159,6 +164,11 @@ class _CardTileState extends State<CardTile> {
             widget.onResize(cols, rows);
           }
           setState(() => _isResizing = false);
+          widget.onResizeEnd();
+        },
+        onPanCancel: () {
+          setState(() => _isResizing = false);
+          widget.onResizeEnd();
         },
         child: MouseRegion(
           cursor: SystemMouseCursors.resizeDownRight,

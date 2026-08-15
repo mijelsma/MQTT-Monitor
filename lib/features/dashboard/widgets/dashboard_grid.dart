@@ -25,6 +25,9 @@ class _DashboardGridState extends State<DashboardGrid> {
   /// The card currently being dragged, or null when idle.
   String? _draggingCardId;
 
+  /// The card currently being resized, or null when idle.
+  String? _resizingCardId;
+
   /// Set when a card lands on a drop target. Applied in [onDragEnd] so the
   /// grid rebuilds after the drag overlay is dismissed (avoids visual glitches).
   ({String cardId, int col, int row})? _pendingMove;
@@ -54,8 +57,8 @@ class _DashboardGridState extends State<DashboardGrid> {
                 // Drop targets — behind cards, only while dragging.
                 if (draggedCard != null) ..._dropTargets(metrics, occupied, draggedCard, columns, maxRow),
 
-                // Dotted empty-cell outlines — shows the grid while dragging.
-                if (_draggingCardId != null) ..._emptyCellIndicators(metrics, occupied, maxRow),
+                // Dotted empty-cell outlines reveal the grid while moving or resizing.
+                if (_draggingCardId != null || _resizingCardId != null) ..._emptyCellIndicators(metrics, occupied, maxRow),
 
                 // Card tiles — always visible.
                 ..._cardTiles(metrics),
@@ -121,7 +124,7 @@ class _DashboardGridState extends State<DashboardGrid> {
   }
 
   /// Faint dotted-border outlines for empty cells — reveals the grid
-  /// structure while the user is dragging a card.
+  /// structure while the user is moving or resizing a card.
   List<Widget> _emptyCellIndicators(GridMetrics metrics, Set<(int, int)> occupied, int maxRow) {
     final color = context.tokens.border.withValues(alpha: 1);
 
@@ -162,6 +165,8 @@ class _DashboardGridState extends State<DashboardGrid> {
             onEdit: () => _showEditDialog(card),
             onRemove: () => vm.removeCard(card.id),
             onResize: (cols, rows) => vm.setCardSize(card.id, cols, rows),
+            onResizeStarted: () => setState(() => _resizingCardId = card.id),
+            onResizeEnd: () => setState(() => _resizingCardId = null),
             onDragStarted: () => setState(() => _draggingCardId = card.id),
             onDragEnd: () {
               final pending = _pendingMove;
