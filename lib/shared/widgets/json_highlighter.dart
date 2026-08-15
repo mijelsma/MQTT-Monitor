@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_tokens/app_tokens.dart';
+import '../format_helpers.dart';
 
 /// Callback that fires when a user taps a pin icon next to a numeric JSON value.
 ///
@@ -23,13 +24,14 @@ typedef JsonPinCallback = void Function(String keyPath, String label);
 /// JSON text and is reused by the publish-panel's editable controller so
 /// there is exactly *one* tokeniser for the entire app.
 class JsonHighlighter extends StatelessWidget {
-  const JsonHighlighter({super.key, required this.source, this.prettyPrint = true, this.onPin, this.selectable = true});
+  const JsonHighlighter({super.key, required this.source, this.prettyPrint = true, this.maxInlineArrayItems = 1, this.onPin, this.selectable = true});
 
   final String source;
 
   /// When `true` (default), the JSON is re-formatted with 4-space indentation
   /// before highlighting. Set to `false` to highlight the raw text as-is.
   final bool prettyPrint;
+  final int maxInlineArrayItems;
 
   /// Whether this widget creates its own selectable text. Set this to false
   /// when an ancestor [SelectionArea] owns selection across multiple rows.
@@ -61,7 +63,7 @@ class JsonHighlighter extends StatelessWidget {
         final style = TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 12.5, height: 1.5, color: tokens.textPrimary);
         return selectable ? SelectableText(source, style: style) : Text(source, style: style);
       }
-      displayText = const JsonEncoder.withIndent('    ').convert(parsed);
+      displayText = formatJsonPayload(source, maxInlineArrayItems: maxInlineArrayItems);
     }
 
     final spans = highlight(displayText, isDark, tokens);

@@ -6,14 +6,37 @@ import '../generated/l10n.dart';
 
 const _months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/// Pretty-prints valid JSON payloads for the clipboard. Non-JSON content is
-/// returned byte-for-byte unchanged.
-String formatPayloadForClipboard(String payload) {
+/// Pretty-prints JSON while keeping short arrays of primitive values on one
+/// line. Maps always remain expanded for readability.
+String formatJsonPayload(String payload, {int maxInlineArrayItems = 1}) {
   try {
-    return const JsonEncoder.withIndent('  ').convert(jsonDecode(payload));
+    return _formatJsonValue(jsonDecode(payload), level: 0, maxInlineArrayItems: maxInlineArrayItems.clamp(1, 10));
   } on FormatException {
     return payload;
   }
+}
+
+/// Formats valid JSON payloads for the clipboard exactly as shown in the
+/// message value window. Non-JSON content is returned byte-for-byte unchanged.
+String formatPayloadForClipboard(String payload, {int maxInlineArrayItems = 1}) => formatJsonPayload(payload, maxInlineArrayItems: maxInlineArrayItems);
+
+String _formatJsonValue(Object? value, {required int level, required int maxInlineArrayItems}) {
+  const indent = '    ';
+  final currentIndent = List.filled(level, indent).join();
+  final childIndent = List.filled(level + 1, indent).join();
+  if (value is Map) {
+    if (value.isEmpty) return '{}';
+    final entries = value.entries.map((entry) => '$childIndent${jsonEncode(entry.key)}: ${_formatJsonValue(entry.value, level: level + 1, maxInlineArrayItems: maxInlineArrayItems)}');
+    return '{\n${entries.join(',\n')}\n$currentIndent}';
+  }
+  if (value is List) {
+    final inline = value.length <= maxInlineArrayItems && value.every((item) => item == null || item is num || item is bool || item is String);
+    if (inline) return '[${value.map(jsonEncode).join(', ')}]';
+    if (value.isEmpty) return '[]';
+    final items = value.map((item) => '$childIndent${_formatJsonValue(item, level: level + 1, maxInlineArrayItems: maxInlineArrayItems)}');
+    return '[\n${items.join(',\n')}\n$currentIndent]';
+  }
+  return jsonEncode(value);
 }
 
 /// Formats a [DateTime] as a human-readable timestamp string.

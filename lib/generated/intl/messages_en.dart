@@ -706,6 +706,12 @@ class MessageLookup extends MessageLookupByLibrary {
         MessageLookupByLibrary.simpleMessage(
           "Hide the selected-topic highlight so activity pulses stay visible on the active topic",
         ),
+    "uiPanelJsonInlineArrayItems": MessageLookupByLibrary.simpleMessage(
+      "Items per inline array",
+    ),
+    "uiPanelJsonInlineArrayItemsSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Keep primitive arrays with this many items or fewer on one line.",
+    ),
     "uiPanelPersistLayout": MessageLookupByLibrary.simpleMessage(
       "Persist Layout",
     ),
@@ -748,6 +754,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Data Display",
     ),
     "uiPanelSectionDefaults": MessageLookupByLibrary.simpleMessage("Defaults"),
+    "uiPanelSectionJson": MessageLookupByLibrary.simpleMessage("JSON display"),
     "uiPanelSectionLayout": MessageLookupByLibrary.simpleMessage("Layout"),
     "uiPanelSectionSearch": MessageLookupByLibrary.simpleMessage("Search"),
     "uiPanelSectionSidebarPanels": MessageLookupByLibrary.simpleMessage(

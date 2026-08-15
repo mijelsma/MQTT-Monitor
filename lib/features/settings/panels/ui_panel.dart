@@ -131,6 +131,11 @@ class UiPanel extends StatelessWidget {
           ],
         ),
 
+        UiSection(
+          label: s.uiPanelSectionJson,
+          children: [UiSliderRow(label: s.uiPanelJsonInlineArrayItems, subtitle: s.uiPanelJsonInlineArrayItemsSubtitle, value: vm.jsonInlineArrayMaxItems.toDouble(), min: 1, max: 10, divisions: 9, displayValue: '${vm.jsonInlineArrayMaxItems}', accent: accent, onChanged: (value) => vm.setJsonInlineArrayMaxItems(value.round()))],
+        ),
+
         // Connection
         UiSection(
           label: s.uiPanelSectionConnection,

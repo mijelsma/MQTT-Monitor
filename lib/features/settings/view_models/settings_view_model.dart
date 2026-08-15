@@ -344,6 +344,9 @@ class SettingsViewModel extends ChangeNotifier {
   SearchScope get defaultSearchScope => _uiPreferences.defaultSearchScope;
   void setDefaultSearchScope(SearchScope value) => _uiPreferences.setDefaultSearchScope(value);
 
+  int get jsonInlineArrayMaxItems => _uiPreferences.jsonInlineArrayMaxItems;
+  void setJsonInlineArrayMaxItems(int value) => _uiPreferences.setJsonInlineArrayMaxItems(value);
+
   int get sidebarAnimationSpeed => _uiPreferences.sidebarAnimationSpeed;
   void setSidebarAnimationSpeed(int v) => _uiPreferences.setSidebarAnimationSpeed(v);
 

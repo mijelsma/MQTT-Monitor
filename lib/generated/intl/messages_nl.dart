@@ -732,6 +732,12 @@ class MessageLookup extends MessageLookupByLibrary {
         MessageLookupByLibrary.simpleMessage(
           "Verberg de selectie-markering zodat activiteitspulsen zichtbaar blijven op het actieve topic",
         ),
+    "uiPanelJsonInlineArrayItems": MessageLookupByLibrary.simpleMessage(
+      "Items per array op één regel",
+    ),
+    "uiPanelJsonInlineArrayItemsSubtitle": MessageLookupByLibrary.simpleMessage(
+      "Houd arrays met eenvoudige waarden met dit aantal items of minder op één regel.",
+    ),
     "uiPanelPersistLayout": MessageLookupByLibrary.simpleMessage(
       "Lay-out bewaren",
     ),
@@ -776,6 +782,7 @@ class MessageLookup extends MessageLookupByLibrary {
     "uiPanelSectionDefaults": MessageLookupByLibrary.simpleMessage(
       "Standaardwaarden",
     ),
+    "uiPanelSectionJson": MessageLookupByLibrary.simpleMessage("JSON-weergave"),
     "uiPanelSectionLayout": MessageLookupByLibrary.simpleMessage("Lay-out"),
     "uiPanelSectionSearch": MessageLookupByLibrary.simpleMessage("Zoeken"),
     "uiPanelSectionSidebarPanels": MessageLookupByLibrary.simpleMessage(

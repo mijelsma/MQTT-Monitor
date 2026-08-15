@@ -1764,6 +1764,36 @@ class S {
     );
   }
 
+  /// `JSON display`
+  String get uiPanelSectionJson {
+    return Intl.message(
+      'JSON display',
+      name: 'uiPanelSectionJson',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Items per inline array`
+  String get uiPanelJsonInlineArrayItems {
+    return Intl.message(
+      'Items per inline array',
+      name: 'uiPanelJsonInlineArrayItems',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Keep primitive arrays with this many items or fewer on one line.`
+  String get uiPanelJsonInlineArrayItemsSubtitle {
+    return Intl.message(
+      'Keep primitive arrays with this many items or fewer on one line.',
+      name: 'uiPanelJsonInlineArrayItemsSubtitle',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Startup Behavior`
   String get uiPanelStartupBehavior {
     return Intl.message(

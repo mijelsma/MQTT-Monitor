@@ -28,6 +28,7 @@ class UiPreferencesRepository extends ChangeNotifier {
   static const String defaultSidebarShortcutsKey = 'settings.defaultSidebarShortcuts';
   static const String defaultSearchMatchModeKey = 'settings.defaultSearchMatchMode';
   static const String defaultSearchScopeKey = 'settings.defaultSearchScope';
+  static const String jsonInlineArrayMaxItemsKey = 'settings.jsonInlineArrayMaxItems';
   static const String languageKey = 'settings.language';
 
   static const ThemeMode defaultThemeMode = ThemeMode.system;
@@ -47,6 +48,7 @@ class UiPreferencesRepository extends ChangeNotifier {
   static const AppLanguageModel defaultLanguage = AppLanguageModel.en;
   static const SearchMatchMode defaultSearchMatchModeValue = SearchMatchMode.any;
   static const SearchScope defaultSearchScopeValue = SearchScope.all;
+  static const int defaultJsonInlineArrayMaxItems = 1;
 
   final PreferencesStore _store;
 
@@ -67,6 +69,7 @@ class UiPreferencesRepository extends ChangeNotifier {
   AppLanguageModel _language = defaultLanguage;
   SearchMatchMode _defaultSearchMatchMode = defaultSearchMatchModeValue;
   SearchScope _defaultSearchScope = defaultSearchScopeValue;
+  int _jsonInlineArrayMaxItems = defaultJsonInlineArrayMaxItems;
 
   ThemeMode get themeMode => _themeMode;
   int get accentColor => _accentColor;
@@ -85,6 +88,7 @@ class UiPreferencesRepository extends ChangeNotifier {
   AppLanguageModel get language => _language;
   SearchMatchMode get defaultSearchMatchMode => _defaultSearchMatchMode;
   SearchScope get defaultSearchScope => _defaultSearchScope;
+  int get jsonInlineArrayMaxItems => _jsonInlineArrayMaxItems;
 
   Future<void> initialize() async {
     final version = _store.get(schemaVersionKey);
@@ -111,6 +115,7 @@ class UiPreferencesRepository extends ChangeNotifier {
     _language = _enumValue(languageKey, AppLanguageModel.values, defaultLanguage);
     _defaultSearchMatchMode = _enumValue(defaultSearchMatchModeKey, SearchMatchMode.values, defaultSearchMatchModeValue);
     _defaultSearchScope = _enumValue(defaultSearchScopeKey, SearchScope.values, defaultSearchScopeValue);
+    _jsonInlineArrayMaxItems = _boundedInt(jsonInlineArrayMaxItemsKey, defaultJsonInlineArrayMaxItems, minimum: 1, maximum: 10);
     notifyListeners();
   }
 
@@ -148,6 +153,8 @@ class UiPreferencesRepository extends ChangeNotifier {
 
   Future<void> setDefaultSearchScope(SearchScope value) => _setEnum(defaultSearchScopeKey, value, (next) => _defaultSearchScope = next);
 
+  Future<void> setJsonInlineArrayMaxItems(int value) => _setInt(jsonInlineArrayMaxItemsKey, value.clamp(1, 10), (next) => _jsonInlineArrayMaxItems = next);
+
   Future<void> resetToDefaults() async {
     for (final key in const [
       themeModeKey,
@@ -166,6 +173,7 @@ class UiPreferencesRepository extends ChangeNotifier {
       defaultSidebarShortcutsKey,
       defaultSearchMatchModeKey,
       defaultSearchScopeKey,
+      jsonInlineArrayMaxItemsKey,
       languageKey,
     ]) {
       await _store.remove(key);
@@ -187,6 +195,7 @@ class UiPreferencesRepository extends ChangeNotifier {
     _language = defaultLanguage;
     _defaultSearchMatchMode = defaultSearchMatchModeValue;
     _defaultSearchScope = defaultSearchScopeValue;
+    _jsonInlineArrayMaxItems = defaultJsonInlineArrayMaxItems;
     notifyListeners();
   }
 

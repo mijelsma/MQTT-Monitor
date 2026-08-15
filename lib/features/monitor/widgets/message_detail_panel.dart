@@ -11,6 +11,7 @@ import '../../../generated/l10n.dart';
 import '../../../core/dashboard/models/graph_card_model.dart';
 import '../../../core/monitor/models/topic_tree_node_model.dart';
 import '../../../core/monitor/models/topic_node_value_model.dart';
+import '../../../core/ui/repositories/ui_preferences_repository.dart';
 import '../../../shared/format_helpers.dart';
 import '../../../shared/widgets/copy_button.dart';
 import '../../../shared/widgets/json_highlighter.dart';
@@ -465,6 +466,7 @@ class _PayloadCardState extends State<_PayloadCard> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final maxInlineArrayItems = context.watch<UiPreferencesRepository>().jsonInlineArrayMaxItems;
     final isJson = JsonHighlighter.isJson(widget.payload);
     final showPin = !widget.isHistorical;
     // Try this before classifying the payload as JSON: a bare number (or a
@@ -484,12 +486,12 @@ class _PayloadCardState extends State<_PayloadCard> {
     } else if (isJson && showPin) {
       content = SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: JsonHighlighter(source: widget.payload, selectable: false, onPin: (keyPath, label) => _onPin(context, widget.topic, keyPath, label)),
+        child: JsonHighlighter(source: widget.payload, selectable: false, maxInlineArrayItems: maxInlineArrayItems, onPin: (keyPath, label) => _onPin(context, widget.topic, keyPath, label)),
       );
     } else {
       content = SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: JsonHighlighter(source: widget.payload, selectable: false),
+        child: JsonHighlighter(source: widget.payload, selectable: false, maxInlineArrayItems: maxInlineArrayItems),
       );
     }
 
@@ -544,7 +546,11 @@ class _PayloadCardState extends State<_PayloadCard> {
                   padding: const EdgeInsets.only(right: 28),
                   child: SelectionArea(key: const Key('payload-selection-area'), child: content),
                 ),
-                Positioned(top: 0, right: 0, child: CopyButton.payload(text: widget.payload, size: 14)),
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: CopyButton.payload(text: widget.payload, size: 14, maxInlineArrayItems: maxInlineArrayItems),
+                ),
               ],
             ),
           ),
