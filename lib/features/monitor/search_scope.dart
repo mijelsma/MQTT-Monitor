@@ -1,2 +1,1 @@
-/// Selects which topic-row fields participate in monitor filtering.
-enum SearchScope { all, topic, value }
+export '../../core/ui/models/search_defaults.dart';

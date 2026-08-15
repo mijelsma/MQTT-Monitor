@@ -477,9 +477,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "Specific brokers",
     ),
     "searchHint": MessageLookupByLibrary.simpleMessage("Search"),
-    "searchScopeAll": MessageLookupByLibrary.simpleMessage("All"),
+    "searchModeAll": MessageLookupByLibrary.simpleMessage("All words"),
+    "searchModeAny": MessageLookupByLibrary.simpleMessage("Any words"),
+    "searchScopeAll": MessageLookupByLibrary.simpleMessage("Topic + message"),
     "searchScopeTopic": MessageLookupByLibrary.simpleMessage("Topic"),
-    "searchScopeValue": MessageLookupByLibrary.simpleMessage("Value"),
+    "searchScopeValue": MessageLookupByLibrary.simpleMessage("Message"),
     "sectionAbout": MessageLookupByLibrary.simpleMessage("About"),
     "sectionAdvanced": MessageLookupByLibrary.simpleMessage("Advanced"),
     "sectionBrokers": MessageLookupByLibrary.simpleMessage("Brokers"),
@@ -730,6 +732,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "uiPanelRateIntervalSubtitle": MessageLookupByLibrary.simpleMessage(
       "How often the message rate is recalculated",
     ),
+    "uiPanelSearchMatchDefault": MessageLookupByLibrary.simpleMessage(
+      "Default word matching",
+    ),
+    "uiPanelSearchScopeDefault": MessageLookupByLibrary.simpleMessage(
+      "Default search in",
+    ),
     "uiPanelSectionAppearance": MessageLookupByLibrary.simpleMessage(
       "Appearance",
     ),
@@ -741,6 +749,7 @@ class MessageLookup extends MessageLookupByLibrary {
     ),
     "uiPanelSectionDefaults": MessageLookupByLibrary.simpleMessage("Defaults"),
     "uiPanelSectionLayout": MessageLookupByLibrary.simpleMessage("Layout"),
+    "uiPanelSectionSearch": MessageLookupByLibrary.simpleMessage("Search"),
     "uiPanelSectionSidebarPanels": MessageLookupByLibrary.simpleMessage(
       "Sidebar Panels",
     ),

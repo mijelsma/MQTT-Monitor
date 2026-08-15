@@ -4,6 +4,8 @@ import 'package:mqtt_monitor/core/history/repositories/history_preferences_repos
 import 'package:mqtt_monitor/core/mqtt/repositories/connection_preferences_repository.dart';
 import 'package:mqtt_monitor/core/storage/shared_preferences_store.dart';
 import 'package:mqtt_monitor/core/ui/repositories/workspace_layout_repository.dart';
+import 'package:mqtt_monitor/core/ui/repositories/ui_preferences_repository.dart';
+import 'package:mqtt_monitor/core/ui/models/search_defaults.dart';
 import 'package:mqtt_monitor/core/dashboard/models/chart_type_model.dart';
 import 'package:mqtt_monitor/core/dashboard/models/interpolation_mode_model.dart';
 import 'package:mqtt_monitor/core/mqtt/models/mqtt_protocol_version_model.dart';
@@ -77,5 +79,23 @@ void main() {
     final store = await SharedPreferencesStore.load();
 
     await expectLater(ConnectionPreferencesRepository(store).initialize(), throwsA(isA<StateError>()));
+  });
+
+  test('search defaults persist independently of the current search', () async {
+    SharedPreferences.setMockInitialValues({});
+    final store = await SharedPreferencesStore.load();
+    final preferences = UiPreferencesRepository(store);
+    await preferences.initialize();
+
+    expect(preferences.defaultSearchMatchMode, SearchMatchMode.any);
+    expect(preferences.defaultSearchScope, SearchScope.all);
+
+    await preferences.setDefaultSearchMatchMode(SearchMatchMode.all);
+    await preferences.setDefaultSearchScope(SearchScope.value);
+
+    final restored = UiPreferencesRepository(store);
+    await restored.initialize();
+    expect(restored.defaultSearchMatchMode, SearchMatchMode.all);
+    expect(restored.defaultSearchScope, SearchScope.value);
   });
 }

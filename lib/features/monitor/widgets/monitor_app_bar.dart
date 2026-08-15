@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/mqtt/connection_status.dart';
+import '../../../core/ui/models/search_defaults.dart';
 import '../../../generated/l10n.dart';
 import '../../../navigation/app_navigation.dart';
 import '../../../shared/widgets/app_bar_action_button.dart';
@@ -9,7 +10,6 @@ import '../../../shared/widgets/spacers.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../view_models/monitor_view_model.dart';
 import '../controllers/monitor_workspace_controller.dart';
-import '../search_scope.dart';
 import 'broker_selector.dart';
 
 class MonitorAppBar extends StatefulWidget implements PreferredSizeWidget {
@@ -65,8 +65,8 @@ class _MonitorAppBarState extends State<MonitorAppBar> {
         mainAxisSize: MainAxisSize.min,
         children: [
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 280),
-            child: _SearchBox(controller: widget.filterController, scope: workspace.scope, hasText: hasText, onScopeChanged: workspace.setScope),
+            constraints: const BoxConstraints(maxWidth: 420),
+            child: _SearchBox(controller: widget.filterController, scope: workspace.scope, matchMode: workspace.matchMode, hasText: hasText, onScopeChanged: workspace.setScope, onMatchModeChanged: workspace.setMatchMode),
           ),
           const HSpacer(8),
           _CollapseExpandButton(),
@@ -81,12 +81,14 @@ class _MonitorAppBarState extends State<MonitorAppBar> {
 }
 
 class _SearchBox extends StatelessWidget {
-  const _SearchBox({required this.controller, required this.scope, required this.hasText, required this.onScopeChanged});
+  const _SearchBox({required this.controller, required this.scope, required this.matchMode, required this.hasText, required this.onScopeChanged, required this.onMatchModeChanged});
 
   final TextEditingController controller;
   final SearchScope scope;
+  final SearchMatchMode matchMode;
   final bool hasText;
   final ValueChanged<SearchScope> onScopeChanged;
+  final ValueChanged<SearchMatchMode> onMatchModeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -128,8 +130,63 @@ class _SearchBox extends StatelessWidget {
           ],
           const SizedBox(width: 6),
           Container(width: 0.5, height: 18, color: tokens.border),
+          _MatchModePicker(mode: matchMode, onChanged: onMatchModeChanged),
+          Container(width: 0.5, height: 18, color: tokens.border),
           _ScopePicker(scope: scope, onChanged: onScopeChanged),
         ],
+      ),
+    );
+  }
+}
+
+class _MatchModePicker extends StatelessWidget {
+  const _MatchModePicker({required this.mode, required this.onChanged});
+
+  final SearchMatchMode mode;
+  final ValueChanged<SearchMatchMode> onChanged;
+
+  String _label(BuildContext context, SearchMatchMode value) => switch (value) {
+    SearchMatchMode.any => S.of(context).searchModeAny,
+    SearchMatchMode.all => S.of(context).searchModeAll,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    return PopupMenuButton<SearchMatchMode>(
+      onSelected: onChanged,
+      color: tokens.surface,
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: tokens.border, width: 0.5),
+      ),
+      offset: const Offset(0, 36),
+      itemBuilder: (_) => SearchMatchMode.values
+          .map(
+            (value) => PopupMenuItem<SearchMatchMode>(
+              value: value,
+              height: 36,
+              child: Text(
+                _label(context, value),
+                style: TextStyle(fontSize: 13, fontWeight: value == mode ? FontWeight.w600 : FontWeight.w400, color: value == mode ? tokens.primary : tokens.textSecondary),
+              ),
+            ),
+          )
+          .toList(),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _label(context, mode),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: tokens.textSecondary),
+            ),
+            const SizedBox(width: 2),
+            Icon(Icons.keyboard_arrow_down_rounded, size: 13, color: tokens.textTertiary),
+          ],
+        ),
       ),
     );
   }

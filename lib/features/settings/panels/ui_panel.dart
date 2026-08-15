@@ -5,6 +5,7 @@ import '../../../generated/l10n.dart';
 import '../../../core/publishing/models/mqtt_qos_default_model.dart';
 import '../../../core/mqtt/models/mqtt_protocol_version_model.dart';
 import '../../../core/ui/models/sidebar_panel_default_model.dart';
+import '../../../core/ui/models/search_defaults.dart';
 import '../../../core/mqtt/models/startup_connection_model.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../../../shared/widgets/color_picker_field.dart';
@@ -100,6 +101,33 @@ class UiPanel extends StatelessWidget {
             UiSwitchRow(label: s.uiPanelPersistLayout, subtitle: s.uiPanelPersistLayoutSubtitle, value: vm.persistLayout, onChanged: (v) => vm.setPersistLayout(v)),
             UiSwitchRow(label: s.uiPanelSidebarAnimations, subtitle: s.uiPanelSidebarAnimationsSubtitle, value: vm.sidebarAnimationsEnabled, onChanged: (v) => vm.setSidebarAnimationsEnabled(v)),
             if (vm.sidebarAnimationsEnabled) UiSliderRow(label: s.uiPanelSidebarAnimationSpeed, subtitle: s.uiPanelSidebarAnimationSpeedSubtitle, value: vm.sidebarAnimationSpeed.toDouble(), min: 0, max: 100, divisions: 10, displayValue: '${vm.sidebarAnimationSpeed}%', accent: accent, onChanged: (v) => vm.setSidebarAnimationSpeed(v.round())),
+          ],
+        ),
+
+        UiSection(
+          label: s.uiPanelSectionSearch,
+          children: [
+            UiSegmentRow<SearchMatchMode>(
+              label: s.uiPanelSearchMatchDefault,
+              accent: accent,
+              value: vm.defaultSearchMatchMode,
+              onChanged: vm.setDefaultSearchMatchMode,
+              options: [
+                UiSegmentOption(value: SearchMatchMode.any, label: s.searchModeAny),
+                UiSegmentOption(value: SearchMatchMode.all, label: s.searchModeAll),
+              ],
+            ),
+            UiSegmentRow<SearchScope>(
+              label: s.uiPanelSearchScopeDefault,
+              accent: accent,
+              value: vm.defaultSearchScope,
+              onChanged: vm.setDefaultSearchScope,
+              options: [
+                UiSegmentOption(value: SearchScope.all, label: s.searchScopeAll),
+                UiSegmentOption(value: SearchScope.topic, label: s.searchScopeTopic),
+                UiSegmentOption(value: SearchScope.value, label: s.searchScopeValue),
+              ],
+            ),
           ],
         ),
 

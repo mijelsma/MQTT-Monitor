@@ -8,11 +8,17 @@ import '../../../core/mqtt/topic_badge_counts.dart';
 import '../../../core/ui/repositories/ui_preferences_repository.dart';
 import '../../../core/monitor/models/flat_tree_row_model.dart';
 import '../../../core/monitor/models/topic_tree_node_model.dart';
-import '../search_scope.dart';
+import '../../../core/ui/models/search_defaults.dart';
 
 /// Owns monitor selection, filtering, expansion, pulses, and cached rows.
 class MonitorWorkspaceController extends ChangeNotifier {
-  MonitorWorkspaceController({required TopicProjection projection, required MessageHistoryService history, required UiPreferencesRepository uiPreferences, TopicPulseController? pulses}) : _projection = projection, _history = history, _uiPreferences = uiPreferences, _pulses = pulses ?? TopicPulseController() {
+  MonitorWorkspaceController({required TopicProjection projection, required MessageHistoryService history, required UiPreferencesRepository uiPreferences, TopicPulseController? pulses})
+    : _projection = projection,
+      _history = history,
+      _uiPreferences = uiPreferences,
+      _pulses = pulses ?? TopicPulseController(),
+      _scope = uiPreferences.defaultSearchScope,
+      _matchMode = uiPreferences.defaultSearchMatchMode {
     _projection.addListener(_onStructureChanged);
     _projection.updates.addListener(_onProjectionUpdate);
     _rebuildRows();
@@ -28,7 +34,9 @@ class MonitorWorkspaceController extends ChangeNotifier {
   TopicTreeNodeModel? _selectedNode;
   String _filter = '';
   String _normalizedFilter = '';
-  SearchScope _scope = SearchScope.all;
+  List<String> _filterTerms = const [];
+  SearchScope _scope;
+  SearchMatchMode _matchMode;
   List<FlatTreeRowModel> _visibleRows = const [];
   int _visibleRowDerivationCount = 0;
   String? _brokerId;
@@ -36,6 +44,7 @@ class MonitorWorkspaceController extends ChangeNotifier {
   TopicTreeNodeModel? get selectedNode => _selectedNode;
   String get filter => _filter;
   SearchScope get scope => _scope;
+  SearchMatchMode get matchMode => _matchMode;
   List<FlatTreeRowModel> get visibleRows => _visibleRows;
   int get visibleRowDerivationCount => _visibleRowDerivationCount;
 
@@ -54,6 +63,7 @@ class MonitorWorkspaceController extends ChangeNotifier {
     final wasEmpty = _normalizedFilter.isEmpty;
     _filter = value;
     _normalizedFilter = value.toLowerCase().trim();
+    _filterTerms = _searchTerms(_normalizedFilter);
     _refreshFilteredIndex();
     if (_normalizedFilter.isNotEmpty && wasEmpty) {
       _expandFilteredBranches();
@@ -66,6 +76,14 @@ class MonitorWorkspaceController extends ChangeNotifier {
   void setScope(SearchScope value) {
     if (_scope == value) return;
     _scope = value;
+    _rebuildRows();
+    notifyListeners();
+  }
+
+  /// Changes whether every search term or any search term must match.
+  void setMatchMode(SearchMatchMode value) {
+    if (_matchMode == value) return;
+    _matchMode = value;
     _rebuildRows();
     notifyListeners();
   }
@@ -232,18 +250,37 @@ class MonitorWorkspaceController extends ChangeNotifier {
 
   TopicNodeMetrics _filteredContributionFor(TopicTreeNodeModel node) {
     final value = node.valueNotifier.value;
-    if (value == null || !_nodeMatchesFilter(node, _normalizedFilter)) {
+    if (value == null || !_nodeMatchesFilter(node)) {
       return const TopicNodeMetrics();
     }
     return TopicNodeMetrics(topicCount: 1, messageCount: value.seq);
   }
 
-  bool _nodeMatchesFilter(TopicTreeNodeModel node, String filter) {
-    if (_scope != SearchScope.value && node.fullPath.toLowerCase().contains(filter)) {
-      return true;
-    }
+  bool _nodeMatchesFilter(TopicTreeNodeModel node) {
     final payload = node.valueNotifier.value?.payload;
-    return _scope != SearchScope.topic && payload != null && payload.toLowerCase().contains(filter);
+    final matches = _filterTerms.map((term) => (_scope != SearchScope.value && node.fullPath.toLowerCase().contains(term)) || (_scope != SearchScope.topic && payload != null && payload.toLowerCase().contains(term)));
+    return _matchMode == SearchMatchMode.any ? matches.any((match) => match) : matches.every((match) => match);
+  }
+
+  /// Separates ordinary words into broad (OR) search terms; quoted text stays
+  /// together as one exact phrase.
+  List<String> _searchTerms(String query) {
+    final terms = <String>[];
+    var index = 0;
+    while (index < query.length) {
+      while (index < query.length && query[index] == ' ') {
+        index++;
+      }
+      if (index == query.length) break;
+
+      final isQuoted = query[index] == '"';
+      if (isQuoted) index++;
+      final end = isQuoted ? query.indexOf('"', index) : query.indexOf(' ', index);
+      final term = query.substring(index, end == -1 ? query.length : end).trim();
+      if (term.isNotEmpty) terms.add(term);
+      index = end == -1 ? query.length : end + 1;
+    }
+    return terms;
   }
 
   bool _isWithin(String? candidate, String root) => candidate != null && (candidate == root || candidate.startsWith('$root/'));

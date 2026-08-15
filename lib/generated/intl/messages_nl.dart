@@ -498,9 +498,11 @@ class MessageLookup extends MessageLookupByLibrary {
       "Specifieke brokers",
     ),
     "searchHint": MessageLookupByLibrary.simpleMessage("Zoeken"),
-    "searchScopeAll": MessageLookupByLibrary.simpleMessage("Alles"),
+    "searchModeAll": MessageLookupByLibrary.simpleMessage("Alle woorden"),
+    "searchModeAny": MessageLookupByLibrary.simpleMessage("Een van de woorden"),
+    "searchScopeAll": MessageLookupByLibrary.simpleMessage("Topic + bericht"),
     "searchScopeTopic": MessageLookupByLibrary.simpleMessage("Topic"),
-    "searchScopeValue": MessageLookupByLibrary.simpleMessage("Waarde"),
+    "searchScopeValue": MessageLookupByLibrary.simpleMessage("Bericht"),
     "sectionAbout": MessageLookupByLibrary.simpleMessage("Over"),
     "sectionAdvanced": MessageLookupByLibrary.simpleMessage("Geavanceerd"),
     "sectionBrokers": MessageLookupByLibrary.simpleMessage("Brokers"),
@@ -756,6 +758,12 @@ class MessageLookup extends MessageLookupByLibrary {
     "uiPanelRateIntervalSubtitle": MessageLookupByLibrary.simpleMessage(
       "Hoe vaak de berichtensnelheid wordt herberekend",
     ),
+    "uiPanelSearchMatchDefault": MessageLookupByLibrary.simpleMessage(
+      "Standaard woordovereenkomst",
+    ),
+    "uiPanelSearchScopeDefault": MessageLookupByLibrary.simpleMessage(
+      "Standaard zoeken in",
+    ),
     "uiPanelSectionAppearance": MessageLookupByLibrary.simpleMessage(
       "Uiterlijk",
     ),
@@ -769,6 +777,7 @@ class MessageLookup extends MessageLookupByLibrary {
       "Standaardwaarden",
     ),
     "uiPanelSectionLayout": MessageLookupByLibrary.simpleMessage("Lay-out"),
+    "uiPanelSectionSearch": MessageLookupByLibrary.simpleMessage("Zoeken"),
     "uiPanelSectionSidebarPanels": MessageLookupByLibrary.simpleMessage(
       "Zijbalkpanelen",
     ),

@@ -1734,6 +1734,36 @@ class S {
     );
   }
 
+  /// `Search`
+  String get uiPanelSectionSearch {
+    return Intl.message(
+      'Search',
+      name: 'uiPanelSectionSearch',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Default word matching`
+  String get uiPanelSearchMatchDefault {
+    return Intl.message(
+      'Default word matching',
+      name: 'uiPanelSearchMatchDefault',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Default search in`
+  String get uiPanelSearchScopeDefault {
+    return Intl.message(
+      'Default search in',
+      name: 'uiPanelSearchScopeDefault',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Startup Behavior`
   String get uiPanelStartupBehavior {
     return Intl.message(
@@ -2759,9 +2789,14 @@ class S {
     );
   }
 
-  /// `All`
+  /// `Topic + message`
   String get searchScopeAll {
-    return Intl.message('All', name: 'searchScopeAll', desc: '', args: []);
+    return Intl.message(
+      'Topic + message',
+      name: 'searchScopeAll',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Topic`
@@ -2769,14 +2804,29 @@ class S {
     return Intl.message('Topic', name: 'searchScopeTopic', desc: '', args: []);
   }
 
-  /// `Value`
+  /// `Message`
   String get searchScopeValue {
-    return Intl.message('Value', name: 'searchScopeValue', desc: '', args: []);
+    return Intl.message(
+      'Message',
+      name: 'searchScopeValue',
+      desc: '',
+      args: [],
+    );
   }
 
   /// `Search`
   String get searchHint {
     return Intl.message('Search', name: 'searchHint', desc: '', args: []);
+  }
+
+  /// `Any words`
+  String get searchModeAny {
+    return Intl.message('Any words', name: 'searchModeAny', desc: '', args: []);
+  }
+
+  /// `All words`
+  String get searchModeAll {
+    return Intl.message('All words', name: 'searchModeAll', desc: '', args: []);
   }
 
   /// `Collapse all`

@@ -109,6 +109,24 @@ void main() {
     expect(workspace.visibleRows.first.metrics.value, const TopicNodeMetrics(topicCount: 2, messageCount: 4));
     expect(pulses.paths, ['factory/needle-topic', 'factory/other']);
   });
+
+  test('searches words broadly while quoted text remains an exact phrase', () {
+    source
+      ..add(_message('factory/kitchen', 'cold', 1))
+      ..add(_message('factory/office', 'warm', 2))
+      ..add(_message('factory/garage', 'kitchen office', 3));
+    workspace.expandAll();
+
+    workspace.setFilter('kitchen office');
+    expect(workspace.visibleRows.map((row) => row.node.fullPath), ['factory', 'factory/garage', 'factory/kitchen', 'factory/office']);
+
+    workspace.setFilter('"kitchen office"');
+    expect(workspace.visibleRows.map((row) => row.node.fullPath), ['factory', 'factory/garage']);
+
+    workspace.setFilter('kitchen office');
+    workspace.setMatchMode(SearchMatchMode.all);
+    expect(workspace.visibleRows.map((row) => row.node.fullPath), ['factory', 'factory/garage']);
+  });
 }
 
 MQTTMessage _message(String topic, String payload, int second) => MQTTMessage(topic: topic, payload: payload, receivedAt: DateTime(2026, 1, 1, 0, 0, second));

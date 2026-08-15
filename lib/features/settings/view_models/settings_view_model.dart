@@ -14,6 +14,7 @@ import '../../../core/publishing/repositories/shortcut_repository.dart';
 import '../../../core/publishing/repositories/qos_preferences_repository.dart';
 import '../../../core/publishing/repositories/variable_repository.dart';
 import '../../../core/ui/repositories/ui_preferences_repository.dart';
+import '../../../core/ui/models/search_defaults.dart';
 import '../../../core/ui/repositories/workspace_layout_repository.dart';
 import '../../../core/update/repositories/update_preferences_repository.dart';
 import '../../../core/broker/models/broker_entry_model.dart';
@@ -336,6 +337,12 @@ class SettingsViewModel extends ChangeNotifier {
 
   bool get sidebarAnimationsEnabled => _uiPreferences.sidebarAnimationsEnabled;
   void setSidebarAnimationsEnabled(bool v) => _uiPreferences.setSidebarAnimationsEnabled(v);
+
+  SearchMatchMode get defaultSearchMatchMode => _uiPreferences.defaultSearchMatchMode;
+  void setDefaultSearchMatchMode(SearchMatchMode value) => _uiPreferences.setDefaultSearchMatchMode(value);
+
+  SearchScope get defaultSearchScope => _uiPreferences.defaultSearchScope;
+  void setDefaultSearchScope(SearchScope value) => _uiPreferences.setDefaultSearchScope(value);
 
   int get sidebarAnimationSpeed => _uiPreferences.sidebarAnimationSpeed;
   void setSidebarAnimationSpeed(int v) => _uiPreferences.setSidebarAnimationSpeed(v);

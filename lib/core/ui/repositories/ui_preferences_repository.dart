@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/ui/models/app_language_model.dart';
 import '../../../core/ui/models/sidebar_panel_default_model.dart';
+import '../models/search_defaults.dart';
 import '../../storage/preferences_store.dart';
 
 /// Owns persisted preferences that affect application presentation.
@@ -25,6 +26,8 @@ class UiPreferencesRepository extends ChangeNotifier {
   static const String defaultSidebarHistoryKey = 'settings.defaultSidebarHistory';
   static const String defaultSidebarPublishKey = 'settings.defaultSidebarPublish';
   static const String defaultSidebarShortcutsKey = 'settings.defaultSidebarShortcuts';
+  static const String defaultSearchMatchModeKey = 'settings.defaultSearchMatchMode';
+  static const String defaultSearchScopeKey = 'settings.defaultSearchScope';
   static const String languageKey = 'settings.language';
 
   static const ThemeMode defaultThemeMode = ThemeMode.system;
@@ -42,6 +45,8 @@ class UiPreferencesRepository extends ChangeNotifier {
   static const SidebarPanelDefaultModel defaultSidebarPublishValue = SidebarPanelDefaultModel.collapsed;
   static const SidebarPanelDefaultModel defaultSidebarShortcutsValue = SidebarPanelDefaultModel.collapsed;
   static const AppLanguageModel defaultLanguage = AppLanguageModel.en;
+  static const SearchMatchMode defaultSearchMatchModeValue = SearchMatchMode.any;
+  static const SearchScope defaultSearchScopeValue = SearchScope.all;
 
   final PreferencesStore _store;
 
@@ -60,6 +65,8 @@ class UiPreferencesRepository extends ChangeNotifier {
   SidebarPanelDefaultModel _defaultSidebarPublish = defaultSidebarPublishValue;
   SidebarPanelDefaultModel _defaultSidebarShortcuts = defaultSidebarShortcutsValue;
   AppLanguageModel _language = defaultLanguage;
+  SearchMatchMode _defaultSearchMatchMode = defaultSearchMatchModeValue;
+  SearchScope _defaultSearchScope = defaultSearchScopeValue;
 
   ThemeMode get themeMode => _themeMode;
   int get accentColor => _accentColor;
@@ -76,6 +83,8 @@ class UiPreferencesRepository extends ChangeNotifier {
   SidebarPanelDefaultModel get defaultSidebarPublish => _defaultSidebarPublish;
   SidebarPanelDefaultModel get defaultSidebarShortcuts => _defaultSidebarShortcuts;
   AppLanguageModel get language => _language;
+  SearchMatchMode get defaultSearchMatchMode => _defaultSearchMatchMode;
+  SearchScope get defaultSearchScope => _defaultSearchScope;
 
   Future<void> initialize() async {
     final version = _store.get(schemaVersionKey);
@@ -100,6 +109,8 @@ class UiPreferencesRepository extends ChangeNotifier {
     _defaultSidebarPublish = _enumValue(defaultSidebarPublishKey, SidebarPanelDefaultModel.values, defaultSidebarPublishValue);
     _defaultSidebarShortcuts = _enumValue(defaultSidebarShortcutsKey, SidebarPanelDefaultModel.values, defaultSidebarShortcutsValue);
     _language = _enumValue(languageKey, AppLanguageModel.values, defaultLanguage);
+    _defaultSearchMatchMode = _enumValue(defaultSearchMatchModeKey, SearchMatchMode.values, defaultSearchMatchModeValue);
+    _defaultSearchScope = _enumValue(defaultSearchScopeKey, SearchScope.values, defaultSearchScopeValue);
     notifyListeners();
   }
 
@@ -133,8 +144,30 @@ class UiPreferencesRepository extends ChangeNotifier {
 
   Future<void> setLanguage(AppLanguageModel value) => _setEnum(languageKey, value, (next) => _language = next);
 
+  Future<void> setDefaultSearchMatchMode(SearchMatchMode value) => _setEnum(defaultSearchMatchModeKey, value, (next) => _defaultSearchMatchMode = next);
+
+  Future<void> setDefaultSearchScope(SearchScope value) => _setEnum(defaultSearchScopeKey, value, (next) => _defaultSearchScope = next);
+
   Future<void> resetToDefaults() async {
-    for (final key in const [themeModeKey, accentColorKey, showStatusBarKey, showActivityKey, disableSelectionHighlightKey, pulseRatePpsKey, pulseFadeMsKey, persistLayoutKey, sidebarAnimationsEnabledKey, sidebarAnimationSpeedKey, defaultSidebarDetailKey, defaultSidebarHistoryKey, defaultSidebarPublishKey, defaultSidebarShortcutsKey, languageKey]) {
+    for (final key in const [
+      themeModeKey,
+      accentColorKey,
+      showStatusBarKey,
+      showActivityKey,
+      disableSelectionHighlightKey,
+      pulseRatePpsKey,
+      pulseFadeMsKey,
+      persistLayoutKey,
+      sidebarAnimationsEnabledKey,
+      sidebarAnimationSpeedKey,
+      defaultSidebarDetailKey,
+      defaultSidebarHistoryKey,
+      defaultSidebarPublishKey,
+      defaultSidebarShortcutsKey,
+      defaultSearchMatchModeKey,
+      defaultSearchScopeKey,
+      languageKey,
+    ]) {
       await _store.remove(key);
     }
     _themeMode = defaultThemeMode;
@@ -152,6 +185,8 @@ class UiPreferencesRepository extends ChangeNotifier {
     _defaultSidebarPublish = defaultSidebarPublishValue;
     _defaultSidebarShortcuts = defaultSidebarShortcutsValue;
     _language = defaultLanguage;
+    _defaultSearchMatchMode = defaultSearchMatchModeValue;
+    _defaultSearchScope = defaultSearchScopeValue;
     notifyListeners();
   }
 
