@@ -16,7 +16,6 @@ import '../../core/ui/repositories/ui_preferences_repository.dart';
 import '../../core/ui/repositories/workspace_layout_repository.dart';
 import '../../core/update/repositories/update_preferences_repository.dart';
 import '../../generated/l10n.dart';
-import '../../theme/app_colors.dart';
 import 'panels/about_panel.dart';
 import 'panels/advanced_panel.dart';
 import 'panels/brokers_panel.dart';
@@ -41,15 +40,15 @@ class SettingsScreen extends StatelessWidget {
   List<SettingsItem> _items(BuildContext context) {
     final s = S.of(context);
     return [
-      (section: SettingsSection.brokers, label: s.sectionBrokers, icon: Icons.dns_rounded, gradient: AppColors.brokerGradient),
-      (section: SettingsSection.dashboard, label: s.sectionDashboard, icon: Icons.dashboard_rounded, gradient: AppColors.dashboardGradient),
-      (section: SettingsSection.variables, label: s.sectionVariables, icon: Icons.data_object_rounded, gradient: AppColors.variablesGradient),
-      (section: SettingsSection.shortcuts, label: s.sectionShortcuts, icon: Icons.bolt_rounded, gradient: AppColors.shortcutsGradient),
-      (section: SettingsSection.monitoring, label: s.sectionMonitoring, icon: Icons.monitor_heart_rounded, gradient: AppColors.monitoringGradient),
-      (section: SettingsSection.ui, label: s.sectionUI, icon: Icons.palette_outlined, gradient: AppColors.uiGradient),
-      (section: SettingsSection.language, label: s.sectionLanguage, icon: Icons.language_rounded, gradient: AppColors.languageGradient),
-      (section: SettingsSection.advanced, label: s.sectionAdvanced, icon: Icons.tune_rounded, gradient: AppColors.advancedGradient),
-      (section: SettingsSection.about, label: s.sectionAbout, icon: Icons.info_outline_rounded, gradient: AppColors.aboutGradient),
+      (section: SettingsSection.brokers, label: s.sectionBrokers, icon: Icons.dns_rounded),
+      (section: SettingsSection.dashboard, label: s.sectionDashboard, icon: Icons.dashboard_rounded),
+      (section: SettingsSection.variables, label: s.sectionVariables, icon: Icons.data_object_rounded),
+      (section: SettingsSection.shortcuts, label: s.sectionShortcuts, icon: Icons.bolt_rounded),
+      (section: SettingsSection.monitoring, label: s.sectionMonitoring, icon: Icons.monitor_heart_rounded),
+      (section: SettingsSection.ui, label: s.sectionUI, icon: Icons.palette_outlined),
+      (section: SettingsSection.language, label: s.sectionLanguage, icon: Icons.language_rounded),
+      (section: SettingsSection.advanced, label: s.sectionAdvanced, icon: Icons.tune_rounded),
+      (section: SettingsSection.about, label: s.sectionAbout, icon: Icons.info_outline_rounded),
     ];
   }
 
