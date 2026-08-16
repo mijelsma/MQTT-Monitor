@@ -46,14 +46,22 @@ jobs:
           channel: ${{ env.FLUTTER_CHANNEL }}
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
-      - name: Locate Inno Setup compiler
+      - name: Locate Windows installer dependencies
         shell: pwsh
         run: |
           $compiler = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $compiler)) {
             throw "Inno Setup compiler was not found at $compiler"
           }
+          $redistRoot = "$env:ProgramFiles\Microsoft Visual Studio\2022\Enterprise\VC\Redist\MSVC"
+          $redist = Get-ChildItem -Path $redistRoot -Filter vc_redist.x64.exe -Recurse -File |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1
+          if ($null -eq $redist) {
+            throw "Microsoft Visual C++ x64 Redistributable was not found below $redistRoot"
+          }
           "INNO_COMPILER=$compiler" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "VC_REDIST_X64=$($redist.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
       - name: Build Windows release assets
         shell: bash
         run: bash scripts/publish_desktop_update.sh windows '${{ needs.release-context.outputs.channel }}'

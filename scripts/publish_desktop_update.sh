@@ -33,6 +33,10 @@ if [[ "$platform" == "windows" ]]; then
     echo "INNO_COMPILER must point to the Inno Setup ISCC.exe compiler." >&2
     exit 64
   fi
+  if [[ -z "${VC_REDIST_X64:-}" || ! -f "$VC_REDIST_X64" ]]; then
+    echo "VC_REDIST_X64 must point to Microsoft's vc_redist.x64.exe." >&2
+    exit 64
+  fi
 fi
 
 # Reject malformed or mismatched tags before a build mutates pubspec metadata.

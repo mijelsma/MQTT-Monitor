@@ -68,6 +68,8 @@ class DesktopPlatformContractsTest(unittest.TestCase):
         installer = _read("windows/installer/mqtt_monitor.iss")
 
         self.assertIn("Inno Setup 6\\ISCC.exe", workflow)
+        self.assertIn("vc_redist.x64.exe", workflow)
+        self.assertIn("VC_REDIST_X64", publish_script)
         for contract in (
             "kind: inno",
             "mode: script",
@@ -83,6 +85,10 @@ class DesktopPlatformContractsTest(unittest.TestCase):
             "UninstallDisplayIcon=",
             "VersionInfoVersion={#InstallerFileVersion}",
             'Name: "desktopicon"',
+            '#define VcRedistX64 GetEnv("VC_REDIST_X64")',
+            'DestName: "vc_redist.x64.exe"',
+            'Check: VcRedistNeedsInstall',
+            "Microsoft\\VisualStudio\\14.0\\VC\\Runtimes\\x64",
         ):
             self.assertIn(contract, installer)
 
