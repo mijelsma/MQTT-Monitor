@@ -71,7 +71,7 @@ class _LifecycleControllerFactory implements AppUpdateControllerFactory {
   final List<_LifecycleController> created = [];
 
   @override
-  AppUpdateController create({required Uri? appArchiveUrl, required String channel, required bool allowUnsignedMacOSUpdates}) {
+  AppUpdateController create({required Uri? appArchiveUrl, required String channel, required bool allowUnsignedMacOSUpdates, String? diagnosticsLogPath}) {
     final controller = _LifecycleController();
     created.add(controller);
     return controller;

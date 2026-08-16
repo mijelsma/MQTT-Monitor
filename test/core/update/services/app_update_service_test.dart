@@ -202,7 +202,7 @@ class _FakeControllerFactory implements AppUpdateControllerFactory {
   final List<_FakeController> created = [];
 
   @override
-  AppUpdateController create({required Uri? appArchiveUrl, required String channel, required bool allowUnsignedMacOSUpdates}) {
+  AppUpdateController create({required Uri? appArchiveUrl, required String channel, required bool allowUnsignedMacOSUpdates, String? diagnosticsLogPath}) {
     final controller = _FakeController(appArchiveUrl: appArchiveUrl, channel: channel, allowUnsignedMacOSUpdates: allowUnsignedMacOSUpdates);
     created.add(controller);
     return controller;

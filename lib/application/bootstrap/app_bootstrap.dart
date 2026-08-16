@@ -218,7 +218,7 @@ class _ProductionLifetimeBuilder {
   AppLifetime assemble() {
     final settings = SettingsNavigationController();
     final appNavigation = AppNavigation(settings);
-    final appUpdater = AppUpdateService(preferences: updatePreferences!);
+    final appUpdater = AppUpdateService(preferences: updatePreferences!, diagnosticsLogPath: AppStorageLocationService.standard().updateInstallerDiagnosticLogFilePath);
     final chrome = PlatformWindowChromeController(logger);
     settingsNavigation = settings;
     navigation = appNavigation;

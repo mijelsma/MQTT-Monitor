@@ -112,7 +112,7 @@ class _UpdateRow extends StatelessWidget {
       UpdateDownloading(:final receivedBytes, :final totalBytes) => _UpdateActionRow(icon: Icons.downloading_rounded, title: 'Downloading update', subtitle: '${_formatBytes(receivedBytes)} of ${_formatBytes(totalBytes)}', progress: totalBytes == 0 ? null : receivedBytes / totalBytes, busy: true),
       UpdateReadyToInstall() => _UpdateActionRow(icon: Icons.restart_alt_rounded, iconColor: accent, title: 'Update ready to install', subtitle: 'The app will close and restart to finish the update', actionLabel: 'Restart', onTap: _install),
       UpdateInstalling() => const _UpdateActionRow(icon: Icons.restart_alt_rounded, title: 'Installing update…', subtitle: 'MQTT Monitor will restart shortly', busy: true),
-      UpdateFailed() => _UpdateActionRow(icon: Icons.error_outline_rounded, iconColor: context.tokens.error, title: 'Could not check for updates', subtitle: 'Check your connection and try again', actionLabel: 'Try again', onTap: () => _check(context)),
+      UpdateFailed(:final error, :final report) => _UpdateActionRow(icon: Icons.error_outline_rounded, iconColor: context.tokens.error, title: _updateFailureTitle(report), subtitle: _updateFailureSubtitle(report, error), actionLabel: 'Try again', onTap: () => _check(context)),
       UpdateIdle() => _UpdateActionRow(icon: Icons.system_update_alt_rounded, iconColor: accent, title: 'Check for ${service.channel} updates', subtitle: 'Look for a newer version of MQTT Monitor', actionLabel: 'Check', onTap: () => _check(context)),
     };
   }
@@ -145,6 +145,44 @@ class _UpdateRow extends StatelessWidget {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
+}
+
+String _updateFailureTitle(UpdateProblemReport? report) {
+  return switch (_updateFailureStage(report)) {
+    UpdateDiagnosticStage.download => 'Could not download the update',
+    UpdateDiagnosticStage.verify => 'Downloaded update could not be verified',
+    UpdateDiagnosticStage.stage => 'Could not prepare the update',
+    UpdateDiagnosticStage.install => 'Could not start the update installation',
+    UpdateDiagnosticStage.descriptor => 'Could not read the update details',
+    UpdateDiagnosticStage.policy => 'This update cannot be installed',
+    _ => 'Could not check for updates',
+  };
+}
+
+String _updateFailureSubtitle(UpdateProblemReport? report, Object error) {
+  final stage = _updateFailureStage(report);
+  final detail = _safeUpdateErrorDetail(error);
+  final guidance = switch (stage) {
+    UpdateDiagnosticStage.install => 'The update was downloaded. Make sure MQTT Monitor is installed in Applications, then try again.',
+    UpdateDiagnosticStage.verify => 'The download did not pass its integrity or signing checks. Try again.',
+    UpdateDiagnosticStage.stage => 'The download could not be prepared for installation. Try again.',
+    UpdateDiagnosticStage.download => 'Check your connection and try again.',
+    _ => 'Check your connection and try again.',
+  };
+  return detail == null ? guidance : '$guidance $detail';
+}
+
+UpdateDiagnosticStage? _updateFailureStage(UpdateProblemReport? report) {
+  for (final entry in report?.entries.reversed ?? const <UpdateDiagnosticEntry>[]) {
+    if (entry.level == UpdateDiagnosticLevel.error) return entry.stage;
+  }
+  return null;
+}
+
+String? _safeUpdateErrorDetail(Object error) {
+  final value = error.toString().replaceAll(RegExp(r'\s+'), ' ').trim();
+  if (value.isEmpty || value.length > 180) return null;
+  return 'Details: $value';
 }
 
 class _UpdateActionRow extends StatelessWidget {

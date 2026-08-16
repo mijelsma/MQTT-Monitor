@@ -14,11 +14,12 @@ import '../repositories/update_preferences_repository.dart';
 /// service recreates that controller when the user changes the beta preference,
 /// so the preference takes effect immediately rather than on the next launch.
 class AppUpdateService extends ChangeNotifier {
-  AppUpdateService({required UpdatePreferencesRepository preferences, Uri? githubReleasesUrl, AppUpdateReleaseSource? releaseSource, AppUpdateControllerFactory controllerFactory = const DesktopAppUpdateControllerFactory(), bool allowUnsignedMacOSUpdates = AppUpdateConfiguration.allowUnsignedMacOSUpdates})
+  AppUpdateService({required UpdatePreferencesRepository preferences, Uri? githubReleasesUrl, AppUpdateReleaseSource? releaseSource, AppUpdateControllerFactory controllerFactory = const DesktopAppUpdateControllerFactory(), bool allowUnsignedMacOSUpdates = AppUpdateConfiguration.allowUnsignedMacOSUpdates, String? diagnosticsLogPath})
     : _preferences = preferences,
       _releaseSource = releaseSource ?? _createReleaseSource(githubReleasesUrl ?? AppUpdateConfiguration.githubReleasesUrl),
       _controllerFactory = controllerFactory,
-      _allowUnsignedMacOSUpdates = allowUnsignedMacOSUpdates {
+      _allowUnsignedMacOSUpdates = allowUnsignedMacOSUpdates,
+      _diagnosticsLogPath = diagnosticsLogPath {
     _lastTracksBetaReleases = preferences.tracksBetaReleases;
     _controller = _createController(appArchiveUrl: null, channel: channel);
     _controller.addListener(_notifyListeners);
@@ -32,6 +33,7 @@ class AppUpdateService extends ChangeNotifier {
   final AppUpdateReleaseSource? _releaseSource;
   final AppUpdateControllerFactory _controllerFactory;
   final bool _allowUnsignedMacOSUpdates;
+  final String? _diagnosticsLogPath;
   late AppUpdateController _controller;
   UpdateState? _discoveryState;
   GitHubRelease? _selectedRelease;
@@ -120,7 +122,7 @@ class AppUpdateService extends ChangeNotifier {
   }
 
   AppUpdateController _createController({required Uri? appArchiveUrl, required String channel}) {
-    return _controllerFactory.create(appArchiveUrl: appArchiveUrl, channel: channel, allowUnsignedMacOSUpdates: _allowUnsignedMacOSUpdates);
+    return _controllerFactory.create(appArchiveUrl: appArchiveUrl, channel: channel, allowUnsignedMacOSUpdates: _allowUnsignedMacOSUpdates, diagnosticsLogPath: _diagnosticsLogPath);
   }
 
   void _replaceController({required Uri? appArchiveUrl, required String channel}) {

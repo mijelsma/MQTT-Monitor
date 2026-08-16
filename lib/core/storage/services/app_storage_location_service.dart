@@ -15,6 +15,7 @@ class AppStorageLocationService {
 
   static const sharedPreferencesFileName = 'shared_preferences.json';
   static const diagnosticLogFileName = 'mqtt-monitor.log';
+  static const updateInstallerDiagnosticLogFileName = 'mqtt-monitor-update-installer.log';
 
   final String operatingSystem;
   final Map<String, String> environment;
@@ -27,13 +28,18 @@ class AppStorageLocationService {
   String get settingsFilePath {
     if (operatingSystem == 'macos') {
       final home = environment['HOME'];
-      if (home == null || home.isEmpty) throw StateError('The home directory is not available.');
+      if (home == null || home.isEmpty) {
+        throw StateError('The home directory is not available.');
+      }
       return _path.join(home, 'Library', 'Preferences', '$bundleIdentifier.plist');
     }
     return _path.join(applicationDataDirectory, sharedPreferencesFileName);
   }
 
   String get diagnosticLogFilePath => _path.join(applicationDataDirectory, 'logs', diagnosticLogFileName);
+
+  /// Native updater helper events written after the app exits.
+  String get updateInstallerDiagnosticLogFilePath => _path.join(applicationDataDirectory, 'logs', updateInstallerDiagnosticLogFileName);
 
   Future<void> openSettingsDirectory() async {
     final directory = Directory(_path.dirname(settingsFilePath));
@@ -44,12 +50,16 @@ class AppStorageLocationService {
   Future<void> openDiagnosticLog() async {
     final file = File(diagnosticLogFilePath);
     await file.parent.create(recursive: true);
-    if (!await file.exists()) await file.create();
+    if (!await file.exists()) {
+      await file.create();
+    }
     await _open(Uri.file(file.path, windows: operatingSystem == 'windows'));
   }
 
   Future<void> _open(Uri uri) async {
-    if (!await _launcher(uri)) throw StateError('The operating system could not open $uri.');
+    if (!await _launcher(uri)) {
+      throw StateError('The operating system could not open $uri.');
+    }
   }
 
   static Future<bool> _launchExternally(Uri uri) => launchUrl(uri, mode: LaunchMode.externalApplication);

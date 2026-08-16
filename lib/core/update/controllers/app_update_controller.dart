@@ -20,7 +20,12 @@ abstract interface class AppUpdateController {
 
 /// Creates channel-specific updater controllers.
 abstract interface class AppUpdateControllerFactory {
-  AppUpdateController create({required Uri? appArchiveUrl, required String channel, required bool allowUnsignedMacOSUpdates});
+  AppUpdateController create({
+    required Uri? appArchiveUrl,
+    required String channel,
+    required bool allowUnsignedMacOSUpdates,
+    String? diagnosticsLogPath,
+  });
 }
 
 /// Production factory backed by the desktop updater plugin.
@@ -28,14 +33,35 @@ class DesktopAppUpdateControllerFactory implements AppUpdateControllerFactory {
   const DesktopAppUpdateControllerFactory();
 
   @override
-  AppUpdateController create({required Uri? appArchiveUrl, required String channel, required bool allowUnsignedMacOSUpdates}) {
-    return DesktopAppUpdateController(appArchiveUrl: appArchiveUrl, channel: channel, allowUnsignedMacOSUpdates: allowUnsignedMacOSUpdates);
+  AppUpdateController create({
+    required Uri? appArchiveUrl,
+    required String channel,
+    required bool allowUnsignedMacOSUpdates,
+    String? diagnosticsLogPath,
+  }) {
+    return DesktopAppUpdateController(
+      appArchiveUrl: appArchiveUrl,
+      channel: channel,
+      allowUnsignedMacOSUpdates: allowUnsignedMacOSUpdates,
+      diagnosticsLogPath: diagnosticsLogPath,
+    );
   }
 }
 
 /// Keeps the plugin type outside the application update lifecycle.
 class DesktopAppUpdateController implements AppUpdateController {
-  DesktopAppUpdateController({required Uri? appArchiveUrl, required String channel, required bool allowUnsignedMacOSUpdates}) : _controller = DesktopUpdaterController(appArchiveUrl: appArchiveUrl, channel: channel, allowUnsignedMacOSUpdates: allowUnsignedMacOSUpdates, skipInitialVersionCheck: true);
+  DesktopAppUpdateController({
+    required Uri? appArchiveUrl,
+    required String channel,
+    required bool allowUnsignedMacOSUpdates,
+    String? diagnosticsLogPath,
+  }) : _controller = DesktopUpdaterController(
+         appArchiveUrl: appArchiveUrl,
+         channel: channel,
+         allowUnsignedMacOSUpdates: allowUnsignedMacOSUpdates,
+         diagnosticsLogPath: diagnosticsLogPath,
+         skipInitialVersionCheck: true,
+       );
 
   final DesktopUpdaterController _controller;
 
@@ -46,10 +72,12 @@ class DesktopAppUpdateController implements AppUpdateController {
   void addListener(VoidCallback listener) => _controller.addListener(listener);
 
   @override
-  void removeListener(VoidCallback listener) => _controller.removeListener(listener);
+  void removeListener(VoidCallback listener) =>
+      _controller.removeListener(listener);
 
   @override
-  Future<ManualUpdateCheckResult> checkForUpdates() => _controller.checkForUpdates();
+  Future<ManualUpdateCheckResult> checkForUpdates() =>
+      _controller.checkForUpdates();
 
   @override
   Future<void> downloadUpdate() => _controller.downloadUpdate();
