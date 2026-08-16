@@ -53,14 +53,14 @@ class DesktopPlatformContractsTest(unittest.TestCase):
             "gatekeeperAssess: true",
         ):
             self.assertIn(contract, release_contract)
-        self.assertIn("com.apple.security.network.client", entitlements)
-        self.assertIn(
-            "com.apple.security.files.user-selected.read-only", entitlements
-        )
+        self.assertNotIn("com.apple.security.app-sandbox", entitlements)
+        self.assertNotIn("com.apple.security.network.client", entitlements)
+        self.assertNotIn("com.apple.security.files.user-selected", entitlements)
         self.assertNotIn("com.apple.security.get-task-allow", entitlements)
         self.assertIn("restore_macos_app_entitlements.sh", release_contract)
         restore_entitlements = _read("scripts/restore_macos_app_entitlements.sh")
         self.assertIn("--generate-entitlement-der", restore_entitlements)
+        self.assertIn("must not carry App Sandbox", restore_entitlements)
 
     def test_windows_release_lane_builds_a_real_installer(self) -> None:
         workflow = _read(".github/workflows/release.yml")

@@ -18,8 +18,9 @@ if [[ ! -d "$app_path" || ! -f "$entitlements_path" ]]; then
   exit 1
 fi
 
-# Sign nested code first, then the app bundle that carries the sandbox
-# entitlement used by file_picker.
+# Sign nested code first, then the app bundle. Public Developer ID builds stay
+# outside App Sandbox so desktop_updater can mount, stage, replace, and relaunch
+# the signed app bundle. Debug builds remain sandboxed separately.
 while IFS= read -r -d '' nested_code; do
   codesign --force --options runtime --timestamp \
     --sign "$MACOS_DEVELOPER_ID_APPLICATION" "$nested_code"
@@ -30,7 +31,10 @@ codesign --force --options runtime --timestamp \
   --entitlements "$entitlements_path" \
   --sign "$MACOS_DEVELOPER_ID_APPLICATION" "$app_path"
 codesign --verify --deep --strict --verbose=2 "$app_path"
-codesign -d --entitlements :- "$app_path" 2>&1 | grep -q 'com.apple.security.files.user-selected.read-only'
+if codesign -d --entitlements :- "$app_path" 2>&1 | grep -q 'com.apple.security.app-sandbox'; then
+  echo 'Release app must not carry App Sandbox; automatic updates cannot stage inside it.' >&2
+  exit 1
+fi
 
 notary_archive="$(mktemp -d)/MQTT-Monitor-notary.zip"
 trap 'rm -rf "${notary_archive%/*}"' EXIT

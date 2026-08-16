@@ -112,9 +112,21 @@ class _UpdateRow extends StatelessWidget {
       UpdateDownloading(:final receivedBytes, :final totalBytes) => _UpdateActionRow(icon: Icons.downloading_rounded, title: 'Downloading update', subtitle: '${_formatBytes(receivedBytes)} of ${_formatBytes(totalBytes)}', progress: totalBytes == 0 ? null : receivedBytes / totalBytes, busy: true),
       UpdateReadyToInstall() => _UpdateActionRow(icon: Icons.restart_alt_rounded, iconColor: accent, title: 'Update ready to install', subtitle: 'The app will close and restart to finish the update', actionLabel: 'Restart', onTap: _install),
       UpdateInstalling() => const _UpdateActionRow(icon: Icons.restart_alt_rounded, title: 'Installing update…', subtitle: 'MQTT Monitor will restart shortly', busy: true),
-      UpdateFailed(:final error, :final report) => _UpdateActionRow(icon: Icons.error_outline_rounded, iconColor: context.tokens.error, title: _updateFailureTitle(report), subtitle: _updateFailureSubtitle(report, error), actionLabel: 'Try again', onTap: () => _check(context)),
+      UpdateFailed(:final error, :final report) => _failedAction(context, error, report),
       UpdateIdle() => _UpdateActionRow(icon: Icons.system_update_alt_rounded, iconColor: accent, title: 'Check for ${service.channel} updates', subtitle: 'Look for a newer version of MQTT Monitor', actionLabel: 'Check', onTap: () => _check(context)),
     };
+  }
+
+  Widget _failedAction(BuildContext context, Object error, UpdateProblemReport? report) {
+    final canDownloadManually = _updateFailureStage(report) == UpdateDiagnosticStage.download && service.selectedRelease != null;
+    return _UpdateActionRow(
+      icon: Icons.error_outline_rounded,
+      iconColor: context.tokens.error,
+      title: _updateFailureTitle(report),
+      subtitle: canDownloadManually ? _manualDownloadFailureSubtitle(error) : _updateFailureSubtitle(report, error),
+      actionLabel: canDownloadManually ? 'Download manually' : 'Try again',
+      onTap: canDownloadManually ? () => _openUrl(service.releasePageUrl.toString()) : () => _check(context),
+    );
   }
 
   Future<void> _check(BuildContext context) async {
@@ -169,6 +181,12 @@ String _updateFailureSubtitle(UpdateProblemReport? report, Object error) {
     UpdateDiagnosticStage.download => 'Check your connection and try again.',
     _ => 'Check your connection and try again.',
   };
+  return detail == null ? guidance : '$guidance $detail';
+}
+
+String _manualDownloadFailureSubtitle(Object error) {
+  final detail = _safeUpdateErrorDetail(error);
+  const guidance = 'Automatic update failed. Download this verified release manually from GitHub.';
   return detail == null ? guidance : '$guidance $detail';
 }
 
