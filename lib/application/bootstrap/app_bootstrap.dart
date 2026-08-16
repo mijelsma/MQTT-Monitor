@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import '../../core/broker/repositories/broker_repository.dart';
 import '../../core/broker/flutter_secure_credential_store.dart';
@@ -88,17 +89,18 @@ class StagedInitializer<T> {
 /// Builds a fresh application graph for each startup or retry attempt.
 class ProductionAppBootstrap implements AppBootstrap {
   factory ProductionAppBootstrap({LocalAppLogger? logger}) {
-    final storageLocations = AppStorageLocationService.standard();
-    return ProductionAppBootstrap._(logger ?? LocalAppLogger(logFilePath: storageLocations.diagnosticLogFilePath));
+    final storageLocations = Platform.isIOS ? null : AppStorageLocationService.standard();
+    return ProductionAppBootstrap._(logger ?? LocalAppLogger(logFilePath: storageLocations?.diagnosticLogFilePath), updateInstallerDiagnosticsLogPath: storageLocations?.updateInstallerDiagnosticLogFilePath);
   }
 
-  ProductionAppBootstrap._(this.logger);
+  ProductionAppBootstrap._(this.logger, {required this.updateInstallerDiagnosticsLogPath});
 
   final LocalAppLogger logger;
+  final String? updateInstallerDiagnosticsLogPath;
 
   @override
   Future<AppLifetime> initialize() {
-    final builder = _ProductionLifetimeBuilder(logger);
+    final builder = _ProductionLifetimeBuilder(logger, updateInstallerDiagnosticsLogPath: updateInstallerDiagnosticsLogPath);
     return StagedInitializer<AppLifetime>(
       logger: logger,
       stages: [
@@ -115,9 +117,10 @@ class ProductionAppBootstrap implements AppBootstrap {
 }
 
 class _ProductionLifetimeBuilder {
-  _ProductionLifetimeBuilder(this.logger);
+  _ProductionLifetimeBuilder(this.logger, {required this.updateInstallerDiagnosticsLogPath});
 
   final LocalAppLogger logger;
+  final String? updateInstallerDiagnosticsLogPath;
 
   PreferencesStore? store;
   UiPreferencesRepository? uiPreferences;
@@ -218,7 +221,7 @@ class _ProductionLifetimeBuilder {
   AppLifetime assemble() {
     final settings = SettingsNavigationController();
     final appNavigation = AppNavigation(settings);
-    final appUpdater = AppUpdateService(preferences: updatePreferences!, diagnosticsLogPath: AppStorageLocationService.standard().updateInstallerDiagnosticLogFilePath);
+    final appUpdater = AppUpdateService(preferences: updatePreferences!, diagnosticsLogPath: updateInstallerDiagnosticsLogPath);
     final chrome = PlatformWindowChromeController(logger);
     settingsNavigation = settings;
     navigation = appNavigation;
