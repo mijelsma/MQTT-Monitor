@@ -15,7 +15,7 @@
 ---
 
 > [!IMPORTANT]
-> **MQTT Monitor is currently in beta. The v1.0 release is planned for the end of August 2026.**
+> **MQTT Monitor is currently in beta. The v1.0 release is planned for the end of August 2026. Documentation will be updated along the way.**
 
 
 Watching a fleet of devices, a home automation setup, or a busy production broker deserves something better than a log window. There are other MQTT tools out there, but I wanted one built around how I actually work, so I could see what's happening instead of decoding a raw JSON feed scrolling past. I use it every day myself, it's built around the stuff I kept running into.
