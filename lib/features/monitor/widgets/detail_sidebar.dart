@@ -33,6 +33,7 @@ class _DetailSidebarState extends State<DetailSidebar> {
     final tokens = context.tokens;
     final workspace = context.watch<MonitorWorkspaceController>();
     final panelController = context.read<DetailSidebarController>();
+    final payloadViewMode = context.select<DetailSidebarController, PayloadViewMode>((controller) => controller.payloadViewMode);
     final animationsEnabled = context.select<UiPreferencesRepository, bool>((preferences) => preferences.sidebarAnimationsEnabled);
     final animationSpeed = context.select<UiPreferencesRepository, int>((preferences) => preferences.sidebarAnimationSpeed);
     final selected = workspace.selectedNode;
@@ -48,6 +49,8 @@ class _DetailSidebarState extends State<DetailSidebar> {
             key: ValueKey(selected.fullPath),
             node: selected,
             selectedHistory: _selectedHistoryValue,
+            payloadViewMode: payloadViewMode,
+            onPayloadViewModeChanged: panelController.setPayloadViewMode,
             onClearSelection: () {
               setState(() => _selectedHistoryValue = null);
             },

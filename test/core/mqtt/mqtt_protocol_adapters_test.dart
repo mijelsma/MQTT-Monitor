@@ -12,6 +12,7 @@ import 'package:mqtt_monitor/core/mqtt/adapters/mqtt311/mqtt311_adapter.dart';
 import 'package:mqtt_monitor/core/mqtt/adapters/mqtt5/mqtt5_adapter.dart';
 import 'package:mqtt_monitor/core/mqtt/adapters/mqtt5/mqtt5_event_client.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_reason.dart';
+import 'package:mqtt_monitor/core/mqtt/mqtt_message.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_connection_intent_store.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
 import 'package:mqtt_monitor/core/broker/repositories/broker_repository.dart';
@@ -311,6 +312,16 @@ class _FakeMqtt5Client extends Mqtt5EventClient {
 }
 
 void main() {
+  test('wire payloads consistently retain decoded text and original bytes', () {
+    final valid = MQTTMessage.fromPayloadBytes(topic: 'valid', payloadBytes: utf8.encode('héllo'), receivedAt: DateTime(2026));
+    final malformed = MQTTMessage.fromPayloadBytes(topic: 'invalid', payloadBytes: [0xFF, 0x61], receivedAt: DateTime(2026));
+
+    expect(valid.payload, 'héllo');
+    expect(valid.payloadBytes, utf8.encode('héllo'));
+    expect(malformed.payload, '\uFFFDa');
+    expect(malformed.payloadBytes, [0xFF, 0x61]);
+  });
+
   late BrokerRepository brokers;
   late MqttConnectionIntentStore intents;
   late TestDependencies dependencies;

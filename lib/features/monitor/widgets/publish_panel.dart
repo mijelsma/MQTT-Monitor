@@ -6,6 +6,7 @@ import '../../../core/publishing/publish_command.dart';
 import '../../../core/publishing/publish_command_result.dart';
 import '../../../generated/l10n.dart';
 import '../../../shared/widgets/feedback_badge.dart';
+import '../../../shared/widgets/ui_compact_segment.dart';
 import '../../../shared/widgets/payload_editor.dart';
 import '../../../theme/accent_contrast.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
@@ -186,39 +187,15 @@ class _MiniQosSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tokens = context.tokens;
-    final accent = tokens.primary;
-    final selectedFill = accentFillForWhiteForeground(accent);
-    return Container(
-      decoration: BoxDecoration(
-        color: tokens.inputFill,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: tokens.border, width: 0.5),
-      ),
-      padding: const EdgeInsets.all(2),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: List.generate(3, (i) {
-          final selected = value == i;
-          return GestureDetector(
-            key: Key('publish-qos-$i'),
-            onTap: () => onChanged(i),
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                curve: Curves.easeOut,
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                decoration: BoxDecoration(color: selected ? selectedFill : Colors.transparent, borderRadius: BorderRadius.circular(4)),
-                child: Text(
-                  'Q$i',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.3, color: selected ? tokens.onPrimary : tokens.textSecondary),
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
+    return UiCompactSegment<int>(
+      value: value,
+      onChanged: onChanged,
+      optionKey: (value) => Key('publish-qos-$value'),
+      options: const [
+        UiCompactSegmentOption(value: 0, label: 'Q0'),
+        UiCompactSegmentOption(value: 1, label: 'Q1'),
+        UiCompactSegmentOption(value: 2, label: 'Q2'),
+      ],
     );
   }
 }

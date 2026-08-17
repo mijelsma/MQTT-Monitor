@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:mqtt_client/mqtt_client.dart' as mqtt3;
 import 'package:mqtt_client/mqtt_server_client.dart' as mqtt3_server;
@@ -198,7 +196,7 @@ class Mqtt311Adapter implements MqttProtocolAdapterInterface {
         continue;
       }
       final publish = received.payload as mqtt3.MqttPublishMessage;
-      _messages.add(MQTTMessage(topic: received.topic, payload: utf8.decode(Uint8List.fromList(publish.payload.message), allowMalformed: true), receivedAt: DateTime.now(), retain: publish.header?.retain ?? false, qos: publish.header?.qos.index ?? 0));
+      _messages.add(MQTTMessage.fromPayloadBytes(topic: received.topic, payloadBytes: publish.payload.message, receivedAt: DateTime.now(), retain: publish.header?.retain ?? false, qos: publish.header?.qos.index ?? 0));
     }
   }
 

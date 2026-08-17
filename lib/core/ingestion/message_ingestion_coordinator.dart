@@ -57,7 +57,7 @@ class MessageIngestionCoordinator {
     final ingested = IngestedMessage(
       brokerId: brokerId,
       topic: message.topic,
-      value: TopicNodeValueModel(payload: message.payload, seq: sequence, receivedAt: message.receivedAt, retain: message.retain, qos: message.qos),
+      value: TopicNodeValueModel(payload: message.payload, payloadBytes: message.payloadBytes, seq: sequence, receivedAt: message.receivedAt, retain: message.retain, qos: message.qos),
     );
     if (!_timeSliced) {
       _messages.add(ingested);
