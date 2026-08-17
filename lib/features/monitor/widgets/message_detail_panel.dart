@@ -243,7 +243,7 @@ class _PropertiesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final timeStr = formatTimestamp(value.receivedAt);
-    final sizeStr = formatByteSize(value.payload);
+    final sizeStr = formatByteSize(value.payloadByteLength);
     final rateStr = _computeRate(context);
 
     final labels = [S.of(context).detailQoS, S.of(context).detailRetained, S.of(context).detailReceived, S.of(context).detailSize, S.of(context).detailMessages, if (rateStr != null) S.of(context).detailRate];

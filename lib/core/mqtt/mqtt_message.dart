@@ -16,6 +16,10 @@ class MQTTMessage {
 
   /// An owned copy of the original MQTT wire payload.
   final List<int>? payloadBytes;
+
+  /// Exact MQTT payload length. Received messages use the original wire bytes;
+  /// manually constructed compatibility messages fall back to encoded text.
+  int get payloadByteLength => payloadBytes?.length ?? utf8.encode(payload).length;
   final DateTime receivedAt;
   final bool retain;
   final int qos;

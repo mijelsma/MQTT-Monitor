@@ -100,6 +100,7 @@ void main() {
     expect(find.text('OFFSET'), findsOneWidget);
     expect(find.text('00000000'), findsOneWidget);
     expect(find.text('AB.. Z'), findsOneWidget);
+    expect(find.text('6 B'), findsOneWidget);
     expect(tester.getTopLeft(find.byKey(const Key('payload-byte-header-0'))).dx, tester.getTopLeft(find.byKey(const Key('payload-byte-0-0'))).dx);
     expect(tester.getTopLeft(find.byKey(const Key('payload-byte-ascii-header'))).dx, tester.getTopLeft(find.byKey(const Key('payload-byte-ascii-0'))).dx);
     expect(tester.widgetList<CopyButton>(find.byType(CopyButton)).last.text, '41 42 00 FF 20 5A');

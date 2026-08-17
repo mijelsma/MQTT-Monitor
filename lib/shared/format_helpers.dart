@@ -77,9 +77,8 @@ String formatTimestamp(DateTime dt, {bool verbose = true}) {
   return '${dt.day} ${_months[dt.month - 1]} ${dt.year}$sep$time';
 }
 
-/// Formats a payload string as a human-readable byte size.
-String formatByteSize(String payload) {
-  final bytes = utf8.encode(payload).length;
+/// Formats an already established byte count as a human-readable size.
+String formatByteSize(int bytes) {
   if (bytes < 1024) return '$bytes B';
   if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
   return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';

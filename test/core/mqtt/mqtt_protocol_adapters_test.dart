@@ -318,8 +318,10 @@ void main() {
 
     expect(valid.payload, 'héllo');
     expect(valid.payloadBytes, utf8.encode('héllo'));
+    expect(valid.payloadByteLength, 6);
     expect(malformed.payload, '\uFFFDa');
     expect(malformed.payloadBytes, [0xFF, 0x61]);
+    expect(malformed.payloadByteLength, 2);
   });
 
   late BrokerRepository brokers;
