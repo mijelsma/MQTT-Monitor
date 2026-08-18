@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:mqtt5_client/mqtt5_client.dart' as mqtt5;
 
@@ -214,7 +212,7 @@ class Mqtt5Adapter implements MqttProtocolAdapterInterface {
         _events.add(const MqttProtocolEvent.notice('Malformed MQTT 5 PUBLISH packet received.'));
         continue;
       }
-      _messages.add(MQTTMessage(topic: received.topic!, payload: utf8.decode(Uint8List.fromList(bytes), allowMalformed: true), receivedAt: DateTime.now(), retain: publish.header?.retain ?? false, qos: publish.header?.qos.index ?? 0));
+      _messages.add(MQTTMessage.fromPayloadBytes(topic: received.topic!, payloadBytes: bytes, receivedAt: DateTime.now(), retain: publish.header?.retain ?? false, qos: publish.header?.qos.index ?? 0));
     }
   }
 
