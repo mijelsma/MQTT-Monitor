@@ -5,10 +5,10 @@ import 'dart:io';
 import 'package:event_bus/event_bus.dart' as events;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_client/mqtt_client.dart' as mqtt3;
-import 'package:mqtt_client/mqtt_server_client.dart' as mqtt3_server;
 import 'package:mqtt5_client/mqtt5_client.dart' as mqtt5;
 import 'package:mqtt_monitor/core/mqtt/connection_status.dart';
 import 'package:mqtt_monitor/core/mqtt/adapters/mqtt311/mqtt311_adapter.dart';
+import 'package:mqtt_monitor/core/mqtt/adapters/mqtt311/mqtt311_event_client.dart';
 import 'package:mqtt_monitor/core/mqtt/adapters/mqtt5/mqtt5_adapter.dart';
 import 'package:mqtt_monitor/core/mqtt/adapters/mqtt5/mqtt5_event_client.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_reason.dart';
@@ -25,7 +25,7 @@ import 'package:mqtt_monitor/core/broker/models/subscription_entry_model.dart';
 import '../../support/test_dependencies.dart';
 
 /// Simulates the mqtt_client API used by the MQTT 3.1.1 adapter.
-class _FakeMqtt3Client extends mqtt3_server.MqttServerClient {
+class _FakeMqtt3Client extends Mqtt311EventClient {
   /// Creates a disconnected fake package client.
   _FakeMqtt3Client() : super('unused', 'test-client');
 
@@ -138,6 +138,10 @@ class _FakeMqtt3Client extends mqtt3_server.MqttServerClient {
     status.state = mqtt3.MqttConnectionState.connected;
     onAutoReconnected?.call();
   }
+
+  void failAutoReconnect(Object error) => onAutoReconnectFailure?.call(error);
+
+  void failUpdates(Object error) => updatesController.addError(error);
 
   /// Emits an update with a non-PUBLISH MQTT packet.
   void addMalformedUpdate() {
@@ -286,6 +290,25 @@ class _FakeMqtt5Client extends Mqtt5EventClient {
     onAutoReconnected?.call();
   }
 
+  void failAutoReconnect(Object error) => onAutoReconnectFailure?.call(error);
+
+  void failUpdates(Object error) => updatesController.addError(error);
+
+  void transportDisconnect() {
+    status.state = mqtt5.MqttConnectionState.disconnected;
+    onDisconnected?.call();
+  }
+
+  void brokerDisconnect(mqtt5.MqttDisconnectReasonCode reasonCode, {String? reasonString}) {
+    var message = mqtt5.MqttDisconnectMessage().withReasonCode(reasonCode);
+    if (reasonString != null) message = message.withReasonString(reasonString);
+    status
+      ..state = mqtt5.MqttConnectionState.disconnected
+      ..disconnectMessage = message
+      ..disconnectionOrigin = mqtt5.MqttDisconnectionOrigin.brokerSolicited;
+    onDisconnected?.call();
+  }
+
   /// Emits a received publish with [bytes] as its payload.
   void addPublish(String topic, List<int> bytes, {int qos = 0, bool retain = false}) {
     final builder = mqtt5.MqttPayloadBuilder();
@@ -377,6 +400,8 @@ void main() {
     expect(fake.connectCalls, 1);
     expect(fake.connectedUsername, 'user');
     expect(fake.connectedPassword, 'secret');
+    expect(fake.keepAlivePeriod, 10);
+    expect(fake.disconnectOnNoResponsePeriod, 5);
     expect(fake.subscriptions, [(topic: 'sensors/+', qos: mqtt3.MqttQos.atLeastOnce), (topic: 'alerts/#', qos: mqtt3.MqttQos.exactlyOnce)]);
     expect(service.connectionStatus, ConnectionStatus.connected);
 
@@ -503,7 +528,31 @@ void main() {
     expect(service.connectionError, mqtt311BrokerDisconnectMessage);
   });
 
-  test('MQTT 3.1.1 auto-reconnect preserves its disconnect limitation', () async {
+  test('MQTT 3.1.1 auto-reconnect immediately surfaces the lost connection', () async {
+    const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid');
+    final fake = _FakeMqtt3Client();
+    await brokers.add(broker);
+    final service = createSession(mqtt311ClientFactory: (_) => fake);
+    addTearDown(service.dispose);
+    addTearDown(fake.close);
+    service.initialize();
+    await settle();
+
+    expect(fake.keepAlivePeriod, 10);
+    expect(fake.disconnectOnNoResponsePeriod, 5);
+
+    fake.beginAutoReconnect();
+    await settle();
+    expect(service.connectionStatus, ConnectionStatus.disconnected);
+    expect(service.connectionError, unexpectedBrokerDisconnectMessage);
+
+    fake.finishAutoReconnect();
+    await settle();
+    expect(service.connectionStatus, ConnectionStatus.connected);
+    expect(service.connectionError, isNull);
+  });
+
+  test('MQTT 3.1.1 auto-reconnect socket failures become visible session errors', () async {
     const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid');
     final fake = _FakeMqtt3Client();
     await brokers.add(broker);
@@ -514,9 +563,31 @@ void main() {
     await settle();
 
     fake.beginAutoReconnect();
+    fake.failAutoReconnect(const SocketException('Operation timed out'));
+    await settle();
+
+    expect(service.connectionStatus, ConnectionStatus.error);
+    expect(service.connectionError, contains('Network error reaching the broker'));
+    expect(service.connectionErrorDetail, contains('Operation timed out'));
+  });
+
+  test('MQTT 5 auto-reconnect surfaces loss and clears it after reconnecting', () async {
+    const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersionModel.v5);
+    final fake = _FakeMqtt5Client();
+    await brokers.add(broker);
+    final service = createSession(mqtt5ClientFactory: (_) => fake);
+    addTearDown(service.dispose);
+    addTearDown(fake.close);
+    service.initialize();
+    await settle();
+
+    expect(fake.keepAlivePeriod, 10);
+    expect(fake.disconnectOnNoResponsePeriod, 5);
+
+    fake.beginAutoReconnect();
     await settle();
     expect(service.connectionStatus, ConnectionStatus.disconnected);
-    expect(service.connectionError, mqtt311BrokerDisconnectMessage);
+    expect(service.connectionError, unexpectedBrokerDisconnectMessage);
 
     fake.finishAutoReconnect();
     await settle();
@@ -524,7 +595,7 @@ void main() {
     expect(service.connectionError, isNull);
   });
 
-  test('MQTT 5 auto-reconnect reports connecting then connected', () async {
+  test('MQTT 5 auto-reconnect socket failures become visible session errors', () async {
     const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersionModel.v5);
     final fake = _FakeMqtt5Client();
     await brokers.add(broker);
@@ -535,13 +606,84 @@ void main() {
     await settle();
 
     fake.beginAutoReconnect();
+    fake.failAutoReconnect(const SocketException('Operation timed out'));
     await settle();
-    expect(service.connectionStatus, ConnectionStatus.connecting);
 
-    fake.finishAutoReconnect();
+    expect(service.connectionStatus, ConnectionStatus.error);
+    expect(service.connectionError, contains('Network error reaching the broker'));
+    expect(service.connectionErrorDetail, contains('Operation timed out'));
+  });
+
+  test('non-socket reconnect failures are also mapped into visible errors', () async {
+    const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid');
+    final fake = _FakeMqtt3Client();
+    await brokers.add(broker);
+    final service = createSession(mqtt311ClientFactory: (_) => fake);
+    addTearDown(service.dispose);
+    addTearDown(fake.close);
+    service.initialize();
     await settle();
-    expect(service.connectionStatus, ConnectionStatus.connected);
-    expect(service.connectionError, isNull);
+
+    fake.beginAutoReconnect();
+    fake.failAutoReconnect(TimeoutException('Reconnect timed out'));
+    await settle();
+
+    expect(service.connectionStatus, ConnectionStatus.error);
+    expect(service.connectionError, contains('connection to the broker timed out'));
+    expect(service.connectionErrorDetail, contains('Reconnect timed out'));
+  });
+
+  test('errors from MQTT client streams cannot remain unhandled or connected', () async {
+    const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersionModel.v5);
+    final fake = _FakeMqtt5Client();
+    await brokers.add(broker);
+    final service = createSession(mqtt5ClientFactory: (_) => fake);
+    addTearDown(service.dispose);
+    addTearDown(fake.close);
+    service.initialize();
+    await settle();
+
+    fake.failUpdates(const FormatException('Invalid remaining length'));
+    await settle();
+
+    expect(service.connectionStatus, ConnectionStatus.error);
+    expect(service.connectionError, contains('invalid MQTT data'));
+    expect(service.connectionErrorDetail, contains('Invalid remaining length'));
+  });
+
+  test('MQTT 5 transport closure without a DISCONNECT packet is visible', () async {
+    const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersionModel.v5);
+    final fake = _FakeMqtt5Client();
+    await brokers.add(broker);
+    final service = createSession(mqtt5ClientFactory: (_) => fake);
+    addTearDown(service.dispose);
+    addTearDown(fake.close);
+    service.initialize();
+    await settle();
+
+    fake.transportDisconnect();
+    await settle();
+
+    expect(service.connectionStatus, ConnectionStatus.disconnected);
+    expect(service.connectionError, unexpectedBrokerDisconnectMessage);
+  });
+
+  test('MQTT 5 broker DISCONNECT preserves its reason and reason string', () async {
+    const broker = BrokerEntryModel(id: 'broker-1', name: 'Test', host: 'broker.invalid', protocolVersion: MqttProtocolVersionModel.v5);
+    final fake = _FakeMqtt5Client();
+    await brokers.add(broker);
+    final service = createSession(mqtt5ClientFactory: (_) => fake);
+    addTearDown(service.dispose);
+    addTearDown(fake.close);
+    service.initialize();
+    await settle();
+
+    fake.brokerDisconnect(mqtt5.MqttDisconnectReasonCode.keepAliveTimeout, reasonString: 'Idle connection expired');
+    await settle();
+
+    expect(service.connectionStatus, ConnectionStatus.disconnected);
+    expect(service.connectionError, 'DISCONNECT: Idle connection expired');
+    expect(service.connectionErrorDetail, 'Idle connection expired');
   });
 
   test('malformed updates are reported and invalid UTF-8 is decoded safely', () async {

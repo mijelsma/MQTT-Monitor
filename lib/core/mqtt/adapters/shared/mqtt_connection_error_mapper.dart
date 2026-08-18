@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import '../../../../core/broker/models/broker_entry_model.dart';
@@ -21,6 +22,22 @@ abstract final class MqttConnectionErrorMapper {
       _ => ('Network error reaching the broker.', 'Check your network connection and the broker address.'),
     };
     return MqttConnectionFailure(status, '$base\n$suggestion', detail: error.toString());
+  }
+
+  /// Maps a failure that occurs after an initial connection was established.
+  static MqttConnectionFailure interrupted(Object error, BrokerEntryModel broker) {
+    if (error is TlsException) return tlsHandshake(error, broker);
+    if (error is SocketException) return socket(error, broker);
+    if (error is TimeoutException) {
+      return MqttConnectionFailure(ConnectionStatus.error, 'The connection to the broker timed out.\nCheck your network connection and broker availability.', detail: error.toString());
+    }
+    if (error is FormatException) {
+      return MqttConnectionFailure(ConnectionStatus.error, 'The broker sent invalid MQTT data and the connection could not continue.', detail: error.toString());
+    }
+    if (error is WebSocketException) {
+      return MqttConnectionFailure(ConnectionStatus.error, 'The WebSocket connection to the broker failed.\nCheck your network connection and broker WebSocket settings.', detail: error.toString());
+    }
+    return MqttConnectionFailure(ConnectionStatus.error, 'The MQTT connection failed unexpectedly.\nThe app will keep trying to reconnect.', detail: error.toString());
   }
 
   /// Maps a TLS handshake [error] for [broker].

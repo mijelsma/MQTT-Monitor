@@ -14,6 +14,8 @@ class Mqtt311EventClient extends mqtt3_server.MqttServerClient {
 
   Mqtt311EventClient.withPort(super.server, super.clientIdentifier, super.port, {super.maxConnectionAttempts}) : super.withPort();
 
+  void Function(Object error)? onAutoReconnectFailure;
+
   /// Connects through a packet-framing transport that cannot monopolize the
   /// UI isolate while a broker delivers a large retained-message burst.
   @override
@@ -30,6 +32,7 @@ class Mqtt311EventClient extends mqtt3_server.MqttServerClient {
       reconnectTimePeriod: acknowledgementTimeoutMs,
       socketOptions: socketOptions,
       socketTimeout: socketTimeout == null ? null : Duration(milliseconds: socketTimeout!),
+      onAutoReconnectFailure: (error) => onAutoReconnectFailure?.call(error),
     );
     if (useWebSocket) {
       handler.secure = false;
@@ -91,9 +94,23 @@ class Mqtt311EventClient extends mqtt3_server.MqttServerClient {
 }
 
 class _TimeSlicedMqtt311ConnectionHandler extends mqtt3_server.SynchronousMqttServerConnectionHandler {
-  _TimeSlicedMqtt311ConnectionHandler(super.clientEventBus, {required super.maxConnectionAttempts, required super.reconnectTimePeriod, required super.socketOptions, required super.socketTimeout});
+  _TimeSlicedMqtt311ConnectionHandler(super.clientEventBus, {required super.maxConnectionAttempts, required super.reconnectTimePeriod, required super.socketOptions, required super.socketTimeout, required this.onAutoReconnectFailure});
+
+  final void Function(Object error) onAutoReconnectFailure;
 
   late mqtt3.MqttConnectionBase<Object> _connection;
+
+  @override
+  Future<mqtt3.MqttClientConnectionStatus> internalConnect(String hostname, int port, mqtt3.MqttConnectMessage? connectMessage) async {
+    try {
+      return await super.internalConnect(hostname, port, connectMessage);
+    } on Object catch (error) {
+      if (!autoReconnectInProgress) rethrow;
+      onAutoReconnectFailure(error);
+      connectionStatus.state = mqtt3.MqttConnectionState.faulted;
+      return connectionStatus;
+    }
+  }
 
   @override
   mqtt3.MqttConnectionBase<Object> get connection => _connection;

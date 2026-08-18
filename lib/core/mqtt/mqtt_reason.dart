@@ -63,6 +63,8 @@ String brokerDisconnectMessage(MqttProtocolVersionModel version) => switch (vers
   MqttProtocolVersionModel.v5 => 'Disconnected from broker.',
 };
 
+const unexpectedBrokerDisconnectMessage = 'The connection to the broker was lost.\nTrying to reconnect automatically.';
+
 /// Human-readable MQTT 5 reason-code labels shared across packet families.
 String mqttReasonCodeLabel(int code) => switch (code) {
   0x00 => 'Success',

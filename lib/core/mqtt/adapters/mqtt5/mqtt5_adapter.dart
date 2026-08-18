@@ -20,6 +20,8 @@ import 'mqtt5_event_client.dart';
 typedef Mqtt5ClientFactory = Mqtt5EventClient Function(BrokerEntryModel broker);
 
 const _socketTimeoutMs = 5000;
+const _keepAliveSeconds = 10;
+const _pingResponseTimeoutSeconds = 5;
 
 /// Adapts the mqtt5_client package to the application MQTT session contract.
 class Mqtt5Adapter implements MqttProtocolAdapterInterface {
@@ -41,6 +43,7 @@ class Mqtt5Adapter implements MqttProtocolAdapterInterface {
   StreamSubscription<List<mqtt5.MqttReceivedMessage<mqtt5.MqttMessage>>>? _updatesSubscription;
   StreamSubscription<mqtt5.MqttMessageAvailable>? _protocolSubscription;
   bool _disposed = false;
+  bool _connectedOnce = false;
 
   /// Returns MQTT 5 as the implemented protocol.
   @override
@@ -63,8 +66,10 @@ class Mqtt5Adapter implements MqttProtocolAdapterInterface {
   Future<void> connect() async {
     final client = _clientFactory(_broker);
     _client = client;
+    client.onAutoReconnectFailure = _onAutoReconnectFailure;
     client.secure = _broker.useSSL || !_broker.clientCertificates.isEmpty;
-    client.keepAlivePeriod = 30;
+    client.keepAlivePeriod = _keepAliveSeconds;
+    client.disconnectOnNoResponsePeriod = _pingResponseTimeoutSeconds;
     client.autoReconnect = true;
     client.resubscribeOnAutoReconnect = false;
     client.socketTimeout = _socketTimeoutMs;
@@ -106,8 +111,8 @@ class Mqtt5Adapter implements MqttProtocolAdapterInterface {
     if (notice != null && _shouldSurface(notice)) {
       _events.add(MqttProtocolEvent.notice(notice.message, detail: notice.reasonString));
     }
-    _protocolSubscription = client.protocolEvents.listen(_onProtocolMessage);
-    _updatesSubscription = client.updates?.listen(_onUpdates);
+    _protocolSubscription = client.protocolEvents.listen(_onProtocolMessage, onError: _onClientStreamError);
+    _updatesSubscription = client.updates?.listen(_onUpdates, onError: _onClientStreamError);
   }
 
   /// Publishes [payload] and resolves MQTT 5 broker reason codes.
@@ -178,12 +183,27 @@ class Mqtt5Adapter implements MqttProtocolAdapterInterface {
 
   /// Emits a successful connection event for current package callbacks.
   void _onConnected() {
-    if (!_disposed) _events.add(const MqttProtocolEvent.connected());
+    if (_disposed) return;
+    _connectedOnce = true;
+    _events.add(const MqttProtocolEvent.connected());
   }
 
-  /// Emits a connecting state for automatic reconnect attempts.
+  /// Makes an unexpected connection loss visible while reconnecting.
   void _onAutoReconnect() {
-    if (!_disposed) _events.add(const MqttProtocolEvent.reconnecting());
+    if (!_disposed) _events.add(const MqttProtocolEvent.disconnected(message: unexpectedBrokerDisconnectMessage));
+  }
+
+  void _onAutoReconnectFailure(Object error) {
+    if (_disposed || !_connectedOnce) return;
+    final failure = MqttConnectionErrorMapper.interrupted(error, _broker);
+    _events.add(MqttProtocolEvent.failure(failure.status, failure.message, detail: failure.detail));
+  }
+
+  /// Converts asynchronous package-stream errors into visible session errors.
+  void _onClientStreamError(Object error, [StackTrace? _]) {
+    if (_disposed || !_connectedOnce) return;
+    final failure = MqttConnectionErrorMapper.interrupted(error, _broker);
+    _events.add(MqttProtocolEvent.failure(failure.status, failure.message, detail: failure.detail));
   }
 
   /// Extracts and emits a broker-driven MQTT 5 disconnect reason.
@@ -195,7 +215,7 @@ class Mqtt5Adapter implements MqttProtocolAdapterInterface {
     } on Object {
       // A missing disconnect packet is valid for transport-level disconnects.
     }
-    _events.add(MqttProtocolEvent.disconnected(message: notice?.message ?? brokerDisconnectMessage(protocolVersion), detail: notice?.reasonString));
+    _events.add(MqttProtocolEvent.disconnected(message: notice?.message ?? unexpectedBrokerDisconnectMessage, detail: notice?.reasonString));
   }
 
   /// Converts package update batches into application messages and notices.
