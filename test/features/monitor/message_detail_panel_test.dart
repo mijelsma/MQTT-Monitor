@@ -6,6 +6,7 @@ import 'package:mqtt_monitor/core/dashboard/repositories/dashboard_repository.da
 import 'package:mqtt_monitor/core/ingestion/message_ingestion_coordinator.dart';
 import 'package:mqtt_monitor/core/history/repositories/history_preferences_repository.dart';
 import 'package:mqtt_monitor/features/monitor/widgets/message_detail_panel.dart';
+import 'package:mqtt_monitor/features/monitor/widgets/comparison_section.dart';
 import 'package:mqtt_monitor/shared/widgets/copy_button.dart';
 import 'package:mqtt_monitor/features/monitor/view_models/monitor_view_model.dart';
 import 'package:mqtt_monitor/core/publishing/services/publish_command_service.dart';
@@ -110,12 +111,56 @@ void main() {
   });
 
   testWidgets('selection display handles a very large payload', (tester) async {
-    final payload = List.filled(20000, 'payload').join('-');
+    final payload = List.filled(16 * 1024, 'payload').join('-');
 
     await tester.pumpWidget(buildHarness(payload));
     await tester.pump();
 
     expect(find.byKey(const Key('payload-selection-area')), findsOneWidget);
+    expect(find.byKey(const Key('large-payload-text-view')), findsOneWidget);
+    expect(find.byType(Text).evaluate().length, lessThan(200));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('large byte payload builds only visible virtualized rows', (tester) async {
+    final bytes = List<int>.generate(125 * 1024, (index) => index & 0xFF, growable: false);
+    final payload = String.fromCharCodes(bytes);
+
+    await tester.pumpWidget(buildHarness(payload, payloadBytes: bytes, width: 420));
+    await tester.pump();
+    await tester.tap(find.text('BYTES'));
+    await tester.pump();
+
+    expect(find.byKey(const Key('payload-byte-view')), findsOneWidget);
+    expect(find.byKey(const Key('payload-byte-0-0')), findsOneWidget);
+    expect(find.byKey(const Key('payload-byte-100-0')), findsNothing);
+    expect(find.byType(Text).evaluate().length, lessThan(500));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('large historical comparison uses bounded previews and disables diff', (tester) async {
+    final payload = List.filled(125 * 1024, 'x').join();
+    final previous = TopicNodeValueModel(payload: payload, seq: 1, receivedAt: DateTime(2026));
+    final selected = TopicNodeValueModel(payload: '${payload}y', seq: 2, receivedAt: DateTime(2026));
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider<UiPreferencesRepository>.value(
+        value: dependencies.uiPreferences,
+        child: MaterialApp(
+          theme: themeLight,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ComparisonSection(selected: selected, previous: previous),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('Diff'), findsNothing);
+    expect(find.byType(SelectableText), findsNWidgets(2));
+    expect(tester.widgetList<SelectableText>(find.byType(SelectableText)).every((widget) => widget.data!.length < 5000), isTrue);
     expect(tester.takeException(), isNull);
   });
 

@@ -4,6 +4,7 @@ import '../../../core/ui/models/app_language_model.dart';
 import '../../../core/ui/models/sidebar_panel_default_model.dart';
 import '../../../core/ui/models/ui_density_model.dart';
 import '../models/search_defaults.dart';
+import '../payload_rendering_limits.dart';
 import '../../storage/preferences_store.dart';
 
 /// Owns persisted preferences that affect application presentation.
@@ -30,6 +31,7 @@ class UiPreferencesRepository extends ChangeNotifier {
   static const String defaultSearchMatchModeKey = 'settings.defaultSearchMatchMode';
   static const String defaultSearchScopeKey = 'settings.defaultSearchScope';
   static const String jsonInlineArrayMaxItemsKey = 'settings.jsonInlineArrayMaxItems';
+  static const String richPayloadFormattingLimitBytesKey = 'settings.richPayloadFormattingLimitBytes';
   static const String languageKey = 'settings.language';
   static const String densityKey = 'settings.density';
   static const String showTopicPayloadPreviewKey = 'settings.showTopicPayloadPreview';
@@ -53,6 +55,7 @@ class UiPreferencesRepository extends ChangeNotifier {
   static const SearchMatchMode defaultSearchMatchModeValue = SearchMatchMode.any;
   static const SearchScope defaultSearchScopeValue = SearchScope.all;
   static const int defaultJsonInlineArrayMaxItems = 1;
+  static const int defaultRichPayloadFormattingLimitBytes = defaultRichPayloadFormattingBytes;
   static const UiDensityModel defaultDensity = UiDensityModel.comfortable;
   static const bool defaultShowTopicPayloadPreview = true;
   static const bool defaultShowTopicBadges = true;
@@ -77,6 +80,7 @@ class UiPreferencesRepository extends ChangeNotifier {
   SearchMatchMode _defaultSearchMatchMode = defaultSearchMatchModeValue;
   SearchScope _defaultSearchScope = defaultSearchScopeValue;
   int _jsonInlineArrayMaxItems = defaultJsonInlineArrayMaxItems;
+  int _richPayloadFormattingLimitBytes = defaultRichPayloadFormattingLimitBytes;
   UiDensityModel _density = defaultDensity;
   bool _showTopicPayloadPreview = defaultShowTopicPayloadPreview;
   bool _showTopicBadges = defaultShowTopicBadges;
@@ -99,6 +103,7 @@ class UiPreferencesRepository extends ChangeNotifier {
   SearchMatchMode get defaultSearchMatchMode => _defaultSearchMatchMode;
   SearchScope get defaultSearchScope => _defaultSearchScope;
   int get jsonInlineArrayMaxItems => _jsonInlineArrayMaxItems;
+  int get richPayloadFormattingLimitBytes => _richPayloadFormattingLimitBytes;
   UiDensityModel get density => _density;
   bool get showTopicPayloadPreview => _showTopicPayloadPreview;
   bool get showTopicBadges => _showTopicBadges;
@@ -129,6 +134,7 @@ class UiPreferencesRepository extends ChangeNotifier {
     _defaultSearchMatchMode = _enumValue(defaultSearchMatchModeKey, SearchMatchMode.values, defaultSearchMatchModeValue);
     _defaultSearchScope = _enumValue(defaultSearchScopeKey, SearchScope.values, defaultSearchScopeValue);
     _jsonInlineArrayMaxItems = _boundedInt(jsonInlineArrayMaxItemsKey, defaultJsonInlineArrayMaxItems, minimum: 1, maximum: 10);
+    _richPayloadFormattingLimitBytes = _boundedInt(richPayloadFormattingLimitBytesKey, defaultRichPayloadFormattingLimitBytes, minimum: minimumRichPayloadFormattingBytes, maximum: maximumRichPayloadFormattingBytes);
     _density = _enumValue(densityKey, UiDensityModel.values, defaultDensity);
     _showTopicPayloadPreview = _value<bool>(showTopicPayloadPreviewKey, defaultShowTopicPayloadPreview);
     _showTopicBadges = _value<bool>(showTopicBadgesKey, defaultShowTopicBadges);
@@ -171,6 +177,9 @@ class UiPreferencesRepository extends ChangeNotifier {
 
   Future<void> setJsonInlineArrayMaxItems(int value) => _setInt(jsonInlineArrayMaxItemsKey, value.clamp(1, 10), (next) => _jsonInlineArrayMaxItems = next);
 
+  Future<void> setRichPayloadFormattingLimitBytes(int value) =>
+      _setInt(richPayloadFormattingLimitBytesKey, value.clamp(minimumRichPayloadFormattingBytes, maximumRichPayloadFormattingBytes), (next) => _richPayloadFormattingLimitBytes = next);
+
   Future<void> setDensity(UiDensityModel value) => _setEnum(densityKey, value, (next) => _density = next);
 
   Future<void> setShowTopicPayloadPreview(bool value) => _setBool(showTopicPayloadPreviewKey, value, (next) => _showTopicPayloadPreview = next);
@@ -196,6 +205,7 @@ class UiPreferencesRepository extends ChangeNotifier {
       defaultSearchMatchModeKey,
       defaultSearchScopeKey,
       jsonInlineArrayMaxItemsKey,
+      richPayloadFormattingLimitBytesKey,
       languageKey,
       densityKey,
       showTopicPayloadPreviewKey,
@@ -221,6 +231,7 @@ class UiPreferencesRepository extends ChangeNotifier {
     _defaultSearchMatchMode = defaultSearchMatchModeValue;
     _defaultSearchScope = defaultSearchScopeValue;
     _jsonInlineArrayMaxItems = defaultJsonInlineArrayMaxItems;
+    _richPayloadFormattingLimitBytes = defaultRichPayloadFormattingLimitBytes;
     _density = defaultDensity;
     _showTopicPayloadPreview = defaultShowTopicPayloadPreview;
     _showTopicBadges = defaultShowTopicBadges;

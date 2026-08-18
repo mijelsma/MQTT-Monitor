@@ -1,12 +1,16 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
 import '../../../core/monitor/models/topic_node_value_model.dart';
+import '../../../core/ui/payload_rendering_limits.dart';
+import '../../../core/ui/repositories/ui_preferences_repository.dart';
 import '../../../shared/format_helpers.dart';
 import '../../../shared/widgets/copy_button.dart';
 import '../../../shared/widgets/json_highlighter.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
+import 'package:provider/provider.dart';
 
 /// Shows a side-by-side comparison of two historical messages,
 /// with optional unified diff view.
@@ -27,6 +31,9 @@ class _ComparisonSectionState extends State<ComparisonSection> {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
+    final formattingLimit = context.watch<UiPreferencesRepository>().richPayloadFormattingLimitBytes;
+    final allowFullComparison = widget.selected.payloadByteLength <= formattingLimit && widget.previous.payloadByteLength <= formattingLimit;
+    final showDiff = _diffMode && allowFullComparison;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,12 +66,12 @@ class _ComparisonSectionState extends State<ComparisonSection> {
               ),
             ),
             const Spacer(),
-            if (_expanded) _DiffModeToggle(diffMode: _diffMode, onChanged: (v) => setState(() => _diffMode = v)),
+            if (_expanded && allowFullComparison) _DiffModeToggle(diffMode: _diffMode, onChanged: (v) => setState(() => _diffMode = v)),
           ],
         ),
         if (_expanded) ...[
           const SizedBox(height: 8),
-          if (_diffMode)
+          if (showDiff)
             _DiffView(selected: widget.selected, previous: widget.previous)
           else
             Row(
@@ -333,7 +340,9 @@ class _ComparePanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final isJson = JsonHighlighter.isJson(value.payload);
+    final isLarge = value.payloadByteLength > context.read<UiPreferencesRepository>().richPayloadFormattingLimitBytes;
+    final displayPayload = isLarge ? '${value.payload.substring(0, math.min(value.payload.length, largePayloadComparisonPreviewChars))}\n…' : value.payload;
+    final isJson = !isLarge && JsonHighlighter.isJson(value.payload);
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -376,9 +385,9 @@ class _ComparePanel extends StatelessWidget {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: isJson
-                ? JsonHighlighter(source: value.payload)
+                ? JsonHighlighter(source: displayPayload)
                 : SelectableText(
-                    value.payload,
+                    displayPayload,
                     style: TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 11, color: tokens.textPrimary, height: 1.5),
                   ),
           ),

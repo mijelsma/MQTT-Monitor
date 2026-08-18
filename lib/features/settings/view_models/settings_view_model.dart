@@ -357,6 +357,9 @@ class SettingsViewModel extends ChangeNotifier {
   int get jsonInlineArrayMaxItems => _uiPreferences.jsonInlineArrayMaxItems;
   void setJsonInlineArrayMaxItems(int value) => _uiPreferences.setJsonInlineArrayMaxItems(value);
 
+  int get richPayloadFormattingLimitBytes => _uiPreferences.richPayloadFormattingLimitBytes;
+  void setRichPayloadFormattingLimitBytes(int value) => _uiPreferences.setRichPayloadFormattingLimitBytes(value);
+
   int get sidebarAnimationSpeed => _uiPreferences.sidebarAnimationSpeed;
   void setSidebarAnimationSpeed(int v) => _uiPreferences.setSidebarAnimationSpeed(v);
 

@@ -33,6 +33,7 @@ void main() {
     expect(repository.density, UiDensityModel.comfortable);
     expect(repository.showTopicPayloadPreview, isTrue);
     expect(repository.showTopicBadges, isTrue);
+    expect(repository.richPayloadFormattingLimitBytes, 32 * 1024);
     expect(store.get(UiPreferencesRepository.schemaVersionKey), UiPreferencesRepository.currentSchemaVersion);
   });
 
@@ -60,6 +61,7 @@ void main() {
     await repository.setDensity(UiDensityModel.compact);
     await repository.setShowTopicPayloadPreview(false);
     await repository.setShowTopicBadges(false);
+    await repository.setRichPayloadFormattingLimitBytes(128 * 1024);
 
     final restored = UiPreferencesRepository(store);
     await restored.initialize();
@@ -82,6 +84,7 @@ void main() {
     expect(restored.density, UiDensityModel.compact);
     expect(restored.showTopicPayloadPreview, isFalse);
     expect(restored.showTopicBadges, isFalse);
+    expect(restored.richPayloadFormattingLimitBytes, 128 * 1024);
     expect(store.get(UiPreferencesRepository.themeModeKey), 'dark');
     expect(store.get(UiPreferencesRepository.languageKey), 'nl');
     expect(store.get(UiPreferencesRepository.persistLayoutKey), isFalse);

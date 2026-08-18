@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/history/history_policy_rules.dart';
+import '../../../core/ui/payload_rendering_limits.dart';
 import '../../../core/storage/services/app_storage_location_service.dart';
 import '../../../generated/l10n.dart';
 import '../../../shared/widgets/ui_panel_scaffold.dart';
@@ -122,6 +123,21 @@ class _AdvancedPanelState extends State<AdvancedPanel> {
               displayValue: '$maximum',
               onChanged: (value) => setState(() => _draftMaximum = value.round()),
               onChangeEnd: (value) => _finishMaximumChange(viewModel, value.round()),
+            ),
+          ],
+        ),
+        UiSection(
+          label: strings.advancedPanelPayloadDisplay,
+          children: [
+            UiSliderRow(
+              label: strings.advancedPanelRichFormattingLimit,
+              subtitle: strings.advancedPanelRichFormattingLimitHint,
+              value: (viewModel.richPayloadFormattingLimitBytes / 1024).toDouble(),
+              min: minimumRichPayloadFormattingBytes / 1024,
+              max: maximumRichPayloadFormattingBytes / 1024,
+              divisions: (maximumRichPayloadFormattingBytes - minimumRichPayloadFormattingBytes) ~/ richPayloadFormattingStepBytes,
+              displayValue: '${viewModel.richPayloadFormattingLimitBytes ~/ 1024} KB',
+              onChanged: (value) => viewModel.setRichPayloadFormattingLimitBytes(value.round() * 1024),
             ),
           ],
         ),

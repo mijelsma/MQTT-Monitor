@@ -1134,6 +1134,36 @@ class S {
     );
   }
 
+  /// `Payload display`
+  String get advancedPanelPayloadDisplay {
+    return Intl.message(
+      'Payload display',
+      name: 'advancedPanelPayloadDisplay',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Rich formatting limit`
+  String get advancedPanelRichFormattingLimit {
+    return Intl.message(
+      'Rich formatting limit',
+      name: 'advancedPanelRichFormattingLimit',
+      desc: '',
+      args: [],
+    );
+  }
+
+  /// `Maximum payload size for JSON formatting and highlighting; larger payloads use the faster virtualized viewer`
+  String get advancedPanelRichFormattingLimitHint {
+    return Intl.message(
+      'Maximum payload size for JSON formatting and highlighting; larger payloads use the faster virtualized viewer',
+      name: 'advancedPanelRichFormattingLimitHint',
+      desc: '',
+      args: [],
+    );
+  }
+
   /// `Reset`
   String get advancedPanelResetSection {
     return Intl.message(
