@@ -1,7 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:mqtt_client/mqtt_client.dart' as mqtt3;
 import 'package:mqtt_client/mqtt_server_client.dart' as mqtt3_server;
@@ -23,6 +21,8 @@ import 'mqtt311_event_client.dart';
 typedef Mqtt311ClientFactory = mqtt3_server.MqttServerClient Function(BrokerEntryModel broker);
 
 const _socketTimeoutMs = 5000;
+const _keepAliveSeconds = 10;
+const _pingResponseTimeoutSeconds = 5;
 
 /// Adapts the mqtt_client package to the application MQTT session contract.
 class Mqtt311Adapter implements MqttProtocolAdapterInterface {
@@ -44,6 +44,7 @@ class Mqtt311Adapter implements MqttProtocolAdapterInterface {
   StreamSubscription<List<mqtt3.MqttReceivedMessage<mqtt3.MqttMessage>>>? _updatesSubscription;
   StreamSubscription<mqtt3.MqttPublishMessage>? _publishedSubscription;
   bool _disposed = false;
+  bool _connectedOnce = false;
 
   /// Returns MQTT 3.1.1 as the implemented protocol.
   @override
@@ -66,8 +67,10 @@ class Mqtt311Adapter implements MqttProtocolAdapterInterface {
   Future<void> connect() async {
     final client = _clientFactory(_broker);
     _client = client;
+    if (client is Mqtt311EventClient) client.onAutoReconnectFailure = _onAutoReconnectFailure;
     client.secure = _broker.useSSL || !_broker.clientCertificates.isEmpty;
-    client.keepAlivePeriod = 30;
+    client.keepAlivePeriod = _keepAliveSeconds;
+    client.disconnectOnNoResponsePeriod = _pingResponseTimeoutSeconds;
     client.autoReconnect = true;
     client.resubscribeOnAutoReconnect = false;
     client.socketTimeout = _socketTimeoutMs;
@@ -80,7 +83,7 @@ class Mqtt311Adapter implements MqttProtocolAdapterInterface {
 
     client.onConnected = _onConnected;
     client.onDisconnected = _onDisconnected;
-    client.onAutoReconnect = _onDisconnected;
+    client.onAutoReconnect = _onAutoReconnect;
     client.onAutoReconnected = _onConnected;
 
     try {
@@ -107,8 +110,8 @@ class Mqtt311Adapter implements MqttProtocolAdapterInterface {
       throw MqttConnectionFailure(ConnectionStatus.error, _returnCodeMessage(client.connectionStatus?.returnCode) ?? MqttConnectionErrorMapper.brokerRejected(_broker));
     }
 
-    _updatesSubscription = client.updates?.listen(_onUpdates);
-    _publishedSubscription = client.published?.listen(_onPublished);
+    _updatesSubscription = client.updates?.listen(_onUpdates, onError: _onClientStreamError);
+    _publishedSubscription = client.published?.listen(_onPublished, onError: _onClientStreamError);
   }
 
   /// Publishes [payload] and maps MQTT 3.1.1 acknowledgements conservatively.
@@ -179,7 +182,26 @@ class Mqtt311Adapter implements MqttProtocolAdapterInterface {
 
   /// Emits a successful connection event for current package callbacks.
   void _onConnected() {
-    if (!_disposed) _events.add(const MqttProtocolEvent.connected());
+    if (_disposed) return;
+    _connectedOnce = true;
+    _events.add(const MqttProtocolEvent.connected());
+  }
+
+  void _onAutoReconnect() {
+    if (!_disposed) _events.add(const MqttProtocolEvent.disconnected(message: unexpectedBrokerDisconnectMessage));
+  }
+
+  void _onAutoReconnectFailure(Object error) {
+    if (_disposed || !_connectedOnce) return;
+    final failure = MqttConnectionErrorMapper.interrupted(error, _broker);
+    _events.add(MqttProtocolEvent.failure(failure.status, failure.message, detail: failure.detail));
+  }
+
+  /// Converts asynchronous package-stream errors into visible session errors.
+  void _onClientStreamError(Object error, [StackTrace? _]) {
+    if (_disposed || !_connectedOnce) return;
+    final failure = MqttConnectionErrorMapper.interrupted(error, _broker);
+    _events.add(MqttProtocolEvent.failure(failure.status, failure.message, detail: failure.detail));
   }
 
   /// Emits the MQTT 3.1.1 broker-disconnect limitation.
@@ -198,7 +220,7 @@ class Mqtt311Adapter implements MqttProtocolAdapterInterface {
         continue;
       }
       final publish = received.payload as mqtt3.MqttPublishMessage;
-      _messages.add(MQTTMessage(topic: received.topic, payload: utf8.decode(Uint8List.fromList(publish.payload.message), allowMalformed: true), receivedAt: DateTime.now(), retain: publish.header?.retain ?? false, qos: publish.header?.qos.index ?? 0));
+      _messages.add(MQTTMessage.fromPayloadBytes(topic: received.topic, payloadBytes: publish.payload.message, receivedAt: DateTime.now(), retain: publish.header?.retain ?? false, qos: publish.header?.qos.index ?? 0));
     }
   }
 

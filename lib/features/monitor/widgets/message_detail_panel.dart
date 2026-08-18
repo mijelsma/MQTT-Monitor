@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -16,10 +17,12 @@ import '../../../shared/format_helpers.dart';
 import '../../../shared/widgets/copy_button.dart';
 import '../../../shared/widgets/json_highlighter.dart';
 import '../../../shared/widgets/qos_tag.dart';
+import '../../../shared/widgets/ui_compact_segment.dart';
 import '../../../shared/widgets/ui_empty_state.dart';
 import '../../../shared/widgets/ui_inline_notice.dart';
 import '../../../theme/app_tokens/app_tokens.dart';
 import '../view_models/monitor_view_model.dart';
+import '../controllers/detail_sidebar_controller.dart';
 import '../controllers/monitor_workspace_controller.dart';
 import 'comparison_section.dart';
 
@@ -29,12 +32,16 @@ import 'comparison_section.dart';
 /// instead of the latest. Also displays a comparison section when
 /// the historical message differs from the latest.
 class MessageDetailPanel extends StatelessWidget {
-  const MessageDetailPanel({super.key, required this.node, this.selectedHistory, this.onClearSelection});
+  const MessageDetailPanel({super.key, required this.node, this.selectedHistory, this.payloadViewMode, this.onPayloadViewModeChanged, this.onClearSelection});
 
   final TopicTreeNodeModel node;
 
   /// A historical value selected from the history panel, or null for latest.
   final TopicNodeValueModel? selectedHistory;
+
+  /// Optional controlled mode used by the session-owned detail sidebar.
+  final PayloadViewMode? payloadViewMode;
+  final ValueChanged<PayloadViewMode>? onPayloadViewModeChanged;
 
   /// Called when the user wants to return to viewing the latest message.
   final VoidCallback? onClearSelection;
@@ -48,7 +55,7 @@ class MessageDetailPanel extends StatelessWidget {
         if (displayValue == null) {
           return _EmptyDetail(topic: node.fullPath);
         }
-        return _DetailContent(node: node, value: displayValue, latestValue: latestValue, isHistorical: selectedHistory != null, onClearSelection: onClearSelection);
+        return _DetailContent(node: node, value: displayValue, latestValue: latestValue, isHistorical: selectedHistory != null, payloadViewMode: payloadViewMode, onPayloadViewModeChanged: onPayloadViewModeChanged, onClearSelection: onClearSelection);
       },
     );
   }
@@ -78,12 +85,14 @@ class _EmptyDetail extends StatelessWidget {
 }
 
 class _DetailContent extends StatelessWidget {
-  const _DetailContent({required this.node, required this.value, this.latestValue, this.isHistorical = false, this.onClearSelection});
+  const _DetailContent({required this.node, required this.value, this.latestValue, this.isHistorical = false, this.payloadViewMode, this.onPayloadViewModeChanged, this.onClearSelection});
 
   final TopicTreeNodeModel node;
   final TopicNodeValueModel value;
   final TopicNodeValueModel? latestValue;
   final bool isHistorical;
+  final PayloadViewMode? payloadViewMode;
+  final ValueChanged<PayloadViewMode>? onPayloadViewModeChanged;
   final VoidCallback? onClearSelection;
 
   @override
@@ -131,7 +140,7 @@ class _DetailContent extends StatelessWidget {
                   },
           ),
           const SizedBox(height: 16),
-          _PayloadCard(payload: value.payload, topic: node.fullPath, isHistorical: isHistorical),
+          _PayloadCard(payload: value.payload, payloadBytes: value.payloadBytes, topic: node.fullPath, viewMode: payloadViewMode, onViewModeChanged: onPayloadViewModeChanged, isHistorical: isHistorical),
           if (showComparison) ...[const SizedBox(height: 16), ComparisonSection(selected: value, previous: previousValue)],
         ],
       ),
@@ -235,7 +244,7 @@ class _PropertiesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final timeStr = formatTimestamp(value.receivedAt);
-    final sizeStr = formatByteSize(value.payload);
+    final sizeStr = formatByteSize(value.payloadByteLength);
     final rateStr = _computeRate(context);
 
     final labels = [S.of(context).detailQoS, S.of(context).detailRetained, S.of(context).detailReceived, S.of(context).detailSize, S.of(context).detailMessages, if (rateStr != null) S.of(context).detailRate];
@@ -259,7 +268,13 @@ class _PropertiesCard extends StatelessWidget {
               children: [
                 QosTag(qos: value.qos),
                 const SizedBox(width: 6),
-                Text(qosLabel(value.qos), style: TextStyle(fontSize: 11, color: tokens.textTertiary)),
+                Flexible(
+                  child: Text(
+                    qosLabel(value.qos),
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11, color: tokens.textTertiary),
+                  ),
+                ),
               ],
             ),
           ),
@@ -450,10 +465,13 @@ class _ClearRetainedButtonState extends State<_ClearRetainedButton> {
 // ── Payload card ────────────────────────────────────────────────────────
 
 class _PayloadCard extends StatefulWidget {
-  const _PayloadCard({required this.payload, required this.topic, this.isHistorical = false});
+  const _PayloadCard({required this.payload, required this.topic, this.payloadBytes, this.viewMode, this.onViewModeChanged, this.isHistorical = false});
 
   final String payload;
+  final List<int>? payloadBytes;
   final String topic;
+  final PayloadViewMode? viewMode;
+  final ValueChanged<PayloadViewMode>? onViewModeChanged;
   final bool isHistorical;
 
   @override
@@ -462,13 +480,20 @@ class _PayloadCard extends StatefulWidget {
 
 class _PayloadCardState extends State<_PayloadCard> {
   bool _expanded = true;
+  PayloadViewMode _localViewMode = PayloadViewMode.text;
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final maxInlineArrayItems = context.watch<UiPreferencesRepository>().jsonInlineArrayMaxItems;
-    final isJson = JsonHighlighter.isJson(widget.payload);
-    final showPin = !widget.isHistorical;
+    final viewMode = widget.viewMode ?? _localViewMode;
+    final isTextMode = viewMode == PayloadViewMode.text;
+    final payloadBytes = isTextMode ? null : widget.payloadBytes ?? utf8.encode(widget.payload);
+    final uiPreferences = context.watch<UiPreferencesRepository>();
+    final payloadByteLength = widget.payloadBytes?.length ?? utf8.encode(widget.payload).length;
+    final useRichTextView = isTextMode && payloadByteLength <= uiPreferences.richPayloadFormattingLimitBytes;
+    final maxInlineArrayItems = uiPreferences.jsonInlineArrayMaxItems;
+    final isJson = useRichTextView && JsonHighlighter.isJson(widget.payload);
+    final showPin = !widget.isHistorical && useRichTextView;
     final brokerId = showPin ? context.watch<MonitorViewModel>().activeBroker?.id : null;
     final dashboard = showPin ? context.watch<DashboardRepository>() : null;
     final pinnedCards = brokerId != null && dashboard != null ? dashboard.cardsForBroker(brokerId).where((card) => card.topic == widget.topic).toList(growable: false) : const <GraphCardModel>[];
@@ -478,12 +503,15 @@ class _PayloadCardState extends State<_PayloadCard> {
     // JSON string containing one) is valid JSON too and should be pinnable.
     final numericParts = showPin ? parseNumericPayload(widget.payload) : null;
     final isNumeric = numericParts != null;
-    final formatLabel = isJson ? 'JSON' : 'TEXT';
-    final formatColor = isJson ? tokens.success : tokens.textTertiary;
 
-    // Build the main payload content widget.
+    // Build only the active representation. Large payloads deliberately skip
+    // JSON parsing/highlighting and use a virtualized plain-text viewport.
     Widget content;
-    if (isNumeric) {
+    if (!isTextMode) {
+      content = _BytePayloadView(bytes: payloadBytes!);
+    } else if (!useRichTextView) {
+      content = _LargeTextPayloadView(payload: widget.payload);
+    } else if (isNumeric) {
       content = SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: _PinnableValue(payload: widget.payload, topic: widget.topic, unit: numericParts.$2, isPinned: isRootValuePinned),
@@ -522,14 +550,20 @@ class _PayloadCardState extends State<_PayloadCard> {
                   'PAYLOAD',
                   style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.8, color: tokens.textTertiary),
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(color: formatColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
-                  child: Text(
-                    formatLabel,
-                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: formatColor, letterSpacing: 0.5),
-                  ),
+                const Spacer(),
+                UiCompactSegment<PayloadViewMode>(
+                  value: viewMode,
+                  onChanged: (value) {
+                    if (widget.onViewModeChanged != null) {
+                      widget.onViewModeChanged!(value);
+                    } else {
+                      setState(() => _localViewMode = value);
+                    }
+                  },
+                  options: const [
+                    UiCompactSegmentOption(value: PayloadViewMode.text, label: 'TEXT', semanticsLabel: 'Text payload view'),
+                    UiCompactSegmentOption(value: PayloadViewMode.bytes, label: 'BYTES', semanticsLabel: 'Bytes payload view'),
+                  ],
                 ),
               ],
             ),
@@ -554,13 +588,197 @@ class _PayloadCardState extends State<_PayloadCard> {
                 Positioned(
                   top: 0,
                   right: 0,
-                  child: CopyButton.payload(text: widget.payload, size: 14, maxInlineArrayItems: maxInlineArrayItems),
+                  child: isTextMode ? CopyButton.payload(text: widget.payload, size: 14, maxInlineArrayItems: maxInlineArrayItems) : _byteCopyButton(payloadBytes!),
                 ),
               ],
             ),
           ),
         ],
       ],
+    );
+  }
+
+  Widget _byteCopyButton(List<int> bytes) {
+    if (bytes.length <= 4096) {
+      return CopyButton(text: formatPayloadBytesForClipboard(bytes), size: 14);
+    }
+    return CopyButton.lazy(textProvider: () => formatPayloadBytesForClipboard(bytes), size: 14);
+  }
+}
+
+/// Formats raw payload bytes for copying without offsets, ASCII, or line breaks.
+String formatPayloadBytesForClipboard(Iterable<int> bytes) => bytes.map((byte) => (byte & 0xFF).toRadixString(16).padLeft(2, '0').toUpperCase()).join(' ');
+
+/// A classic hex dump: offset, hexadecimal bytes, and printable ASCII.
+class _BytePayloadView extends StatelessWidget {
+  const _BytePayloadView({required this.bytes});
+
+  final List<int> bytes;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    if (bytes.isEmpty) return Text('(empty payload)', style: TextStyle(color: tokens.textTertiary));
+    final dataRowCount = (bytes.length + 15) ~/ 16;
+    final viewportHeight = math.min((dataRowCount + 1) * _BytePayloadRow.rowHeight, 360.0);
+    return SingleChildScrollView(
+      key: const Key('payload-byte-scroll'),
+      scrollDirection: Axis.horizontal,
+      child: SizedBox(
+        width: _BytePayloadRow.tableWidth,
+        height: viewportHeight,
+        child: ListView.builder(
+          key: const Key('payload-byte-view'),
+          primary: false,
+          itemExtent: _BytePayloadRow.rowHeight,
+          itemCount: dataRowCount + 1,
+          itemBuilder: (context, index) {
+            if (index == 0) return const _BytePayloadRow.header();
+            final offset = (index - 1) * 16;
+            return _BytePayloadRow(offset: offset, bytes: bytes.sublist(offset, math.min(offset + 16, bytes.length)));
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Bounded, lazily built text rows for payloads too large for syntax-rich text.
+class _LargeTextPayloadView extends StatefulWidget {
+  const _LargeTextPayloadView({required this.payload});
+
+  final String payload;
+
+  @override
+  State<_LargeTextPayloadView> createState() => _LargeTextPayloadViewState();
+}
+
+class _LargeTextPayloadViewState extends State<_LargeTextPayloadView> {
+  static const int _charactersPerRow = 256;
+  static const double _rowHeight = 20;
+  late List<String> _rows = _chunk(widget.payload);
+  late int _widestRow = _rows.fold(0, (width, row) => math.max(width, row.length));
+
+  @override
+  void didUpdateWidget(covariant _LargeTextPayloadView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (identical(oldWidget.payload, widget.payload)) return;
+    _rows = _chunk(widget.payload);
+    _widestRow = _rows.fold(0, (width, row) => math.max(width, row.length));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final height = math.min(math.max(_rows.length, 1) * _rowHeight, 360.0);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = math.max(constraints.maxWidth, _widestRow * 7.6 + 8);
+        return SingleChildScrollView(
+          key: const Key('large-payload-text-horizontal-scroll'),
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            width: width,
+            height: height,
+            child: ListView.builder(
+              key: const Key('large-payload-text-view'),
+              primary: false,
+              itemExtent: _rowHeight,
+              itemCount: _rows.length,
+              itemBuilder: (context, index) => Text(
+                _rows[index],
+                softWrap: false,
+                style: TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 12.5, height: 1.5, color: tokens.textPrimary),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  static List<String> _chunk(String payload) {
+    final rows = <String>[];
+    for (final line in payload.split('\n')) {
+      if (line.isEmpty) {
+        rows.add('');
+        continue;
+      }
+      for (var start = 0; start < line.length; start += _charactersPerRow) {
+        rows.add(line.substring(start, math.min(start + _charactersPerRow, line.length)));
+      }
+    }
+    return rows;
+  }
+}
+
+/// One geometrically aligned row in the byte table. Every column has a fixed
+/// width, so alignment never depends on the metrics of a particular glyph.
+class _BytePayloadRow extends StatelessWidget {
+  const _BytePayloadRow({required this.offset, required this.bytes}) : isHeader = false;
+  const _BytePayloadRow.header() : offset = 0, bytes = const [], isHeader = true;
+
+  static const double _offsetWidth = 76;
+  static const double _byteWidth = 24;
+  static const double _groupGap = 8;
+  static const double _asciiWidth = 150;
+  static const double rowHeight = 22;
+  static const double tableWidth = _offsetWidth + (16 * _byteWidth) + _groupGap + 12 + _asciiWidth;
+
+  final int offset;
+  final List<int> bytes;
+  final bool isHeader;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final rowIndex = offset ~/ 16;
+    final style = TextStyle(fontFamily: 'monospace', fontSize: 12, height: 1.55, color: tokens.textPrimary);
+    final ascii = bytes.map((byte) => byte >= 32 && byte <= 126 ? String.fromCharCode(byte) : '.').join();
+    return DefaultTextStyle(
+      style: style,
+      child: SizedBox(
+        height: rowHeight,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: _offsetWidth,
+              child: Text(
+                isHeader ? 'OFFSET' : offset.toRadixString(16).padLeft(8, '0').toUpperCase(),
+                key: isHeader ? const Key('payload-byte-offset-header') : Key('payload-byte-offset-$rowIndex'),
+                style: TextStyle(color: tokens.textTertiary, fontWeight: isHeader ? FontWeight.w700 : FontWeight.normal),
+              ),
+            ),
+            for (var index = 0; index < 16; index++) ...[
+              if (index == 8) const SizedBox(width: _groupGap),
+              SizedBox(
+                width: _byteWidth,
+                child: Text(
+                  isHeader
+                      ? index.toRadixString(16).padLeft(2, '0').toUpperCase()
+                      : index < bytes.length
+                      ? bytes[index].toRadixString(16).padLeft(2, '0').toUpperCase()
+                      : '',
+                  key: isHeader ? Key('payload-byte-header-$index') : Key('payload-byte-$rowIndex-$index'),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: isHeader ? tokens.textTertiary : tokens.textPrimary, fontWeight: isHeader ? FontWeight.w700 : FontWeight.normal),
+                ),
+              ),
+            ],
+            const SizedBox(width: 12),
+            SizedBox(
+              width: _asciiWidth,
+              child: Text(
+                isHeader ? 'ASCII' : ascii,
+                key: isHeader ? const Key('payload-byte-ascii-header') : Key('payload-byte-ascii-$rowIndex'),
+                softWrap: false,
+                style: TextStyle(color: isHeader ? tokens.textTertiary : tokens.textSecondary, fontWeight: isHeader ? FontWeight.w700 : FontWeight.normal),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

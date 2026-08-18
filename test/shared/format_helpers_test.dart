@@ -2,6 +2,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/shared/format_helpers.dart';
 
 void main() {
+  test('formats established byte counts without interpreting payload text', () {
+    expect(formatByteSize(9), '9 B');
+    expect(formatByteSize(1536), '1.5 KB');
+  });
+
   group('formatPayloadForClipboard', () {
     test('pretty-prints JSON using the value-window indentation', () {
       expect(formatPayloadForClipboard('{"sensor":{"value":21},"ok":true}'), '{\n    "sensor": {\n        "value": 21\n    },\n    "ok": true\n}');

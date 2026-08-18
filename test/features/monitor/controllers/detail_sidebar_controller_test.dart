@@ -18,6 +18,18 @@ void main() {
     expect([for (var index = 0; index < 4; index++) controller.isCollapsed(index)], [false, true, true, true]);
   });
 
+  test('payload view mode survives selections but resets with a new app session', () {
+    final controller = DetailSidebarController(dependencies.workspaceLayout, dependencies.uiPreferences);
+    addTearDown(controller.dispose);
+
+    controller.setPayloadViewMode(PayloadViewMode.bytes);
+    expect(controller.payloadViewMode, PayloadViewMode.bytes);
+
+    final nextSession = DetailSidebarController(dependencies.workspaceLayout, dependencies.uiPreferences);
+    addTearDown(nextSession.dispose);
+    expect(nextSession.payloadViewMode, PayloadViewMode.text);
+  });
+
   test('startup defaults override last layout except for lastStatus', () async {
     await dependencies.workspaceLayout.setCollapsed(0, true);
     await dependencies.workspaceLayout.setCollapsed(1, false);

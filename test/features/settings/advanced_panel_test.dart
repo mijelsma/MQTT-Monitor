@@ -56,20 +56,26 @@ void main() {
     expect(find.text('New subscription history'), findsOneWidget);
     expect(find.text('Default retention'), findsOneWidget);
     expect(find.text('Maximum retention'), findsOneWidget);
+    expect(find.text('Rich formatting limit'), findsOneWidget);
+    expect(find.text('32 KB'), findsOneWidget);
   });
 
   testWidgets('history controls expose domain-supported ranges', (tester) async {
     await pumpPanel(tester);
 
     final sliders = tester.widgetList<Slider>(find.byType(Slider)).toList();
-    expect(sliders, hasLength(2));
+    expect(sliders, hasLength(3));
     expect(sliders.first.min, 1);
     expect(sliders.first.max, 50);
     expect(sliders.first.value, 10);
-    expect(sliders.last.min, 50);
-    expect(sliders.last.max, 1000);
-    expect(sliders.last.value, 50);
-    expect(sliders.last.divisions, 19);
+    expect(sliders[1].min, 50);
+    expect(sliders[1].max, 1000);
+    expect(sliders[1].value, 50);
+    expect(sliders[1].divisions, 19);
+    expect(sliders.last.min, 8);
+    expect(sliders.last.max, 256);
+    expect(sliders.last.value, 32);
+    expect(sliders.last.divisions, 31);
   });
 
   testWidgets('turning off the new policy disables its retention slider', (tester) async {
@@ -95,7 +101,7 @@ void main() {
     );
     await pumpPanel(tester);
 
-    Slider maximumSlider() => tester.widgetList<Slider>(find.byType(Slider)).last;
+    Slider maximumSlider() => tester.widgetList<Slider>(find.byType(Slider)).elementAt(1);
 
     maximumSlider().onChanged!(50);
     await tester.pump();
