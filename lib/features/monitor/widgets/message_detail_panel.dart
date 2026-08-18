@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -485,9 +486,14 @@ class _PayloadCardState extends State<_PayloadCard> {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     final viewMode = widget.viewMode ?? _localViewMode;
-    final maxInlineArrayItems = context.watch<UiPreferencesRepository>().jsonInlineArrayMaxItems;
-    final isJson = JsonHighlighter.isJson(widget.payload);
-    final showPin = !widget.isHistorical;
+    final isTextMode = viewMode == PayloadViewMode.text;
+    final payloadBytes = isTextMode ? null : widget.payloadBytes ?? utf8.encode(widget.payload);
+    final uiPreferences = context.watch<UiPreferencesRepository>();
+    final payloadByteLength = widget.payloadBytes?.length ?? utf8.encode(widget.payload).length;
+    final useRichTextView = isTextMode && payloadByteLength <= uiPreferences.richPayloadFormattingLimitBytes;
+    final maxInlineArrayItems = uiPreferences.jsonInlineArrayMaxItems;
+    final isJson = useRichTextView && JsonHighlighter.isJson(widget.payload);
+    final showPin = !widget.isHistorical && useRichTextView;
     final brokerId = showPin ? context.watch<MonitorViewModel>().activeBroker?.id : null;
     final dashboard = showPin ? context.watch<DashboardRepository>() : null;
     final pinnedCards = brokerId != null && dashboard != null ? dashboard.cardsForBroker(brokerId).where((card) => card.topic == widget.topic).toList(growable: false) : const <GraphCardModel>[];
@@ -498,9 +504,14 @@ class _PayloadCardState extends State<_PayloadCard> {
     final numericParts = showPin ? parseNumericPayload(widget.payload) : null;
     final isNumeric = numericParts != null;
 
-    // Build the decoded-text payload content widget.
+    // Build only the active representation. Large payloads deliberately skip
+    // JSON parsing/highlighting and use a virtualized plain-text viewport.
     Widget content;
-    if (isNumeric) {
+    if (!isTextMode) {
+      content = _BytePayloadView(bytes: payloadBytes!);
+    } else if (!useRichTextView) {
+      content = _LargeTextPayloadView(payload: widget.payload);
+    } else if (isNumeric) {
       content = SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: _PinnableValue(payload: widget.payload, topic: widget.topic, unit: numericParts.$2, isPinned: isRootValuePinned),
@@ -516,8 +527,6 @@ class _PayloadCardState extends State<_PayloadCard> {
         child: JsonHighlighter(source: widget.payload, selectable: false, maxInlineArrayItems: maxInlineArrayItems),
       );
     }
-
-    final payloadBytes = widget.payloadBytes ?? utf8.encode(widget.payload);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -574,15 +583,12 @@ class _PayloadCardState extends State<_PayloadCard> {
               children: [
                 Padding(
                   padding: const EdgeInsets.only(right: 28),
-                  child: SelectionArea(
-                    key: const Key('payload-selection-area'),
-                    child: viewMode == PayloadViewMode.text ? content : _BytePayloadView(bytes: payloadBytes),
-                  ),
+                  child: SelectionArea(key: const Key('payload-selection-area'), child: content),
                 ),
                 Positioned(
                   top: 0,
                   right: 0,
-                  child: viewMode == PayloadViewMode.text ? CopyButton.payload(text: widget.payload, size: 14, maxInlineArrayItems: maxInlineArrayItems) : CopyButton(text: formatPayloadBytesForClipboard(payloadBytes), size: 14),
+                  child: isTextMode ? CopyButton.payload(text: widget.payload, size: 14, maxInlineArrayItems: maxInlineArrayItems) : _byteCopyButton(payloadBytes!),
                 ),
               ],
             ),
@@ -590,6 +596,13 @@ class _PayloadCardState extends State<_PayloadCard> {
         ],
       ],
     );
+  }
+
+  Widget _byteCopyButton(List<int> bytes) {
+    if (bytes.length <= 4096) {
+      return CopyButton(text: formatPayloadBytesForClipboard(bytes), size: 14);
+    }
+    return CopyButton.lazy(textProvider: () => formatPayloadBytesForClipboard(bytes), size: 14);
   }
 }
 
@@ -605,24 +618,97 @@ class _BytePayloadView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.tokens;
-    final rows = <Widget>[];
-    for (var offset = 0; offset < bytes.length; offset += 16) {
-      final chunk = bytes.sublist(offset, (offset + 16).clamp(0, bytes.length));
-      rows.add(_BytePayloadRow(offset: offset, bytes: chunk));
-    }
-    if (rows.isEmpty) {
-      rows.add(
-        Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text('(empty payload)', style: TextStyle(color: tokens.textTertiary)),
-        ),
-      );
-    }
+    if (bytes.isEmpty) return Text('(empty payload)', style: TextStyle(color: tokens.textTertiary));
+    final dataRowCount = (bytes.length + 15) ~/ 16;
+    final viewportHeight = math.min((dataRowCount + 1) * _BytePayloadRow.rowHeight, 360.0);
     return SingleChildScrollView(
       key: const Key('payload-byte-scroll'),
       scrollDirection: Axis.horizontal,
-      child: Column(key: const Key('payload-byte-view'), crossAxisAlignment: CrossAxisAlignment.start, children: [const _BytePayloadRow.header(), ...rows]),
+      child: SizedBox(
+        width: _BytePayloadRow.tableWidth,
+        height: viewportHeight,
+        child: ListView.builder(
+          key: const Key('payload-byte-view'),
+          primary: false,
+          itemExtent: _BytePayloadRow.rowHeight,
+          itemCount: dataRowCount + 1,
+          itemBuilder: (context, index) {
+            if (index == 0) return const _BytePayloadRow.header();
+            final offset = (index - 1) * 16;
+            return _BytePayloadRow(offset: offset, bytes: bytes.sublist(offset, math.min(offset + 16, bytes.length)));
+          },
+        ),
+      ),
     );
+  }
+}
+
+/// Bounded, lazily built text rows for payloads too large for syntax-rich text.
+class _LargeTextPayloadView extends StatefulWidget {
+  const _LargeTextPayloadView({required this.payload});
+
+  final String payload;
+
+  @override
+  State<_LargeTextPayloadView> createState() => _LargeTextPayloadViewState();
+}
+
+class _LargeTextPayloadViewState extends State<_LargeTextPayloadView> {
+  static const int _charactersPerRow = 256;
+  static const double _rowHeight = 20;
+  late List<String> _rows = _chunk(widget.payload);
+  late int _widestRow = _rows.fold(0, (width, row) => math.max(width, row.length));
+
+  @override
+  void didUpdateWidget(covariant _LargeTextPayloadView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (identical(oldWidget.payload, widget.payload)) return;
+    _rows = _chunk(widget.payload);
+    _widestRow = _rows.fold(0, (width, row) => math.max(width, row.length));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final height = math.min(math.max(_rows.length, 1) * _rowHeight, 360.0);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = math.max(constraints.maxWidth, _widestRow * 7.6 + 8);
+        return SingleChildScrollView(
+          key: const Key('large-payload-text-horizontal-scroll'),
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            width: width,
+            height: height,
+            child: ListView.builder(
+              key: const Key('large-payload-text-view'),
+              primary: false,
+              itemExtent: _rowHeight,
+              itemCount: _rows.length,
+              itemBuilder: (context, index) => Text(
+                _rows[index],
+                softWrap: false,
+                style: TextStyle(fontFamily: 'SF Mono, Menlo, monospace', fontSize: 12.5, height: 1.5, color: tokens.textPrimary),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  static List<String> _chunk(String payload) {
+    final rows = <String>[];
+    for (final line in payload.split('\n')) {
+      if (line.isEmpty) {
+        rows.add('');
+        continue;
+      }
+      for (var start = 0; start < line.length; start += _charactersPerRow) {
+        rows.add(line.substring(start, math.min(start + _charactersPerRow, line.length)));
+      }
+    }
+    return rows;
   }
 }
 
@@ -636,6 +722,8 @@ class _BytePayloadRow extends StatelessWidget {
   static const double _byteWidth = 24;
   static const double _groupGap = 8;
   static const double _asciiWidth = 150;
+  static const double rowHeight = 22;
+  static const double tableWidth = _offsetWidth + (16 * _byteWidth) + _groupGap + 12 + _asciiWidth;
 
   final int offset;
   final List<int> bytes;
@@ -650,7 +738,7 @@ class _BytePayloadRow extends StatelessWidget {
     return DefaultTextStyle(
       style: style,
       child: SizedBox(
-        height: 22,
+        height: rowHeight,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

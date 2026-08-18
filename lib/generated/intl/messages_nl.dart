@@ -26,19 +26,15 @@ class MessageLookup extends MessageLookupByLibrary {
 
   static String m2(seq) => "Bericht #${seq} bekijken";
 
-  static String m3(count) =>
-      "${count} ${Intl.plural(count, one: 'uur', other: 'uur')}";
+  static String m3(count) => "${count} ${Intl.plural(count, one: 'uur', other: 'uur')}";
 
-  static String m4(count) =>
-      "${count} ${Intl.plural(count, one: 'minuut', other: 'minuten')}";
+  static String m4(count) => "${count} ${Intl.plural(count, one: 'minuut', other: 'minuten')}";
 
-  static String m5(count) =>
-      "${count} ${Intl.plural(count, one: 'seconde', other: 'seconden')}";
+  static String m5(count) => "${count} ${Intl.plural(count, one: 'seconde', other: 'seconden')}";
 
   static String m6(count, rate) => "${count} berichten · ${rate}/s";
 
-  static String m7(count) =>
-      "${count} ${Intl.plural(count, one: 'optie', other: 'opties')}";
+  static String m7(count) => "${count} ${Intl.plural(count, one: 'optie', other: 'opties')}";
 
   final messages = _notInlinedMessages(_notInlinedMessages);
   static Map<String, Function> _notInlinedMessages(_) => <String, Function>{
@@ -46,438 +42,188 @@ class MessageLookup extends MessageLookupByLibrary {
     "aboutPanelChangelog": MessageLookupByLibrary.simpleMessage("Changelog"),
     "aboutPanelCommitHash": MessageLookupByLibrary.simpleMessage("Commit Hash"),
     "aboutPanelLicense": MessageLookupByLibrary.simpleMessage("Licentie"),
-    "aboutPanelReportIssue": MessageLookupByLibrary.simpleMessage(
-      "Probleem melden",
-    ),
+    "aboutPanelReportIssue": MessageLookupByLibrary.simpleMessage("Probleem melden"),
     "aboutPanelSectionDetails": MessageLookupByLibrary.simpleMessage("Details"),
-    "aboutPanelSectionResources": MessageLookupByLibrary.simpleMessage(
-      "Bronnen",
-    ),
+    "aboutPanelSectionResources": MessageLookupByLibrary.simpleMessage("Bronnen"),
     "aboutPanelSourceCode": MessageLookupByLibrary.simpleMessage("Broncode"),
-    "aboutPanelSupportProject": MessageLookupByLibrary.simpleMessage(
-      "Project steunen",
-    ),
+    "aboutPanelSupportProject": MessageLookupByLibrary.simpleMessage("Project steunen"),
     "aboutPanelTitle": MessageLookupByLibrary.simpleMessage("Over"),
-    "aboutPanelVersion": MessageLookupByLibrary.simpleMessage(
-      "Versie 1.0.0  ·  Build 1",
-    ),
+    "aboutPanelVersion": MessageLookupByLibrary.simpleMessage("Versie 1.0.0  ·  Build 1"),
     "aboutPanelVersionDetail": MessageLookupByLibrary.simpleMessage("Versie"),
     "add": MessageLookupByLibrary.simpleMessage("Toevoegen"),
-    "advancedPanelAffectedBuffers": MessageLookupByLibrary.simpleMessage(
-      "Actieve topicbuffers",
-    ),
-    "advancedPanelAffectedDefault": MessageLookupByLibrary.simpleMessage(
-      "Standaard voor nieuwe abonnementen",
-    ),
-    "advancedPanelAffectedSubscriptions": MessageLookupByLibrary.simpleMessage(
-      "Opgeslagen abonnementsbeleidsregels",
-    ),
-    "advancedPanelDefaultRetention": MessageLookupByLibrary.simpleMessage(
-      "Standaard bewaarlimiet",
-    ),
-    "advancedPanelDefaultRetentionHint": MessageLookupByLibrary.simpleMessage(
-      "Berichten die door elk nieuw abonnement worden bewaard",
-    ),
-    "advancedPanelDescription": MessageLookupByLibrary.simpleMessage(
-      "Het aanpassen van deze instellingen kan de prestaties aanzienlijk beïnvloeden. Wijzig ze voorzichtig.",
-    ),
-    "advancedPanelHistoryBuffer": MessageLookupByLibrary.simpleMessage(
-      "Geschiedenisbuffer",
-    ),
-    "advancedPanelLogFile": MessageLookupByLibrary.simpleMessage(
-      "Diagnoselogboek",
-    ),
-    "advancedPanelLogFileHint": MessageLookupByLibrary.simpleMessage(
-      "Diagnosegebeurtenissen zonder gevoelige gegevens van de huidige en eerdere sessies",
-    ),
-    "advancedPanelMaximumConfirmBody": MessageLookupByLibrary.simpleMessage(
-      "Getroffen beleidsregels en actieve buffers worden begrensd. Bestaande berichten boven de nieuwe limiet worden verwijderd.",
-    ),
-    "advancedPanelMaximumConfirmTitle": MessageLookupByLibrary.simpleMessage(
-      "Maximum voor geschiedenis verlagen?",
-    ),
-    "advancedPanelMaximumRetention": MessageLookupByLibrary.simpleMessage(
-      "Maximale bewaarlimiet",
-    ),
-    "advancedPanelMaximumRetentionHint": MessageLookupByLibrary.simpleMessage(
-      "Bovengrens voor elk abonnement en elke actieve geschiedenisbuffer",
-    ),
-    "advancedPanelNewSubscriptionHistory": MessageLookupByLibrary.simpleMessage(
-      "Geschiedenis voor nieuwe abonnementen",
-    ),
-    "advancedPanelNewSubscriptionHistoryHint": MessageLookupByLibrary.simpleMessage(
-      "Verzamel begrensde geschiedenis voor abonnementen die vanaf nu worden gemaakt",
-    ),
-    "advancedPanelOpenFolder": MessageLookupByLibrary.simpleMessage(
-      "Map openen",
-    ),
-    "advancedPanelOpenLocationFailed": MessageLookupByLibrary.simpleMessage(
-      "De locatie kon niet worden geopend.",
-    ),
-    "advancedPanelOpenLog": MessageLookupByLibrary.simpleMessage(
-      "Logboek openen",
-    ),
-    "advancedPanelResetAction": MessageLookupByLibrary.simpleMessage(
-      "Gegevens selecteren",
-    ),
-    "advancedPanelResetBrokers": MessageLookupByLibrary.simpleMessage(
-      "Brokerprofielen",
-    ),
-    "advancedPanelResetCleanupWarning": MessageLookupByLibrary.simpleMessage(
-      "De geselecteerde gegevens zijn hersteld, maar sommige brokerbestanden of inloggegevens konden niet worden verwijderd.",
-    ),
-    "advancedPanelResetConfirmBody": MessageLookupByLibrary.simpleMessage(
-      "Geselecteerde gegevens worden permanent verwijderd of hersteld naar de standaardwaarden. Niet-geselecteerde gegevens blijven behouden.",
-    ),
-    "advancedPanelResetConfirmTitle": MessageLookupByLibrary.simpleMessage(
-      "Kies wat je wilt herstellen",
-    ),
-    "advancedPanelResetConnection": MessageLookupByLibrary.simpleMessage(
-      "Verbindingsvoorkeuren",
-    ),
-    "advancedPanelResetDashboards": MessageLookupByLibrary.simpleMessage(
-      "Dashboards",
-    ),
-    "advancedPanelResetFailed": MessageLookupByLibrary.simpleMessage(
-      "Instellingen konden niet worden hersteld. Er zijn geen brokerbronnen verwijderd.",
-    ),
-    "advancedPanelResetHint": MessageLookupByLibrary.simpleMessage(
-      "Kies welke instellingen en opgeslagen gegevens je wilt herstellen, of herstel alles",
-    ),
-    "advancedPanelResetHistory": MessageLookupByLibrary.simpleMessage(
-      "Geschiedenisvoorkeuren",
-    ),
-    "advancedPanelResetPublishing": MessageLookupByLibrary.simpleMessage(
-      "Publicatievoorkeuren",
-    ),
-    "advancedPanelResetSection": MessageLookupByLibrary.simpleMessage(
-      "Opnieuw instellen",
-    ),
-    "advancedPanelResetSelectAll": MessageLookupByLibrary.simpleMessage(
-      "Alles selecteren",
-    ),
-    "advancedPanelResetSelectedAction": MessageLookupByLibrary.simpleMessage(
-      "Selectie herstellen",
-    ),
-    "advancedPanelResetShortcuts": MessageLookupByLibrary.simpleMessage(
-      "Snelkoppelingen",
-    ),
-    "advancedPanelResetSuccess": MessageLookupByLibrary.simpleMessage(
-      "De geselecteerde gegevens zijn hersteld.",
-    ),
-    "advancedPanelResetTitle": MessageLookupByLibrary.simpleMessage(
-      "Applicatiegegevens herstellen",
-    ),
-    "advancedPanelResetUpdates": MessageLookupByLibrary.simpleMessage(
-      "Updatevoorkeuren",
-    ),
-    "advancedPanelResetUserInterface": MessageLookupByLibrary.simpleMessage(
-      "Gebruikersinterface",
-    ),
-    "advancedPanelResetVariables": MessageLookupByLibrary.simpleMessage(
-      "Variabelen",
-    ),
-    "advancedPanelSettingsLocation": MessageLookupByLibrary.simpleMessage(
-      "Locatie van instellingen",
-    ),
-    "advancedPanelSettingsLocationHint": MessageLookupByLibrary.simpleMessage(
-      "Applicatievoorkeuren worden hier opgeslagen. Brokerwachtwoorden blijven in de beveiligde opslag van het besturingssysteem.",
-    ),
-    "advancedPanelStorageSection": MessageLookupByLibrary.simpleMessage(
-      "Opslag en diagnose",
-    ),
+    "advancedPanelAffectedBuffers": MessageLookupByLibrary.simpleMessage("Actieve topicbuffers"),
+    "advancedPanelAffectedDefault": MessageLookupByLibrary.simpleMessage("Standaard voor nieuwe abonnementen"),
+    "advancedPanelAffectedSubscriptions": MessageLookupByLibrary.simpleMessage("Opgeslagen abonnementsbeleidsregels"),
+    "advancedPanelDefaultRetention": MessageLookupByLibrary.simpleMessage("Standaard bewaarlimiet"),
+    "advancedPanelDefaultRetentionHint": MessageLookupByLibrary.simpleMessage("Berichten die door elk nieuw abonnement worden bewaard"),
+    "advancedPanelDescription": MessageLookupByLibrary.simpleMessage("Het aanpassen van deze instellingen kan de prestaties aanzienlijk beïnvloeden. Wijzig ze voorzichtig."),
+    "advancedPanelHistoryBuffer": MessageLookupByLibrary.simpleMessage("Geschiedenisbuffer"),
+    "advancedPanelLogFile": MessageLookupByLibrary.simpleMessage("Diagnoselogboek"),
+    "advancedPanelLogFileHint": MessageLookupByLibrary.simpleMessage("Diagnosegebeurtenissen zonder gevoelige gegevens van de huidige en eerdere sessies"),
+    "advancedPanelMaximumConfirmBody": MessageLookupByLibrary.simpleMessage("Getroffen beleidsregels en actieve buffers worden begrensd. Bestaande berichten boven de nieuwe limiet worden verwijderd."),
+    "advancedPanelMaximumConfirmTitle": MessageLookupByLibrary.simpleMessage("Maximum voor geschiedenis verlagen?"),
+    "advancedPanelMaximumRetention": MessageLookupByLibrary.simpleMessage("Maximale bewaarlimiet"),
+    "advancedPanelMaximumRetentionHint": MessageLookupByLibrary.simpleMessage("Bovengrens voor elk abonnement en elke actieve geschiedenisbuffer"),
+    "advancedPanelNewSubscriptionHistory": MessageLookupByLibrary.simpleMessage("Geschiedenis voor nieuwe abonnementen"),
+    "advancedPanelNewSubscriptionHistoryHint": MessageLookupByLibrary.simpleMessage("Verzamel begrensde geschiedenis voor abonnementen die vanaf nu worden gemaakt"),
+    "advancedPanelOpenFolder": MessageLookupByLibrary.simpleMessage("Map openen"),
+    "advancedPanelOpenLocationFailed": MessageLookupByLibrary.simpleMessage("De locatie kon niet worden geopend."),
+    "advancedPanelOpenLog": MessageLookupByLibrary.simpleMessage("Logboek openen"),
+    "advancedPanelPayloadDisplay": MessageLookupByLibrary.simpleMessage("Payloadweergave"),
+    "advancedPanelResetAction": MessageLookupByLibrary.simpleMessage("Gegevens selecteren"),
+    "advancedPanelResetBrokers": MessageLookupByLibrary.simpleMessage("Brokerprofielen"),
+    "advancedPanelResetCleanupWarning": MessageLookupByLibrary.simpleMessage("De geselecteerde gegevens zijn hersteld, maar sommige brokerbestanden of inloggegevens konden niet worden verwijderd."),
+    "advancedPanelResetConfirmBody": MessageLookupByLibrary.simpleMessage("Geselecteerde gegevens worden permanent verwijderd of hersteld naar de standaardwaarden. Niet-geselecteerde gegevens blijven behouden."),
+    "advancedPanelResetConfirmTitle": MessageLookupByLibrary.simpleMessage("Kies wat je wilt herstellen"),
+    "advancedPanelResetConnection": MessageLookupByLibrary.simpleMessage("Verbindingsvoorkeuren"),
+    "advancedPanelResetDashboards": MessageLookupByLibrary.simpleMessage("Dashboards"),
+    "advancedPanelResetFailed": MessageLookupByLibrary.simpleMessage("Instellingen konden niet worden hersteld. Er zijn geen brokerbronnen verwijderd."),
+    "advancedPanelResetHint": MessageLookupByLibrary.simpleMessage("Kies welke instellingen en opgeslagen gegevens je wilt herstellen, of herstel alles"),
+    "advancedPanelResetHistory": MessageLookupByLibrary.simpleMessage("Geschiedenisvoorkeuren"),
+    "advancedPanelResetPublishing": MessageLookupByLibrary.simpleMessage("Publicatievoorkeuren"),
+    "advancedPanelResetSection": MessageLookupByLibrary.simpleMessage("Opnieuw instellen"),
+    "advancedPanelResetSelectAll": MessageLookupByLibrary.simpleMessage("Alles selecteren"),
+    "advancedPanelResetSelectedAction": MessageLookupByLibrary.simpleMessage("Selectie herstellen"),
+    "advancedPanelResetShortcuts": MessageLookupByLibrary.simpleMessage("Snelkoppelingen"),
+    "advancedPanelResetSuccess": MessageLookupByLibrary.simpleMessage("De geselecteerde gegevens zijn hersteld."),
+    "advancedPanelResetTitle": MessageLookupByLibrary.simpleMessage("Applicatiegegevens herstellen"),
+    "advancedPanelResetUpdates": MessageLookupByLibrary.simpleMessage("Updatevoorkeuren"),
+    "advancedPanelResetUserInterface": MessageLookupByLibrary.simpleMessage("Gebruikersinterface"),
+    "advancedPanelResetVariables": MessageLookupByLibrary.simpleMessage("Variabelen"),
+    "advancedPanelRichFormattingLimit": MessageLookupByLibrary.simpleMessage("Limiet voor rijke opmaak"),
+    "advancedPanelRichFormattingLimitHint": MessageLookupByLibrary.simpleMessage("Maximale payloadgrootte voor JSON-opmaak en syntaxiskleuring; grotere payloads gebruiken de snellere gevirtualiseerde weergave"),
+    "advancedPanelSettingsLocation": MessageLookupByLibrary.simpleMessage("Locatie van instellingen"),
+    "advancedPanelSettingsLocationHint": MessageLookupByLibrary.simpleMessage("Applicatievoorkeuren worden hier opgeslagen. Brokerwachtwoorden blijven in de beveiligde opslag van het besturingssysteem."),
+    "advancedPanelStorageSection": MessageLookupByLibrary.simpleMessage("Opslag en diagnose"),
     "advancedPanelTitle": MessageLookupByLibrary.simpleMessage("Geavanceerd"),
     "back": MessageLookupByLibrary.simpleMessage("Terug"),
-    "brokerDialogAddSubscription": MessageLookupByLibrary.simpleMessage(
-      "Abonnement toevoegen",
-    ),
-    "brokerDialogAddTitle": MessageLookupByLibrary.simpleMessage(
-      "Broker toevoegen",
-    ),
-    "brokerDialogDefaultSubscriptionName": MessageLookupByLibrary.simpleMessage(
-      "Elk onderwerp",
-    ),
-    "brokerDialogEditTitle": MessageLookupByLibrary.simpleMessage(
-      "Broker bewerken",
-    ),
-    "brokerDialogFieldClientId": MessageLookupByLibrary.simpleMessage(
-      "Client-ID",
-    ),
+    "brokerDialogAddSubscription": MessageLookupByLibrary.simpleMessage("Abonnement toevoegen"),
+    "brokerDialogAddTitle": MessageLookupByLibrary.simpleMessage("Broker toevoegen"),
+    "brokerDialogDefaultSubscriptionName": MessageLookupByLibrary.simpleMessage("Elk onderwerp"),
+    "brokerDialogEditTitle": MessageLookupByLibrary.simpleMessage("Broker bewerken"),
+    "brokerDialogFieldClientId": MessageLookupByLibrary.simpleMessage("Client-ID"),
     "brokerDialogFieldColor": MessageLookupByLibrary.simpleMessage("Kleur"),
     "brokerDialogFieldHost": MessageLookupByLibrary.simpleMessage("Host"),
     "brokerDialogFieldName": MessageLookupByLibrary.simpleMessage("Naam"),
-    "brokerDialogFieldPassword": MessageLookupByLibrary.simpleMessage(
-      "Wachtwoord",
-    ),
+    "brokerDialogFieldPassword": MessageLookupByLibrary.simpleMessage("Wachtwoord"),
     "brokerDialogFieldPort": MessageLookupByLibrary.simpleMessage("Poort"),
-    "brokerDialogFieldUsername": MessageLookupByLibrary.simpleMessage(
-      "Gebruikersnaam",
-    ),
-    "brokerDialogHistoryDisabled": MessageLookupByLibrary.simpleMessage(
-      "Geschiedenis uit",
-    ),
-    "brokerDialogHistoryMessages": MessageLookupByLibrary.simpleMessage(
-      "geschiedenisberichten",
-    ),
-    "brokerDialogRandomSuffix": MessageLookupByLibrary.simpleMessage(
-      "Willekeurig achtervoegsel",
-    ),
-    "brokerDialogRandomSuffixSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Voegt een willekeurig 6-cijferig hex-achtervoegsel toe aan het Client-ID",
-    ),
-    "brokerDialogSectionAuthentication": MessageLookupByLibrary.simpleMessage(
-      "Verificatie",
-    ),
-    "brokerDialogSectionConnection": MessageLookupByLibrary.simpleMessage(
-      "Verbinding",
-    ),
-    "brokerDialogSectionTopics": MessageLookupByLibrary.simpleMessage(
-      "Onderwerpen",
-    ),
-    "brokerDialogUseSSL": MessageLookupByLibrary.simpleMessage(
-      "SSL / TLS gebruiken",
-    ),
-    "brokerDialogUseSSLSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Versleutelt de verbinding met TLS",
-    ),
-    "brokerDialogValidateCertificates": MessageLookupByLibrary.simpleMessage(
-      "Certificaten valideren",
-    ),
-    "brokerDialogValidateCertificatesSubtitle":
-        MessageLookupByLibrary.simpleMessage(
-          "Valideert de SSL/TLS-certificaten van de broker",
-        ),
-    "brokerDialogValidateHost": MessageLookupByLibrary.simpleMessage(
-      "Voer een host in",
-    ),
-    "brokerDialogValidateName": MessageLookupByLibrary.simpleMessage(
-      "Voer een naam in",
-    ),
-    "brokerProfilesUnavailable": MessageLookupByLibrary.simpleMessage(
-      "Brokerprofielen niet beschikbaar",
-    ),
-    "brokersPanelAddBroker": MessageLookupByLibrary.simpleMessage(
-      "Broker toevoegen",
-    ),
-    "brokersPanelDescription": MessageLookupByLibrary.simpleMessage(
-      "MQTT-brokers configureren.",
-    ),
-    "brokersPanelNoBrokersMessage": MessageLookupByLibrary.simpleMessage(
-      "Druk op \'Broker toevoegen\' om je eerste broker aan te maken.",
-    ),
-    "brokersPanelNoBrokersTitle": MessageLookupByLibrary.simpleMessage(
-      "Nog geen brokers",
-    ),
-    "brokersPanelSectionConnections": MessageLookupByLibrary.simpleMessage(
-      "Verbindingen",
-    ),
+    "brokerDialogFieldUsername": MessageLookupByLibrary.simpleMessage("Gebruikersnaam"),
+    "brokerDialogHistoryDisabled": MessageLookupByLibrary.simpleMessage("Geschiedenis uit"),
+    "brokerDialogHistoryMessages": MessageLookupByLibrary.simpleMessage("geschiedenisberichten"),
+    "brokerDialogRandomSuffix": MessageLookupByLibrary.simpleMessage("Willekeurig achtervoegsel"),
+    "brokerDialogRandomSuffixSubtitle": MessageLookupByLibrary.simpleMessage("Voegt een willekeurig 6-cijferig hex-achtervoegsel toe aan het Client-ID"),
+    "brokerDialogSectionAuthentication": MessageLookupByLibrary.simpleMessage("Verificatie"),
+    "brokerDialogSectionConnection": MessageLookupByLibrary.simpleMessage("Verbinding"),
+    "brokerDialogSectionTopics": MessageLookupByLibrary.simpleMessage("Onderwerpen"),
+    "brokerDialogUseSSL": MessageLookupByLibrary.simpleMessage("SSL / TLS gebruiken"),
+    "brokerDialogUseSSLSubtitle": MessageLookupByLibrary.simpleMessage("Versleutelt de verbinding met TLS"),
+    "brokerDialogValidateCertificates": MessageLookupByLibrary.simpleMessage("Certificaten valideren"),
+    "brokerDialogValidateCertificatesSubtitle": MessageLookupByLibrary.simpleMessage("Valideert de SSL/TLS-certificaten van de broker"),
+    "brokerDialogValidateHost": MessageLookupByLibrary.simpleMessage("Voer een host in"),
+    "brokerDialogValidateName": MessageLookupByLibrary.simpleMessage("Voer een naam in"),
+    "brokerProfilesUnavailable": MessageLookupByLibrary.simpleMessage("Brokerprofielen niet beschikbaar"),
+    "brokersPanelAddBroker": MessageLookupByLibrary.simpleMessage("Broker toevoegen"),
+    "brokersPanelDescription": MessageLookupByLibrary.simpleMessage("MQTT-brokers configureren."),
+    "brokersPanelNoBrokersMessage": MessageLookupByLibrary.simpleMessage("Druk op \'Broker toevoegen\' om je eerste broker aan te maken."),
+    "brokersPanelNoBrokersTitle": MessageLookupByLibrary.simpleMessage("Nog geen brokers"),
+    "brokersPanelSectionConnections": MessageLookupByLibrary.simpleMessage("Verbindingen"),
     "brokersPanelTitle": MessageLookupByLibrary.simpleMessage("Brokers"),
     "cancel": MessageLookupByLibrary.simpleMessage("Annuleren"),
-    "clearAllTopics": MessageLookupByLibrary.simpleMessage(
-      "Alle topics wissen",
-    ),
+    "clearAllTopics": MessageLookupByLibrary.simpleMessage("Alle topics wissen"),
     "collapseAll": MessageLookupByLibrary.simpleMessage("Alles inklappen"),
     "copy": MessageLookupByLibrary.simpleMessage("Kopiëren"),
-    "dashboardDialogEditTitle": MessageLookupByLibrary.simpleMessage(
-      "Dashboard bewerken",
-    ),
+    "dashboardDialogEditTitle": MessageLookupByLibrary.simpleMessage("Dashboard bewerken"),
     "dashboardDialogFieldName": MessageLookupByLibrary.simpleMessage("Naam"),
-    "dashboardDialogNewTitle": MessageLookupByLibrary.simpleMessage(
-      "Nieuw dashboard",
-    ),
-    "dashboardDialogScopeBrokersSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Alleen voor geselecteerde brokers",
-    ),
-    "dashboardDialogScopeGlobalSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Dashboard gebruiken voor alle brokers",
-    ),
-    "dashboardDialogSectionDetails": MessageLookupByLibrary.simpleMessage(
-      "Details",
-    ),
-    "dashboardDialogSectionScope": MessageLookupByLibrary.simpleMessage(
-      "Bereik",
-    ),
-    "dashboardDialogValidateName": MessageLookupByLibrary.simpleMessage(
-      "Naam is verplicht",
-    ),
-    "dashboardEraseHistory": MessageLookupByLibrary.simpleMessage(
-      "Geschiedenis wissen",
-    ),
-    "dashboardPanelAddDashboard": MessageLookupByLibrary.simpleMessage(
-      "Dashboard toevoegen",
-    ),
-    "dashboardPanelChartType": MessageLookupByLibrary.simpleMessage(
-      "Grafiektype",
-    ),
+    "dashboardDialogNewTitle": MessageLookupByLibrary.simpleMessage("Nieuw dashboard"),
+    "dashboardDialogScopeBrokersSubtitle": MessageLookupByLibrary.simpleMessage("Alleen voor geselecteerde brokers"),
+    "dashboardDialogScopeGlobalSubtitle": MessageLookupByLibrary.simpleMessage("Dashboard gebruiken voor alle brokers"),
+    "dashboardDialogSectionDetails": MessageLookupByLibrary.simpleMessage("Details"),
+    "dashboardDialogSectionScope": MessageLookupByLibrary.simpleMessage("Bereik"),
+    "dashboardDialogValidateName": MessageLookupByLibrary.simpleMessage("Naam is verplicht"),
+    "dashboardEraseHistory": MessageLookupByLibrary.simpleMessage("Geschiedenis wissen"),
+    "dashboardPanelAddDashboard": MessageLookupByLibrary.simpleMessage("Dashboard toevoegen"),
+    "dashboardPanelChartType": MessageLookupByLibrary.simpleMessage("Grafiektype"),
     "dashboardPanelColor": MessageLookupByLibrary.simpleMessage("Kleur"),
-    "dashboardPanelDashboards": MessageLookupByLibrary.simpleMessage(
-      "Dashboards",
-    ),
-    "dashboardPanelDefaults": MessageLookupByLibrary.simpleMessage(
-      "Standaardwaarden",
-    ),
-    "dashboardPanelDescription": MessageLookupByLibrary.simpleMessage(
-      "Beheer opgeslagen dashboardlay-outs.",
-    ),
-    "dashboardPanelDotSize": MessageLookupByLibrary.simpleMessage(
-      "Puntgrootte",
-    ),
-    "dashboardPanelDotSizeHint": MessageLookupByLibrary.simpleMessage(
-      "Puntgrootte voor nieuwe lijngrafieken. Kies 0 om punten te verbergen.",
-    ),
-    "dashboardPanelInterpolation": MessageLookupByLibrary.simpleMessage(
-      "Interpolatie",
-    ),
-    "dashboardPanelMaxSamples": MessageLookupByLibrary.simpleMessage(
-      "Meetpunten",
-    ),
-    "dashboardPanelMaxSamplesHint": MessageLookupByLibrary.simpleMessage(
-      "Maximumaantal recente waarden dat per nieuwe grafiek wordt bewaard.",
-    ),
-    "dashboardPanelNoDashboardsMessage": MessageLookupByLibrary.simpleMessage(
-      "Maak een dashboard of sla op vanuit de dashboardweergave",
-    ),
-    "dashboardPanelNoDashboardsTitle": MessageLookupByLibrary.simpleMessage(
-      "Nog geen dashboards",
-    ),
+    "dashboardPanelDashboards": MessageLookupByLibrary.simpleMessage("Dashboards"),
+    "dashboardPanelDefaults": MessageLookupByLibrary.simpleMessage("Standaardwaarden"),
+    "dashboardPanelDescription": MessageLookupByLibrary.simpleMessage("Beheer opgeslagen dashboardlay-outs."),
+    "dashboardPanelDotSize": MessageLookupByLibrary.simpleMessage("Puntgrootte"),
+    "dashboardPanelDotSizeHint": MessageLookupByLibrary.simpleMessage("Puntgrootte voor nieuwe lijngrafieken. Kies 0 om punten te verbergen."),
+    "dashboardPanelInterpolation": MessageLookupByLibrary.simpleMessage("Interpolatie"),
+    "dashboardPanelMaxSamples": MessageLookupByLibrary.simpleMessage("Meetpunten"),
+    "dashboardPanelMaxSamplesHint": MessageLookupByLibrary.simpleMessage("Maximumaantal recente waarden dat per nieuwe grafiek wordt bewaard."),
+    "dashboardPanelNoDashboardsMessage": MessageLookupByLibrary.simpleMessage("Maak een dashboard of sla op vanuit de dashboardweergave"),
+    "dashboardPanelNoDashboardsTitle": MessageLookupByLibrary.simpleMessage("Nog geen dashboards"),
     "dashboardPanelTitle": MessageLookupByLibrary.simpleMessage("Dashboard"),
     "delete": MessageLookupByLibrary.simpleMessage("Verwijderen"),
-    "detailClearRetained": MessageLookupByLibrary.simpleMessage(
-      "Retained bericht verwijderen",
-    ),
-    "detailDeleteTopic": MessageLookupByLibrary.simpleMessage(
-      "Topic verwijderen",
-    ),
+    "detailClearRetained": MessageLookupByLibrary.simpleMessage("Retained bericht verwijderen"),
+    "detailDeleteTopic": MessageLookupByLibrary.simpleMessage("Topic verwijderen"),
     "detailMessages": MessageLookupByLibrary.simpleMessage("Berichten"),
     "detailNo": MessageLookupByLibrary.simpleMessage("Nee"),
-    "detailPinnedToDashboard": MessageLookupByLibrary.simpleMessage(
-      "Vastgezet op dashboard",
-    ),
+    "detailPinnedToDashboard": MessageLookupByLibrary.simpleMessage("Vastgezet op dashboard"),
     "detailQoS": MessageLookupByLibrary.simpleMessage("QoS"),
     "detailRate": MessageLookupByLibrary.simpleMessage("Frequentie"),
     "detailRatePerSecond": m0,
     "detailRateValue": m1,
     "detailReceived": MessageLookupByLibrary.simpleMessage("Ontvangen"),
     "detailRetained": MessageLookupByLibrary.simpleMessage("Vastgehouden"),
-    "detailRetainedClearFailed": MessageLookupByLibrary.simpleMessage(
-      "Wissen mislukt — niet verbonden",
-    ),
-    "detailRetainedCleared": MessageLookupByLibrary.simpleMessage(
-      "Retained bericht verwijderd",
-    ),
+    "detailRetainedClearFailed": MessageLookupByLibrary.simpleMessage("Wissen mislukt — niet verbonden"),
+    "detailRetainedCleared": MessageLookupByLibrary.simpleMessage("Retained bericht verwijderd"),
     "detailShowLatest": MessageLookupByLibrary.simpleMessage("Toon nieuwste"),
     "detailSize": MessageLookupByLibrary.simpleMessage("Grootte"),
-    "detailTopicDeleted": MessageLookupByLibrary.simpleMessage(
-      "Topic verwijderd",
-    ),
+    "detailTopicDeleted": MessageLookupByLibrary.simpleMessage("Topic verwijderd"),
     "detailViewingMessage": m2,
-    "detailWaitingForMessages": MessageLookupByLibrary.simpleMessage(
-      "Wachten op berichten…",
-    ),
+    "detailWaitingForMessages": MessageLookupByLibrary.simpleMessage("Wachten op berichten…"),
     "detailYes": MessageLookupByLibrary.simpleMessage("Ja"),
     "disconnect": MessageLookupByLibrary.simpleMessage("Verbinding verbreken"),
     "dismiss": MessageLookupByLibrary.simpleMessage("Sluiten"),
     "durationHours": m3,
-    "durationLessThanSecond": MessageLookupByLibrary.simpleMessage(
-      "< 1 seconde",
-    ),
+    "durationLessThanSecond": MessageLookupByLibrary.simpleMessage("< 1 seconde"),
     "durationMinutes": m4,
     "durationSeconds": m5,
     "expandAll": MessageLookupByLibrary.simpleMessage("Alles uitklappen"),
-    "filterNoMatchingTopics": MessageLookupByLibrary.simpleMessage(
-      "Geen overeenkomende topics",
-    ),
-    "filterNoMatchingTopicsSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Probeer het filter aan te passen of te wissen.",
-    ),
+    "filterNoMatchingTopics": MessageLookupByLibrary.simpleMessage("Geen overeenkomende topics"),
+    "filterNoMatchingTopicsSubtitle": MessageLookupByLibrary.simpleMessage("Probeer het filter aan te passen of te wissen."),
     "hideDetails": MessageLookupByLibrary.simpleMessage("Details verbergen"),
     "historyPanelClear": MessageLookupByLibrary.simpleMessage("Wissen"),
-    "historyPanelDisabled": MessageLookupByLibrary.simpleMessage(
-      "Geschiedenis uitgeschakeld",
-    ),
-    "historyPanelDisabledHint": MessageLookupByLibrary.simpleMessage(
-      "Live waarden blijven binnenkomen, maar nieuwe geschiedenis wordt niet opgeslagen",
-    ),
-    "historyPanelNoHistory": MessageLookupByLibrary.simpleMessage(
-      "Nog geen geschiedenis",
-    ),
-    "historyPanelNoHistoryHint": MessageLookupByLibrary.simpleMessage(
-      "Berichten verschijnen hier zodra ze binnenkomen",
-    ),
-    "historyPanelNotSubscribed": MessageLookupByLibrary.simpleMessage(
-      "Geen passend abonnement",
-    ),
-    "historyPanelNotSubscribedHint": MessageLookupByLibrary.simpleMessage(
-      "Dit topic valt niet onder de abonnementen van de actieve broker",
-    ),
-    "historyPanelRetainingUpTo": MessageLookupByLibrary.simpleMessage(
-      "Maximaal bewaren",
-    ),
+    "historyPanelDisabled": MessageLookupByLibrary.simpleMessage("Geschiedenis uitgeschakeld"),
+    "historyPanelDisabledHint": MessageLookupByLibrary.simpleMessage("Live waarden blijven binnenkomen, maar nieuwe geschiedenis wordt niet opgeslagen"),
+    "historyPanelNoHistory": MessageLookupByLibrary.simpleMessage("Nog geen geschiedenis"),
+    "historyPanelNoHistoryHint": MessageLookupByLibrary.simpleMessage("Berichten verschijnen hier zodra ze binnenkomen"),
+    "historyPanelNotSubscribed": MessageLookupByLibrary.simpleMessage("Geen passend abonnement"),
+    "historyPanelNotSubscribedHint": MessageLookupByLibrary.simpleMessage("Dit topic valt niet onder de abonnementen van de actieve broker"),
+    "historyPanelRetainingUpTo": MessageLookupByLibrary.simpleMessage("Maximaal bewaren"),
     "historyPanelStored": MessageLookupByLibrary.simpleMessage("opgeslagen"),
     "languageNameDe": MessageLookupByLibrary.simpleMessage("Duits"),
     "languageNameEn": MessageLookupByLibrary.simpleMessage("Engels"),
     "languageNameEs": MessageLookupByLibrary.simpleMessage("Spaans"),
     "languageNameFr": MessageLookupByLibrary.simpleMessage("Frans"),
     "languageNameNl": MessageLookupByLibrary.simpleMessage("Nederlands"),
-    "languagePanelChangesNote": MessageLookupByLibrary.simpleMessage(
-      "Wijzigingen worden toegepast bij de volgende start.",
-    ),
-    "languagePanelDescription": MessageLookupByLibrary.simpleMessage(
-      "Selecteer de interfacetaal.",
-    ),
-    "languagePanelSectionLabel": MessageLookupByLibrary.simpleMessage(
-      "Interfacetaal",
-    ),
+    "languagePanelChangesNote": MessageLookupByLibrary.simpleMessage("Wijzigingen worden toegepast bij de volgende start."),
+    "languagePanelDescription": MessageLookupByLibrary.simpleMessage("Selecteer de interfacetaal."),
+    "languagePanelSectionLabel": MessageLookupByLibrary.simpleMessage("Interfacetaal"),
     "languagePanelTitle": MessageLookupByLibrary.simpleMessage("Taal"),
-    "monitoringPanelClearAll": MessageLookupByLibrary.simpleMessage(
-      "Alles wissen",
-    ),
-    "monitoringPanelDescription": MessageLookupByLibrary.simpleMessage(
-      "Configureer live bemonstering van de berichtfrequentie.",
-    ),
-    "monitoringPanelIncreasedBufferHint": MessageLookupByLibrary.simpleMessage(
-      "Berichten voor gemonitorde topics",
-    ),
-    "monitoringPanelIncreasedBufferSize": MessageLookupByLibrary.simpleMessage(
-      "Verhoogde buffergrootte",
-    ),
-    "monitoringPanelIncreasedMonitoring": MessageLookupByLibrary.simpleMessage(
-      "Verhoogde monitoring",
-    ),
-    "monitoringPanelRateSampleHint": MessageLookupByLibrary.simpleMessage(
-      "Berichten voor frequentieberekening",
-    ),
-    "monitoringPanelRateSampleSize": MessageLookupByLibrary.simpleMessage(
-      "Frequentie berekengrootte",
-    ),
-    "monitoringPanelRateSampling": MessageLookupByLibrary.simpleMessage(
-      "Frequentiebemonstering",
-    ),
+    "monitoringPanelClearAll": MessageLookupByLibrary.simpleMessage("Alles wissen"),
+    "monitoringPanelDescription": MessageLookupByLibrary.simpleMessage("Configureer live bemonstering van de berichtfrequentie."),
+    "monitoringPanelIncreasedBufferHint": MessageLookupByLibrary.simpleMessage("Berichten voor gemonitorde topics"),
+    "monitoringPanelIncreasedBufferSize": MessageLookupByLibrary.simpleMessage("Verhoogde buffergrootte"),
+    "monitoringPanelIncreasedMonitoring": MessageLookupByLibrary.simpleMessage("Verhoogde monitoring"),
+    "monitoringPanelRateSampleHint": MessageLookupByLibrary.simpleMessage("Berichten voor frequentieberekening"),
+    "monitoringPanelRateSampleSize": MessageLookupByLibrary.simpleMessage("Frequentie berekengrootte"),
+    "monitoringPanelRateSampling": MessageLookupByLibrary.simpleMessage("Frequentiebemonstering"),
     "monitoringPanelTitle": MessageLookupByLibrary.simpleMessage("Monitoring"),
     "noBroker": MessageLookupByLibrary.simpleMessage("Geen broker"),
-    "noMessagesSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Nog geen berichten ontvangen.",
-    ),
-    "noMessagesTitle": MessageLookupByLibrary.simpleMessage(
-      "Wachten op berichten",
-    ),
+    "noMessagesSubtitle": MessageLookupByLibrary.simpleMessage("Nog geen berichten ontvangen."),
+    "noMessagesTitle": MessageLookupByLibrary.simpleMessage("Wachten op berichten"),
     "optional": MessageLookupByLibrary.simpleMessage("Optioneel"),
     "publishAcknowledged": MessageLookupByLibrary.simpleMessage("Verzonden"),
     "publishBadJson": MessageLookupByLibrary.simpleMessage("Ongeldige JSON"),
     "publishDelivered": MessageLookupByLibrary.simpleMessage("Bezorgd"),
     "publishFailed": MessageLookupByLibrary.simpleMessage("Mislukt"),
-    "publishInvalidQos": MessageLookupByLibrary.simpleMessage(
-      "QoS moet 0, 1 of 2 zijn",
-    ),
-    "publishInvalidTemplate": MessageLookupByLibrary.simpleMessage(
-      "Zet de variabelenaam tussen accolades na een dollarteken",
-    ),
-    "publishInvalidTopic": MessageLookupByLibrary.simpleMessage(
-      "Voer een geldige MQTT-topicnaam in",
-    ),
-    "publishMissingVariables": MessageLookupByLibrary.simpleMessage(
-      "Stel elke topicvariabele in voordat je publiceert",
-    ),
+    "publishInvalidQos": MessageLookupByLibrary.simpleMessage("QoS moet 0, 1 of 2 zijn"),
+    "publishInvalidTemplate": MessageLookupByLibrary.simpleMessage("Zet de variabelenaam tussen accolades na een dollarteken"),
+    "publishInvalidTopic": MessageLookupByLibrary.simpleMessage("Voer een geldige MQTT-topicnaam in"),
+    "publishMissingVariables": MessageLookupByLibrary.simpleMessage("Stel elke topicvariabele in voordat je publiceert"),
     "publishNoTopic": MessageLookupByLibrary.simpleMessage("Geen topic"),
     "publishOffline": MessageLookupByLibrary.simpleMessage("Offline"),
     "publishPrettifyJson": MessageLookupByLibrary.simpleMessage("JSON opmaken"),
@@ -491,12 +237,8 @@ class MessageLookup extends MessageLookupByLibrary {
     "retry": MessageLookupByLibrary.simpleMessage("Opnieuw proberen"),
     "save": MessageLookupByLibrary.simpleMessage("Opslaan"),
     "scopeGlobal": MessageLookupByLibrary.simpleMessage("Globaal"),
-    "scopeSelectedBrokers": MessageLookupByLibrary.simpleMessage(
-      "Geselecteerde brokers",
-    ),
-    "scopeSpecificBrokers": MessageLookupByLibrary.simpleMessage(
-      "Specifieke brokers",
-    ),
+    "scopeSelectedBrokers": MessageLookupByLibrary.simpleMessage("Geselecteerde brokers"),
+    "scopeSpecificBrokers": MessageLookupByLibrary.simpleMessage("Specifieke brokers"),
     "searchHint": MessageLookupByLibrary.simpleMessage("Zoeken"),
     "searchModeAll": MessageLookupByLibrary.simpleMessage("Alle woorden"),
     "searchModeAny": MessageLookupByLibrary.simpleMessage("Een van de woorden"),
@@ -513,392 +255,153 @@ class MessageLookup extends MessageLookupByLibrary {
     "sectionUI": MessageLookupByLibrary.simpleMessage("Gebruikersinterface"),
     "sectionVariables": MessageLookupByLibrary.simpleMessage("Variabelen"),
     "settings": MessageLookupByLibrary.simpleMessage("Instellingen"),
-    "shortcutDialogAddTitle": MessageLookupByLibrary.simpleMessage(
-      "Snelkoppeling toevoegen",
-    ),
-    "shortcutDialogEditTitle": MessageLookupByLibrary.simpleMessage(
-      "Snelkoppeling bewerken",
-    ),
+    "shortcutDialogAddTitle": MessageLookupByLibrary.simpleMessage("Snelkoppeling toevoegen"),
+    "shortcutDialogEditTitle": MessageLookupByLibrary.simpleMessage("Snelkoppeling bewerken"),
     "shortcutDialogFieldColor": MessageLookupByLibrary.simpleMessage("Kleur"),
     "shortcutDialogFieldName": MessageLookupByLibrary.simpleMessage("Naam"),
     "shortcutDialogFieldTopic": MessageLookupByLibrary.simpleMessage("Topic"),
-    "shortcutDialogInvalidTemplate": MessageLookupByLibrary.simpleMessage(
-      "Zet de variabelenaam tussen accolades na een dollarteken",
-    ),
-    "shortcutDialogInvalidTopic": MessageLookupByLibrary.simpleMessage(
-      "Voer een geldige MQTT-topicnaam in",
-    ),
+    "shortcutDialogInvalidTemplate": MessageLookupByLibrary.simpleMessage("Zet de variabelenaam tussen accolades na een dollarteken"),
+    "shortcutDialogInvalidTopic": MessageLookupByLibrary.simpleMessage("Voer een geldige MQTT-topicnaam in"),
     "shortcutDialogRetain": MessageLookupByLibrary.simpleMessage("Retain"),
-    "shortcutDialogRetainSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Broker slaat het bericht op voor nieuwe abonnees",
-    ),
-    "shortcutDialogScopeBrokersSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Alleen voor geselecteerde brokers",
-    ),
-    "shortcutDialogScopeGlobalSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Beschikbaar voor alle brokers",
-    ),
-    "shortcutDialogValidateName": MessageLookupByLibrary.simpleMessage(
-      "Voer een naam in",
-    ),
-    "shortcutDialogValidateTopic": MessageLookupByLibrary.simpleMessage(
-      "Voer een topic in",
-    ),
-    "shortcutsPanelAddShortcut": MessageLookupByLibrary.simpleMessage(
-      "Snelkoppeling toevoegen",
-    ),
-    "shortcutsPanelDefinedShortcuts": MessageLookupByLibrary.simpleMessage(
-      "Gedefinieerde snelkoppelingen",
-    ),
-    "shortcutsPanelDescription": MessageLookupByLibrary.simpleMessage(
-      "Definieer publiceer snelkoppelingen om snel berichten naar topics te sturen.",
-    ),
-    "shortcutsPanelNoShortcutsMessage": MessageLookupByLibrary.simpleMessage(
-      "Voeg een snelkoppeling toe om snel\nnaar je favoriete topics te publiceren.",
-    ),
-    "shortcutsPanelNoShortcutsTitle": MessageLookupByLibrary.simpleMessage(
-      "Nog geen snelkoppelingen",
-    ),
-    "shortcutsPanelTitle": MessageLookupByLibrary.simpleMessage(
-      "Snelkoppelingen",
-    ),
+    "shortcutDialogRetainSubtitle": MessageLookupByLibrary.simpleMessage("Broker slaat het bericht op voor nieuwe abonnees"),
+    "shortcutDialogScopeBrokersSubtitle": MessageLookupByLibrary.simpleMessage("Alleen voor geselecteerde brokers"),
+    "shortcutDialogScopeGlobalSubtitle": MessageLookupByLibrary.simpleMessage("Beschikbaar voor alle brokers"),
+    "shortcutDialogValidateName": MessageLookupByLibrary.simpleMessage("Voer een naam in"),
+    "shortcutDialogValidateTopic": MessageLookupByLibrary.simpleMessage("Voer een topic in"),
+    "shortcutsPanelAddShortcut": MessageLookupByLibrary.simpleMessage("Snelkoppeling toevoegen"),
+    "shortcutsPanelDefinedShortcuts": MessageLookupByLibrary.simpleMessage("Gedefinieerde snelkoppelingen"),
+    "shortcutsPanelDescription": MessageLookupByLibrary.simpleMessage("Definieer publiceer snelkoppelingen om snel berichten naar topics te sturen."),
+    "shortcutsPanelNoShortcutsMessage": MessageLookupByLibrary.simpleMessage("Voeg een snelkoppeling toe om snel\nnaar je favoriete topics te publiceren."),
+    "shortcutsPanelNoShortcutsTitle": MessageLookupByLibrary.simpleMessage("Nog geen snelkoppelingen"),
+    "shortcutsPanelTitle": MessageLookupByLibrary.simpleMessage("Snelkoppelingen"),
     "showDetails": MessageLookupByLibrary.simpleMessage("Details tonen"),
     "sidebarHistory": MessageLookupByLibrary.simpleMessage("GESCHIEDENIS"),
-    "sidebarMessageDetail": MessageLookupByLibrary.simpleMessage(
-      "BERICHTDETAILS",
-    ),
-    "sidebarNoSelectionSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Kies een topic uit de boom\nom berichtdetails te bekijken",
-    ),
-    "sidebarNoSelectionTitle": MessageLookupByLibrary.simpleMessage(
-      "Selecteer een topic om te bekijken",
-    ),
+    "sidebarMessageDetail": MessageLookupByLibrary.simpleMessage("BERICHTDETAILS"),
+    "sidebarNoSelectionSubtitle": MessageLookupByLibrary.simpleMessage("Kies een topic uit de boom\nom berichtdetails te bekijken"),
+    "sidebarNoSelectionTitle": MessageLookupByLibrary.simpleMessage("Selecteer een topic om te bekijken"),
     "sidebarPublish": MessageLookupByLibrary.simpleMessage("PUBLICEREN"),
-    "sidebarResizeDetailHistory": MessageLookupByLibrary.simpleMessage(
-      "Formaat van Berichtdetails en Geschiedenis wijzigen",
-    ),
-    "sidebarResizeDetailPublish": MessageLookupByLibrary.simpleMessage(
-      "Formaat van Berichtdetails en Publiceren wijzigen",
-    ),
-    "sidebarResizeDetailShortcuts": MessageLookupByLibrary.simpleMessage(
-      "Formaat van Berichtdetails en Snelkoppelingen wijzigen",
-    ),
-    "sidebarResizeHistoryPublish": MessageLookupByLibrary.simpleMessage(
-      "Formaat van Geschiedenis en Publiceren wijzigen",
-    ),
-    "sidebarResizeHistoryShortcuts": MessageLookupByLibrary.simpleMessage(
-      "Formaat van Geschiedenis en Snelkoppelingen wijzigen",
-    ),
-    "sidebarResizePublishShortcuts": MessageLookupByLibrary.simpleMessage(
-      "Formaat van Publiceren en Snelkoppelingen wijzigen",
-    ),
+    "sidebarResizeDetailHistory": MessageLookupByLibrary.simpleMessage("Formaat van Berichtdetails en Geschiedenis wijzigen"),
+    "sidebarResizeDetailPublish": MessageLookupByLibrary.simpleMessage("Formaat van Berichtdetails en Publiceren wijzigen"),
+    "sidebarResizeDetailShortcuts": MessageLookupByLibrary.simpleMessage("Formaat van Berichtdetails en Snelkoppelingen wijzigen"),
+    "sidebarResizeHistoryPublish": MessageLookupByLibrary.simpleMessage("Formaat van Geschiedenis en Publiceren wijzigen"),
+    "sidebarResizeHistoryShortcuts": MessageLookupByLibrary.simpleMessage("Formaat van Geschiedenis en Snelkoppelingen wijzigen"),
+    "sidebarResizePublishShortcuts": MessageLookupByLibrary.simpleMessage("Formaat van Publiceren en Snelkoppelingen wijzigen"),
     "sidebarShortcuts": MessageLookupByLibrary.simpleMessage("SNELKOPPELINGEN"),
-    "sidebarShortcutsEmpty": MessageLookupByLibrary.simpleMessage(
-      "Geen snelkoppelingen beschikbaar.\nVoeg ze toe via Instellingen.",
-    ),
-    "sidebarShortcutsManage": MessageLookupByLibrary.simpleMessage(
-      "Snelkoppelingen beheren",
-    ),
+    "sidebarShortcutsEmpty": MessageLookupByLibrary.simpleMessage("Geen snelkoppelingen beschikbaar.\nVoeg ze toe via Instellingen."),
+    "sidebarShortcutsManage": MessageLookupByLibrary.simpleMessage("Snelkoppelingen beheren"),
     "statusConnected": MessageLookupByLibrary.simpleMessage("Verbonden"),
     "statusConnecting": MessageLookupByLibrary.simpleMessage("Verbinden"),
-    "statusConnectionRefused": MessageLookupByLibrary.simpleMessage(
-      "Verbinding geweigerd",
-    ),
+    "statusConnectionRefused": MessageLookupByLibrary.simpleMessage("Verbinding geweigerd"),
     "statusDisconnected": MessageLookupByLibrary.simpleMessage("Verbroken"),
     "statusError": MessageLookupByLibrary.simpleMessage("Fout"),
-    "statusHostNotFound": MessageLookupByLibrary.simpleMessage(
-      "Host niet gevonden",
-    ),
+    "statusHostNotFound": MessageLookupByLibrary.simpleMessage("Host niet gevonden"),
     "statusMessages": m6,
-    "statusMqtt311Detail": MessageLookupByLibrary.simpleMessage(
-      "MQTT 3.1.1 — broker retourneert geen bezorgredenen",
-    ),
-    "statusMqtt5Detail": MessageLookupByLibrary.simpleMessage(
-      "MQTT 5.0 — redencodes en eigenschappen beschikbaar",
-    ),
-    "statusNotPermitted": MessageLookupByLibrary.simpleMessage(
-      "Niet toegestaan",
-    ),
-    "statusOpenUpdateSettings": MessageLookupByLibrary.simpleMessage(
-      "Update-instellingen openen",
-    ),
+    "statusMqtt311Detail": MessageLookupByLibrary.simpleMessage("MQTT 3.1.1 — broker retourneert geen bezorgredenen"),
+    "statusMqtt5Detail": MessageLookupByLibrary.simpleMessage("MQTT 5.0 — redencodes en eigenschappen beschikbaar"),
+    "statusNotPermitted": MessageLookupByLibrary.simpleMessage("Niet toegestaan"),
+    "statusOpenUpdateSettings": MessageLookupByLibrary.simpleMessage("Update-instellingen openen"),
     "statusTlsFailed": MessageLookupByLibrary.simpleMessage("TLS mislukt"),
-    "statusUpdateAvailable": MessageLookupByLibrary.simpleMessage(
-      "Update beschikbaar",
-    ),
-    "subscriptionDialogAddTitle": MessageLookupByLibrary.simpleMessage(
-      "Abonnement toevoegen",
-    ),
-    "subscriptionDialogDuplicateTopicFilter":
-        MessageLookupByLibrary.simpleMessage(
-          "Deze broker heeft dit topicfilter al",
-        ),
-    "subscriptionDialogEditTitle": MessageLookupByLibrary.simpleMessage(
-      "Abonnement bewerken",
-    ),
-    "subscriptionDialogFieldDisplayName": MessageLookupByLibrary.simpleMessage(
-      "Weergavenaam",
-    ),
-    "subscriptionDialogFieldTopicFilter": MessageLookupByLibrary.simpleMessage(
-      "Onderwerpfilter",
-    ),
-    "subscriptionDialogHintDisplayName": MessageLookupByLibrary.simpleMessage(
-      "Optionele vriendelijke naam",
-    ),
-    "subscriptionDialogHistoryEnabled": MessageLookupByLibrary.simpleMessage(
-      "Berichtgeschiedenis opslaan",
-    ),
-    "subscriptionDialogHistoryEnabledHint":
-        MessageLookupByLibrary.simpleMessage(
-          "Live berichten blijven beschikbaar wanneer geschiedenis uit staat",
-        ),
-    "subscriptionDialogHistoryLabel": MessageLookupByLibrary.simpleMessage(
-      "Geschiedenis",
-    ),
-    "subscriptionDialogHistoryOverlapHint": MessageLookupByLibrary.simpleMessage(
-      "Wanneer ingeschakelde filters overlappen, wordt de grootste passende bewaarlimiet gebruikt.",
-    ),
-    "subscriptionDialogHistoryRetention": MessageLookupByLibrary.simpleMessage(
-      "Bewaarlimiet",
-    ),
-    "subscriptionDialogHistoryRetentionHint": MessageLookupByLibrary.simpleMessage(
-      "Berichten die worden bewaard voor topics die bij dit abonnement passen",
-    ),
-    "subscriptionDialogInvalidTopicFilter":
-        MessageLookupByLibrary.simpleMessage(
-          "Voer een geldig MQTT-topicfilter in",
-        ),
-    "subscriptionDialogQoS0Description": MessageLookupByLibrary.simpleMessage(
-      "Maximaal één keer",
-    ),
-    "subscriptionDialogQoS0Label": MessageLookupByLibrary.simpleMessage(
-      "QoS 0",
-    ),
-    "subscriptionDialogQoS1Description": MessageLookupByLibrary.simpleMessage(
-      "Minimaal één keer",
-    ),
-    "subscriptionDialogQoS1Label": MessageLookupByLibrary.simpleMessage(
-      "QoS 1",
-    ),
-    "subscriptionDialogQoS2Description": MessageLookupByLibrary.simpleMessage(
-      "Precies één keer",
-    ),
-    "subscriptionDialogQoS2Label": MessageLookupByLibrary.simpleMessage(
-      "QoS 2",
-    ),
-    "subscriptionDialogQoSLabel": MessageLookupByLibrary.simpleMessage(
-      "Servicekwaliteit",
-    ),
-    "subscriptionDialogValidateTopicFilter":
-        MessageLookupByLibrary.simpleMessage("Voer een onderwerpfilter in"),
+    "statusUpdateAvailable": MessageLookupByLibrary.simpleMessage("Update beschikbaar"),
+    "subscriptionDialogAddTitle": MessageLookupByLibrary.simpleMessage("Abonnement toevoegen"),
+    "subscriptionDialogDuplicateTopicFilter": MessageLookupByLibrary.simpleMessage("Deze broker heeft dit topicfilter al"),
+    "subscriptionDialogEditTitle": MessageLookupByLibrary.simpleMessage("Abonnement bewerken"),
+    "subscriptionDialogFieldDisplayName": MessageLookupByLibrary.simpleMessage("Weergavenaam"),
+    "subscriptionDialogFieldTopicFilter": MessageLookupByLibrary.simpleMessage("Onderwerpfilter"),
+    "subscriptionDialogHintDisplayName": MessageLookupByLibrary.simpleMessage("Optionele vriendelijke naam"),
+    "subscriptionDialogHistoryEnabled": MessageLookupByLibrary.simpleMessage("Berichtgeschiedenis opslaan"),
+    "subscriptionDialogHistoryEnabledHint": MessageLookupByLibrary.simpleMessage("Live berichten blijven beschikbaar wanneer geschiedenis uit staat"),
+    "subscriptionDialogHistoryLabel": MessageLookupByLibrary.simpleMessage("Geschiedenis"),
+    "subscriptionDialogHistoryOverlapHint": MessageLookupByLibrary.simpleMessage("Wanneer ingeschakelde filters overlappen, wordt de grootste passende bewaarlimiet gebruikt."),
+    "subscriptionDialogHistoryRetention": MessageLookupByLibrary.simpleMessage("Bewaarlimiet"),
+    "subscriptionDialogHistoryRetentionHint": MessageLookupByLibrary.simpleMessage("Berichten die worden bewaard voor topics die bij dit abonnement passen"),
+    "subscriptionDialogInvalidTopicFilter": MessageLookupByLibrary.simpleMessage("Voer een geldig MQTT-topicfilter in"),
+    "subscriptionDialogQoS0Description": MessageLookupByLibrary.simpleMessage("Maximaal één keer"),
+    "subscriptionDialogQoS0Label": MessageLookupByLibrary.simpleMessage("QoS 0"),
+    "subscriptionDialogQoS1Description": MessageLookupByLibrary.simpleMessage("Minimaal één keer"),
+    "subscriptionDialogQoS1Label": MessageLookupByLibrary.simpleMessage("QoS 1"),
+    "subscriptionDialogQoS2Description": MessageLookupByLibrary.simpleMessage("Precies één keer"),
+    "subscriptionDialogQoS2Label": MessageLookupByLibrary.simpleMessage("QoS 2"),
+    "subscriptionDialogQoSLabel": MessageLookupByLibrary.simpleMessage("Servicekwaliteit"),
+    "subscriptionDialogValidateTopicFilter": MessageLookupByLibrary.simpleMessage("Voer een onderwerpfilter in"),
     "uiPanelAccentColor": MessageLookupByLibrary.simpleMessage("Accentkleur"),
-    "uiPanelDefaultBrokerProtocol": MessageLookupByLibrary.simpleMessage(
-      "Standaardprotocol voor nieuwe brokers",
-    ),
-    "uiPanelDefaultPublishQos": MessageLookupByLibrary.simpleMessage(
-      "Standaard QoS publiceren",
-    ),
-    "uiPanelDefaultPublishQosSubtitle": MessageLookupByLibrary.simpleMessage(
-      "QoS voor nieuwe te publiceren berichten",
-    ),
-    "uiPanelDefaultShortcutQos": MessageLookupByLibrary.simpleMessage(
-      "Standaard QoS snelkoppelingen",
-    ),
-    "uiPanelDefaultShortcutQosSubtitle": MessageLookupByLibrary.simpleMessage(
-      "QoS voor nieuwe publicatiesnelkoppelingen",
-    ),
-    "uiPanelDefaultStateCollapsed": MessageLookupByLibrary.simpleMessage(
-      "Ingeklapt",
-    ),
-    "uiPanelDefaultStateExpanded": MessageLookupByLibrary.simpleMessage(
-      "Uitgeklapt",
-    ),
-    "uiPanelDefaultStateLastStatus": MessageLookupByLibrary.simpleMessage(
-      "Laatste status",
-    ),
-    "uiPanelDefaultSubscribeQos": MessageLookupByLibrary.simpleMessage(
-      "Standaard QoS abonneren",
-    ),
-    "uiPanelDefaultSubscribeQosSubtitle": MessageLookupByLibrary.simpleMessage(
-      "QoS voor nieuwe abonnementen",
-    ),
+    "uiPanelDefaultBrokerProtocol": MessageLookupByLibrary.simpleMessage("Standaardprotocol voor nieuwe brokers"),
+    "uiPanelDefaultPublishQos": MessageLookupByLibrary.simpleMessage("Standaard QoS publiceren"),
+    "uiPanelDefaultPublishQosSubtitle": MessageLookupByLibrary.simpleMessage("QoS voor nieuwe te publiceren berichten"),
+    "uiPanelDefaultShortcutQos": MessageLookupByLibrary.simpleMessage("Standaard QoS snelkoppelingen"),
+    "uiPanelDefaultShortcutQosSubtitle": MessageLookupByLibrary.simpleMessage("QoS voor nieuwe publicatiesnelkoppelingen"),
+    "uiPanelDefaultStateCollapsed": MessageLookupByLibrary.simpleMessage("Ingeklapt"),
+    "uiPanelDefaultStateExpanded": MessageLookupByLibrary.simpleMessage("Uitgeklapt"),
+    "uiPanelDefaultStateLastStatus": MessageLookupByLibrary.simpleMessage("Laatste status"),
+    "uiPanelDefaultSubscribeQos": MessageLookupByLibrary.simpleMessage("Standaard QoS abonneren"),
+    "uiPanelDefaultSubscribeQosSubtitle": MessageLookupByLibrary.simpleMessage("QoS voor nieuwe abonnementen"),
     "uiPanelDensity": MessageLookupByLibrary.simpleMessage("Weergavedichtheid"),
-    "uiPanelDensityComfortable": MessageLookupByLibrary.simpleMessage(
-      "Comfortabel",
-    ),
+    "uiPanelDensityComfortable": MessageLookupByLibrary.simpleMessage("Comfortabel"),
     "uiPanelDensityCompact": MessageLookupByLibrary.simpleMessage("Compact"),
-    "uiPanelDescription": MessageLookupByLibrary.simpleMessage(
-      "Uiterlijk en lay-outvoorkeuren.",
-    ),
-    "uiPanelDisableSelectionHighlight": MessageLookupByLibrary.simpleMessage(
-      "Selectie-markering uitschakelen",
-    ),
-    "uiPanelDisableSelectionHighlightSubtitle":
-        MessageLookupByLibrary.simpleMessage(
-          "Verberg de selectie-markering zodat activiteitspulsen zichtbaar blijven op het actieve topic",
-        ),
-    "uiPanelJsonInlineArrayItems": MessageLookupByLibrary.simpleMessage(
-      "Items per array op één regel",
-    ),
-    "uiPanelJsonInlineArrayItemsSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Houd arrays met eenvoudige waarden met dit aantal items of minder op één regel.",
-    ),
-    "uiPanelPersistLayout": MessageLookupByLibrary.simpleMessage(
-      "Lay-out bewaren",
-    ),
-    "uiPanelPersistLayoutSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Panelgrootten en -posities herstellen bij opstart",
-    ),
+    "uiPanelDescription": MessageLookupByLibrary.simpleMessage("Uiterlijk en lay-outvoorkeuren."),
+    "uiPanelDisableSelectionHighlight": MessageLookupByLibrary.simpleMessage("Selectie-markering uitschakelen"),
+    "uiPanelDisableSelectionHighlightSubtitle": MessageLookupByLibrary.simpleMessage("Verberg de selectie-markering zodat activiteitspulsen zichtbaar blijven op het actieve topic"),
+    "uiPanelJsonInlineArrayItems": MessageLookupByLibrary.simpleMessage("Items per array op één regel"),
+    "uiPanelJsonInlineArrayItemsSubtitle": MessageLookupByLibrary.simpleMessage("Houd arrays met eenvoudige waarden met dit aantal items of minder op één regel."),
+    "uiPanelPersistLayout": MessageLookupByLibrary.simpleMessage("Lay-out bewaren"),
+    "uiPanelPersistLayoutSubtitle": MessageLookupByLibrary.simpleMessage("Panelgrootten en -posities herstellen bij opstart"),
     "uiPanelPulseFade": MessageLookupByLibrary.simpleMessage("Pulsvervaging"),
-    "uiPanelPulseFadeSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Duur van de animatie",
-    ),
+    "uiPanelPulseFadeSubtitle": MessageLookupByLibrary.simpleMessage("Duur van de animatie"),
     "uiPanelPulseRate": MessageLookupByLibrary.simpleMessage("Pulsnelheid"),
-    "uiPanelPulseRateSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Maximum activiteitspulsen per seconde",
-    ),
-    "uiPanelQosOptionLastUsed": MessageLookupByLibrary.simpleMessage(
-      "Laatst gebruikt",
-    ),
-    "uiPanelQosOptionLastUsedSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Hergebruik de QoS die je het laatst hebt gekozen",
-    ),
-    "uiPanelRateInterval": MessageLookupByLibrary.simpleMessage(
-      "Update-interval",
-    ),
-    "uiPanelRateIntervalSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Hoe vaak de berichtensnelheid wordt herberekend",
-    ),
-    "uiPanelSearchMatchDefault": MessageLookupByLibrary.simpleMessage(
-      "Standaard woordovereenkomst",
-    ),
-    "uiPanelSearchScopeDefault": MessageLookupByLibrary.simpleMessage(
-      "Standaard zoeken in",
-    ),
-    "uiPanelSectionAppearance": MessageLookupByLibrary.simpleMessage(
-      "Uiterlijk",
-    ),
-    "uiPanelSectionConnection": MessageLookupByLibrary.simpleMessage(
-      "Verbinding",
-    ),
-    "uiPanelSectionDataDisplay": MessageLookupByLibrary.simpleMessage(
-      "Data weergave",
-    ),
-    "uiPanelSectionDefaults": MessageLookupByLibrary.simpleMessage(
-      "Standaardwaarden",
-    ),
+    "uiPanelPulseRateSubtitle": MessageLookupByLibrary.simpleMessage("Maximum activiteitspulsen per seconde"),
+    "uiPanelQosOptionLastUsed": MessageLookupByLibrary.simpleMessage("Laatst gebruikt"),
+    "uiPanelQosOptionLastUsedSubtitle": MessageLookupByLibrary.simpleMessage("Hergebruik de QoS die je het laatst hebt gekozen"),
+    "uiPanelRateInterval": MessageLookupByLibrary.simpleMessage("Update-interval"),
+    "uiPanelRateIntervalSubtitle": MessageLookupByLibrary.simpleMessage("Hoe vaak de berichtensnelheid wordt herberekend"),
+    "uiPanelSearchMatchDefault": MessageLookupByLibrary.simpleMessage("Standaard woordovereenkomst"),
+    "uiPanelSearchScopeDefault": MessageLookupByLibrary.simpleMessage("Standaard zoeken in"),
+    "uiPanelSectionAppearance": MessageLookupByLibrary.simpleMessage("Uiterlijk"),
+    "uiPanelSectionConnection": MessageLookupByLibrary.simpleMessage("Verbinding"),
+    "uiPanelSectionDataDisplay": MessageLookupByLibrary.simpleMessage("Data weergave"),
+    "uiPanelSectionDefaults": MessageLookupByLibrary.simpleMessage("Standaardwaarden"),
     "uiPanelSectionJson": MessageLookupByLibrary.simpleMessage("JSON-weergave"),
     "uiPanelSectionLayout": MessageLookupByLibrary.simpleMessage("Lay-out"),
     "uiPanelSectionSearch": MessageLookupByLibrary.simpleMessage("Zoeken"),
-    "uiPanelSectionSidebarPanels": MessageLookupByLibrary.simpleMessage(
-      "Zijbalkpanelen",
-    ),
-    "uiPanelShowActivity": MessageLookupByLibrary.simpleMessage(
-      "Activiteit tonen",
-    ),
-    "uiPanelShowActivitySubtitle": MessageLookupByLibrary.simpleMessage(
-      "Pluseer topic bij activiteit",
-    ),
-    "uiPanelShowStatusBar": MessageLookupByLibrary.simpleMessage(
-      "Statusbalk tonen",
-    ),
-    "uiPanelShowStatusBarSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Toont de statusbalk onder het scherm",
-    ),
-    "uiPanelShowTopicBadges": MessageLookupByLibrary.simpleMessage(
-      "Topicbadges tonen",
-    ),
-    "uiPanelShowTopicBadgesSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Toon topic- en berichtentellingen in de topicboom",
-    ),
-    "uiPanelShowTopicPayloadPreview": MessageLookupByLibrary.simpleMessage(
-      "Payloadvoorbeelden tonen",
-    ),
-    "uiPanelShowTopicPayloadPreviewSubtitle":
-        MessageLookupByLibrary.simpleMessage(
-          "Toon de recentste waarde direct in de topicboom",
-        ),
-    "uiPanelSidebarAnimationSpeed": MessageLookupByLibrary.simpleMessage(
-      "Animatiesnelheid panelen",
-    ),
-    "uiPanelSidebarAnimationSpeedSubtitle":
-        MessageLookupByLibrary.simpleMessage(
-          "Hoe snel de rechterpanelen bewegen",
-        ),
-    "uiPanelSidebarAnimations": MessageLookupByLibrary.simpleMessage(
-      "Animaties rechterpanelen",
-    ),
-    "uiPanelSidebarAnimationsSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Animeer panelen bij uit- en inklappen",
-    ),
-    "uiPanelStartupBehavior": MessageLookupByLibrary.simpleMessage(
-      "Opstartgedrag",
-    ),
+    "uiPanelSectionSidebarPanels": MessageLookupByLibrary.simpleMessage("Zijbalkpanelen"),
+    "uiPanelShowActivity": MessageLookupByLibrary.simpleMessage("Activiteit tonen"),
+    "uiPanelShowActivitySubtitle": MessageLookupByLibrary.simpleMessage("Pluseer topic bij activiteit"),
+    "uiPanelShowStatusBar": MessageLookupByLibrary.simpleMessage("Statusbalk tonen"),
+    "uiPanelShowStatusBarSubtitle": MessageLookupByLibrary.simpleMessage("Toont de statusbalk onder het scherm"),
+    "uiPanelShowTopicBadges": MessageLookupByLibrary.simpleMessage("Topicbadges tonen"),
+    "uiPanelShowTopicBadgesSubtitle": MessageLookupByLibrary.simpleMessage("Toon topic- en berichtentellingen in de topicboom"),
+    "uiPanelShowTopicPayloadPreview": MessageLookupByLibrary.simpleMessage("Payloadvoorbeelden tonen"),
+    "uiPanelShowTopicPayloadPreviewSubtitle": MessageLookupByLibrary.simpleMessage("Toon de recentste waarde direct in de topicboom"),
+    "uiPanelSidebarAnimationSpeed": MessageLookupByLibrary.simpleMessage("Animatiesnelheid panelen"),
+    "uiPanelSidebarAnimationSpeedSubtitle": MessageLookupByLibrary.simpleMessage("Hoe snel de rechterpanelen bewegen"),
+    "uiPanelSidebarAnimations": MessageLookupByLibrary.simpleMessage("Animaties rechterpanelen"),
+    "uiPanelSidebarAnimationsSubtitle": MessageLookupByLibrary.simpleMessage("Animeer panelen bij uit- en inklappen"),
+    "uiPanelStartupBehavior": MessageLookupByLibrary.simpleMessage("Opstartgedrag"),
     "uiPanelStartupConnect": MessageLookupByLibrary.simpleMessage("Verbinden"),
-    "uiPanelStartupDisconnected": MessageLookupByLibrary.simpleMessage(
-      "Verbroken",
-    ),
-    "uiPanelStartupLastStatus": MessageLookupByLibrary.simpleMessage(
-      "Laatste status",
-    ),
+    "uiPanelStartupDisconnected": MessageLookupByLibrary.simpleMessage("Verbroken"),
+    "uiPanelStartupLastStatus": MessageLookupByLibrary.simpleMessage("Laatste status"),
     "uiPanelThemeDark": MessageLookupByLibrary.simpleMessage("Donker"),
     "uiPanelThemeLight": MessageLookupByLibrary.simpleMessage("Licht"),
     "uiPanelThemeMode": MessageLookupByLibrary.simpleMessage("Thema"),
     "uiPanelThemeSystem": MessageLookupByLibrary.simpleMessage("Systeem"),
     "uiPanelTitle": MessageLookupByLibrary.simpleMessage("Gebruikersinterface"),
-    "variableDialogAddOption": MessageLookupByLibrary.simpleMessage(
-      "Optie toevoegen",
-    ),
-    "variableDialogAddTitle": MessageLookupByLibrary.simpleMessage(
-      "Variabele toevoegen",
-    ),
-    "variableDialogDisplayName": MessageLookupByLibrary.simpleMessage(
-      "Weergavenaam",
-    ),
-    "variableDialogEditTitle": MessageLookupByLibrary.simpleMessage(
-      "Variabele bewerken",
-    ),
+    "variableDialogAddOption": MessageLookupByLibrary.simpleMessage("Optie toevoegen"),
+    "variableDialogAddTitle": MessageLookupByLibrary.simpleMessage("Variabele toevoegen"),
+    "variableDialogDisplayName": MessageLookupByLibrary.simpleMessage("Weergavenaam"),
+    "variableDialogEditTitle": MessageLookupByLibrary.simpleMessage("Variabele bewerken"),
     "variableDialogFieldName": MessageLookupByLibrary.simpleMessage("Naam"),
-    "variableDialogNameExists": MessageLookupByLibrary.simpleMessage(
-      "Een variabele met deze naam bestaat al",
-    ),
-    "variableDialogNameInvalid": MessageLookupByLibrary.simpleMessage(
-      "Naam mag geen spaties of speciale tekens bevatten",
-    ),
-    "variableDialogOptionsHint": MessageLookupByLibrary.simpleMessage(
-      "Met opties kun je kiezen uit een lijst in het dashboard in plaats van elke keer te typen.",
-    ),
-    "variableDialogPredefinedOptions": MessageLookupByLibrary.simpleMessage(
-      "Voorgedefinieerde opties",
-    ),
-    "variableDialogScopeBrokersSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Alleen voor geselecteerde brokers",
-    ),
-    "variableDialogScopeGlobalSubtitle": MessageLookupByLibrary.simpleMessage(
-      "Beschikbaar voor alle brokers",
-    ),
-    "variableDialogValidateName": MessageLookupByLibrary.simpleMessage(
-      "Voer een variabelenaam in",
-    ),
+    "variableDialogNameExists": MessageLookupByLibrary.simpleMessage("Een variabele met deze naam bestaat al"),
+    "variableDialogNameInvalid": MessageLookupByLibrary.simpleMessage("Naam mag geen spaties of speciale tekens bevatten"),
+    "variableDialogOptionsHint": MessageLookupByLibrary.simpleMessage("Met opties kun je kiezen uit een lijst in het dashboard in plaats van elke keer te typen."),
+    "variableDialogPredefinedOptions": MessageLookupByLibrary.simpleMessage("Voorgedefinieerde opties"),
+    "variableDialogScopeBrokersSubtitle": MessageLookupByLibrary.simpleMessage("Alleen voor geselecteerde brokers"),
+    "variableDialogScopeGlobalSubtitle": MessageLookupByLibrary.simpleMessage("Beschikbaar voor alle brokers"),
+    "variableDialogValidateName": MessageLookupByLibrary.simpleMessage("Voer een variabelenaam in"),
     "variableDialogValue": MessageLookupByLibrary.simpleMessage("Waarde"),
-    "variablesPanelAddVariable": MessageLookupByLibrary.simpleMessage(
-      "Variabele toevoegen",
-    ),
-    "variablesPanelDefinedVariables": MessageLookupByLibrary.simpleMessage(
-      "Gedefinieerde variabelen",
-    ),
-    "variablesPanelDescription": MessageLookupByLibrary.simpleMessage(
-      "Definieer omgevingsvariabelen voor gebruik als placeholders in grafiek-topicstrings.",
-    ),
-    "variablesPanelNoOptions": MessageLookupByLibrary.simpleMessage(
-      "Geen opties",
-    ),
-    "variablesPanelNoVariablesMessage": MessageLookupByLibrary.simpleMessage(
-      "Voeg een variabele toe als placeholder\nin je grafiek-topicstrings.",
-    ),
-    "variablesPanelNoVariablesTitle": MessageLookupByLibrary.simpleMessage(
-      "Nog geen variabelen",
-    ),
+    "variablesPanelAddVariable": MessageLookupByLibrary.simpleMessage("Variabele toevoegen"),
+    "variablesPanelDefinedVariables": MessageLookupByLibrary.simpleMessage("Gedefinieerde variabelen"),
+    "variablesPanelDescription": MessageLookupByLibrary.simpleMessage("Definieer omgevingsvariabelen voor gebruik als placeholders in grafiek-topicstrings."),
+    "variablesPanelNoOptions": MessageLookupByLibrary.simpleMessage("Geen opties"),
+    "variablesPanelNoVariablesMessage": MessageLookupByLibrary.simpleMessage("Voeg een variabele toe als placeholder\nin je grafiek-topicstrings."),
+    "variablesPanelNoVariablesTitle": MessageLookupByLibrary.simpleMessage("Nog geen variabelen"),
     "variablesPanelOptionsCount": m7,
     "variablesPanelTitle": MessageLookupByLibrary.simpleMessage("Variabelen"),
   };
