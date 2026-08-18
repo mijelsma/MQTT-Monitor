@@ -14,6 +14,7 @@ import '../mqtt_connection_failure.dart';
 import '../mqtt_message.dart';
 import '../interfaces/mqtt_protocol_adapter_interface.dart';
 import '../mqtt_protocol_event.dart';
+import '../mqtt_reason.dart';
 import '../publish_result.dart';
 import '../../publishing/publish_transport.dart';
 import 'mqtt_connection_intent_store.dart';
@@ -260,6 +261,10 @@ class MqttSessionController extends ChangeNotifier implements PublishTransport {
     _rateCounter = 0;
     _rateTimer = _periodicTimerFactory(Duration(milliseconds: intervalMs), (_) {
       if (_disposed) return;
+      if (_state.status == ConnectionStatus.connected && _adapter?.isConnected != true) {
+        _subscriptions.onDisconnected();
+        _emit(status: ConnectionStatus.disconnected, error: unexpectedBrokerDisconnectMessage, detail: null);
+      }
       final rate = (_rateCounter * 1000 / intervalMs).round();
       _rateCounter = 0;
       _emit(messageCount: _messageCount, messageRate: rate);

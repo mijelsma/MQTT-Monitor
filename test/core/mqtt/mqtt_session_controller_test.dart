@@ -93,6 +93,8 @@ class _ControllableAdapter implements MqttProtocolAdapterInterface {
   /// Emits [message] even after disposal to test generation filtering.
   void emitMessage(MQTTMessage message) => _messages.add(message);
 
+  void dropTransportWithoutEvent() => _connected = false;
+
   /// Closes resources retained for stale-callback tests.
   Future<void> close() async {
     await _events.close();
@@ -385,5 +387,33 @@ void main() {
     expect(controller.state.messageCount, 1);
     expect(controller.messageRate, 1);
     expect(notifications, 1);
+  });
+
+  test('sampling watchdog rejects a stale connected state when callbacks are missed', () async {
+    await brokers.add(const BrokerEntryModel(id: 'broker', name: 'Broker', host: 'one.invalid'));
+    late void Function(Timer) sample;
+    late _ControllableAdapter adapter;
+    final controller = MqttSessionController(
+      connectionPreferences,
+      brokers,
+      intent,
+      logger: logger,
+      adapterFactory: (broker) => adapter = _ControllableAdapter(broker.protocolVersion),
+      periodicTimerFactory: (_, callback) {
+        sample = callback;
+        return _ManualTimer();
+      },
+    );
+    addTearDown(controller.dispose);
+    addTearDown(() => adapter.close());
+    controller.initialize();
+    await settle();
+
+    adapter.dropTransportWithoutEvent();
+    expect(controller.connectionStatus, ConnectionStatus.connected);
+    sample(_ManualTimer());
+
+    expect(controller.connectionStatus, ConnectionStatus.disconnected);
+    expect(controller.connectionError, contains('connection to the broker was lost'));
   });
 }

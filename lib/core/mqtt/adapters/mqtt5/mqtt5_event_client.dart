@@ -16,6 +16,8 @@ class Mqtt5EventClient extends mqtt5_server.MqttServerClient {
   /// Creates a client using an explicit [port].
   Mqtt5EventClient.withPort(super.server, super.clientIdentifier, super.port, {super.maxConnectionAttempts}) : super.withPort();
 
+  void Function(Object error)? onAutoReconnectFailure;
+
   mqtt5.MqttConnectionStatus? _brokerDisconnectStatus;
 
   @override
@@ -34,6 +36,7 @@ class Mqtt5EventClient extends mqtt5_server.MqttServerClient {
       maxConnectionAttempts: maxConnectionAttempts,
       socketOptions: socketOptions,
       socketTimeout: socketTimeout == null ? null : Duration(milliseconds: socketTimeout!),
+      onAutoReconnectFailure: (error) => onAutoReconnectFailure?.call(error),
     );
     if (useWebSocket) {
       connectionHandler.secure = false;
@@ -107,9 +110,23 @@ class Mqtt5EventClient extends mqtt5_server.MqttServerClient {
 }
 
 class _TimeSlicedMqtt5ConnectionHandler extends mqtt5_server.MqttSynchronousServerConnectionHandler {
-  _TimeSlicedMqtt5ConnectionHandler(super.clientEventBus, {required super.maxConnectionAttempts, required super.socketOptions, required super.socketTimeout});
+  _TimeSlicedMqtt5ConnectionHandler(super.clientEventBus, {required super.maxConnectionAttempts, required super.socketOptions, required super.socketTimeout, required this.onAutoReconnectFailure});
+
+  final void Function(Object error) onAutoReconnectFailure;
 
   dynamic _connection;
+
+  @override
+  Future<mqtt5.MqttConnectionStatus> internalConnect(String? hostname, int? port, mqtt5.MqttConnectMessage? connectMessage) async {
+    try {
+      return await super.internalConnect(hostname, port, connectMessage);
+    } on Object catch (error) {
+      if (!(autoReconnectInProgress ?? false)) rethrow;
+      onAutoReconnectFailure(error);
+      connectionStatus.state = mqtt5.MqttConnectionState.faulted;
+      return connectionStatus;
+    }
+  }
 
   @override
   void connectAckReceived(mqtt5.MqttConnectAckMessageAvailable event) {
