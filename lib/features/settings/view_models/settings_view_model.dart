@@ -117,6 +117,9 @@ class SettingsViewModel extends ChangeNotifier {
   /// Persists the updated broker profile.
   Future<void> updateBroker(BrokerEntryModel updated) => _brokers.update(updated);
 
+  /// Duplicates a broker and all of its owned connection resources.
+  Future<void> duplicateBroker(String id) => _brokers.duplicate(id);
+
   /// Deletes the broker identified by [id].
   Future<void> deleteBroker(String id) => _brokers.delete(id);
 

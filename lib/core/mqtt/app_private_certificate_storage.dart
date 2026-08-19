@@ -40,16 +40,29 @@ class AppPrivateCertificateStorage implements CertificateStorageInterface {
     return destination;
   }
 
+  /// Duplicates an owned certificate into an isolated broker directory.
+  @override
+  Future<String> duplicate(String filePath, {required String brokerId, required ClientCertificateKind kind}) async {
+    final candidate = await _ownedPath(filePath);
+    final bytes = await _files.read(candidate);
+    return store(brokerId, kind, bytes, originalFileName: path.basename(candidate));
+  }
+
   /// Deletes an owned certificate file when it exists.
   @override
   Future<void> delete(String filePath) async {
+    final candidate = await _ownedPath(filePath);
+    await _files.delete(candidate);
+  }
+
+  Future<String> _ownedPath(String filePath) async {
     final root = await _directoryProvider();
     final ownedRoot = path.normalize(path.join(root, 'mqtt_certificates'));
     final candidate = path.normalize(filePath);
     if (!path.isWithin(ownedRoot, candidate)) {
       throw StateError('The certificate path is outside app-owned storage.');
     }
-    await _files.delete(candidate);
+    return candidate;
   }
 
   /// Returns the directory name assigned to [kind].

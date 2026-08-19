@@ -30,12 +30,30 @@ void main() {
 
     expect(storage.services, [FlutterSecureCredentialStore.keychainServiceName, AppleOptions.defaultAccountName]);
   });
+
+  test('legacy cleanup failure does not fail deletion of a current credential', () async {
+    await credentials.write('duplicate-password', 'secret');
+    storage.failDeleteService = AppleOptions.defaultAccountName;
+
+    await credentials.delete('duplicate-password');
+
+    expect(await credentials.read('duplicate-password'), isNull);
+  });
+
+  test('current credential deletion failure is still reported', () async {
+    await credentials.write('duplicate-password', 'secret');
+    storage.failDeleteService = FlutterSecureCredentialStore.keychainServiceName;
+
+    await expectLater(credentials.delete('duplicate-password'), throwsStateError);
+    expect(await credentials.read('duplicate-password'), 'secret');
+  });
 }
 
 class _RecordingSecureStorage extends FlutterSecureStorage {
   final Map<(String, String), String> _values = {};
   final List<String> services = [];
   final List<bool> dataProtectionValues = [];
+  String? failDeleteService;
 
   String _record(AppleOptions? options) {
     final macOptions = options! as MacOsOptions;
@@ -62,6 +80,11 @@ class _RecordingSecureStorage extends FlutterSecureStorage {
 
   @override
   Future<void> delete({required String key, AppleOptions? iOptions, AndroidOptions? aOptions, LinuxOptions? lOptions, WebOptions? webOptions, AppleOptions? mOptions, WindowsOptions? wOptions}) async {
-    _values.remove((_record(mOptions), key));
+    final service = _record(mOptions);
+    if (failDeleteService == service) {
+      failDeleteService = null;
+      throw StateError('Injected delete failure for $service');
+    }
+    _values.remove((service, key));
   }
 }
