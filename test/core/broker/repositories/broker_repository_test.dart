@@ -7,6 +7,7 @@ import 'package:mqtt_monitor/core/storage/preferences_store.dart';
 import 'package:mqtt_monitor/core/broker/models/broker_entry_model.dart';
 import 'package:mqtt_monitor/core/broker/models/client_certificate_config_model.dart';
 import 'package:mqtt_monitor/core/mqtt/models/mqtt_protocol_version_model.dart';
+import 'package:mqtt_monitor/core/mqtt/client_certificate_kind.dart';
 import 'package:mqtt_monitor/core/broker/models/subscription_entry_model.dart';
 
 void main() {
@@ -117,6 +118,57 @@ void main() {
     expect(reloaded.failure, isNull);
     expect(reloaded.brokers.single.password, 'secret');
     expect(reloaded.brokers.single.toJson(), repository.brokers.single.toJson());
+  });
+
+  test('duplicates broker settings with independent credentials and certificates', () async {
+    const broker = BrokerEntryModel(
+      id: 'source',
+      name: 'Source',
+      host: 'mqtt.example.com',
+      port: 8883,
+      useSSL: true,
+      username: 'user',
+      password: 'secret',
+      clientId: 'client',
+      randomClientIdSuffix: false,
+      colorIndex: 3,
+      clientCertificates: ClientCertificateConfigModel(rootCaPath: '/owned/root.pem'),
+      subscriptions: [SubscriptionEntryModel(id: 'sub', topic: 'devices/#', qos: 1)],
+    );
+    final store = _MemoryPreferencesStore();
+    final credentials = _MemoryCredentialStore();
+    final certificates = _MemoryCertificateStorage();
+    final repository = _repository(store, credentials: credentials, certificates: certificates);
+    await repository.initialize();
+    await repository.add(broker);
+
+    expect(await repository.duplicate(broker.id), isTrue);
+    expect(repository.failure, isNull);
+
+    expect(repository.brokers, hasLength(2));
+    final source = repository.brokers.first;
+    final duplicate = repository.brokers.last;
+    expect(repository.activeBrokerId, source.id);
+    expect(duplicate.id, isNot(source.id));
+    expect(duplicate.name, source.name);
+    expect(duplicate.host, source.host);
+    expect(duplicate.password, source.password);
+    expect(duplicate.passwordReference, isNot(source.passwordReference));
+    expect(duplicate.subscriptions.map((subscription) => subscription.toJson()), source.subscriptions.map((subscription) => subscription.toJson()));
+    expect(duplicate.clientCertificates.rootCaPath, isNot(source.clientCertificates.rootCaPath));
+    expect(credentials.values.values, ['secret', 'secret']);
+    expect(certificates.duplicated, [duplicate.clientCertificates.rootCaPath]);
+
+    expect(await repository.delete(duplicate.id), isTrue);
+    expect(repository.failure, isNull);
+    expect(certificates.deleted, [duplicate.clientCertificates.rootCaPath]);
+    expect(credentials.values.values, ['secret']);
+
+    final reloaded = _repository(store, credentials: credentials, certificates: certificates);
+    await reloaded.initialize();
+    expect(reloaded.failure, isNull);
+    expect(reloaded.brokers.map((broker) => broker.id), [source.id]);
+    expect(reloaded.brokers.single.password, 'secret');
   });
 
   test('CRUD, reorder, selection, and active deletion survive reload', () async {
@@ -417,7 +469,15 @@ class _MemoryCredentialStore implements CredentialStoreInterface {
 /// Records certificate deletion and can inject one failure.
 class _MemoryCertificateStorage implements CertificateStorageInterface {
   final List<String> deleted = [];
+  final List<String> duplicated = [];
   bool failNextDelete = false;
+
+  @override
+  Future<String> duplicate(String filePath, {required String brokerId, required ClientCertificateKind kind}) async {
+    final copied = '$filePath.$brokerId.${kind.name}';
+    duplicated.add(copied);
+    return copied;
+  }
 
   /// Deletes [filePath] unless the next deletion is configured to fail.
   @override

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import '../../../core/broker/models/broker_entry_model.dart';
+import '../../../core/broker/models/client_certificate_config_model.dart';
 import '../../history/history_policy_rules.dart';
 import '../../storage/preferences_store.dart';
 import '../broker_profile_codec.dart';
@@ -10,6 +11,7 @@ import '../broker_repository_failure.dart';
 import '../broker_storage_keys.dart';
 import '../interfaces/certificate_storage_interface.dart';
 import '../interfaces/credential_store_interface.dart';
+import '../../mqtt/client_certificate_kind.dart';
 
 /// Owns broker profiles, active selection, schema checks, and atomic writes.
 class BrokerRepository extends ChangeNotifier {
@@ -134,6 +136,41 @@ class BrokerRepository extends ChangeNotifier {
     } on Object catch (error) {
       await _restoreCredential(credentialRollback);
       await _discardUncommittedCertificates(_certificatePaths(broker).difference(_certificatePaths(previous)));
+      _setSaveFailure(error);
+      return false;
+    }
+  }
+
+  /// Creates a fully independent copy directly after the source profile.
+  Future<bool> duplicate(String id) async {
+    if (_failure != null) return false;
+    final index = _brokers.indexWhere((broker) => broker.id == id);
+    if (index < 0) return false;
+
+    var sequence = DateTime.now().microsecondsSinceEpoch;
+    var duplicateId = 'broker_$sequence';
+    while (_brokers.any((broker) => broker.id == duplicateId)) {
+      duplicateId = 'broker_${++sequence}';
+    }
+
+    final copiedCertificatePaths = <String>{};
+    _CredentialRollback? credentialRollback;
+    try {
+      final source = _brokers[index];
+      final certificates = await _duplicateCertificates(source.clientCertificates, duplicateId, copiedCertificatePaths);
+      final duplicate = source.copyWith(id: duplicateId, clientCertificates: certificates, clearPasswordReference: true);
+      final prepared = await _prepareCredential(duplicate);
+      credentialRollback = prepared.rollback;
+      final updated = [..._brokers]..insert(index + 1, prepared.broker);
+      final saved = await _commit(updated, _activeBrokerId, const _CleanupPlan());
+      if (!saved) {
+        await _restoreCredential(credentialRollback);
+        await _discardUncommittedCertificates(copiedCertificatePaths);
+      }
+      return saved;
+    } on Object catch (error) {
+      await _restoreCredential(credentialRollback);
+      await _discardUncommittedCertificates(copiedCertificatePaths);
       _setSaveFailure(error);
       return false;
     }
@@ -434,6 +471,17 @@ class BrokerRepository extends ChangeNotifier {
     if (broker.clientCertificates.clientPrivateKeyPath != null) broker.clientCertificates.clientPrivateKeyPath!,
     if (broker.clientCertificates.clientCertificatePath != null) broker.clientCertificates.clientCertificatePath!,
   };
+
+  Future<ClientCertificateConfigModel> _duplicateCertificates(ClientCertificateConfigModel source, String brokerId, Set<String> copiedPaths) async {
+    Future<String?> copy(String? filePath, ClientCertificateKind kind) async {
+      if (filePath == null) return null;
+      final copied = await _certificates.duplicate(filePath, brokerId: brokerId, kind: kind);
+      copiedPaths.add(copied);
+      return copied;
+    }
+
+    return ClientCertificateConfigModel(rootCaPath: await copy(source.rootCaPath, ClientCertificateKind.rootCa), clientPrivateKeyPath: await copy(source.clientPrivateKeyPath, ClientCertificateKind.privateKey), clientCertificatePath: await copy(source.clientCertificatePath, ClientCertificateKind.clientCertificate));
+  }
 
   /// Finds every broker-owned resource, including references in invalid JSON.
   _CleanupPlan _resetCleanupPlan() {

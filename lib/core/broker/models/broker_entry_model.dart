@@ -58,6 +58,7 @@ class BrokerEntryModel {
 
   /// Returns a copy with selected profile and runtime credential values changed.
   BrokerEntryModel copyWith({
+    String? id,
     String? name,
     String? host,
     int? port,
@@ -78,7 +79,7 @@ class BrokerEntryModel {
     bool clearClientId = false,
   }) {
     return BrokerEntryModel(
-      id: id,
+      id: id ?? this.id,
       name: name ?? this.name,
       host: host ?? this.host,
       port: port ?? this.port,

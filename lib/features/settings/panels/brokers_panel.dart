@@ -29,11 +29,7 @@ class BrokersPanel extends StatelessWidget {
   /// Opens the broker dialog and persists edits or deletion.
   Future<void> _openEdit(BuildContext context, BrokerEntryModel broker) async {
     final vm = context.read<SettingsViewModel>();
-    final updated = await showBrokerDialog(
-      context,
-      broker: broker,
-      onDelete: () async => vm.deleteBroker(broker.id),
-    );
+    final updated = await showBrokerDialog(context, broker: broker, onDelete: () async => vm.deleteBroker(broker.id));
     if (updated == null) return;
     await vm.updateBroker(updated);
   }
@@ -50,21 +46,9 @@ class BrokersPanel extends StatelessWidget {
       description: s.brokersPanelDescription,
       children: [
         if (vm.brokerFailure case final failure?)
-          UiInlineNotice(
-            kind: UiNoticeKind.error,
-            title: s.brokerProfilesUnavailable,
-            message: failure.message,
-            detail: failure.details,
-            actionLabel: s.retry,
-            onAction: vm.retryBrokerLoad,
-            margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          )
+          UiInlineNotice(kind: UiNoticeKind.error, title: s.brokerProfilesUnavailable, message: failure.message, detail: failure.details, actionLabel: s.retry, onAction: vm.retryBrokerLoad, margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 8))
         else if (brokers.isEmpty)
-          UiEmptyState(
-            icon: Icons.dns_outlined,
-            title: s.brokersPanelNoBrokersTitle,
-            message: s.brokersPanelNoBrokersMessage,
-          )
+          UiEmptyState(icon: Icons.dns_outlined, title: s.brokersPanelNoBrokersTitle, message: s.brokersPanelNoBrokersMessage)
         else
           UiSection(
             label: s.brokersPanelSectionConnections,
@@ -79,28 +63,19 @@ class BrokersPanel extends StatelessWidget {
                     width: 3.5,
                     height: 28,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: AppColors.brokerGradientFor(
-                          brokers[i].colorIndex,
-                        ),
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
+                      gradient: LinearGradient(colors: AppColors.brokerGradientFor(brokers[i].colorIndex), begin: Alignment.topCenter, end: Alignment.bottomCenter),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                   title: brokers[i].name,
                   subtitle: brokers[i].displayAddress,
                   onTap: () => _openEdit(context, brokers[i]),
+                  onDuplicate: () => vm.duplicateBroker(brokers[i].id),
                   onDelete: () => vm.deleteBroker(brokers[i].id),
                 ),
             ],
           ),
-        if (vm.brokerFailure == null)
-          UiAddButton(
-            label: s.brokersPanelAddBroker,
-            onPressed: () => _openAdd(context),
-          ),
+        if (vm.brokerFailure == null) UiAddButton(label: s.brokersPanelAddBroker, onPressed: () => _openAdd(context)),
       ],
     );
   }

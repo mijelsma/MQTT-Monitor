@@ -58,6 +58,19 @@ class ShortcutRepository extends ChangeNotifier {
     await _persist(shortcuts);
   }
 
+  /// Creates an identical shortcut with a fresh ID directly after [id].
+  Future<void> duplicate(String id) async {
+    final index = _shortcuts.indexWhere((shortcut) => shortcut.id == id);
+    if (index < 0) return;
+    var sequence = DateTime.now().microsecondsSinceEpoch;
+    var duplicateId = 'shortcut_$sequence';
+    while (_shortcuts.any((shortcut) => shortcut.id == duplicateId)) {
+      duplicateId = 'shortcut_${++sequence}';
+    }
+    final shortcuts = [..._shortcuts]..insert(index + 1, _shortcuts[index].copyWith(id: duplicateId));
+    await _persist(shortcuts);
+  }
+
   Future<void> delete(String id) => _persist(_shortcuts.where((shortcut) => shortcut.id != id).toList(growable: false));
 
   Future<void> reorder(int oldIndex, int newIndex) async {
