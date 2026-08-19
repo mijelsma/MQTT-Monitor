@@ -14,8 +14,8 @@ class PublishShortcutModel {
 
   bool get isGlobal => brokerIds.isEmpty;
 
-  PublishShortcutModel copyWith({String? name, String? topic, String? payload, bool? payloadFormatIsJson, int? qos, bool? retain, int? colorValue, List<String>? brokerIds}) {
-    return PublishShortcutModel(id: id, name: name ?? this.name, topic: topic ?? this.topic, payload: payload ?? this.payload, payloadFormatIsJson: payloadFormatIsJson ?? this.payloadFormatIsJson, qos: qos ?? this.qos, retain: retain ?? this.retain, colorValue: colorValue ?? this.colorValue, brokerIds: brokerIds ?? this.brokerIds);
+  PublishShortcutModel copyWith({String? id, String? name, String? topic, String? payload, bool? payloadFormatIsJson, int? qos, bool? retain, int? colorValue, List<String>? brokerIds}) {
+    return PublishShortcutModel(id: id ?? this.id, name: name ?? this.name, topic: topic ?? this.topic, payload: payload ?? this.payload, payloadFormatIsJson: payloadFormatIsJson ?? this.payloadFormatIsJson, qos: qos ?? this.qos, retain: retain ?? this.retain, colorValue: colorValue ?? this.colorValue, brokerIds: brokerIds ?? this.brokerIds);
   }
 
   factory PublishShortcutModel.fromJson(Map<String, dynamic> json) {

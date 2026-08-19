@@ -83,6 +83,25 @@ void main() {
     addTearDown(restored.dispose);
     expect(restored.shortcuts.map((shortcut) => shortcut.id), ['second', 'first']);
   });
+
+  test('shortcut duplication copies every setting with a new persisted ID', () async {
+    final dependencies = await TestDependencies.create();
+    final original = _shortcut('original', brokerIds: const ['broker']).copyWith(retain: true);
+    await dependencies.brokers.add(const BrokerEntryModel(id: 'broker', name: 'Broker', host: 'broker.invalid'));
+    await dependencies.shortcuts.add(original);
+
+    await dependencies.shortcuts.duplicate(original.id);
+
+    final shortcuts = dependencies.shortcuts.shortcuts;
+    expect(shortcuts, hasLength(2));
+    expect(shortcuts.last.id, isNot(original.id));
+    expect(shortcuts.last.toJson()..['id'] = original.id, original.toJson());
+
+    final restored = ShortcutRepository(dependencies.preferences, dependencies.brokers, dependencies.templateResolver, const JsonPayloadValidator());
+    await restored.initialize();
+    addTearDown(restored.dispose);
+    expect(restored.shortcuts.map((shortcut) => shortcut.id), shortcuts.map((shortcut) => shortcut.id));
+  });
 }
 
 PublishShortcutModel _shortcut(String id, {List<String> brokerIds = const []}) {

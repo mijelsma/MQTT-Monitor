@@ -301,6 +301,8 @@ class SettingsViewModel extends ChangeNotifier {
 
   Future<void> updateShortcut(PublishShortcutModel updated) => _shortcuts.update(updated);
 
+  Future<void> duplicateShortcut(String id) => _shortcuts.duplicate(id);
+
   Future<void> deleteShortcut(String id) => _shortcuts.delete(id);
 
   Future<void> reorderShortcuts(int oldIndex, int newIndex) => _shortcuts.reorder(oldIndex, newIndex);
