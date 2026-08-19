@@ -37,6 +37,29 @@ void main() {
     expect(restored.values, {'SITE': 'west'});
   });
 
+  test('variable duplication copies definition and value with an available name', () async {
+    final dependencies = await TestDependencies.create();
+    await dependencies.brokers.add(const BrokerEntryModel(id: 'one', name: 'One', host: 'one.invalid'));
+    final original = EnvironmentVariableModel(name: 'DEVICE', brokerIds: const ['one']);
+    await dependencies.variables.add(original);
+    await dependencies.variables.add(EnvironmentVariableModel(name: 'DEVICE_COPY'));
+    await dependencies.variables.setValue('DEVICE', 'lamp');
+
+    await dependencies.variables.duplicate('DEVICE');
+
+    expect(dependencies.variables.variables.map((variable) => variable.name), ['DEVICE', 'DEVICE_COPY_2', 'DEVICE_COPY']);
+    final duplicate = dependencies.variables.variables[1];
+    expect(duplicate.brokerIds, original.brokerIds);
+    expect(duplicate.options, original.options);
+    expect(dependencies.variables.values['DEVICE_COPY_2'], 'lamp');
+
+    final restored = VariableRepository(dependencies.preferences, dependencies.brokers, dependencies.templateResolver);
+    await restored.initialize();
+    addTearDown(restored.dispose);
+    expect(restored.variables.map((variable) => variable.name), ['DEVICE', 'DEVICE_COPY_2', 'DEVICE_COPY']);
+    expect(restored.values['DEVICE_COPY_2'], 'lamp');
+  });
+
   test('broker deletion removes orphaned scoped variables and shortcuts', () async {
     final dependencies = await TestDependencies.create();
     await dependencies.brokers.add(const BrokerEntryModel(id: 'one', name: 'One', host: 'one.invalid'));

@@ -289,6 +289,8 @@ class SettingsViewModel extends ChangeNotifier {
 
   Future<void> updateEnvironmentVariable(String oldName, EnvironmentVariableModel updated) => _variables.update(oldName, updated);
 
+  Future<void> duplicateEnvironmentVariable(String name) => _variables.duplicate(name);
+
   Future<void> deleteEnvironmentVariable(String name) => _variables.delete(name);
 
   Future<void> reorderEnvironmentVariables(int oldIndex, int newIndex) => _variables.reorder(oldIndex, newIndex);

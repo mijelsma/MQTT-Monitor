@@ -78,6 +78,22 @@ class VariableRepository extends ChangeNotifier {
     await _writeSnapshot(variables, values);
   }
 
+  /// Creates a copy with an available variable name directly after [name].
+  Future<void> duplicate(String name) async {
+    final index = _variables.indexWhere((variable) => variable.name == name);
+    if (index < 0) return;
+    final existingNames = _variables.map((variable) => variable.name).toSet();
+    final baseName = '${name}_COPY';
+    var duplicateName = baseName;
+    var suffix = 2;
+    while (existingNames.contains(duplicateName)) {
+      duplicateName = '${baseName}_${suffix++}';
+    }
+    final variables = [..._variables]..insert(index + 1, _variables[index].copyWith(name: duplicateName));
+    final values = _values.containsKey(name) ? {..._values, duplicateName: _values[name]!} : _values;
+    await _writeSnapshot(variables, values);
+  }
+
   Future<void> delete(String name) async {
     final variables = _variables.where((variable) => variable.name != name).toList(growable: false);
     final values = {..._values}..remove(name);
