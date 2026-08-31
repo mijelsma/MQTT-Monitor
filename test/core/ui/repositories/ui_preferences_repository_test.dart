@@ -33,7 +33,7 @@ void main() {
     expect(repository.density, UiDensityModel.comfortable);
     expect(repository.showTopicPayloadPreview, isTrue);
     expect(repository.showTopicBadges, isTrue);
-    expect(repository.richPayloadFormattingLimitBytes, 32 * 1024);
+    expect(repository.richPayloadFormattingLimitBytes, 16 * 1024);
     expect(store.get(UiPreferencesRepository.schemaVersionKey), UiPreferencesRepository.currentSchemaVersion);
   });
 
