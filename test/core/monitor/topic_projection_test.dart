@@ -148,6 +148,18 @@ void main() {
     expect(projection.pathFor('same/topic').last.valueNotifier.value?.seq, 1);
     expect(history.getHistory('same/topic').single.payload, 'second');
   });
+
+  test('history is stored under the projected path for topics with empty levels', () {
+    source
+      ..add(_message('/leading/value', 'leading', 1))
+      ..add(_message('trailing/value/', 'trailing', 2))
+      ..add(_message('double//value', 'double', 3));
+
+    expect(projection.pathFor('/leading/value').last.fullPath, 'leading/value');
+    expect(history.getHistory('leading/value').single.payload, 'leading');
+    expect(history.getHistory('trailing/value').single.payload, 'trailing');
+    expect(history.getHistory('double/value').single.payload, 'double');
+  });
 }
 
 MQTTMessage _message(String topic, String payload, int second, {bool retain = false, int qos = 0}) => MQTTMessage(topic: topic, payload: payload, receivedAt: DateTime(2026, 1, 1, 0, 0, second), retain: retain, qos: qos);

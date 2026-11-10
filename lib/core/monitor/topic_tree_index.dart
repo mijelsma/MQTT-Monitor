@@ -2,6 +2,7 @@ import 'dart:collection';
 
 import '../../core/monitor/models/topic_tree_node_model.dart';
 import '../ingestion/ingested_message.dart';
+import 'topic_path.dart';
 
 /// Owns the sorted topic tree and updates subtree totals incrementally.
 class TopicTreeIndex {
@@ -15,7 +16,7 @@ class TopicTreeIndex {
 
   /// Inserts [message] and returns its node path plus structural-change state.
   ({List<TopicTreeNodeModel> path, bool structureChanged, bool topicCreated}) insert(IngestedMessage message) {
-    final segments = message.topic.split('/').where((segment) => segment.isNotEmpty).toList();
+    final segments = TopicPath.canonical(message.topic).split('/').where((segment) => segment.isNotEmpty).toList();
     if (segments.isEmpty) {
       return (path: const [], structureChanged: false, topicCreated: false);
     }
@@ -47,7 +48,7 @@ class TopicTreeIndex {
 
   /// Returns the existing node path for a concrete topic.
   List<TopicTreeNodeModel> pathFor(String topic) {
-    final segments = topic.split('/').where((segment) => segment.isNotEmpty);
+    final segments = TopicPath.canonical(topic).split('/').where((segment) => segment.isNotEmpty);
     Map<String, TopicTreeNodeModel> level = _roots;
     final path = <TopicTreeNodeModel>[];
     for (final segment in segments) {
@@ -61,7 +62,7 @@ class TopicTreeIndex {
 
   /// Removes [node], prunes empty ancestors, and returns concrete topic paths.
   List<String> delete(TopicTreeNodeModel node) {
-    final segments = node.fullPath.split('/').where((segment) => segment.isNotEmpty).toList();
+    final segments = TopicPath.canonical(node.fullPath).split('/').where((segment) => segment.isNotEmpty).toList();
     if (segments.isEmpty) return const [];
 
     final ancestorPath = pathFor(node.fullPath);
