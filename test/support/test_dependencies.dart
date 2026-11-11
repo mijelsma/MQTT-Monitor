@@ -7,6 +7,7 @@ import 'package:mqtt_monitor/core/history/repositories/history_preferences_repos
 import 'package:mqtt_monitor/core/history/services/message_history_service.dart';
 import 'package:mqtt_monitor/core/logging/app_logger.dart';
 import 'package:mqtt_monitor/core/mqtt/repositories/connection_preferences_repository.dart';
+import 'package:mqtt_monitor/core/mqtt/client_certificate_kind.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_connection_intent_store.dart';
 import 'package:mqtt_monitor/core/mqtt/session/mqtt_session_controller.dart';
 import 'package:mqtt_monitor/core/publishing/services/publish_command_service.dart';
@@ -155,6 +156,9 @@ class _MemoryCredentialStore implements CredentialStoreInterface {
 
 /// Discards certificate cleanup requests made by test repositories.
 class _MemoryCertificateStorage implements CertificateStorageInterface {
+  @override
+  Future<String> duplicate(String filePath, {required String brokerId, required ClientCertificateKind kind}) async => '$filePath.$brokerId.${kind.name}';
+
   /// Accepts deletion because test profiles do not own real files.
   @override
   Future<void> delete(String filePath) async {}

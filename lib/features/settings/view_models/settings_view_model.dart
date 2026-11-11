@@ -117,6 +117,9 @@ class SettingsViewModel extends ChangeNotifier {
   /// Persists the updated broker profile.
   Future<void> updateBroker(BrokerEntryModel updated) => _brokers.update(updated);
 
+  /// Duplicates a broker and all of its owned connection resources.
+  Future<void> duplicateBroker(String id) => _brokers.duplicate(id);
+
   /// Deletes the broker identified by [id].
   Future<void> deleteBroker(String id) => _brokers.delete(id);
 
@@ -289,6 +292,8 @@ class SettingsViewModel extends ChangeNotifier {
 
   Future<void> updateEnvironmentVariable(String oldName, EnvironmentVariableModel updated) => _variables.update(oldName, updated);
 
+  Future<void> duplicateEnvironmentVariable(String name) => _variables.duplicate(name);
+
   Future<void> deleteEnvironmentVariable(String name) => _variables.delete(name);
 
   Future<void> reorderEnvironmentVariables(int oldIndex, int newIndex) => _variables.reorder(oldIndex, newIndex);
@@ -300,6 +305,8 @@ class SettingsViewModel extends ChangeNotifier {
   Future<void> addShortcut(PublishShortcutModel shortcut) => _shortcuts.add(shortcut);
 
   Future<void> updateShortcut(PublishShortcutModel updated) => _shortcuts.update(updated);
+
+  Future<void> duplicateShortcut(String id) => _shortcuts.duplicate(id);
 
   Future<void> deleteShortcut(String id) => _shortcuts.delete(id);
 

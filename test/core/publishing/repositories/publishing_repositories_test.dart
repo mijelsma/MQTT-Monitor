@@ -37,6 +37,29 @@ void main() {
     expect(restored.values, {'SITE': 'west'});
   });
 
+  test('variable duplication copies definition and value with an available name', () async {
+    final dependencies = await TestDependencies.create();
+    await dependencies.brokers.add(const BrokerEntryModel(id: 'one', name: 'One', host: 'one.invalid'));
+    final original = EnvironmentVariableModel(name: 'DEVICE', brokerIds: const ['one']);
+    await dependencies.variables.add(original);
+    await dependencies.variables.add(EnvironmentVariableModel(name: 'DEVICE_COPY'));
+    await dependencies.variables.setValue('DEVICE', 'lamp');
+
+    await dependencies.variables.duplicate('DEVICE');
+
+    expect(dependencies.variables.variables.map((variable) => variable.name), ['DEVICE', 'DEVICE_COPY_2', 'DEVICE_COPY']);
+    final duplicate = dependencies.variables.variables[1];
+    expect(duplicate.brokerIds, original.brokerIds);
+    expect(duplicate.options, original.options);
+    expect(dependencies.variables.values['DEVICE_COPY_2'], 'lamp');
+
+    final restored = VariableRepository(dependencies.preferences, dependencies.brokers, dependencies.templateResolver);
+    await restored.initialize();
+    addTearDown(restored.dispose);
+    expect(restored.variables.map((variable) => variable.name), ['DEVICE', 'DEVICE_COPY_2', 'DEVICE_COPY']);
+    expect(restored.values['DEVICE_COPY_2'], 'lamp');
+  });
+
   test('broker deletion removes orphaned scoped variables and shortcuts', () async {
     final dependencies = await TestDependencies.create();
     await dependencies.brokers.add(const BrokerEntryModel(id: 'one', name: 'One', host: 'one.invalid'));
@@ -82,6 +105,25 @@ void main() {
     await restored.initialize();
     addTearDown(restored.dispose);
     expect(restored.shortcuts.map((shortcut) => shortcut.id), ['second', 'first']);
+  });
+
+  test('shortcut duplication copies every setting with a new persisted ID', () async {
+    final dependencies = await TestDependencies.create();
+    final original = _shortcut('original', brokerIds: const ['broker']).copyWith(retain: true);
+    await dependencies.brokers.add(const BrokerEntryModel(id: 'broker', name: 'Broker', host: 'broker.invalid'));
+    await dependencies.shortcuts.add(original);
+
+    await dependencies.shortcuts.duplicate(original.id);
+
+    final shortcuts = dependencies.shortcuts.shortcuts;
+    expect(shortcuts, hasLength(2));
+    expect(shortcuts.last.id, isNot(original.id));
+    expect(shortcuts.last.toJson()..['id'] = original.id, original.toJson());
+
+    final restored = ShortcutRepository(dependencies.preferences, dependencies.brokers, dependencies.templateResolver, const JsonPayloadValidator());
+    await restored.initialize();
+    addTearDown(restored.dispose);
+    expect(restored.shortcuts.map((shortcut) => shortcut.id), shortcuts.map((shortcut) => shortcut.id));
   });
 }
 

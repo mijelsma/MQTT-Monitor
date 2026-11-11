@@ -32,10 +32,15 @@ class FlutterSecureCredentialStore implements CredentialStoreInterface {
   @override
   Future<void> delete(String reference) async {
     await _storage.delete(key: reference, mOptions: _macOsOptions);
-    // Development data is not migrated, but reset/delete must not leave the
-    // former plugin-default Keychain item behind.
+    // Development data is not migrated, but reset/delete should not leave the
+    // former plugin-default Keychain item behind. This cleanup is best-effort:
+    // current profiles (including duplicates) never own a legacy item.
     if (defaultTargetPlatform == TargetPlatform.macOS) {
-      await _storage.delete(key: reference, mOptions: _legacyMacOsOptions);
+      try {
+        await _storage.delete(key: reference, mOptions: _legacyMacOsOptions);
+      } on Object {
+        // The current credential has already been removed successfully.
+      }
     }
   }
 }

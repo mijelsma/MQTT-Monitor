@@ -3,7 +3,7 @@ import '../../generated/l10n.dart';
 import '../../theme/app_tokens/app_tokens.dart';
 
 class UiSortableRow extends StatelessWidget {
-  const UiSortableRow({super.key, required this.leading, required this.title, this.subtitle, this.trailing = const [], required this.index, required this.onTap, this.onDelete});
+  const UiSortableRow({super.key, required this.leading, required this.title, this.subtitle, this.trailing = const [], required this.index, required this.onTap, this.onDuplicate, this.onDelete});
 
   final Widget leading;
   final String title;
@@ -11,6 +11,7 @@ class UiSortableRow extends StatelessWidget {
   final List<Widget> trailing;
   final int index;
   final VoidCallback onTap;
+  final VoidCallback? onDuplicate;
   final VoidCallback? onDelete;
 
   @override
@@ -42,6 +43,14 @@ class UiSortableRow extends StatelessWidget {
               ),
             ),
             for (final widget in trailing) ...[const SizedBox(width: 6), widget],
+            if (onDuplicate != null)
+              IconButton(
+                icon: Icon(Icons.copy_rounded, size: 18, color: tokens.textTertiary),
+                tooltip: S.of(context).copy,
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.all(6),
+                onPressed: onDuplicate,
+              ),
             if (onDelete != null)
               IconButton(
                 icon: Icon(Icons.delete_outline_rounded, size: 18, color: tokens.error),

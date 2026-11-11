@@ -141,6 +141,20 @@ void main() {
     expect(files.values[second], testPrivateKeyPem);
   });
 
+  test('duplicates only app-owned certificates into the target broker directory', () async {
+    final files = _MemoryFiles();
+    var import = 0;
+    final storage = AppPrivateCertificateStorage(files: files, directoryProvider: () async => '/app-support', importIdProvider: () => 'import-${++import}');
+    final source = await storage.store('source', ClientCertificateKind.rootCa, testCertificatePem, originalFileName: 'ca.crt');
+
+    final duplicate = await storage.duplicate(source, brokerId: 'copy', kind: ClientCertificateKind.rootCa);
+
+    expect(duplicate, isNot(source));
+    expect(duplicate, contains('/Y29weQ/root_ca/'));
+    expect(files.values[duplicate], testCertificatePem);
+    await expectLater(storage.duplicate('/user/documents/ca.crt', brokerId: 'copy', kind: ClientCertificateKind.rootCa), throwsStateError);
+  });
+
   test('deletes an owned certificate path', () async {
     final files = _MemoryFiles();
     final storage = AppPrivateCertificateStorage(files: files, directoryProvider: () async => '/app-support', importIdProvider: () => 'import-1');

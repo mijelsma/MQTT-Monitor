@@ -59,6 +59,7 @@ class VariablesPanel extends StatelessWidget {
                   subtitle: _subtitle(s, variables[i]),
                   trailing: [ScopeBadge(isGlobal: variables[i].isGlobal, brokerCount: variables[i].brokerIds.length)],
                   onTap: () => _editVariable(context, variables[i]),
+                  onDuplicate: () => vm.duplicateEnvironmentVariable(variables[i].name),
                   onDelete: () => vm.deleteEnvironmentVariable(variables[i].name),
                 ),
             ],
