@@ -43,5 +43,25 @@ xcrun notarytool submit "$notary_archive" \
   --keychain-profile "$MACOS_NOTARY_PROFILE" \
   --keychain "$MACOS_KEYCHAIN" \
   --wait
-xcrun stapler staple "$app_path"
+
+# Ticket delivery uses CloudKit and can lose an otherwise healthy connection
+# after notarization has already completed. Stapling is idempotent, so retry a
+# few times before failing the release for a transient delivery error.
+max_staple_attempts=5
+staple_attempt=1
+while ! xcrun stapler staple "$app_path"; do
+  if (( staple_attempt >= max_staple_attempts )); then
+    echo "Stapling failed after $max_staple_attempts attempts." >&2
+    exit 1
+  fi
+
+  retry_delay=$(( (staple_attempt - 1) * 5 ))
+  if (( retry_delay > 0 )); then
+    echo "Stapling attempt $staple_attempt failed; retrying in ${retry_delay}s..." >&2
+    sleep "$retry_delay"
+  else
+    echo "Stapling attempt $staple_attempt failed; retrying immediately..." >&2
+  fi
+  staple_attempt=$((staple_attempt + 1))
+done
 xcrun stapler validate "$app_path"
