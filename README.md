@@ -1,47 +1,95 @@
-<h1 align="center">MQTT-Monitor</h1>
+<h1 align="center">MQTT Monitor</h1>
+
 <p align="center">
-  A fast, customizable, native desktop MQTT client for people who actually live in their broker all day.
+  A fast, native desktop MQTT client for seeing what's actually happening on your broker.
+</p>
+
+
+<p align="center">
+  <a href="https://github.com/mijelsma/MQTT-Monitor/releases/latest">
+    <strong>⬇️ Download MQTT Monitor</strong>
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/mijelsma/MQTT-Monitor/releases/latest">
+    <img src="https://img.shields.io/github/v/release/mijelsma/MQTT-Monitor?label=latest%20release" alt="Latest release">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/github/license/mijelsma/MQTT-Monitor" alt="License">
+  </a>
+
 </p>
 
 <p align="center">
   <a href="https://ko-fi.com/micheljelsma">
-    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi">
+    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support MQTT Monitor on Ko-fi">
   </a>
+  <br>
+  <sub>If MQTT Monitor saves you time, consider supporting its development ☕</sub>
 </p>
+
 <p align="center">
-  If MQTT-Monitor saves you time, consider <a href="https://ko-fi.com/micheljelsma">buying me a coffee on Ko-fi</a>, it genuinely helps keep this maintained.
+  <img src="docs/images/ui-light-purple.png" alt="MQTT Monitor showing a live MQTT topic tree" width="95%">
 </p>
 
 ---
 
-> [!IMPORTANT]
-> **MQTT Monitor is currently in beta. The v1.0 release is planned for the end of August 2026. Documentation will be updated along the way.**
+## Download
 
+MQTT-Monitor ships in prebuild binaries for windows macos and linux. 
 
-Watching a fleet of devices, a home automation setup, or a busy production broker deserves something better than a log window. There are other MQTT tools out there, but I wanted one built around how I actually work, so I could see what's happening instead of decoding a raw JSON feed scrolling past. I use it every day myself, it's built around the stuff I kept running into.
-
-It's built with Flutter and runs as a real native app on macOS, Windows, and Linux from one codebase.
-
-**Why Flutter?**<br>
-Flutter compiles down to native code instead of shipping a bundled browser, which makes it a lot easier to keep macOS, Windows, and Linux builds in sync from a single codebase, and it leaves the door open for a mobile app down the line.
+Download the latest build for your platform from GitHub Releases:
 
 <p align="center">
-  <img src="docs/images/ui-light-purple.png" alt="Screenshot of the topic tree" width="95%">
+  <a href="https://github.com/mijelsma/MQTT-Monitor/releases/latest">
+    <strong>View the latest release →</strong>
+  </a>
 </p>
 
+Choose the appropriate installer or package for your operating system from the **Assets** section.
+
+---
+
+## Why MQTT Monitor?
+
+Watching a fleet of devices, a home automation setup, or a busy production broker deserves something better than a log window.
+
+There are plenty of MQTT tools out there, but I wanted one built around how I actually work: something that makes it easy to **see what's happening** instead of decoding an endless stream of topics and JSON manually.
+
+MQTT Monitor is built around the workflows I kept running into myself, and I use it every day.
+
+It gives you:
+
+* A **live topic tree** that reacts as messages arrive
+* Support for **MQTT 3.1.1 and MQTT 5**
+* Multiple saved broker profiles
+* **TLS certificate** support
+* Search across topics and payloads
+* Adjustable per-topic **message history**
+* Side-by-side payload diffs
+* Live charts for numeric MQTT values
+* Reusable publish shortcuts with variables
+* Light and dark themes with customizable accent colors
+* Auto-connect for brokers you use every day
+
 <p align="center">
-  <img src="docs/images/dashboard-light.png" alt="Screenshot of the dashboard" width="95%">
+  <img src="docs/images/dashboard-light.png" alt="MQTT Monitor dashboard with live MQTT charts" width="95%">
 </p>
 
 ---
 
 ## Contents
 
-- [Features](#features)
-- [Getting Started in VS Code](#getting-started-in-vs-code)
-- [Desktop Updates](docs/updates.md)
-- [Reporting Issues](#reporting-issues)
-- [License](#license)
+* [Download](#download)
+* [Why MQTT Monitor?](#why-mqtt-monitor)
+* [Features](#features)
+* [Privacy](#privacy)
+* [Building from source](#building-from-source)
+* [Desktop Updates](docs/updates.md)
+* [Reporting Issues](#reporting-issues)
+* [Support the Project](#support-the-project)
+* [License](#license)
 
 ---
 
@@ -49,93 +97,164 @@ Flutter compiles down to native code instead of shipping a bundled browser, whic
 
 ### Broker connections, done properly
 
-Switch between brokers in a couple of clicks, keep separate profiles for your local dev broker, staging, and production without re-entering credentials every time. Both **MQTT 3.1.1 and MQTT 5** are supported, including MQTT 5 properties like reason codes, so you're not stuck guessing why your messages don't seem to arrive.
+Switch between brokers in a couple of clicks and keep separate profiles for your local development broker, staging environment, production systems, or home automation setup without entering credentials every time.
+
+Both **MQTT 3.1.1 and MQTT 5** are supported, including MQTT 5 properties such as reason codes, so you're not stuck guessing why messages aren't arriving.
 
 <p align="center">
-  <img src="docs/images/broker-switcher.png" alt="Broker switcher" width="60%">
+  <img src="docs/images/broker-switcher.png" alt="MQTT Monitor broker switcher" width="60%">
 </p>
 
-For anything running over TLS, certificate handling is built in rather than bolted on: point it at your **root CA, client certificate, and private key** and it just connects, no fiddling with system trust stores or extra tooling.
+For brokers using TLS, certificate handling is built in rather than bolted on.
+
+Configure your:
+
+* Root CA
+* Client certificate
+* Private key
+
+directly in the connection profile.
+
+No fiddling with external tooling just to get a secure broker connection working.
+
+---
 
 ### A topic tree that shows you what's actually happening
 
-The topic tree isn't just a static list, topics **flash on activity** as messages arrive, so a noisy sensor or a stuck retained message stands out immediately instead of hiding in a wall of text. It's the fastest way to get a feel for what's going on across a broker at a glance.
+The topic tree isn't just a static list.
+
+Topics **flash on activity** as messages arrive, making noisy sensors, changing values, and active parts of your MQTT hierarchy immediately visible.
+
+Instead of watching a wall of messages scroll by, you can get a feel for what's happening across the broker at a glance.
 
 <p align="center">
-  <img src="docs/images/topic-tree-purple.png" alt="Topic tree" width="90%">
+  <img src="docs/images/topic-tree-purple.png" alt="Live MQTT topic tree" width="90%">
 </p>
 
-Need to find something specific? The **search field filters as you type**, and you can scope it to topic names, payload values, or both, handy when you know a device sent a value but can't remember which topic it lives under.
+Need to find something specific?
 
-### Turn numbers into a dashboard
+The search field filters as you type and can search:
 
-Pin any numeric topic to the **dashboard** and watch it plot live as a chart instead of a scrolling number. Great for keeping an eye on temperatures, battery levels, or any value where the trend matters more than any single reading.
+* Topic names
+* Payload values
+* Both at the same time
 
-<p align="center">
-  <img src="docs/images/dashboard.png" alt="Live value charts on the dashboard" width="90%">
-</p>
+Useful when you know a device sent a particular value but can't remember which topic it lives under.
 
-### Message shortcuts, with variables
+---
 
-Save frequently-used publish messages as **shortcuts**, and drop **variable fields** into the payload, timestamps, incrementing counters, custom placeholders, so you're not hand-editing the same JSON every time you want to trigger something. The same variables work on the dashboard too, so a shortcut and a dashboard tile can share the same dynamic values.
+### Turn MQTT values into a dashboard
 
-### History that works the way you need it to
+Pin numeric topics to the **dashboard** and watch them plot live instead of staring at individual values scrolling past.
 
-Every topic keeps a rolling history of past messages, and you decide how deep that history goes, the **number of retained data points is adjustable**, so you can keep things light for chatty topics and go deeper where it matters. Got a topic you're actively debugging? Flag it for **increased monitoring** and it'll store more history than the rest, without bloating memory for everything else.
+Great for:
 
-When something looks off, pull up two historical messages on the same topic and **diff them side by side** to see exactly what changed between payloads.
-
-<p align="center">
-  <img src="docs/images/history-light.png" alt="Diff view" width="70%">
-</p>
-
-### Make it feel like yours
-
-MQTT-Monitor follows your system's **light or dark theme** automatically, or you can select your own preferred mode. It goes further with a genuinely customizable UI: pick your own **accent color**, set default startup behavior, and enable **auto-connect** so your usual broker is live and streaming the moment the app opens.
-
+* Temperatures
+* Battery levels
+* Power usage
+* Sensor readings
+* Counters
+* Any value where the trend matters more than a single reading
 
 <p align="center">
-  <img src="docs/images/theme-grid.png" alt="Dark theme with blue, green, purple, and red accent colors" width="100%">
+  <img src="docs/images/dashboard.png" alt="Live MQTT value charts on the dashboard" width="90%">
 </p>
 
 ---
 
-## Getting Started in VS Code
+### Message shortcuts, with variables
+
+Save frequently used publish messages as **shortcuts** instead of rebuilding or hand-editing the same payload every time.
+
+Shortcuts can contain dynamic variables such as:
+
+* Timestamps
+* Incrementing counters
+* Custom placeholders
+
+The same variable system can also be used from dashboard controls, making repetitive testing and device control much faster.
+
+---
+
+### History that works the way you need it to
+
+Every topic keeps a rolling history of previous messages.
+
+You control the **number of retained data points**, so chatty topics can stay lightweight while important topics keep a deeper history.
+
+If you're actively debugging a topic, enable **increased monitoring** to retain more history for that topic without increasing memory usage across the entire broker.
+
+When something changes unexpectedly, select two historical messages and **diff them side by side** to see exactly what changed.
+
+<p align="center">
+  <img src="docs/images/history-light.png" alt="MQTT Monitor historical payload diff view" width="70%">
+</p>
+
+---
+
+### Make it feel like yours
+
+MQTT Monitor can follow your operating system's **light or dark theme** automatically, or you can select one manually.
+
+You can also customize:
+
+* Accent color
+* Startup behavior
+* Default connection behavior
+* Automatic broker connection
+
+So your usual broker can already be connected and streaming by the time the app opens.
+
+<p align="center">
+  <img src="docs/images/theme-grid.png" alt="MQTT Monitor themes with multiple accent colors" width="100%">
+</p>
+
+---
+
+## Privacy
+
+MQTT Monitor **doesn't collect or transmit user analytics**.
+
+There is no usage tracking and no automatic crash reporting.
+
+Your broker details and MQTT traffic are not sent to me.
+
+The downside is that if something breaks, I won't automatically know about it, so bug reports are especially useful.
+
+---
+
+## Building from source
+
+The downloads above are for people who simply want to use MQTT Monitor.
+
+If you want to contribute, modify the app, or run a development build, you can build it from source.
 
 ### Prerequisites
 
-- [Visual Studio Code](https://code.visualstudio.com/)
-- This repo cloned and opened in VS Code
+* [Visual Studio Code](https://code.visualstudio.com/)
+* [Flutter](https://docs.flutter.dev/install)
+* This repository cloned locally
 
-### 1. Install recommended extensions
+Clone the repository:
 
-The repo ships a `.vscode/extensions.json`, so VS Code should prompt you to install the recommended extensions when you open the project, just click **Install**. If it doesn't, run **Extensions: Show Recommended Extensions** from the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`).
+```bash
+git clone https://github.com/mijelsma/MQTT-Monitor.git
+cd MQTT-Monitor
+```
 
-### 2. Set up Flutter & Dart
-
-Follow Flutter's official VS Code setup guide, it walks through installing the Flutter SDK, Dart SDK, and whatever platform toolchains you need.
-
-**[docs.flutter.dev/install/with-vs-code](https://docs.flutter.dev/install/with-vs-code)**
-
-Once that's done, check everything's in order:
+Check your Flutter installation:
 
 ```bash
 flutter doctor -v
 ```
 
-### 3. Run the app in debug mode
+Install dependencies:
 
-Use the built-in VS Code task to launch a debug build on your platform. This is not a release build, it's the debug mode you'll want while actually working on the app.
+```bash
+flutter pub get
+```
 
-Open the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`), run **Tasks: Run Build Task**, and pick the one for your OS:
-
-| Platform | Task name |
-|---|---|
-| macOS | `Run — macOS (debug)` |
-| Windows | `Run — Windows (debug)` |
-| Linux | `Run — Linux (debug)` |
-
-Or just run it from the terminal:
+### Run in debug mode
 
 ```bash
 # macOS
@@ -148,50 +267,86 @@ flutter run -d windows
 flutter run -d linux
 ```
 
-While it's running, the terminal stays interactive and takes single-key commands, no need to press enter:
+The repository also includes VS Code tasks for each desktop platform.
 
-- `r` Hot reload. 🔥🔥🔥
-- `R` Hot restart.
-- `v` Open Flutter DevTools.
-- `w` Dump widget hierarchy to the console. (debugDumpApp)
-- `t` Dump rendering tree to the console. (debugDumpRenderTree)
-- `L` Dump layer tree to the console. (debugDumpLayerTree)
-- `f` Dump focus tree to the console. (debugDumpFocusTree)
-- `S` Dump accessibility tree in traversal order. (debugDumpSemantics)
-- `U` Dump accessibility tree in inverse hit test order. (debugDumpSemantics)
-- `i` Toggle widget inspector. (WidgetsApp.showWidgetInspectorOverride)
-- `p` Toggle the display of construction lines. (debugPaintSizeEnabled)
-- `I` Toggle oversized image inversion. (debugInvertOversizedImages)
-- `o` Simulate different operating systems. (defaultTargetPlatform)
-- `b` Toggle platform brightness (dark and light mode). (debugBrightnessOverride)
-- `P` Toggle performance overlay. (WidgetsApp.showPerformanceOverlay)
-- `a` Toggle timeline events for all widget build methods. (debugProfileWidgetBuilds)
-- `g` Run source code generators.
-- `h` Repeat this help message.
-- `d` Detach (terminate "flutter run" but leave application running).
-- `c` Clear the screen.
-- `q` Quit (terminate the application on the device).
+Open the Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`), choose **Tasks: Run Build Task**, and select:
+
+| Platform | Task                    |
+| -------- | ----------------------- |
+| macOS    | `Run — macOS (debug)`   |
+| Windows  | `Run — Windows (debug)` |
+| Linux    | `Run — Linux (debug)`   |
+
+### Flutter run commands
+
+While the app is running with `flutter run`, the terminal stays interactive and accepts single-key commands without needing to press Enter.
+
+Some useful ones:
+
+* `r` — Hot reload
+* `R` — Hot restart
+* `v` — Open Flutter DevTools
+* `i` — Toggle widget inspector
+* `p` — Toggle construction lines
+* `P` — Toggle performance overlay
+* `c` — Clear the terminal
+* `q` — Quit the application
+* `h` — Show all available commands
+
+---
+
+### Why Flutter?
+
+MQTT Monitor is built with Flutter and runs as a native desktop application on macOS, Windows, and Linux from one codebase.
+
+Flutter compiles the application rather than shipping it inside a bundled browser, while allowing the desktop versions to share most of their implementation.
+
+That makes it easier to keep the Windows, macOS, and Linux versions in sync and also leaves the door open for mobile versions in the future.
 
 ---
 
 ## Reporting Issues
 
-MQTT-Monitor proudly doesn't track any user data. That also means there's no automatic crash or error reporting, if something goes wrong, I won't know unless you tell me.
+MQTT Monitor proudly doesn't track user activity or include automatic crash reporting.
 
-Found a bug, or something behaving weird? [Open an issue](../../issues) and try to include:
+That means if something goes wrong, I won't know unless you tell me.
 
-- What you expected to happen and what actually happened
-- Steps to reproduce it
-- Any error messages shown, exact text or a screenshot
-- For UI bugs, a screenshot or screen recording, it's usually much faster to spot what's wrong from an image than from a written description
+Found a bug or something behaving strangely?
 
-Clear, specific issues are a lot easier for me to track down and fix, so any detail you can add helps.
+[Open an issue](../../issues) and, if possible, include:
+
+* What you expected to happen
+* What actually happened
+* Steps to reproduce the problem
+* Any error messages shown
+* Your operating system
+* Your MQTT Monitor version
+* A screenshot or screen recording for UI issues
+
+Clear reproduction steps make bugs much easier to track down and fix.
+
+For UI bugs especially, a screenshot or short screen recording is usually much faster to diagnose than a written description alone.
+
+---
+
+## Support the Project
+
+MQTT Monitor is open source and maintained in my spare time.
+
+If it saves you time and you'd like to support continued development, you can buy me a coffee on Ko-fi.
+
+<p align="center">
+  <a href="https://ko-fi.com/micheljelsma">
+    <img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support MQTT Monitor on Ko-fi">
+  </a>
+</p>
+
+If you find MQTT Monitor useful, **starring the repository also helps other MQTT users discover it.**
 
 ---
 
 ## License
 
-MQTT Monitor is licensed under the [GNU Affero General Public License v3.0](LICENSE)
-(`AGPL-3.0-only`). If you distribute a modified version, or make one available
-for users to interact with over a network, you must make the corresponding
-source code available under the same license.
+MQTT Monitor is licensed under the [GNU Affero General Public License v3.0](LICENSE) (`AGPL-3.0-only`).
+
+If you distribute a modified version, or make one available for users to interact with over a network, you must make the corresponding source code available under the same license.
