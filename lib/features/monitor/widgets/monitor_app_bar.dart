@@ -62,11 +62,12 @@ class _MonitorAppBarState extends State<MonitorAppBar> {
         child: Container(height: 1.0, color: Theme.of(context).dividerColor),
       ),
       title: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: _SearchBox(controller: widget.filterController, scope: workspace.scope, matchMode: workspace.matchMode, hasText: hasText, onScopeChanged: workspace.setScope, onMatchModeChanged: workspace.setMatchMode),
+          Flexible(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: _SearchBox(controller: widget.filterController, scope: workspace.scope, matchMode: workspace.matchMode, hasText: hasText, onScopeChanged: workspace.setScope, onMatchModeChanged: workspace.setMatchMode),
+            ),
           ),
           const HSpacer(8),
           _CollapseExpandButton(),
@@ -112,39 +113,44 @@ class _SearchBoxState extends State<_SearchBox> {
       ),
       child: Focus(
         onFocusChange: (value) => setState(() => _focused = value),
-        child: Row(
-          children: [
-            const SizedBox(width: 11),
-            Icon(Icons.search_rounded, size: 17, color: _focused ? tokens.primary : tokens.textTertiary),
-            const SizedBox(width: 8),
-            Expanded(
-              child: TextField(
-                controller: widget.controller,
-                style: TextStyle(fontSize: 13, color: tokens.textPrimary, height: 1.0),
-                decoration: InputDecoration(
-                  hintText: '${S.of(context).searchHint}…',
-                  hintStyle: TextStyle(fontSize: 13, color: tokens.textTertiary, fontWeight: FontWeight.w400),
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: EdgeInsets.zero,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compactPickers = constraints.maxWidth < 400;
+            return Row(
+              children: [
+                const SizedBox(width: 11),
+                Icon(Icons.search_rounded, size: 17, color: _focused ? tokens.primary : tokens.textTertiary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: widget.controller,
+                    style: TextStyle(fontSize: 13, color: tokens.textPrimary, height: 1.0),
+                    decoration: InputDecoration(
+                      hintText: '${S.of(context).searchHint}…',
+                      hintStyle: TextStyle(fontSize: 13, color: tokens.textTertiary, fontWeight: FontWeight.w400),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    cursorColor: tokens.primary,
+                    cursorWidth: 1.5,
+                  ),
                 ),
-                cursorColor: tokens.primary,
-                cursorWidth: 1.5,
-              ),
-            ),
-            if (widget.hasText) ...[
-              const SizedBox(width: 4),
-              GestureDetector(
-                onTap: widget.controller.clear,
-                child: Icon(Icons.cancel_rounded, size: 14, color: tokens.textTertiary),
-              ),
-            ],
-            const SizedBox(width: 6),
-            Container(width: 0.5, height: 18, color: tokens.border),
-            _MatchModePicker(mode: widget.matchMode, onChanged: widget.onMatchModeChanged),
-            Container(width: 0.5, height: 18, color: tokens.border),
-            _ScopePicker(scope: widget.scope, onChanged: widget.onScopeChanged),
-          ],
+                if (widget.hasText) ...[
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: widget.controller.clear,
+                    child: Icon(Icons.cancel_rounded, size: 14, color: tokens.textTertiary),
+                  ),
+                ],
+                const SizedBox(width: 6),
+                Container(width: 0.5, height: 18, color: tokens.border),
+                _MatchModePicker(mode: widget.matchMode, compact: compactPickers, onChanged: widget.onMatchModeChanged),
+                Container(width: 0.5, height: 18, color: tokens.border),
+                _ScopePicker(scope: widget.scope, compact: compactPickers, onChanged: widget.onScopeChanged),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -152,9 +158,10 @@ class _SearchBoxState extends State<_SearchBox> {
 }
 
 class _MatchModePicker extends StatelessWidget {
-  const _MatchModePicker({required this.mode, required this.onChanged});
+  const _MatchModePicker({required this.mode, required this.compact, required this.onChanged});
 
   final SearchMatchMode mode;
+  final bool compact;
   final ValueChanged<SearchMatchMode> onChanged;
 
   String _label(BuildContext context, SearchMatchMode value) => switch (value) {
@@ -166,6 +173,7 @@ class _MatchModePicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.tokens;
     return PopupMenuButton<SearchMatchMode>(
+      tooltip: _label(context, mode),
       onSelected: onChanged,
       color: tokens.surface,
       elevation: 4,
@@ -191,10 +199,13 @@ class _MatchModePicker extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              _label(context, mode),
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: tokens.textSecondary),
-            ),
+            if (compact)
+              Icon(mode == SearchMatchMode.all ? Icons.checklist_rounded : Icons.filter_alt_outlined, size: 15, color: tokens.textSecondary)
+            else
+              Text(
+                _label(context, mode),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: tokens.textSecondary),
+              ),
             const SizedBox(width: 2),
             Icon(Icons.keyboard_arrow_down_rounded, size: 13, color: tokens.textTertiary),
           ],
@@ -205,9 +216,10 @@ class _MatchModePicker extends StatelessWidget {
 }
 
 class _ScopePicker extends StatelessWidget {
-  const _ScopePicker({required this.scope, required this.onChanged});
+  const _ScopePicker({required this.scope, required this.compact, required this.onChanged});
 
   final SearchScope scope;
+  final bool compact;
   final ValueChanged<SearchScope> onChanged;
 
   String _label(BuildContext context, SearchScope s) => switch (s) {
@@ -221,6 +233,7 @@ class _ScopePicker extends StatelessWidget {
     final tokens = context.tokens;
 
     return PopupMenuButton<SearchScope>(
+      tooltip: _label(context, scope),
       onSelected: onChanged,
       color: tokens.surface,
       elevation: 4,
@@ -246,10 +259,21 @@ class _ScopePicker extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              _label(context, scope),
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: tokens.textSecondary),
-            ),
+            if (compact)
+              Icon(
+                switch (scope) {
+                  SearchScope.all => Icons.manage_search_rounded,
+                  SearchScope.topic => Icons.tag_rounded,
+                  SearchScope.value => Icons.data_object_rounded,
+                },
+                size: 15,
+                color: tokens.textSecondary,
+              )
+            else
+              Text(
+                _label(context, scope),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: tokens.textSecondary),
+              ),
             const SizedBox(width: 2),
             Icon(Icons.keyboard_arrow_down_rounded, size: 13, color: tokens.textTertiary),
           ],

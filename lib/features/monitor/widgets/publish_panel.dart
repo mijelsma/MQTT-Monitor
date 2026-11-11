@@ -23,6 +23,8 @@ class PublishPanel extends StatefulWidget {
 }
 
 class _PublishPanelState extends State<PublishPanel> with FeedbackMixin<PublishPanel> {
+  static const double _minimumContentHeight = 180;
+
   // Handles the Publish button tap: validates input and attempts to publish via the ViewModel.
   Future<void> _publish() async {
     final draft = context.read<PublishDraftController>();
@@ -57,7 +59,7 @@ class _PublishPanelState extends State<PublishPanel> with FeedbackMixin<PublishP
     final draft = context.watch<PublishDraftController>();
     final connected = vm.isConnected;
 
-    return Container(
+    final content = Container(
       color: tokens.bg,
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Column(
@@ -77,6 +79,15 @@ class _PublishPanelState extends State<PublishPanel> with FeedbackMixin<PublishP
           _OptionsBar(qos: draft.qos, retain: draft.retain, connected: connected, feedback: feedback, feedbackDetail: feedbackDetail, onQosChanged: draft.setQos, onRetainChanged: draft.setRetain, onPublish: _publish),
         ],
       ),
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (!constraints.hasBoundedHeight || constraints.maxHeight >= _minimumContentHeight) return content;
+        return SingleChildScrollView(
+          child: SizedBox(height: _minimumContentHeight, child: content),
+        );
+      },
     );
   }
 }
