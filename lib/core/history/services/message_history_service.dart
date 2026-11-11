@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:collection';
 
 import '../../../core/monitor/models/topic_node_value_model.dart';
-import '../../../core/monitor/topic_path.dart';
 import '../../broker/repositories/broker_repository.dart';
 import '../../ingestion/ingested_message.dart';
 import '../../ingestion/message_ingestion_coordinator.dart';
@@ -94,9 +93,7 @@ class MessageHistoryService {
     final resolution = resolutionFor(message.topic);
     if (!resolution.enabled) return;
 
-    final key = TopicPath.canonical(message.topic);
-    if (key.isEmpty) return;
-    final values = _history.putIfAbsent(key, ListQueue.new);
+    final values = _history.putIfAbsent(message.topic, ListQueue.new);
     values.addLast(message.value);
     _trim(values, resolution.retention);
   }

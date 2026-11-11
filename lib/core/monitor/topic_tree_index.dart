@@ -2,7 +2,6 @@ import 'dart:collection';
 
 import '../../core/monitor/models/topic_tree_node_model.dart';
 import '../ingestion/ingested_message.dart';
-import 'topic_path.dart';
 
 /// Owns the sorted topic tree and updates subtree totals incrementally.
 class TopicTreeIndex {
@@ -16,17 +15,18 @@ class TopicTreeIndex {
 
   /// Inserts [message] and returns its node path plus structural-change state.
   ({List<TopicTreeNodeModel> path, bool structureChanged, bool topicCreated}) insert(IngestedMessage message) {
-    final segments = TopicPath.canonical(message.topic).split('/').where((segment) => segment.isNotEmpty).toList();
-    if (segments.isEmpty) {
+    if (message.topic.isEmpty) {
       return (path: const [], structureChanged: false, topicCreated: false);
     }
+    final segments = message.topic.split('/');
 
     Map<String, TopicTreeNodeModel> level = _roots;
     final path = <TopicTreeNodeModel>[];
     var fullPath = '';
     var structureChanged = false;
-    for (final segment in segments) {
-      fullPath = fullPath.isEmpty ? segment : '$fullPath/$segment';
+    for (var index = 0; index < segments.length; index++) {
+      final segment = segments[index];
+      fullPath = index == 0 ? segment : '$fullPath/$segment';
       var node = level[segment];
       if (node == null) {
         node = TopicTreeNodeModel(segment: segment, fullPath: fullPath);
@@ -48,7 +48,7 @@ class TopicTreeIndex {
 
   /// Returns the existing node path for a concrete topic.
   List<TopicTreeNodeModel> pathFor(String topic) {
-    final segments = TopicPath.canonical(topic).split('/').where((segment) => segment.isNotEmpty);
+    final segments = _segmentsForPath(topic);
     Map<String, TopicTreeNodeModel> level = _roots;
     final path = <TopicTreeNodeModel>[];
     for (final segment in segments) {
@@ -62,8 +62,7 @@ class TopicTreeIndex {
 
   /// Removes [node], prunes empty ancestors, and returns concrete topic paths.
   List<String> delete(TopicTreeNodeModel node) {
-    final segments = TopicPath.canonical(node.fullPath).split('/').where((segment) => segment.isNotEmpty).toList();
-    if (segments.isEmpty) return const [];
+    final segments = _segmentsForPath(node.fullPath);
 
     final ancestorPath = pathFor(node.fullPath);
     if (ancestorPath.isEmpty || !identical(ancestorPath.last, node)) {
@@ -112,6 +111,8 @@ class TopicTreeIndex {
     }
   }
 }
+
+List<String> _segmentsForPath(String path) => path.isEmpty ? const [''] : path.split('/');
 
 int _compareSegments(String left, String right) {
   final folded = left.toLowerCase().compareTo(right.toLowerCase());
