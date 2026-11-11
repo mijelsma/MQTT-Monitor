@@ -73,7 +73,7 @@ jobs:
 
   macos:
     needs: release-context
-    runs-on: macos-14
+    runs-on: macos-15-intel
     env:
       MACOS_DEVELOPER_ID_APPLICATION: 'Developer ID Application: Michel Jelsma (T589Z25JDU)'
       MACOS_NOTARY_PROFILE: mqtt-monitor-notary
