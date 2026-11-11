@@ -83,6 +83,32 @@ void main() {
     expect(history.getHistory('sensors/device/value').map((value) => value.payload), ['2', '3', '4', '5']);
   });
 
+  test('empty topic levels keep independent buffers and policy resolution', () async {
+    const retentions = {'/sensor/value': 1, 'sensor/value': 2, 'sensor/value/': 3, 'sensor//value': 4, '/': 5};
+    await addBroker('broker', [for (final entry in retentions.entries) subscription(entry.key, entry.key, retention: 5)]);
+
+    for (final topic in retentions.keys) {
+      for (var index = 1; index <= 5; index++) {
+        messages.add(message(topic, '$topic:$index', index));
+      }
+    }
+    await settle();
+
+    final broker = brokers.activeBroker!;
+    await brokers.update(
+      broker.copyWith(
+        subscriptions: [for (final current in broker.subscriptions) current.copyWith(history: SubscriptionHistoryPolicyModel(retention: retentions[current.topic]!))],
+      ),
+    );
+
+    expect(history.bufferCount, retentions.length);
+    for (final entry in retentions.entries) {
+      expect(history.resolutionFor(entry.key).retention, entry.value, reason: entry.key);
+      expect(history.getHistory(entry.key), hasLength(entry.value), reason: entry.key);
+      expect(history.getHistory(entry.key).last.payload, '${entry.key}:5', reason: entry.key);
+    }
+  });
+
   test('disabling history preserves existing values and skips new work', () async {
     await addBroker('broker', [subscription('all', '#', retention: 3)]);
     messages.add(message('sensor/value', 'kept', 1));

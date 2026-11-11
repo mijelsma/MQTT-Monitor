@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mqtt_monitor/core/history/services/message_history_service.dart';
 import 'package:mqtt_monitor/core/ingestion/message_ingestion_coordinator.dart';
+import 'package:mqtt_monitor/core/monitor/models/topic_tree_node_model.dart';
 import 'package:mqtt_monitor/core/monitor/topic_projection.dart';
 import 'package:mqtt_monitor/core/mqtt/mqtt_message.dart';
 import 'package:mqtt_monitor/features/monitor/controllers/monitor_workspace_controller.dart';
@@ -147,6 +148,42 @@ void main() {
 
     expect(projection.pathFor('same/topic').last.valueNotifier.value?.seq, 1);
     expect(history.getHistory('same/topic').single.payload, 'second');
+  });
+
+  test('empty topic levels retain distinct nodes, values, and histories', () {
+    const messagesByTopic = {'/sensor/value': 'leading', 'sensor/value': 'plain', 'sensor/value/': 'trailing', 'sensor//value': 'adjacent', '/': 'slash'};
+
+    var second = 1;
+    for (final entry in messagesByTopic.entries) {
+      source.add(_message(entry.key, entry.value, second++));
+    }
+
+    final leaves = <TopicTreeNodeModel>{};
+    for (final entry in messagesByTopic.entries) {
+      final leaf = projection.pathFor(entry.key).last;
+      leaves.add(leaf);
+      expect(leaf.fullPath, entry.key, reason: entry.key);
+      expect(leaf.valueNotifier.value?.payload, entry.value, reason: entry.key);
+      expect(history.getHistory(entry.key).single.payload, entry.value, reason: entry.key);
+    }
+    expect(leaves, hasLength(messagesByTopic.length));
+    expect(history.bufferCount, messagesByTopic.length);
+  });
+
+  test('deleting the leading empty-level subtree preserves ordinary topics', () {
+    source
+      ..add(_message('/sensor/value', 'leading', 1))
+      ..add(_message('sensor/value', 'plain', 2));
+
+    final emptyRoot = projection.pathFor('/sensor/value').first;
+    expect(emptyRoot.segment, isEmpty);
+
+    workspace.deleteTopic(emptyRoot);
+
+    expect(projection.pathFor('/sensor/value'), isEmpty);
+    expect(history.getHistory('/sensor/value'), isEmpty);
+    expect(projection.pathFor('sensor/value').last.valueNotifier.value?.payload, 'plain');
+    expect(history.getHistory('sensor/value').single.payload, 'plain');
   });
 }
 
